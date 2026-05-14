@@ -1526,7 +1526,7 @@ tr:hover td{background:var(--g9);}
       <button class="sb-item" onclick="showPanel('calculadoras')"><span class="sb-icon">🧮</span><span>Calculadoras</span></button>
       <button class="sb-item" onclick="abrirFirmaDigital()"><span class="sb-icon">✍️</span><span>Firma Digital</span></button>
       <button class="sb-item" onclick="showPanel('telemed')"><span class="sb-icon">📹</span><span>Telemedicina</span></button>
-      
+      <button class="sb-item" onclick="pedirApiKey()" id="sb-apikey-btn"><span class="sb-icon">🔑</span><span id="sb-apikey-label">Configurar IA</span></button>
       <button class="sb-item" onclick="showPanel('resumen-hc')"><span class="sb-icon">📄</span><span>Resumen HC</span></button>
     </div>
 
@@ -3847,6 +3847,61 @@ if(usuarios.length === 0){
 }
 var usuarioActual = null;
 
+// ── API KEY MANAGEMENT ──
+function getApiKey(){
+  return localStorage.getItem('med_api_key') || '';
+}
+function setApiKey(key){
+  localStorage.setItem('med_api_key', key);
+  actualizarBtnApiKey();
+}
+function actualizarBtnApiKey(){
+  var lbl = document.getElementById('sb-apikey-label');
+  var btn = document.getElementById('sb-apikey-btn');
+  if(lbl){
+    if(getApiKey()){
+      lbl.textContent = '🟢 IA Activa';
+      if(btn) btn.style.color = '#6dde96';
+    } else {
+      lbl.textContent = 'Configurar IA';
+      if(btn) btn.style.color = '';
+    }
+  }
+}
+function pedirApiKey(){
+  var actual = getApiKey();
+  var key = prompt(
+    '🔑 API Key de Anthropic\n\n' +
+    'Para usar las funciones de IA necesitás una API key de Anthropic.\n\n' +
+    'Cómo obtenerla GRATIS:\n' +
+    '1. Entrá a console.anthropic.com\n' +
+    '2. Creá una cuenta gratuita\n' +
+    '3. En "API Keys" generá una clave\n' +
+    '4. Pegala acá abajo\n\n' +
+    (actual ? '✅ API key configurada: sk-ant-...'+actual.slice(-6) : '⚠️ No hay API key configurada'),
+    actual || ''
+  );
+  if(key === null) return; // canceló
+  if(key && key.trim().startsWith('sk-ant-')){
+    setApiKey(key.trim());
+    alert('✅ API key guardada. Las funciones de IA ya están activas.');
+  } else if(key.trim() === '') {
+    localStorage.removeItem('med_api_key');
+    actualizarBtnApiKey();
+    alert('API key eliminada.');
+  } else {
+    alert('❌ La API key no es válida. Debe comenzar con "sk-ant-"');
+  }
+}
+// Actualizar botón al cargar
+setTimeout(actualizarBtnApiKey, 500);
+function getHeaders(){
+  var key = getApiKey();
+  var headers = {'Content-Type':'application/json'};
+  if(key) headers['x-api-key'] = key;
+  return headers;
+}
+
 // ── ENTRAR AL APP ──
 function abrirLogin(){
   entrarDirecto();
@@ -3994,7 +4049,28 @@ function cambiarNombreUsuario(){
 }
 
 function mostrarRecuperarPass(){
-  alert('Para recuperar tu contraseña, contactá al soporte: medhistoriasclinicas@gmail.com');
+  try {
+    var guardados = JSON.parse(localStorage.getItem('med_usuarios')||'[]');
+    if(!guardados.length){
+      // No hay usuarios — ofrecer crear cuenta nueva
+      var r = confirm('No hay cuentas registradas en este dispositivo.\n\n¿Querés crear una cuenta nueva?');
+      if(r){ mlTab('reg'); }
+      return;
+    }
+    // Mostrar usuarios registrados para que elija
+    var lista = guardados.map(function(u,i){ return (i+1)+'. '+u.nombre+' ('+u.email+')'; }).join('\n');
+    var idx = prompt('Cuentas registradas en este dispositivo:\n\n'+lista+'\n\nEscribí el número de tu cuenta para resetear la contraseña:');
+    if(!idx) return;
+    var i = parseInt(idx) - 1;
+    if(isNaN(i) || i < 0 || i >= guardados.length){ alert('Número inválido.'); return; }
+    var nueva = prompt('Nueva contraseña para '+guardados[i].nombre+' (mínimo 8 caracteres):');
+    if(!nueva || nueva.length < 8){ alert('La contraseña debe tener al menos 8 caracteres.'); return; }
+    guardados[i].pass = nueva;
+    localStorage.setItem('med_usuarios', JSON.stringify(guardados));
+    alert('✅ Contraseña actualizada para '+guardados[i].nombre+'.\n\nAhora podés ingresar con tu email y la nueva contraseña.');
+  } catch(e) {
+    alert('No se pudo recuperar la contraseña. Intentá registrarte con una cuenta nueva.');
+  }
 }
 function cerrarApp(){
   document.body.classList.remove('in-app');
@@ -4022,7 +4098,7 @@ async function consultarIA(){
   try {
     var response = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:getHeaders(),
       body: JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:1000,
@@ -8473,7 +8549,7 @@ async function buscarCIE10(btn){
   try {
     var response = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:getHeaders(),
       body: JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:300,
@@ -9141,7 +9217,7 @@ async function enviarIA(){
   try {
     var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: getHeaders(),
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
@@ -9638,7 +9714,7 @@ function generarResumenIA(){
 
   fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
-    headers:{'Content-Type':'application/json'},
+    headers:getHeaders(),
     body: JSON.stringify({
       model:'claude-sonnet-4-20250514',
       max_tokens:1000,
@@ -9739,6 +9815,14 @@ function abrirDictado(){
   }
 }
 
+function capitalizarTexto(txt){
+  if(!txt) return txt;
+  // Capitalizar después de . ! ? y al inicio
+  return txt.replace(/(^|[.!?]\s+)([a-záéíóúüñ])/gi, function(m, prev, letra){
+    return prev + letra.toUpperCase();
+  });
+}
+
 function cerrarDictado(){
   detenerMic();
   document.getElementById('dictado-overlay').classList.remove('open');
@@ -9803,6 +9887,8 @@ function iniciarMic(){
       }
     }
     if(final) dictadoTexto += final;
+    // Capitalizar primera letra y después de punto seguido
+    dictadoTexto = capitalizarTexto(dictadoTexto);
     var display = dictadoTexto + (interino ? '['+interino+']' : '');
     var el = document.getElementById('dictado-transcript');
     if(el) el.textContent = display || 'Hablá cuando el micrófono esté activo (rojo)...';
@@ -10308,7 +10394,7 @@ function verImagen(i){
 </div>
 
 <!-- DICTADO IA MODAL -->
-<div id="dictado-overlay">
+<div id="dictado-overlay" onclick="if(event.target===this)cerrarDictado()">
   <div class="dictado-modal">
     <div class="dictado-header">
       <div>
