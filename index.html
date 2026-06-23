@@ -4777,21 +4777,27 @@ function entrarApp(){
     return; 
   }
 
-  // Buscar en usuarios guardados
-  var guardados = [];
-  try { guardados = JSON.parse(localStorage.getItem('med_usuarios')||'[]'); } catch(e){}
-  
-  var encontrado = guardados.find(function(usr){
-    return (usr.email===u || usr.usuario===u) && usr.pass===p;
+sb.from('usuarios').select('*').eq('email', u).eq('password', p).then(function(r){
+    var encontrado = (r.data && r.data[0]) || null;
+    if(!encontrado){
+      var guardados = [];
+      try { guardados = JSON.parse(localStorage.getItem('med_usuarios')||'[]'); } catch(e){}
+      encontrado = guardados.find(function(usr){
+        return (usr.email===u || usr.usuario===u) && usr.pass===p;
+      });
+    }
+    if(!encontrado){
+      if(errEl){ errEl.textContent='Usuario o contraseña incorrectos.'; errEl.style.display='block'; }
+      return;
+    }
+    if(errEl) errEl.style.display='none';
+    usuarioActual = encontrado;
+    continuarLogin(encontrado);
   });
+}
+  
 
-  if(!encontrado){
-    if(errEl){ errEl.textContent='Usuario o contraseña incorrectos.'; errEl.style.display='block'; }
-    return;
-  }
-
-  if(errEl) errEl.style.display='none';
-  usuarioActual = encontrado;
+function continuarLogin(encontrado){
 
   var landing = document.getElementById('landing');
   var app = document.getElementById('app');
