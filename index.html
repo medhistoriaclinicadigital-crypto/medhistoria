@@ -4881,7 +4881,11 @@ function registrarUsuario(){
   try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
   try{ showPanel('dash'); }catch(e){}
   try{ precargarDatosMedico(usuarioActual); }catch(e){}
-  alert('✅ Cuenta creada con éxito. Bienvenida/o, ' + nombre + '!');
+  sb.from('usuarios').insert([{
+    nombre: nombre, email: email, password: pass,
+    especialidad: especialidad, matricula: tipoMat+' '+matricula,
+    telefono: telefono, dni: dni, rol: 'medico'
+  }]).then(function(r){ if(r.error) console.error('Error guardando en Supabase:', r.error); });alert('✅ Cuenta creada con éxito. Bienvenida/o, ' + nombre + '!');
 }
 
 // ── EDITAR PERFIL ──
