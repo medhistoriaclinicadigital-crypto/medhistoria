@@ -13181,6 +13181,11 @@ function mlRegistrar(){
   guardados.push(nuevoUser);
   localStorage.setItem('med_usuarios', JSON.stringify(guardados));
   usuarioActual = nuevoUser;
+  sb.from('usuarios').insert([{
+        nombre: nombre, email: email, password: pass,
+        especialidad: esp, matricula: (mn?'M.N. '+mn:(mp?'M.P. '+mp:'')),
+        telefono: tel, dni: dni, rol: 'medico'
+      }]).then(function(r){ if(r.error) console.error('Error guardando en Supabase:', r.error); });
 
   // Limpiar formulario de registro para el próximo usuario
   ['ml-reg-nombre','ml-reg-dni','ml-reg-cuil','ml-reg-tel','ml-reg-mn','ml-reg-mp','ml-reg-esp','ml-reg-subesp','ml-reg-inst','ml-reg-provincia','ml-reg-ciudad','ml-reg-email','ml-reg-pass','ml-reg-pass2'].forEach(function(id){
