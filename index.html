@@ -12264,6 +12264,36 @@ function cargarLocal(){
     if(v) videoconsultas = JSON.parse(v);
   } catch(e){ pacientes = []; }
 }
+function sincronizarPacientesSupabase(){
+  if(!usuarioActual || !usuarioActual.id) return;
+  sb.from('pacientes').select('*').eq('medico_id', usuarioActual.id).then(function(r){
+    if(r.data){
+      r.data.forEach(function(remoto){
+        var existe = pacientes.find(function(p){ return p.dni && remoto.dni && p.dni.trim()===remoto.dni.trim(); });
+        if(!existe){
+          pacientes.unshift({
+            nombre: (remoto.apellido||'') + ', ' + (remoto.nombre||''),
+            apellido: remoto.apellido||'',
+            dni: remoto.dni||'',
+            fnac: remoto.fecha_nacimiento||'',
+            tel: remoto.telefono||'',
+            email: remoto.email||'',
+            os: remoto.obra_social||'',
+            afiliado: remoto.n_afiliado||'',
+            plan: remoto.plan||'',
+            domicilio: remoto.domicilio||'',
+            localidad: remoto.localidad||'',
+            nacionalidad: remoto.nacionalidad||'',
+            sexo: remoto.sexo||''
+          });
+        }
+      });
+      localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(pacientes));
+      renderPacientes();
+    }
+  });
+}
+  
 
 
 // ══ PWA INSTALL ══
@@ -13093,6 +13123,7 @@ function mlIngresar(){
       try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){}
       try{ document.getElementById('app-user-name').textContent = nombreConTitulo(encSB) + ' 👨‍⚕️'; }catch(e){}
       try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
+      try{ sincronizarPacientesSupabase(); }catch(e){}
       try{ showPanel('dash'); }catch(e){}
       try{ precargarDatosMedico(encSB); }catch(e){}
       return;
@@ -13131,6 +13162,7 @@ function mlIngresar(){
     try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){}
     try{ document.getElementById('app-user-name').textContent = nombreConTitulo(encontrado) + ' 👨‍⚕️'; }catch(e){}
     try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
+    try{ sincronizarPacientesSupabase(); }catch(e){}
     try{ showPanel('dash'); }catch(e){}
     // Precarga automática del médico en todos los formularios
     try{ precargarDatosMedico(encontrado); }catch(e){}
