@@ -12312,7 +12312,38 @@ function sincronizarPacientesSupabase(){
   });
 }
   
-
+function sincronizarTurnosSupabase(){
+  if(!usuarioActual || !usuarioActual.id) return;
+  sb.from('turnos').select('*').eq('medico_id', usuarioActual.id).then(function(r){
+    if(r.data){
+      r.data.forEach(function(remoto){
+        var yaExiste = turnos.find(function(t){ return t._sbId === remoto.id; });
+        if(!yaExiste){
+          var nombrePac = '(paciente sin datos)';
+          if(remoto.paciente_id){
+            var pEncontrado = pacientes.find(function(p){ return p._sbId === remoto.paciente_id; });
+            if(pEncontrado) nombrePac = pEncontrado.nombre;
+          }
+          var partesF = (remoto.fecha||'').split('-');
+          var fechaDisp = partesF.length===3 ? (partesF[2]+'/'+partesF[1]+'/'+partesF[0]) : '';
+          turnos.unshift({
+            _sbId: remoto.id,
+            pac: nombrePac,
+            fecha: remoto.fecha||'',
+            fechaDisplay: fechaDisp,
+            hora: (remoto.hora||'').slice(0,5),
+            motivo: remoto.motivo||'',
+            os: remoto.obra_social||'',
+            estado: remoto.estado||remoto.prioridad||'pend',
+            wa: remoto.whatsapp||''
+          });
+        }
+      });
+      localStorage.setItem(_userKey('mhcd_turnos'), JSON.stringify(turnos));
+      renderTurnos();
+    }
+  });
+}
 
 // ══ PWA INSTALL ══
 function mostrarInstruccionesPWA(){
@@ -13142,6 +13173,7 @@ function mlIngresar(){
       try{ document.getElementById('app-user-name').textContent = nombreConTitulo(encSB) + ' 👨‍⚕️'; }catch(e){}
       try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
       try{ sincronizarPacientesSupabase(); }catch(e){}
+      try{ sincronizarTurnosSupabase(); }catch(e){}
       try{ showPanel('dash'); }catch(e){}
       try{ precargarDatosMedico(encSB); }catch(e){}
       return;
@@ -13181,6 +13213,7 @@ function mlIngresar(){
     try{ document.getElementById('app-user-name').textContent = nombreConTitulo(encontrado) + ' 👨‍⚕️'; }catch(e){}
     try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
     try{ sincronizarPacientesSupabase(); }catch(e){}
+    try{ sincronizarTurnosSupabase(); }catch(e){}
     try{ showPanel('dash'); }catch(e){}
     // Precarga automática del médico en todos los formularios
     try{ precargarDatosMedico(encontrado); }catch(e){}
