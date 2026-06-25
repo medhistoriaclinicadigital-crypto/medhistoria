@@ -13040,41 +13040,74 @@ function mlIngresar(){
   u = u.trim();
   if(!u||!p){ alert('Completá usuario y contraseña.'); return; }
 
-  var guardados = [];
-  try { guardados = JSON.parse(localStorage.getItem('med_usuarios')||'[]'); } catch(e){}
+  // Buscar primero en Supabase
+  sb.from('usuarios').select('*').eq('email', u).then(function(r){
+    var encSB = (r.data && r.data.find(function(usr){ return usr.password===p; })) || null;
 
-  var encontrado = guardados.find(function(usr){
-    return (usr.email===u || usr.usuario===u) && usr.pass===p;
+    if(encSB){
+      var rEl0 = document.getElementById('ml-recordar');
+      if(rEl0 && rEl0.checked){
+        localStorage.setItem('mhcd_recordar','1');
+        localStorage.setItem('mhcd_user_guardado', u);
+        localStorage.setItem('mhcd_pass_guardado', p);
+      } else {
+        localStorage.removeItem('mhcd_recordar');
+        localStorage.removeItem('mhcd_user_guardado');
+        localStorage.removeItem('mhcd_pass_guardado');
+      }
+      usuarioActual = encSB;
+      document.getElementById('miLoginModal').style.display='none';
+      var landingSB = document.getElementById('landing');
+      var appSB = document.getElementById('app');
+      if(landingSB) landingSB.style.display='none';
+      document.body.classList.add('in-app');
+      if(appSB){ appSB.style.display='block'; }
+      setTimeout(function(){ window.scrollTo(0,0); },30);
+      try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){}
+      try{ document.getElementById('app-user-name').textContent = nombreConTitulo(encSB) + ' 👨‍⚕️'; }catch(e){}
+      try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
+      try{ showPanel('dash'); }catch(e){}
+      try{ precargarDatosMedico(encSB); }catch(e){}
+      return;
+    }
+
+    // Plan B: buscar en localStorage (médicos antiguos no migrados)
+    var guardados = [];
+    try { guardados = JSON.parse(localStorage.getItem('med_usuarios')||'[]'); } catch(e){}
+
+    var encontrado = guardados.find(function(usr){
+      return (usr.email===u || usr.usuario===u) && usr.pass===p;
+    });
+
+    if(!encontrado){ alert('Usuario o contraseña incorrectos.'); return; }
+
+    // Guardar si tildó "Recordar"
+    var recordar = document.getElementById('ml-recordar');
+    if(recordar && recordar.checked){
+      localStorage.setItem('mhcd_recordar','1');
+      localStorage.setItem('mhcd_user_guardado', u);
+      localStorage.setItem('mhcd_pass_guardado', p);
+    } else {
+      localStorage.removeItem('mhcd_recordar');
+      localStorage.removeItem('mhcd_user_guardado');
+      localStorage.removeItem('mhcd_pass_guardado');
+    }
+
+    usuarioActual = encontrado;
+    document.getElementById('miLoginModal').style.display='none';
+    var landing = document.getElementById('landing');
+    var app = document.getElementById('app');
+    if(landing) landing.style.display='none';
+    document.body.classList.add('in-app');
+    if(app){ app.style.display='block'; }
+    setTimeout(function(){ window.scrollTo(0,0); },30);
+    try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){}
+    try{ document.getElementById('app-user-name').textContent = nombreConTitulo(encontrado) + ' 👨‍⚕️'; }catch(e){}
+    try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
+    try{ showPanel('dash'); }catch(e){}
+    // Precarga automática del médico en todos los formularios
+    try{ precargarDatosMedico(encontrado); }catch(e){}
   });
-
-  if(!encontrado){ alert('Usuario o contraseña incorrectos.'); return; }
-
-  // Guardar si tildó "Recordar"
-  var recordar = document.getElementById('ml-recordar');
-  if(recordar && recordar.checked){
-    localStorage.setItem('mhcd_recordar','1');
-    localStorage.setItem('mhcd_user_guardado', u);
-    localStorage.setItem('mhcd_pass_guardado', p);
-  } else {
-    localStorage.removeItem('mhcd_recordar');
-    localStorage.removeItem('mhcd_user_guardado');
-    localStorage.removeItem('mhcd_pass_guardado');
-  }
-
-  usuarioActual = encontrado;
-  document.getElementById('miLoginModal').style.display='none';
-  var landing = document.getElementById('landing');
-  var app = document.getElementById('app');
-  if(landing) landing.style.display='none';
-  document.body.classList.add('in-app');
-  if(app){ app.style.display='block'; }
-  setTimeout(function(){ window.scrollTo(0,0); },30);
-  try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){}
-  try{ document.getElementById('app-user-name').textContent = nombreConTitulo(encontrado) + ' ✏️'; }catch(e){}
-  try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
-  try{ showPanel('dash'); }catch(e){}
-  // Precarga automática del médico en todos los formularios
-  try{ precargarDatosMedico(encontrado); }catch(e){}
 }
 
 function nombreConTitulo(u){
