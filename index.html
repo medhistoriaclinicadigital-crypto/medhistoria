@@ -4450,6 +4450,21 @@ function guardarPaciente(){
   // Refrescar lista ordenada
   renderPacientes();
 
+  // Guardar también en Supabase
+    if(usuarioActual && usuarioActual.id){
+      var pacSB = Object.assign({}, pac, { medico_id: usuarioActual.id });
+      delete pacSB.edad;
+      delete pacSB.ultimaConsulta;
+      delete pacSB.ultima;
+      sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', pac.dni||'').then(function(r){
+        if(r.data && r.data.length>0){
+          sb.from('pacientes').update(pacSB).eq('id', r.data[0].id).then(function(){});
+        } else {
+          sb.from('pacientes').insert(pacSB).then(function(){});
+        }
+      });
+    }
+
   cerrarNuevoPaciente();
 }
 document.getElementById('pacienteOverlay').addEventListener('click',function(e){if(e.target===this)cerrarNuevoPaciente();});
