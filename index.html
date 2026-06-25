@@ -4452,10 +4452,22 @@ function guardarPaciente(){
 
   // Guardar también en Supabase
     if(usuarioActual && usuarioActual.id){
-      var pacSB = Object.assign({}, pac, { medico_id: usuarioActual.id });
-      delete pacSB.edad;
-      delete pacSB.ultimaConsulta;
-      delete pacSB.ultima;
+      var pacSB = {
+          medico_id: usuarioActual.id,
+          nombre: nombre,
+          apellido: apellido,
+          dni: pac.dni||'',
+          fecha_nacimiento: pac.fnac||null,
+          telefono: pac.tel||'',
+          email: pac.email||'',
+          obra_social: pac.os||'',
+          n_afiliado: pac.afiliado||'',
+          plan: pac.plan||'',
+          domicilio: pac.domicilio||'',
+          localidad: pac.localidad||'',
+          nacionalidad: pac.nacionalidad||'',
+          sexo: pac.sexo||''
+        };
       sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', pac.dni||'').then(function(r){
         if(r.data && r.data.length>0){
           sb.from('pacientes').update(pacSB).eq('id', r.data[0].id).then(function(){});
