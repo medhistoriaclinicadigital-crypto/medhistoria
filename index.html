@@ -10656,6 +10656,24 @@ function guardarTurno(){
   var partes = fecha.split('-');
   var fechaDisplay = partes[2]+'/'+partes[1]+'/'+partes[0];
   turnos.push({pac:pac, fecha:fecha, fechaDisplay:fechaDisplay, hora:hora, motivo:motivo||'Consulta', os:os, estado:prio, wa:wa});
+  // Guardar también en Supabase
+  if(usuarioActual && usuarioActual.id){
+    sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('nombre', pac.split(',')[1]?pac.split(',')[1].trim():pac).eq('apellido', pac.split(',')[0].trim()).then(function(rPac){
+      var pacienteId = (rPac.data && rPac.data.length>0) ? rPac.data[0].id : null;
+      var turnoSB = {
+        medico_id: usuarioActual.id,
+        paciente_id: pacienteId,
+        fecha: fecha,
+        hora: hora,
+        motivo: motivo||'Consulta',
+        whatsapp: wa||'',
+        obra_social: os||'',
+        prioridad: prio||'',
+        estado: prio||''
+      };
+      sb.from('turnos').insert(turnoSB).then(function(){});
+    });
+  }
   
   // Ofrecer enviar recordatorio por WA
   if(wa){
