@@ -9635,7 +9635,7 @@ function renderEvolucionesHistorial(){
 
   var rb = function(l,v){ return v?'<div style="margin-bottom:6px;"><div style="font-size:.78rem;font-weight:700;color:var(--g3);margin-bottom:2px;">'+l+'</div><div style="background:var(--g9);border-radius:6px;padding:8px 12px;font-size:.85rem;white-space:pre-wrap;font-family:\'Outfit\',sans-serif;">'+v+'</div></div>':''; };
 
-  lista.innerHTML = evols.map(function(e){
+  lista.innerHTML = evols.map(function(e,i){ 
     var sv = [e.ta&&('TA: '+e.ta), e.fc&&('FC: '+e.fc), e.peso&&('Peso: '+e.peso+'kg'), e.temp&&('Temp: '+e.temp+'°C')].filter(Boolean).join(' · ');
     return '<div style="border:1.5px solid var(--g9);border-radius:10px;padding:14px;background:#fff;">'
       +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--g9);">'
