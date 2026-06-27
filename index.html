@@ -13272,6 +13272,7 @@ function mlIngresar(){
       try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
       try{ sincronizarPacientesSupabase(); }catch(e){}
       try{ sincronizarTurnosSupabase(); }catch(e){}
+      try{ sincronizarHistoriasClinicasSupabase(); }catch(e){}
       try{ showPanel('dash'); }catch(e){}
       try{ precargarDatosMedico(encSB); }catch(e){}
       return;
@@ -13312,6 +13313,7 @@ function mlIngresar(){
     try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
     try{ sincronizarPacientesSupabase(); }catch(e){}
     try{ sincronizarTurnosSupabase(); }catch(e){}
+    try{ sincronizarHistoriasClinicasSupabase(); }catch(e){}
     try{ showPanel('dash'); }catch(e){}
     // Precarga automática del médico en todos los formularios
     try{ precargarDatosMedico(encontrado); }catch(e){}
