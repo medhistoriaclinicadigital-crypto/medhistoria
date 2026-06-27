@@ -12394,41 +12394,47 @@ function sincronizarPacientesSupabase(){
     }
   });
 }
-   function sincronizarEvolucionesSupabase(){
-  if(!usuarioActual || !usuarioActual.id) return;
-  sb.from('evoluciones').select('*').eq('medico_id', usuarioActual.id).then(function(r){
-    if(r.data){
-      r.data.forEach(function(remoto){
-        var pEncontrado = pacientes.find(function(p){ return p._sbId === remoto.paciente_id; });
-        if(pEncontrado){
-          if(!pEncontrado.evoluciones) pEncontrado.evoluciones = [];
-          var yaExiste = pEncontrado.evoluciones.find(function(e){ return e._sbId === remoto.id; });
-          if(!yaExiste){
-            var fechaISO = remoto.fecha_evolucion || '';
-            var fechaObj = fechaISO ? new Date(fechaISO) : new Date();
-            var dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-            var meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-            var fechaLarga = dias[fechaObj.getDay()]+', '+fechaObj.getDate()+' de '+meses[fechaObj.getMonth()]+' de '+fechaObj.getFullYear();
-            var hora = fechaObj.getHours().toString().padStart(2,'0')+':'+fechaObj.getMinutes().toString().padStart(2,'0');
-            pEncontrado.evoluciones.unshift({
-              _sbId: remoto.id,
-              fecha: fechaLarga,
-              fechaISO: fechaISO,
-              hora: hora,
-              motivo: remoto.motivo_consulta||'',
-              cuadro: remoto.evolucion||'',
-              diag: '',
-              plan: remoto.indicaciones_plan||'',
-              proxima: remoto.proxima_consulta||'',
-              medico: ''
-            });
-          }
-        }
+    function sincronizarEvolucionesSupabase(){
+      if(!usuarioActual || !usuarioActual.id) return;
+      sb.from('pacientes').select('id,dni').eq('medico_id', usuarioActual.id).then(function(rPac){
+        if(!rPac.data) return;
+        var mapaIdDni = {};
+        rPac.data.forEach(function(p){ mapaIdDni[p.id] = p.dni; });
+        sb.from('evoluciones').select('*').eq('medico_id', usuarioActual.id).then(function(r){
+          if(!r.data) return;
+          r.data.forEach(function(remoto){
+            var dniLocal = mapaIdDni[remoto.paciente_id];
+            if(!dniLocal) return;
+            var idx = -1;
+            for(var i=0;i<pacientes.length;i++){ if(pacientes[i].dni && pacientes[i].dni===dniLocal){ idx=i; break; } }
+            if(idx===-1) return;
+            if(!pacientes[idx].evoluciones) pacientes[idx].evoluciones = [];
+            var yaExiste = pacientes[idx].evoluciones.find(function(e){ return e._sbId === remoto.id; });
+            if(!yaExiste){
+              var fechaISO = remoto.fecha_evolucion || '';
+              var fechaObj = fechaISO ? new Date(fechaISO) : new Date();
+              var dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+              var meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+              var fechaLarga = dias[fechaObj.getDay()]+', '+fechaObj.getDate()+' de '+meses[fechaObj.getMonth()]+' de '+fechaObj.getFullYear();
+              var hora = fechaObj.getHours().toString().padStart(2,'0')+':'+fechaObj.getMinutes().toString().padStart(2,'0');
+              pacientes[idx].evoluciones.unshift({
+                _sbId: remoto.id,
+                fecha: fechaLarga,
+                fechaISO: fechaISO,
+                hora: hora,
+                motivo: remoto.motivo_consulta||'',
+                cuadro: remoto.evolucion||'',
+                diag: '',
+                plan: remoto.indicaciones_plan||'',
+                proxima: remoto.proxima_consulta||'',
+                medico: ''
+              });
+            }
+          });
+          guardarLocal();
+        });
       });
-      guardarLocal();
     }
-  });
-}
   
   function sincronizarHistoriasClinicasSupabase(){
       if(!usuarioActual || !usuarioActual.id) return;
