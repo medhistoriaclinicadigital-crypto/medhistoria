@@ -12176,6 +12176,29 @@ function guardarDesdeHC(){
 
   guardarLocal();
   renderPacientes();
+   // Guardar también en Supabase (historias_clinicas)
+    if(usuarioActual && usuarioActual.id && dni){
+      sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', dni).then(function(rPac){
+        var pacienteId = (rPac.data && rPac.data.length>0) ? rPac.data[0].id : null;
+        if(pacienteId){
+          var hcSB = {
+            paciente_id: pacienteId,
+            antecedentes_personales: antPersonal||'',
+            antecedentes_familiares: antFamiliar||'',
+            antecedentes_quirurgicos: antQuirurgico||'',
+            medicacion_habitual: medicacion||'',
+            alergias: alergias||''
+          };
+          sb.from('historias_clinicas').select('id').eq('paciente_id', pacienteId).then(function(rHC){
+            if(rHC.data && rHC.data.length>0){
+              sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando HC en Supabase:', r.error); });
+            } else {
+              sb.from('historias_clinicas').insert(hcSB).then(function(r){ if(r.error) console.error('Error guardando HC en Supabase:', r.error); });
+            }
+          });
+        }
+      });
+    }
   alert('✅ Anamnesis guardada. El paciente aparece en el listado de Pacientes.');
   showPanel('pacientes');
 }
