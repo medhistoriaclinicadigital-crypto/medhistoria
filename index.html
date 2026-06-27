@@ -9755,6 +9755,25 @@ function guardarEvolucion(){
   }
 
   evoluciones.unshift(evol);
+  // Guardar también en Supabase
+  if(usuarioActual && usuarioActual.id && pacienteHCActualIdx>=0 && pacientes[pacienteHCActualIdx]){
+    var pacDni = pacientes[pacienteHCActualIdx].dni;
+    sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', pacDni).then(function(rPac){
+      var pacienteId = (rPac.data && rPac.data.length>0) ? rPac.data[0].id : null;
+      if(pacienteId){
+        var evolSB = {
+          paciente_id: pacienteId,
+          medico_id: usuarioActual.id,
+          fecha_evolucion: evol.fechaISO,
+          motivo_consulta: evol.motivo||'',
+          evolucion: evol.cuadro||'',
+          indicaciones_plan: evol.plan||'',
+          proxima_consulta: evol.proxima||''
+        };
+        sb.from('evoluciones').insert(evolSB).then(function(){});
+      }
+    });
+  }
 
   // Guardar evoluciones en el paciente activo
   if(pacienteHCActualIdx >= 0 && pacientes[pacienteHCActualIdx]){
@@ -12375,7 +12394,43 @@ function sincronizarPacientesSupabase(){
     }
   });
 }
-   function sincronizarHistoriasClinicasSupabase(){
+   function sincronizarEvolucionesSupabase(){
+  if(!usuarioActual || !usuarioActual.id) return;
+  sb.from('evoluciones').select('*').eq('medico_id', usuarioActual.id).then(function(r){
+    if(r.data){
+      r.data.forEach(function(remoto){
+        var pEncontrado = pacientes.find(function(p){ return p._sbId === remoto.paciente_id; });
+        if(pEncontrado){
+          if(!pEncontrado.evoluciones) pEncontrado.evoluciones = [];
+          var yaExiste = pEncontrado.evoluciones.find(function(e){ return e._sbId === remoto.id; });
+          if(!yaExiste){
+            var fechaISO = remoto.fecha_evolucion || '';
+            var fechaObj = fechaISO ? new Date(fechaISO) : new Date();
+            var dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+            var meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+            var fechaLarga = dias[fechaObj.getDay()]+', '+fechaObj.getDate()+' de '+meses[fechaObj.getMonth()]+' de '+fechaObj.getFullYear();
+            var hora = fechaObj.getHours().toString().padStart(2,'0')+':'+fechaObj.getMinutes().toString().padStart(2,'0');
+            pEncontrado.evoluciones.unshift({
+              _sbId: remoto.id,
+              fecha: fechaLarga,
+              fechaISO: fechaISO,
+              hora: hora,
+              motivo: remoto.motivo_consulta||'',
+              cuadro: remoto.evolucion||'',
+              diag: '',
+              plan: remoto.indicaciones_plan||'',
+              proxima: remoto.proxima_consulta||'',
+              medico: ''
+            });
+          }
+        }
+      });
+      guardarLocal();
+    }
+  });
+}
+  
+  function sincronizarHistoriasClinicasSupabase(){
       if(!usuarioActual || !usuarioActual.id) return;
       sb.from('pacientes').select('id,dni').eq('medico_id', usuarioActual.id).then(function(rPac){
         if(!rPac.data) return;
@@ -13273,6 +13328,7 @@ function mlIngresar(){
       try{ sincronizarPacientesSupabase(); }catch(e){}
       try{ sincronizarTurnosSupabase(); }catch(e){}
       try{ sincronizarHistoriasClinicasSupabase(); }catch(e){}
+      try{ sincronizarEvolucionesSupabase(); }catch(e){}
       try{ showPanel('dash'); }catch(e){}
       try{ precargarDatosMedico(encSB); }catch(e){}
       return;
@@ -13314,6 +13370,7 @@ function mlIngresar(){
     try{ sincronizarPacientesSupabase(); }catch(e){}
     try{ sincronizarTurnosSupabase(); }catch(e){}
     try{ sincronizarHistoriasClinicasSupabase(); }catch(e){}
+    try{ sincronizarEvolucionesSupabase(); }catch(e){}
     try{ showPanel('dash'); }catch(e){}
     // Precarga automática del médico en todos los formularios
     try{ precargarDatosMedico(encontrado); }catch(e){}
