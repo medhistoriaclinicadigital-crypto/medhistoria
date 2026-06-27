@@ -9483,6 +9483,32 @@ function guardarExamenFisico(){
   if(pacienteHCActualIdx >= 0 && pacientes[pacienteHCActualIdx]){
     pacientes[pacienteHCActualIdx].examen = examen;
     guardarLocal();
+   var dniEF = pacientes[pacienteHCActualIdx].dni;
+      if(usuarioActual && usuarioActual.id && dniEF){
+        sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', dniEF).then(function(rPac){
+          var pacienteId = (rPac.data && rPac.data.length>0) ? rPac.data[0].id : null;
+          if(pacienteId){
+            var hcSB = {
+              paciente_id: pacienteId,
+              talla: examen.talla||null,
+              peso: examen.peso||null,
+              tension_arterial: examen.ta||'',
+              frecuencia_cardiaca: examen.fc||null,
+              frecuencia_respiratoria: examen.fr||null,
+              temperatura: examen.temp||null,
+              saturacion_o2: examen.sat||null,
+              examen_aparatos_sistemas: examen.sistemas||''
+            };
+            sb.from('historias_clinicas').select('id').eq('paciente_id', pacienteId).then(function(rHC){
+              if(rHC.data && rHC.data.length>0){
+                sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando examen fisico en Supabase:', r.error); });
+              } else {
+                sb.from('historias_clinicas').insert(hcSB).then(function(r){ if(r.error) console.error('Error guardando examen fisico en Supabase:', r.error); });
+              }
+            });
+          }
+        });
+      } 
     alert('✅ Examen físico guardado correctamente.');
   } else {
     alert('⚠️ Abrí un paciente desde el listado primero.');
@@ -9500,6 +9526,25 @@ function guardarDiagnostico(){
   if(pacienteHCActualIdx >= 0 && pacientes[pacienteHCActualIdx]){
     pacientes[pacienteHCActualIdx].diagnostico = diagnostico;
     guardarLocal();
+    var dniDx = pacientes[pacienteHCActualIdx].dni;
+      if(usuarioActual && usuarioActual.id && dniDx){
+        sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', dniDx).then(function(rPac){
+          var pacienteId = (rPac.data && rPac.data.length>0) ? rPac.data[0].id : null;
+          if(pacienteId){
+            var hcSB = {
+              paciente_id: pacienteId,
+              diagnostico: (diagnostico.principal||'') + (diagnostico.secundarios? (' / '+diagnostico.secundarios) : '')
+            };
+            sb.from('historias_clinicas').select('id').eq('paciente_id', pacienteId).then(function(rHC){
+              if(rHC.data && rHC.data.length>0){
+                sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando diagnostico en Supabase:', r.error); });
+              } else {
+                sb.from('historias_clinicas').insert(hcSB).then(function(r){ if(r.error) console.error('Error guardando diagnostico en Supabase:', r.error); });
+              }
+            });
+          }
+        });
+      }
     alert('✅ Diagnóstico guardado correctamente.');
   } else {
     alert('⚠️ Abrí un paciente desde el listado primero.');
