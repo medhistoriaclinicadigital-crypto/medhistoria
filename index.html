@@ -12375,6 +12375,40 @@ function sincronizarPacientesSupabase(){
     }
   });
 }
+   function sincronizarHistoriasClinicasSupabase(){
+      if(!usuarioActual || !usuarioActual.id) return;
+      sb.from('pacientes').select('id,dni').eq('medico_id', usuarioActual.id).then(function(rPac){
+        if(!rPac.data) return;
+        var mapaIdDni = {};
+        rPac.data.forEach(function(p){ mapaIdDni[p.id] = p.dni; });
+        sb.from('historias_clinicas').select('*').then(function(rHC){
+          if(!rHC.data) return;
+          rHC.data.forEach(function(hc){
+            var dniLocal = mapaIdDni[hc.paciente_id];
+            if(!dniLocal) return;
+            var idx = -1;
+            for(var i=0;i<pacientes.length;i++){ if(pacientes[i].dni && pacientes[i].dni===dniLocal){ idx=i; break; } }
+            if(idx<0) return;
+            pacientes[idx].antPersonal = hc.antecedentes_personales||pacientes[idx].antPersonal||'';
+            pacientes[idx].antFamiliar = hc.antecedentes_familiares||pacientes[idx].antFamiliar||'';
+            pacientes[idx].antQuirurgico = hc.antecedentes_quirurgicos||pacientes[idx].antQuirurgico||'';
+            pacientes[idx].medicacion = hc.medicacion_habitual||pacientes[idx].medicacion||'';
+            pacientes[idx].alergias = hc.alergias||pacientes[idx].alergias||'';
+            pacientes[idx].examen = pacientes[idx].examen || {};
+            if(hc.talla!=null) pacientes[idx].examen.talla = hc.talla;
+            if(hc.peso!=null) pacientes[idx].examen.peso = hc.peso;
+            if(hc.tension_arterial) pacientes[idx].examen.ta = hc.tension_arterial;
+            if(hc.frecuencia_cardiaca!=null) pacientes[idx].examen.fc = hc.frecuencia_cardiaca;
+            if(hc.frecuencia_respiratoria!=null) pacientes[idx].examen.fr = hc.frecuencia_respiratoria;
+            if(hc.temperatura!=null) pacientes[idx].examen.temp = hc.temperatura;
+            if(hc.saturacion_o2!=null) pacientes[idx].examen.sat = hc.saturacion_o2;
+            if(hc.examen_aparatos_sistemas) pacientes[idx].examen.sistemas = hc.examen_aparatos_sistemas;
+          });
+          localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(pacientes));
+          renderPacientes();
+        });
+      });
+    }
   
 function sincronizarTurnosSupabase(){
   if(!usuarioActual || !usuarioActual.id) return;
