@@ -11098,6 +11098,24 @@ function descargarPDF(tipo){
         });
       }
     }
+  if(tipo==='receta' && usuarioActual && usuarioActual.id){
+      var dniRec = (document.getElementById('rx2-dni')||{}).value||'';
+      if(dniRec){
+        sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', dniRec).then(function(rPac){
+          var pacienteIdRec = (rPac.data && rPac.data.length>0) ? rPac.data[0].id : null;
+          var recSB = {
+            paciente_id: pacienteIdRec,
+            medico_id: usuarioActual.id,
+            diagnostico_cie10: (document.getElementById('rx2-diag')||{}).value||'',
+            medicacion_prescripta: (document.getElementById('rx2-med')||{}).value||'',
+            validez: (document.getElementById('rx2-validez')||{}).value||'',
+            whatsapp_envio: '',
+            email_envio: ''
+          };
+          sb.from('recetas').insert(recSB).then(function(){});
+        });
+      }
+    }
   generarPDFbase64(tipo, function(doc, d){
     var nombre = d.titulo.replace(/ /g,'_')+'_'+d.pac.replace(/ /g,'_')+'_'+new Date().toLocaleDateString('es-AR').replace(/\//g,'-')+'.pdf';
     doc.save(nombre);
