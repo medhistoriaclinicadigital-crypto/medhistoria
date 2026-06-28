@@ -11125,8 +11125,8 @@ function descargarPDF(tipo){
 		        paciente_id: pacienteIdEst,
 		        medico_id: usuarioActual.id,
 		        estudios_solicitados: (document.getElementById('est-det')||{}).value||'',
-		        tipo_estudio: (document.getElementById('est-diag')||{}).value||'',
-		        urgencia: '',
+		        tipo_estudio: (document.getElementById('est-tipo')||{}).value||'',
+		       urgencia: (document.getElementById('est-urgencia')||{}).value||'',
 		        whatsapp_envio: '',
 		        email_envio: ''
 		      };
