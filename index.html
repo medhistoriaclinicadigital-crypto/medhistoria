@@ -11079,6 +11079,25 @@ function generarPDFbase64(tipo, callback){
 function descargarPDF(tipo){
   var d = getDatosDocumento(tipo);
   if(!d.pac){ alert('Completá el nombre del paciente primero.'); return; }
+   if(tipo==='derivacion' && usuarioActual && usuarioActual.id){
+      var dniDer = (document.getElementById('der-dni')||{}).value||'';
+      if(dniDer){
+        sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', dniDer).then(function(rPac){
+          var pacienteIdDer = (rPac.data && rPac.data.length>0) ? rPac.data[0].id : null;
+          var derSB = {
+            paciente_id: pacienteIdDer,
+            medico_id: usuarioActual.id,
+            especialidad: (document.getElementById('der-especialidad')||{}).value||'',
+            motivo_derivacion: (document.getElementById('der-motivo')||{}).value||'',
+            antecedentes_relevantes: (document.getElementById('der-ant')||{}).value||'',
+            urgencia: (document.getElementById('der-urgencia')||{}).value||'',
+            whatsapp_envio: '',
+            email_envio: ''
+          };
+          sb.from('derivaciones').insert(derSB).then(function(){});
+        });
+      }
+    }
   generarPDFbase64(tipo, function(doc, d){
     var nombre = d.titulo.replace(/ /g,'_')+'_'+d.pac.replace(/ /g,'_')+'_'+new Date().toLocaleDateString('es-AR').replace(/\//g,'-')+'.pdf';
     doc.save(nombre);
