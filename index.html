@@ -11116,7 +11116,7 @@ function descargarPDF(tipo){
         });
       }
     }
-  if(tipo==='estudio' && usuarioActual && usuarioActual.id){
+  if(tipo==='pedido' && usuarioActual && usuarioActual.id){
 		  var dniEst = (document.getElementById('est-dni')||{}).value||'';
 		  if(dniEst){
 		    sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', dniEst).then(function(rPac){
