@@ -11172,6 +11172,27 @@ function mostrarOpcionesEnvio(tipo){
 function enviarDesdeOverlay(canal){
   document.getElementById('envioOverlay').style.display = 'none';
   var tipo = _tipoEnvioActual;
+  // Guardar derivación en Supabase
+  if(tipo==='derivacion' && usuarioActual && usuarioActual.id){
+    var dDer = getDatosDocumento('derivacion');
+    var dniDer = (document.getElementById('der-dni')||{}).value||'';
+    if(dniDer){
+      sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', dniDer).then(function(rPac){
+        var pacienteIdDer = (rPac.data && rPac.data.length>0) ? rPac.data[0].id : null;
+        var derSB = {
+          paciente_id: pacienteIdDer,
+          medico_id: usuarioActual.id,
+          especialidad: dDer.esp||'',
+          motivo_derivacion: dDer.contenido||'',
+          antecedentes_relevantes: (document.getElementById('der-ant')||{}).value||'',
+          urgencia: (document.getElementById('der-urgencia')||{}).value||'',
+          whatsapp_envio: '',
+          email_envio: ''
+        };
+        sb.from('derivaciones').insert(derSB).then(function(){});
+      });
+    }
+  }
   if(canal === 'pdf'){
     descargarPDF(tipo);
     return;
