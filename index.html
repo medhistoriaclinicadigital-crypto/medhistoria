@@ -11764,6 +11764,11 @@ function nuevaOrden(tipo){
   var panel = document.getElementById('panel-'+(tipo==='pedido'?'estudios':tipo==='receta'?'recetas':'derivaciones'));
   if(panel) panel.scrollTop = 0;
   window.scrollTo(0,0);
+  // Volver a autocompletar los datos del paciente en atención
+      if(pacienteHCActualIdx !== -1){
+        var idPanel = (tipo==='pedido'?'estudios':tipo==='receta'?'recetas':'derivaciones');
+        showPanel(idPanel);
+      }
 }
 
 function enviarRecordatorioWA(idx){
