@@ -11116,6 +11116,25 @@ function descargarPDF(tipo){
         });
       }
     }
+  if(tipo==='estudio' && usuarioActual && usuarioActual.id){
+		  var dniEst = (document.getElementById('est-dni')||{}).value||'';
+		  if(dniEst){
+		    sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', dniEst).then(function(rPac){
+		      var pacienteIdEst = (rPac.data && rPac.data.length>0) ? rPac.data[0].id : null;
+		      var estSB = {
+		        paciente_id: pacienteIdEst,
+		        medico_id: usuarioActual.id,
+		        estudios_solicitados: (document.getElementById('est-det')||{}).value||'',
+		        tipo_estudio: (document.getElementById('est-diag')||{}).value||'',
+		        urgencia: '',
+		        whatsapp_envio: '',
+		        email_envio: ''
+		      };
+		      sb.from('pedidos_estudios').insert(estSB).then(function(){});
+		    });
+		  }
+		}
+  
   generarPDFbase64(tipo, function(doc, d){
     var nombre = d.titulo.replace(/ /g,'_')+'_'+d.pac.replace(/ /g,'_')+'_'+new Date().toLocaleDateString('es-AR').replace(/\//g,'-')+'.pdf';
     doc.save(nombre);
