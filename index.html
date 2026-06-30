@@ -3628,6 +3628,9 @@ document.addEventListener('DOMContentLoaded', function(){
               <div class="fl"><label>DNI del paciente<input type="text" id="fo-dni" placeholder="30.000.000"></div>
               <div class="fl"><label>Fecha de prestación<input type="date" id="fo-fecha"></div>
               <div class="fl full"><label>Prestaciones realizadas
+               <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:4px;font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;">
+                  <span>Descripción</span><span>Código</span><span style="text-align:right;">Cant.</span><span style="text-align:right;">$ Valor</span><span></span>
+                </div>
                 <div id="fo-prestaciones">
                   <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center;">
                     <input class="mi" type="text" placeholder="Descripción" style="margin:0;">
@@ -3666,6 +3669,9 @@ document.addEventListener('DOMContentLoaded', function(){
               <div class="fl"><label>Fecha<input type="date" id="fp-fecha"></div>
               <div class="fl"><label>Condición IVA<select id="fp-iva"><option>Consumidor Final</option><option>Responsable Inscripto</option><option>Monotributista</option><option>Exento</option></select></div>
               <div class="fl full"><label>Prestaciones realizadas
+                <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:4px;font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;">
+                  <span>Descripción</span><span style="text-align:right;">Cant.</span><span style="text-align:right;">$ Precio</span><span></span>
+                </div>
                 <div id="fp-prestaciones">
                   <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center;">
                     <input class="mi" type="text" placeholder="Descripción" style="margin:0;">
@@ -5206,6 +5212,9 @@ function showPanel(id){
         fillField('fp-paciente', hcPac); fillField('fp-dni', hcDni);
         fillField('fo-paciente', hcPac); fillField('fo-dni', hcDni);
         fillField('fo-os', hcOs); fillField('fo-afiliado', hcAfil);
+        var hoyFact = new Date().toISOString().split('T')[0];
+        var fpFecha = document.getElementById('fp-fecha'); if(fpFecha && !fpFecha.value) fpFecha.value = hoyFact;
+        var foFecha = document.getElementById('fo-fecha'); if(foFecha && !foFecha.value) foFecha.value = hoyFact;
         if(hcPac && panel){ var sub=panel.querySelector('.app-page-sub'); if(sub) sub.textContent='Paciente: '+hcPac+(hcDni?' · DNI '+hcDni:''); }
       } else {
         var prefixMap = {recetas:'rx2', derivaciones:'der', estudios:'est'};
