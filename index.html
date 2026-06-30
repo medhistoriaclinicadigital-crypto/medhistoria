@@ -10340,6 +10340,8 @@ function calcularTotal(prefix){
 
 function guardarFactura(tipo){
   var prefix = tipo==='os'?'fo':'fp';
+  var pacienteNombre = (document.getElementById(prefix+'-paciente')||{}).value||'';
+  var totalTexto = (document.getElementById(prefix+'-total')||{}).value||'$ 0.00';
 if(tipo==='part' && usuarioActual && usuarioActual.id){
 		  var dniFp = (document.getElementById('fp-dni')||{}).value||'';
 		  if(dniFp){
@@ -10388,11 +10390,18 @@ if(tipo==='part' && usuarioActual && usuarioActual.id){
 		            }).then(function(){});
 		          });
 		        }
+		        alert('✓ Factura guardada en la nube.\n\nPaciente: '+pacienteNombre+'\nTotal: '+totalTexto);
+		        limpiarFacturaForm(prefix);
+		      }, function(errFact){
+		        alert('⚠️ No se pudo guardar la factura en la nube. Revisá tu conexión y probá de nuevo.\n\nLos datos cargados NO se borraron.');
 		      });
+		    }, function(errPac){
+		      alert('⚠️ No se pudo guardar la factura en la nube. Revisá tu conexión y probá de nuevo.\n\nLos datos cargados NO se borraron.');
 		    });
+		    return;
 		  }
 		}
-   alert('✓ Factura guardada.\n\nPaciente: '+paciente+'\nTotal: '+total);
+   alert('✓ Factura guardada.\n\nPaciente: '+pacienteNombre+'\nTotal: '+totalTexto);
 	  limpiarFacturaForm(prefix);
 }
 	function limpiarFacturaForm(prefix){
