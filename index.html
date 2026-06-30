@@ -10423,9 +10423,41 @@ if(tipo==='part' && usuarioActual && usuarioActual.id){
 function renderHistorial(){
   var cont = document.getElementById('fact-historial-lista');
   if(!cont) return;
-  if(!facturas.length){ cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px;">No hay facturas emitidas aún.</div>'; return; }
-  cont.innerHTML = facturas.map(function(f){
-    return '<div class="agenda-item"><div class="agenda-hora" style="font-size:.72rem;">'+f.fecha+'</div><div class="agenda-info"><div class="agenda-pac">'+f.paciente+'</div><div class="agenda-mot">'+f.tipo+' · '+f.total+'</div></div><span class="pac-tag tag-ok">Emitida</span></div>';
+  if(!usuarioActual || !usuarioActual.id){
+    cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px;">No hay facturas emitidas aún.</div>';
+    return;
+  }
+  cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px;">Cargando facturas...</div>';
+  sb.from('facturas').select('id,paciente_id,fecha_prestacion,total,tipo,obra_social').eq('medico_id', usuarioActual.id).order('fecha_prestacion', {ascending:false}).then(function(rFact){
+    var lista = rFact.data || [];
+    if(!lista.length){
+      cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px;">No hay facturas emitidas aún.</div>';
+      return;
+    }
+    var idsPac = [];
+    lista.forEach(function(f){ if(f.paciente_id && idsPac.indexOf(f.paciente_id)===-1) idsPac.push(f.paciente_id); });
+    if(idsPac.length===0){ pintarHistorial(lista, {}); return; }
+    sb.from('pacientes').select('id,nombre,apellido').in('id', idsPac).then(function(rPac){
+      var mapa = {};
+      (rPac.data||[]).forEach(function(p){ mapa[p.id] = (p.apellido?p.apellido+', ':'')+(p.nombre||''); });
+      pintarHistorial(lista, mapa);
+    }, function(){
+      pintarHistorial(lista, {});
+    });
+  }, function(){
+    cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px;">⚠️ No se pudo cargar el historial. Revisá tu conexión e intentá de nuevo.</div>';
+  });
+}
+
+function pintarHistorial(lista, mapaPacientes){
+  var cont = document.getElementById('fact-historial-lista');
+  if(!cont) return;
+  cont.innerHTML = lista.map(function(f){
+    var nombrePac = mapaPacientes[f.paciente_id] || '(Paciente)';
+    var tipoTxt = f.tipo==='particular' ? 'Particular' : (f.obra_social || 'Obra Social');
+    var totalTxt = '$ '+(parseFloat(f.total)||0).toFixed(2);
+    var fechaTxt = f.fecha_prestacion || '';
+    return '<div class="agenda-item"><div class="agenda-hora" style="font-size:.72rem;">'+fechaTxt+'</div><div class="agenda-info"><div class="agenda-pac">'+nombrePac+'</div><div class="agenda-mot">'+tipoTxt+' · '+totalTxt+'</div></div><span class="pac-tag tag-ok">Emitida</span></div>';
   }).join('');
 }
 
