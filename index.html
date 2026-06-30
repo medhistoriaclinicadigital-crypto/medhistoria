@@ -10327,6 +10327,54 @@ function guardarFactura(tipo){
   var paciente = (document.getElementById(prefix+'-paciente')||{}).value||'Sin nombre';
   var total = (document.getElementById(prefix+'-total')||{}).value||'$ 0.00';
   facturas.unshift({fecha:new Date().toLocaleDateString('es-AR'), paciente:paciente, total:total, tipo:tipo==='os'?'Obra Social':'Particular'});
+	if(tipo==='part' && usuarioActual && usuarioActual.id){
+		  var dniFp = (document.getElementById('fp-dni')||{}).value||'';
+		  if(dniFp){
+		    sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', dniFp).then(function(rPac){
+		      var pacienteIdFp = (rPac.data && rPac.data.length>0) ? rPac.data[0].id : null;
+		      var subtotalFp = parseFloat(((document.getElementById('fp-subtotal')||{}).value||'0').replace('$','').replace(',','').trim()) || 0;
+		      var totalFp = parseFloat(((document.getElementById('fp-total')||{}).value||'0').replace('$','').replace(',','').trim()) || 0;
+		      var factSB = {
+		        paciente_id: pacienteIdFp,
+		        medico_id: usuarioActual.id,
+		        cuit_prestador: (document.getElementById('fp-cuit')||{}).value||'',
+		        obra_social: '',
+		        cuit_obra_social: '',
+		        razon_social: '',
+		        n_convenio: '',
+		        fecha_prestacion: (document.getElementById('fp-fecha')||{}).value||null,
+		        subtotal: subtotalFp,
+		        descuento: parseFloat((document.getElementById('fp-descuento')||{}).value||0) || 0,
+		        total: totalFp,
+		        n_liquidacion: '',
+		        whatsapp_envio: '',
+		        email_envio: '',
+		        tipo: 'particular'
+		      };
+		      sb.from('facturas').insert(factSB).select().then(function(rFact){
+		        var facturaId = (rFact.data && rFact.data.length>0) ? rFact.data[0].id : null;
+		        if(facturaId){
+		          var filasPrest = document.querySelectorAll('#fp-prestaciones > div');
+		          filasPrest.forEach(function(fila){
+		            var inputs = fila.querySelectorAll('input');
+		            var desc = inputs[0] ? inputs[0].value : '';
+		            var cant = inputs[1] ? inputs[1].value : '1';
+		            var val = inputs[2] ? inputs[2].value : '0';
+		            if(desc){
+		              sb.from('factura_items').insert({
+		                factura_id: facturaId,
+		                descripcion: desc,
+		                codigo: '',
+		                cantidad: parseFloat(cant)||1,
+		                valor: parseFloat(val)||0
+		              }).then(function(){});
+		            }
+		          });
+		        }
+		      });
+		    });
+		  }
+		}
   alert('✓ Factura guardada.\n\nPaciente: '+paciente+'\nTotal: '+total);
 }
 
