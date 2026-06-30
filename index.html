@@ -4390,6 +4390,7 @@ function guardarPaciente(){
 
   // Obtener datos existentes si estamos editando
   var pExistente = (_editandoPacienteIdx >= 0 && pacientes[_editandoPacienteIdx]) ? pacientes[_editandoPacienteIdx] : {};
+  var dniOriginalSB = pExistente.dni || '';
   var pac = Object.assign({}, pExistente, {
     apellido: apellido,
     nombre: apellido + ', ' + nombre,
@@ -4464,7 +4465,7 @@ function guardarPaciente(){
           nacionalidad: pac.nacionalidad||'',
           sexo: pac.sexo||''
         };
-      sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', pac.dni||'').then(function(r){
+      sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', dniOriginalSB || pac.dni || '').then(function(r){
         if(r.data && r.data.length>0){
           sb.from('pacientes').update(pacSB).eq('id', r.data[0].id).then(function(){});
         } else {
