@@ -3603,7 +3603,7 @@ document.addEventListener('DOMContentLoaded', function(){
       </div>
 
       <div class="app-panel" id="panel-facturacion">
-        <div class="app-page-title">Facturación</div>
+        <div class="app-page-title">Facturación <button onclick="finalizarAtencion()" style="margin-left:12px;background:linear-gradient(135deg,#22a050,#1a7a42);color:#fff;border:none;font-size:.82rem;font-weight:600;padding:7px 14px;border-radius:9px;cursor:pointer;font-family:'Outfit',sans-serif;">✅ Finalizar atención</button></div>
         <div class="app-page-sub">Facturas a obra social, prepaga y pacientes particulares</div>
         <div class="hc-tabs" style="margin-bottom:20px;">
           <button class="hc-tab on" onclick="switchFactTab(this,'fact-os')">🏥 Obra Social / Prepaga</button>
@@ -5186,7 +5186,7 @@ function showPanel(id){
       if(b){b.value='';filtrarPacientes('');} 
     }catch(e){} 
   }
-  if(id==='recetas' || id==='derivaciones' || id==='estudios'){
+ if(id==='recetas' || id==='derivaciones' || id==='estudios' || id==='facturacion'){
     try{
       var hcPac = (document.getElementById('hc-paciente')||{}).value||'';
       var hcDni = (document.getElementById('hc-dni')||{}).value||'';
@@ -5200,20 +5200,26 @@ function showPanel(id){
         if(!pObj && hcPac) pObj = pacientes.find(function(p){ return p.nombre === hcPac; });
         if(pObj && pObj.afiliado) hcAfil = pObj.afiliado;
       }
-      var prefixMap = {recetas:'rx2', derivaciones:'der', estudios:'est'};
-      var pre = prefixMap[id];
       var fillField = function(fieldId, val){ var el=document.getElementById(fieldId); if(el) el.value=val||''; };
-      fillField(pre+'-paciente', hcPac); fillField(pre+'-dni', hcDni);
-      fillField(pre+'-fnac', hcFnac); fillField(pre+'-os', hcOs);
-      fillField(pre+'-afiliado', hcAfil); fillField(pre+'-sexo', hcSexo);
-      var hcPlan = (document.getElementById('hc-plan')||{}).value||'';
-      if(!hcPlan && hcDni){ var pPlan = pacientes.find(function(p){ return (p.dni||'').trim()===hcDni.trim(); }); if(pPlan) hcPlan=pPlan.plan||''; }
-      fillField(pre+'-plan', hcPlan);
-      if(hcPac && panel){ var sub=panel.querySelector('.app-page-sub'); if(sub) sub.textContent='Paciente: '+hcPac+(hcDni?' · DNI '+hcDni:''); }
+      if(id==='facturacion'){
+        fillField('fp-paciente', hcPac); fillField('fp-dni', hcDni);
+        fillField('fo-paciente', hcPac); fillField('fo-dni', hcDni);
+        fillField('fo-os', hcOs); fillField('fo-afiliado', hcAfil);
+        if(hcPac && panel){ var sub=panel.querySelector('.app-page-sub'); if(sub) sub.textContent='Paciente: '+hcPac+(hcDni?' · DNI '+hcDni:''); }
+      } else {
+        var prefixMap = {recetas:'rx2', derivaciones:'der', estudios:'est'};
+        var pre = prefixMap[id];
+        fillField(pre+'-paciente', hcPac); fillField(pre+'-dni', hcDni);
+        fillField(pre+'-fnac', hcFnac); fillField(pre+'-os', hcOs);
+        fillField(pre+'-afiliado', hcAfil); fillField(pre+'-sexo', hcSexo);
+        var hcPlan = (document.getElementById('hc-plan')||{}).value||'';
+        if(!hcPlan && hcDni){ var pPlan = pacientes.find(function(p){ return (p.dni||'').trim()===hcDni.trim(); }); if(pPlan) hcPlan=pPlan.plan||''; }
+        fillField(pre+'-plan', hcPlan);
+        if(hcPac && panel){ var sub=panel.querySelector('.app-page-sub'); if(sub) sub.textContent='Paciente: '+hcPac+(hcDni?' · DNI '+hcDni:''); }
+      }
     }catch(e){}
   }
 }
-
 // ══ LIMPIAR FORMULARIO HC ══
 function limpiarFormularioHC(){
   var ids = ['hc-paciente','hc-dni','hc-fnac','hc-edad','hc-sexo','hc-nacionalidad',
@@ -10375,7 +10381,23 @@ function guardarFactura(tipo){
 		    });
 		  }
 		}
-  alert('✓ Factura guardada.\n\nPaciente: '+paciente+'\nTotal: '+total);
+   alert('✓ Factura guardada.\n\nPaciente: '+paciente+'\nTotal: '+total);
+	  limpiarFacturaForm(prefix);
+}
+	function limpiarFacturaForm(prefix){
+  var cont = document.getElementById(prefix+'-prestaciones');
+  if(cont){
+    var isOS = prefix==='fo';
+    cont.innerHTML = isOS
+      ? '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center;"><input class="mi" type="text" placeholder="Descripción" style="margin:0;"><input class="mi" type="text" placeholder="Código" style="margin:0;"><input class="mi" type="text" inputmode="numeric" placeholder="Cant." value="1" style="margin:0;text-align:right;" oninput="calcularSubtotal(\'fo\')"><input class="mi" type="text" inputmode="decimal" placeholder="$ Valor" style="margin:0;text-align:right;" oninput="calcularSubtotal(\'fo\')"><button onclick="eliminarFila(this)" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1.2rem;">✕</button></div>'
+      : '<div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center;"><input class="mi" type="text" placeholder="Descripción" style="margin:0;"><input class="mi" type="text" inputmode="numeric" placeholder="Cant." value="1" style="margin:0;text-align:right;max-width:80px;" oninput="calcularSubtotal(\'fp\')"><input class="mi" type="text" inputmode="decimal" placeholder="$ Precio" style="margin:0;text-align:right;" oninput="calcularSubtotal(\'fp\')"><button onclick="eliminarFila(this)" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1.2rem;">✕</button></div>';
+  }
+  var descEl = document.getElementById(prefix+'-descuento'); if(descEl) descEl.value='';
+  var subEl = document.getElementById(prefix+'-subtotal'); if(subEl) subEl.value='';
+  var totEl = document.getElementById(prefix+'-total'); if(totEl) totEl.value='';
+  if(prefix==='fo'){
+    ['fo-convenio','fo-liquidacion'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  }
 }
 
 function renderHistorial(){
@@ -13777,7 +13799,11 @@ function finalizarAtencion(){
   ['est-paciente','est-dni','est-os','est-afiliado','est-plan','est-diag','est-det','est-medico'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value='';
   });
-  var estSexo=document.getElementById('est-sexo'); if(estSexo) estSexo.selectedIndex=0;
+ var estSexo=document.getElementById('est-sexo'); if(estSexo) estSexo.selectedIndex=0;
+  // Limpiar Facturación
+  ['fp-paciente','fp-dni'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ['fo-paciente','fo-dni','fo-os','fo-afiliado'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  try{ limpiarFacturaForm('fp'); limpiarFacturaForm('fo'); }catch(e){}
   showPanel('pacientes');
 }
 
