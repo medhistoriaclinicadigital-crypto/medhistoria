@@ -10461,8 +10461,8 @@ function pintarHistorial(lista, mapaPacientes){
     var nombrePac = mapaPacientes[f.paciente_id] || '(Paciente)';
     var tipoTxt = f.tipo==='particular' ? 'Particular' : (f.obra_social || 'Obra Social');
     var totalTxt = '$ '+(parseFloat(f.total)||0).toFixed(2);
-    var fechaTxt = f.fecha_prestacion || '';
-    return '<div class="agenda-item"><div class="agenda-hora" style="font-size:.72rem;">'+fechaTxt+'</div><div class="agenda-info"><div class="agenda-pac">'+nombrePac+'</div><div class="agenda-mot">'+tipoTxt+' · '+totalTxt+'</div></div><span class="pac-tag tag-ok">Emitida</span></div>';
+    var fechaTxt = f.fecha_prestacion ? f.fecha_prestacion.split('-').reverse().join('/') : '';
+    return '<div class="agenda-item"><div class="agenda-hora" style="font-size:.72rem;width:auto;min-width:62px;white-space:nowrap;padding:6px 10px;">'+fechaTxt+'</div><div class="agenda-info"><div class="agenda-pac">'+nombrePac+'</div><div class="agenda-mot">'+tipoTxt+' · '+totalTxt+'</div></div><span class="pac-tag tag-ok">Emitida</span></div>';
   }).join('');
 }
 
