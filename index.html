@@ -10253,11 +10253,14 @@ function solicitarFactura(){
   var plan = (document.getElementById('fs-plan')||{}).value||'';
   var periodo = (document.getElementById('fs-periodo')||{}).value||'';
   var obs = (document.getElementById('fs-obs')||{}).value||'';
+  var tipoDoc = (document.getElementById('fs-tipodoc')||{}).value||'';
+  var domicilio = (document.getElementById('fs-domicilio')||{}).value||'';
   var msg = document.getElementById('fs-mensaje');
 
   if(!nombre){ alert('Ingresa el nombre o razon social.'); return; }
   if(!cuit){ alert('Ingresa el CUIT.'); return; }
   if(!email){ alert('Ingresa el email de facturacion.'); return; }
+  if(!domicilio){ alert('Ingresa el domicilio comercial.'); return; }
 
   var btn = document.querySelector('#fact-suscripcion .form-submit');
   if(btn){ btn.disabled=true; btn.textContent='Enviando...'; }
@@ -10271,18 +10274,20 @@ function solicitarFactura(){
     plan: plan,
     periodo: periodo,
     observaciones: obs,
+    tipo_doc: tipoDoc,
+    domicilio: domicilio,
     estado: 'pendiente'
   }).then(function(){}, function(errSB){ console.error('Error guardando solicitud en Supabase:', JSON.stringify(errSB)); });
 
   emailjs.send('service_3cprmeh', 'template_fdrpmfe', {
     name: '🔔 NUEVA SOLICITUD DE FACTURA — ' + nombre,
     email: 'medhistoriaclinicaonline@gmail.com',
-    message: 'SOLICITUD DE FACTURA DE SUSCRIPCIÓN\n\nNombre / Razón Social: '+nombre+'\nCUIT: '+cuit+'\nEmail de facturación: '+email+'\nCondición IVA: '+iva+'\nPlan contratado: '+plan+'\nPeríodo: '+periodo+(obs?'\nObservaciones: '+obs:'')
+    message: 'SOLICITUD DE FACTURA DE SUSCRIPCIÓN\n\nNombre / Razón Social: '+nombre+'\nCUIT: '+cuit+'\nEmail de facturación: '+email+'\nCondición IVA: '+iva+'\nPlan contratado: '+plan+'\nPeríodo: '+periodo+'\nTipo de Documento: '+tipoDoc+'\nDomicilio Comercial: '+domicilio+(obs?'\nObservaciones: '+obs:'')
   });
   emailjs.send('service_3cprmeh', 'template_fdrpmfe', {
     name: nombre + ' — Solicitud de Factura',
     email: email,
-    message: 'SOLICITUD DE FACTURA DE SUSCRIPCIÓN\n\nNombre / Razón Social: '+nombre+'\nCUIT: '+cuit+'\nEmail de facturación: '+email+'\nCondición IVA: '+iva+'\nPlan contratado: '+plan+'\nPeríodo: '+periodo+(obs?'\nObservaciones: '+obs:'')
+    message: 'SOLICITUD DE FACTURA DE SUSCRIPCIÓN\n\nNombre / Razón Social: '+nombre+'\nCUIT: '+cuit+'\nEmail de facturación: '+email+'\nCondición IVA: '+iva+'\nPlan contratado: '+plan+'\nPeríodo: '+periodo+'\nTipo de Documento: '+tipoDoc+'\nDomicilio Comercial: '+domicilio+(obs?'\nObservaciones: '+obs:'')
   }).then(function(){
     if(msg){
       msg.style.display='block';
@@ -10298,6 +10303,7 @@ function solicitarFactura(){
     document.getElementById('fs-email').value='';
     var obsEl = document.getElementById('fs-obs'); if(obsEl) obsEl.value='';
     document.getElementById('fs-periodo').value='';
+    document.getElementById('fs-domicilio').value='';
   }, function(err){
     console.error('EmailJS error:', JSON.stringify(err));
     if(msg){
@@ -10310,7 +10316,6 @@ function solicitarFactura(){
     if(btn){ btn.disabled=false; btn.textContent='Enviar solicitud'; }
   });
 }
-
 function agregarPrestacion(prefix){
   var cont = document.getElementById(prefix+'-prestaciones');
   if(!cont) return;
