@@ -3720,13 +3720,7 @@ document.addEventListener('DOMContentLoaded', function(){
             <div class="form-g2">
               <div class="fl"><label>Nombre / Razón Social *<input type="text" id="fs-nombre" placeholder="Ej: Dr. Juan Pérez / Consultorio Médico SA"></div>
               <div class="fl"><label>CUIT *<input type="text" id="fs-cuit" placeholder="20-00000000-0" maxlength="13"></div>
-				    <div class="fl"><label>Tipo de Documento *
-                <select id="fs-tipodoc">
-                  <option>CUIT</option>
-                  <option>DNI</option>
-                  <option>Otro</option>
-                </select>
-              </div>
+
               <div class="fl full"><label>Domicilio Comercial *<input type="text" id="fs-domicilio" placeholder="Calle, número, localidad, provincia"></div>
               <div class="fl"><label>Email de facturación *<input type="email" id="fs-email" placeholder="facturacion@ejemplo.com"></div>
               <div class="fl"><label>Condición IVA
@@ -3739,7 +3733,7 @@ document.addEventListener('DOMContentLoaded', function(){
               </div>
               <div class="fl"><label>Plan contratado
                 <select id="fs-plan">
-                  <option>Prueba Gratuita</option>
+                  
 <option>Starter — U$S 34/mes</option>
 <option>Pro — U$S 49/mes</option>
 <option>Premium — U$S 89/mes</option>
@@ -10253,7 +10247,6 @@ function solicitarFactura(){
   var plan = (document.getElementById('fs-plan')||{}).value||'';
   var periodo = (document.getElementById('fs-periodo')||{}).value||'';
   var obs = (document.getElementById('fs-obs')||{}).value||'';
-  var tipoDoc = (document.getElementById('fs-tipodoc')||{}).value||'';
   var domicilio = (document.getElementById('fs-domicilio')||{}).value||'';
   var msg = document.getElementById('fs-mensaje');
 
@@ -10274,7 +10267,6 @@ function solicitarFactura(){
     plan: plan,
     periodo: periodo,
     observaciones: obs,
-    tipo_doc: tipoDoc,
     domicilio: domicilio,
     estado: 'pendiente'
   }).then(function(){}, function(errSB){ console.error('Error guardando solicitud en Supabase:', JSON.stringify(errSB)); });
@@ -10282,12 +10274,12 @@ function solicitarFactura(){
   emailjs.send('service_3cprmeh', 'template_fdrpmfe', {
     name: '🔔 NUEVA SOLICITUD DE FACTURA — ' + nombre,
     email: 'medhistoriaclinicaonline@gmail.com',
-    message: 'SOLICITUD DE FACTURA DE SUSCRIPCIÓN\n\nNombre / Razón Social: '+nombre+'\nCUIT: '+cuit+'\nEmail de facturación: '+email+'\nCondición IVA: '+iva+'\nPlan contratado: '+plan+'\nPeríodo: '+periodo+'\nTipo de Documento: '+tipoDoc+'\nDomicilio Comercial: '+domicilio+(obs?'\nObservaciones: '+obs:'')
+    message: 'SOLICITUD DE FACTURA DE SUSCRIPCIÓN\n\nNombre / Razón Social: '+nombre+'\nCUIT: '+cuit+'\nEmail de facturación: '+email+'\nCondición IVA: '+iva+'\nPlan contratado: '+plan+'\nPeríodo: '+periodo+'\nDomicilio Comercial: '+domicilio+(obs?'\nObservaciones: '+obs:'')
   });
   emailjs.send('service_3cprmeh', 'template_fdrpmfe', {
     name: nombre + ' — Solicitud de Factura',
     email: email,
-    message: 'SOLICITUD DE FACTURA DE SUSCRIPCIÓN\n\nNombre / Razón Social: '+nombre+'\nCUIT: '+cuit+'\nEmail de facturación: '+email+'\nCondición IVA: '+iva+'\nPlan contratado: '+plan+'\nPeríodo: '+periodo+'\nTipo de Documento: '+tipoDoc+'\nDomicilio Comercial: '+domicilio+(obs?'\nObservaciones: '+obs:'')
+    message: 'SOLICITUD DE FACTURA DE SUSCRIPCIÓN\n\nNombre / Razón Social: '+nombre+'\nCUIT: '+cuit+'\nEmail de facturación: '+email+'\nCondición IVA: '+iva+'\nPlan contratado: '+plan+'\nPeríodo: '+periodo+'\nDomicilio Comercial: '+domicilio+(obs?'\nObservaciones: '+obs:'')
   }).then(function(){
     if(msg){
       msg.style.display='block';
