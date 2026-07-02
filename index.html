@@ -3720,6 +3720,14 @@ document.addEventListener('DOMContentLoaded', function(){
             <div class="form-g2">
               <div class="fl"><label>Nombre / Razón Social *<input type="text" id="fs-nombre" placeholder="Ej: Dr. Juan Pérez / Consultorio Médico SA"></div>
               <div class="fl"><label>CUIT *<input type="text" id="fs-cuit" placeholder="20-00000000-0" maxlength="13"></div>
+				    <div class="fl"><label>Tipo de Documento *
+                <select id="fs-tipodoc">
+                  <option>CUIT</option>
+                  <option>DNI</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+              <div class="fl full"><label>Domicilio Comercial *<input type="text" id="fs-domicilio" placeholder="Calle, número, localidad, provincia"></div>
               <div class="fl"><label>Email de facturación *<input type="email" id="fs-email" placeholder="facturacion@ejemplo.com"></div>
               <div class="fl"><label>Condición IVA
                 <select id="fs-iva">
@@ -3739,6 +3747,15 @@ document.addEventListener('DOMContentLoaded', function(){
                 </select>
               </div>
               <div class="fl"><label>Período<input type="text" id="fs-periodo" placeholder="Ej: Mayo 2026"></div>
+              <div class="fl"><label>Tipo de Documento
+                <select id="fs-tipodoc">
+                  <option>CUIT</option>
+                  <option>CUIL</option>
+                  <option>DNI</option>
+                  <option>Pasaporte</option>
+                </select>
+              </div>
+              <div class="fl"><label>Domicilio Comercial *<input type="text" id="fs-domicilio" placeholder="Calle, número, ciudad"></div>
 
             </div>
             <div style="margin-top:20px;">
