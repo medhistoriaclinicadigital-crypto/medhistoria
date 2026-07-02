@@ -10253,6 +10253,23 @@ function solicitarFactura(){
   var btn = document.querySelector('#fact-suscripcion .form-submit');
   if(btn){ btn.disabled=true; btn.textContent='Enviando...'; }
 
+  sb.from('solicitudes_factura').insert({
+    medico_id: (usuarioActual && usuarioActual.id) ? usuarioActual.id : null,
+    nombre: nombre,
+    cuit: cuit,
+    email: email,
+    condicion_iva: iva,
+    plan: plan,
+    periodo: periodo,
+    observaciones: obs,
+    estado: 'pendiente'
+  }).then(function(){}, function(errSB){ console.error('Error guardando solicitud en Supabase:', JSON.stringify(errSB)); });
+
+  emailjs.send('service_3cprmeh', 'template_fdrpmfe', {
+    name: '🔔 NUEVA SOLICITUD DE FACTURA — ' + nombre,
+    email: 'medhistoriaclinicaonline@gmail.com',
+    message: 'SOLICITUD DE FACTURA DE SUSCRIPCIÓN\n\nNombre / Razón Social: '+nombre+'\nCUIT: '+cuit+'\nEmail de facturación: '+email+'\nCondición IVA: '+iva+'\nPlan contratado: '+plan+'\nPeríodo: '+periodo+(obs?'\nObservaciones: '+obs:'')
+  });
   emailjs.send('service_3cprmeh', 'template_fdrpmfe', {
     name: nombre + ' — Solicitud de Factura',
     email: email,
