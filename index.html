@@ -3915,17 +3915,28 @@ document.addEventListener('DOMContentLoaded', function(){
             <div id="paso2-ok" style="display:none;margin-left:auto;background:#dcfce7;color:#15803d;border-radius:20px;padding:3px 12px;font-size:.75rem;font-weight:700;">✓ Guardada</div>
           </div>
           <p style="font-size:.83rem;color:var(--muted);line-height:1.65;margin-bottom:14px;">
-            Una vez que tengas tu firma digital registrada, dibujá tu firma manuscrita. Esta imagen aparecerá en el pie de cada receta, derivación y pedido de estudios que generes, junto con tu nombre y matrícula.
+             Dibujá tu firma manuscrita. Esta imagen aparecerá en el pie de cada receta, derivación y pedido de estudios que generes, junto con tu nombre y matrícula.
           </p>
 
-          <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+            <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+              <input type="checkbox" id="chk-consentimiento-firma" onchange="toggleConsentimientoFirma(this.checked)" style="margin-top:3px;min-width:16px;width:16px;height:16px;cursor:pointer;">
+              <span style="font-size:.8rem;color:#78350f;line-height:1.6;">
+                Entiendo que esta firma es una imagen manuscrita de referencia, dibujada por mí, y no un certificado de Firma Digital oficial. Si no completé el trámite de Firma Digital (Ley 25.506) ante el Estado, esta firma no tiene validez legal certificada, y <strong>MedHistoriaClinicaOnline no se hace responsable por reclamos, disputas o problemas legales derivados del uso de documentos firmados sin ese certificado.</strong>
+              </span>
+            </label>
+          </div>
+
+          <div id="firma-canvas-bloqueado-msg" style="font-size:.8rem;color:#b91c1c;font-weight:600;margin-bottom:10px;">🔒 Tildá la casilla de arriba para poder dibujar y guardar tu firma.</div>
+
+          <div id="firma-canvas-controles" style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;opacity:.4;pointer-events:none;">
             <span style="font-size:.82rem;color:var(--muted);font-weight:600;">Dibujá tu firma con el mouse o con el dedo:</span>
             <button onclick="limpiarFirma()" style="padding:5px 14px;background:#f3f4f6;border:1px solid #ddd;border-radius:6px;font-size:.78rem;cursor:pointer;font-family:'Outfit',sans-serif;">🗑️ Limpiar</button>
             <button onclick="guardarFirma()" style="padding:5px 18px;background:var(--g4);color:#fff;border:none;border-radius:6px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">💾 Guardar firma</button>
           </div>
 
           <canvas id="canvas-firma"
-            style="border:1.5px solid #d1d5db;border-radius:8px;background:#fff;cursor:crosshair;touch-action:none;display:block;width:100%;max-width:560px;height:140px;"></canvas>
+            style="border:1.5px solid #d1d5db;border-radius:8px;background:#fff;cursor:crosshair;touch-action:none;display:block;width:100%;max-width:560px;height:140px;opacity:.4;pointer-events:none;"></canvas>
 
           <div id="firma-guardada-preview" style="margin-top:16px;display:none;">
             <p style="font-size:.8rem;color:var(--g4);font-weight:600;margin-bottom:8px;">✅ Firma guardada — así aparecerá en tus documentos:</p>
