@@ -13701,89 +13701,97 @@ function mlRegistrar(){
   if(!email){ alert('Ingresá tu email.'); return; }
   if(!pass || pass.length < 8){ alert('La contraseña debe tener al menos 8 caracteres.'); return; }
   if(pass !== pass2){ alert('Las contraseñas no coinciden.'); return; }
-  
-
-  var guardados = [];
-  try { guardados = JSON.parse(localStorage.getItem('med_usuarios')||'[]'); } catch(e){}
-  if(guardados.find(function(u){ return u.email===email; })){ alert('Ya existe una cuenta con ese email.'); return; }
 
   var planElegido = ((document.getElementById('ml-reg-plan')||document.getElementById('reg-plan')||{}).value||'Prueba Gratuita');
-  var nuevoUser = {
-    usuario: email, email: email, pass: pass,
-    nombre: nombre, sexo: sexo, dni: dni, cuil: cuil, telefono: tel,
-    mn: mn, mp: mp, especialidad: esp,
-    subespecialidad: subesp, institucion: inst,
-    pais: pais, region: prov, ciudad: ciudad,
-    plan: planElegido
-  };
-  guardados.push(nuevoUser);
-  localStorage.setItem('med_usuarios', JSON.stringify(guardados));
-  usuarioActual = nuevoUser;
-  sb.from('usuarios').insert([{
-        nombre: nombre, email: email, password: pass,
-        especialidad: esp, matricula: (mn?'M.N. '+mn:(mp?'M.P. '+mp:'')),
-        telefono: tel, dni: dni, rol: 'medico'
-      }]).then(function(r){ if(r.error) console.error('Error guardando en Supabase:', r.error); });
+  var btnReg = document.querySelector('#ml-form-reg .form-submit') || document.querySelector('#ml-form-reg button[onclick="mlRegistrar()"]');
+  if(btnReg){ btnReg.disabled = true; }
 
-  // Limpiar formulario de registro para el próximo usuario
-  ['ml-reg-nombre','ml-reg-dni','ml-reg-cuil','ml-reg-tel','ml-reg-mn','ml-reg-mp','ml-reg-esp','ml-reg-subesp','ml-reg-inst','ml-reg-provincia','ml-reg-ciudad','ml-reg-email','ml-reg-pass','ml-reg-pass2'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.value='';
+  sb.auth.signUp({ email: email, password: pass }).then(function(r){
+    if(btnReg){ btnReg.disabled = false; }
+    if(r.error){
+      if(r.error.message && r.error.message.toLowerCase().indexOf('already') !== -1){
+        alert('Ya existe una cuenta con ese email.');
+      } else {
+        alert('No se pudo crear la cuenta: ' + r.error.message);
+      }
+      return;
+    }
+    var authId = r.data && r.data.user ? r.data.user.id : null;
+
+    var nuevoUser = {
+      id: authId, auth_id: authId,
+      usuario: email, email: email,
+      nombre: nombre, sexo: sexo, dni: dni, cuil: cuil, telefono: tel,
+      mn: mn, mp: mp, especialidad: esp,
+      subespecialidad: subesp, institucion: inst,
+      pais: pais, region: prov, ciudad: ciudad,
+      plan: planElegido
+    };
+    usuarioActual = nuevoUser;
+
+    sb.from('usuarios').insert([{
+      auth_id: authId,
+      nombre: nombre, email: email,
+      especialidad: esp, matricula: (mn?'M.N. '+mn:(mp?'M.P. '+mp:'')),
+      telefono: tel, dni: dni, rol: 'medico'
+    }]).then(function(r2){ if(r2.error) console.error('Error guardando en Supabase:', r2.error); });
+
+    ['ml-reg-nombre','ml-reg-dni','ml-reg-cuil','ml-reg-tel','ml-reg-mn','ml-reg-mp','ml-reg-esp','ml-reg-subesp','ml-reg-inst','ml-reg-provincia','ml-reg-ciudad','ml-reg-email','ml-reg-pass','ml-reg-pass2'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.value='';
+    });
+    try{ var sx=document.getElementById('ml-reg-sexo'); if(sx) sx.selectedIndex=0; }catch(e){}
+    try{ var px=document.getElementById('ml-reg-pais'); if(px) px.selectedIndex=0; }catch(e){}
+    try{ var pl=document.getElementById('ml-reg-plan'); if(pl) pl.selectedIndex=0; }catch(e){}
+    try{ var tc=document.getElementById('ml-reg-terminos'); if(tc) tc.checked=false; }catch(e){}
+
+    document.getElementById('miLoginModal').style.display='none';
+    var landing = document.getElementById('landing');
+    var app = document.getElementById('app');
+    if(landing) landing.style.display='none';
+    document.body.classList.add('in-app');
+    if(app){ app.style.display='block'; }
+    setTimeout(function(){ window.scrollTo(0,0); },30);
+    try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){}
+    try{ document.getElementById('app-user-name').textContent = nombreConTitulo(usuarioActual||{nombre:nombre}) + ' ✏️'; }catch(e){}
+    try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
+    try{ showPanel('dash'); }catch(e){}
+    try{ precargarDatosMedico(nuevoUser); }catch(e){}
+    try {
+      emailjs.send('service_3cprmeh', 'template_qv3i2jf', {
+        name: nombre,
+        email: email
+      });
+      var sexoTexto = sexo === 'F' ? 'Femenino' : 'Masculino';
+      var mensajeAdmin = '🔔 NUEVO MÉDICO REGISTRADO\n\n'
+        + '━━━━━━━━━━━━━━━━━━━━\n'
+        + 'DATOS PERSONALES\n'
+        + '━━━━━━━━━━━━━━━━━━━━\n'
+        + 'Nombre: ' + nombre + '\n'
+        + 'Sexo: ' + sexoTexto + '\n'
+        + 'Email: ' + email + '\n'
+        + 'CUIL/CUIT: ' + (cuil||'(no ingresado)') + '\n'
+        + 'País: ' + pais + '\n'
+        + 'Ciudad: ' + (ciudad||'(no ingresado)') + '\n\n'
+        + '━━━━━━━━━━━━━━━━━━━━\n'
+        + 'DATOS PROFESIONALES\n'
+        + '━━━━━━━━━━━━━━━━━━━━\n'
+        + 'Especialidad: ' + (esp||'(no ingresada)') + '\n'
+        + 'M.N.: ' + (mn||'(no ingresada)') + '\n'
+        + 'M.P.: ' + (mp||'(no ingresada)') + '\n\n'
+        + '━━━━━━━━━━━━━━━━━━━━\n'
+        + 'SUSCRIPCIÓN\n'
+        + '━━━━━━━━━━━━━━━━━━━━\n'
+        + 'Plan elegido: ' + planElegido + '\n'
+        + 'Fecha de registro: ' + new Date().toLocaleDateString('es-AR');
+      emailjs.send('service_3cprmeh', 'template_qv3i2jf', {
+        name: '🔔 NUEVO REGISTRO — ' + nombre,
+        email: 'medhistoriaclinicaonline@gmail.com',
+        message: mensajeAdmin
+      });
+    } catch(e){ console.log('EmailJS error:', e); }
+    alert('✅ Cuenta creada. Bienvenida/o, ' + nombre + '! Te enviamos un mail de bienvenida.');
   });
-  try{ var sx=document.getElementById('ml-reg-sexo'); if(sx) sx.selectedIndex=0; }catch(e){}
-  try{ var px=document.getElementById('ml-reg-pais'); if(px) px.selectedIndex=0; }catch(e){}
-  try{ var pl=document.getElementById('ml-reg-plan'); if(pl) pl.selectedIndex=0; }catch(e){}
-  try{ var tc=document.getElementById('ml-reg-terminos'); if(tc) tc.checked=false; }catch(e){}
-
-  document.getElementById('miLoginModal').style.display='none';
-  var landing = document.getElementById('landing');
-  var app = document.getElementById('app');
-  if(landing) landing.style.display='none';
-  document.body.classList.add('in-app');
-  if(app){ app.style.display='block'; }
-  setTimeout(function(){ window.scrollTo(0,0); },30);
-  try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){}
-  try{ document.getElementById('app-user-name').textContent = nombreConTitulo(usuarioActual||{nombre:nombre}) + ' ✏️'; }catch(e){}
-  try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
-  try{ showPanel('dash'); }catch(e){}
-  try{ precargarDatosMedico(nuevoUser); }catch(e){}
-  // Enviar mail de bienvenida al usuario
-  try {
-    emailjs.send('service_3cprmeh', 'template_qv3i2jf', {
-      name: nombre,
-      email: email
-    });
-    // Enviar notificación a vos con todos los datos para facturación
-    var sexoTexto = sexo === 'F' ? 'Femenino' : 'Masculino';
-    var mensajeAdmin = '🔔 NUEVO MÉDICO REGISTRADO\n\n'
-      + '━━━━━━━━━━━━━━━━━━━━\n'
-      + 'DATOS PERSONALES\n'
-      + '━━━━━━━━━━━━━━━━━━━━\n'
-      + 'Nombre: ' + nombre + '\n'
-      + 'Sexo: ' + sexoTexto + '\n'
-      + 'Email: ' + email + '\n'
-      + 'CUIL/CUIT: ' + (cuil||'(no ingresado)') + '\n'
-      + 'País: ' + pais + '\n'
-      + 'Ciudad: ' + (ciudad||'(no ingresado)') + '\n\n'
-      + '━━━━━━━━━━━━━━━━━━━━\n'
-      + 'DATOS PROFESIONALES\n'
-      + '━━━━━━━━━━━━━━━━━━━━\n'
-      + 'Especialidad: ' + (esp||'(no ingresada)') + '\n'
-      + 'M.N.: ' + (mn||'(no ingresada)') + '\n'
-      + 'M.P.: ' + (mp||'(no ingresada)') + '\n\n'
-      + '━━━━━━━━━━━━━━━━━━━━\n'
-      + 'SUSCRIPCIÓN\n'
-      + '━━━━━━━━━━━━━━━━━━━━\n'
-      + 'Plan elegido: ' + ((document.getElementById('reg-plan')||{}).value||'Prueba Gratuita') + '\n'
-      + 'Fecha de registro: ' + new Date().toLocaleDateString('es-AR');
-    emailjs.send('service_3cprmeh', 'template_qv3i2jf', {
-      name: '🔔 NUEVO REGISTRO — ' + nombre,
-      email: 'medhistoriaclinicaonline@gmail.com',
-      message: mensajeAdmin
-    });
-  } catch(e){ console.log('EmailJS error:', e); }
-  alert('✅ Cuenta creada. Bienvenida/o, ' + nombre + '! Te enviamos un mail de bienvenida.');
 }
-
 // ══ PDF REAL con html2canvas + jsPDF ══
 function generarPDFResumen(autoPrint){
   var contenido = document.getElementById('resumen-hc-contenido');
