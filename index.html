@@ -6118,12 +6118,24 @@ function initCanvasFirma(){
   cargarPreviewFirma();
 }
 
+
+function toggleConsentimientoFirma(aceptado){
+  localStorage.setItem('medhistoria_firma_consentimiento', aceptado ? '1' : '0');
+  var canvas=document.getElementById('canvas-firma');
+  var controles=document.getElementById('firma-canvas-controles');
+  var msg=document.getElementById('firma-canvas-bloqueado-msg');
+  if(canvas){ canvas.style.opacity = aceptado ? '1' : '.4'; canvas.style.pointerEvents = aceptado ? 'auto' : 'none'; }
+  if(controles){ controles.style.opacity = aceptado ? '1' : '.4'; controles.style.pointerEvents = aceptado ? 'auto' : 'none'; }
+  if(msg){ msg.style.display = aceptado ? 'none' : 'block'; }
+}
+
 function limpiarFirma(){
   if(!_firmaCanvas) initCanvasFirma();
   _firmaCtx.clearRect(0,0,_firmaCanvas.width,_firmaCanvas.height);
 }
 
 function guardarFirma(){
+  if(localStorage.getItem('medhistoria_firma_consentimiento')!=='1'){alert('Primero tildá la casilla de aceptación.');return;}
   if(!_firmaCanvas){alert('Primero dibujá tu firma.');return;}
   var data=_firmaCtx.getImageData(0,0,_firmaCanvas.width,_firmaCanvas.height).data;
   var hayTrazo=false;
@@ -6149,8 +6161,12 @@ function cargarPreviewFirma(){
     var p1=document.getElementById('paso1-ok');
     if(p1) p1.style.display='inline-block';
   }
+  // Restaurar consentimiento
+  var yaAcepto = localStorage.getItem('medhistoria_firma_consentimiento')==='1';
+  var chk=document.getElementById('chk-consentimiento-firma');
+  if(chk){ chk.checked = yaAcepto; }
+  toggleConsentimientoFirma(yaAcepto);
 }
-
 function borrarFirmaGuardada(){
   if(!confirm('¿Eliminar la firma guardada?'))return;
   localStorage.removeItem('medhistoria_firma');
