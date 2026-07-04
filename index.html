@@ -5056,6 +5056,8 @@ function mostrarRecuperarPass(){
   }
 }
 function cerrarApp(){
+  try{ sb.auth.signOut(); }catch(e){}
+  usuarioActual = null;
   document.body.classList.remove('in-app');
   document.getElementById('app').style.display='none';
   document.getElementById('landing').style.display='block';
