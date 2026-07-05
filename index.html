@@ -5264,6 +5264,21 @@ function showPanel(id){
       }
     }catch(e){}
   }
+if(id==='recetas' || id==='derivaciones' || id==='estudios'){ try{ mostrarValidezPais(id); }catch(e){} }
+}
+
+function mostrarValidezPais(tipoId){
+  try{
+    var cont = document.getElementById('validez-'+tipoId);
+    if(!cont) return;
+    var pais = (usuarioActual && usuarioActual.pais) ? usuarioActual.pais : (typeof paisActual !== 'undefined' ? paisActual : 'ar');
+    var info = firmaInfo[pais] || firmaInfo['ar'];
+    if(info && info.validez){
+      cont.innerHTML = '<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin:10px 0 4px;"><div style="font-weight:700;color:#1e40af;font-size:.8rem;margin-bottom:4px;">📋 Cómo hacer válido este documento</div><div style="font-size:.8rem;color:#1e3a8a;line-height:1.5;">'+info.validez+'</div></div>';
+    } else {
+      cont.innerHTML = '';
+    }
+  }catch(e){}
 }
 // ══ LIMPIAR FORMULARIO HC ══
 function limpiarFormularioHC(){
