@@ -6119,8 +6119,19 @@ function initCanvasFirma(){
 }
 
 
-function toggleConsentimientoFirma(aceptado){
-  localStorage.setItem('medhistoria_firma_consentimiento', aceptado ? '1' : '0');
+function tieneConsentimientoFirma(){
+  if(usuarioActual && usuarioActual.firma_consentimiento === true) return true;
+  return localStorage.getItem('medhistoria_firma_consentimiento')==='1';
+}
+
+function toggleConsentimientoFirma(aceptado, soloRestaurar){
+  if(!soloRestaurar){
+    localStorage.setItem('medhistoria_firma_consentimiento', aceptado ? '1' : '0');
+    if(usuarioActual){ usuarioActual.firma_consentimiento = aceptado; }
+    if(usuarioActual && usuarioActual.auth_id){
+      sb.from('usuarios').update({firma_consentimiento: aceptado, firma_consentimiento_fecha: new Date().toISOString()}).eq('auth_id', usuarioActual.auth_id).then(function(){});
+    }
+  }
   var canvas=document.getElementById('canvas-firma');
   var controles=document.getElementById('firma-canvas-controles');
   var msg=document.getElementById('firma-canvas-bloqueado-msg');
