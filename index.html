@@ -6288,7 +6288,12 @@ function activarConCodigo(addon){
   var usados = JSON.parse(localStorage.getItem('medhistoria_codigos_usados')||'[]');
   usados.push(codigo);
   localStorage.setItem('medhistoria_codigos_usados', JSON.stringify(usados));
-  localStorage.setItem('medhistoria_addon_'+addon, '1');
+ localStorage.setItem('medhistoria_addon_'+addon, '1');
+  if(usuarioActual && usuarioActual.auth_id){
+    var _campoAddon = {}; _campoAddon['addon_'+addon] = true;
+    usuarioActual['addon_'+addon] = true;
+    sb.from('usuarios').update(_campoAddon).eq('auth_id', usuarioActual.auth_id).then(function(){});
+  }
 
   document.getElementById('codigo-overlay').remove();
 
