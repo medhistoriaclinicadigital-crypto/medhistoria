@@ -11276,7 +11276,7 @@ function generarPDFbase64(tipo, callback){
   // Nombre + matrícula ENCIMA de la línea
   doc.setTextColor(20,20,20); doc.setFontSize(10); doc.setFont('helvetica','bold');
   // Firma manuscrita guardada
-  var _firmaImg = localStorage.getItem('medhistoria_firma');
+  var _firmaImg = usuarioActual ? usuarioActual.firma_imagen : localStorage.getItem('medhistoria_firma');
   if(_firmaImg){ try{ doc.addImage(_firmaImg,'PNG',x,footerY-24,44,18); }catch(e){} }
 
   doc.text(medicoNombre, x, footerY - 4);
