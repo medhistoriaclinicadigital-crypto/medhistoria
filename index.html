@@ -6338,6 +6338,7 @@ function checkAddonAnalitica(){
 }
 
 function tieneAddonFirma(){
+  if(usuarioActual && usuarioActual.addon_firma === true) return true;
   return localStorage.getItem('medhistoria_addon_firma')==='1';
 }
 
