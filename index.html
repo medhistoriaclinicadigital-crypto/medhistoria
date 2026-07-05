@@ -6135,7 +6135,7 @@ function limpiarFirma(){
 }
 
 function guardarFirma(){
-  if(localStorage.getItem('medhistoria_firma_consentimiento')!=='1'){alert('Primero tildá la casilla de aceptación.');return;}
+  if(!tieneConsentimientoFirma()){alert('Primero tildá la casilla de aceptación.');return;}
   if(!_firmaCanvas){alert('Primero dibujá tu firma.');return;}
   var data=_firmaCtx.getImageData(0,0,_firmaCanvas.width,_firmaCanvas.height).data;
   var hayTrazo=false;
@@ -6143,6 +6143,10 @@ function guardarFirma(){
   if(!hayTrazo){alert('Dibujá tu firma antes de guardar.');return;}
   var url=_firmaCanvas.toDataURL('image/png');
   localStorage.setItem('medhistoria_firma',url);
+  if(usuarioActual){ usuarioActual.firma_imagen = url; }
+  if(usuarioActual && usuarioActual.auth_id){
+    sb.from('usuarios').update({firma_imagen:url}).eq('auth_id', usuarioActual.auth_id).then(function(){});
+  }
   cargarPreviewFirma();
   var p2=document.getElementById('paso2-ok');
   if(p2) p2.style.display='inline-block';
