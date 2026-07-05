@@ -4632,21 +4632,31 @@ function adaptarPais(pais){
   var t = terminologia[pais] || terminologia['ar'];
 
   // Adaptar labels
+function _setLabelText(el, nuevoTexto){
+    for(var i=0; i<el.childNodes.length; i++){
+      if(el.childNodes[i].nodeType === 3){
+        el.childNodes[i].textContent = nuevoTexto;
+        return;
+      }
+    }
+    el.insertBefore(document.createTextNode(nuevoTexto), el.firstChild);
+  }
   document.querySelectorAll('label, .pl').forEach(function(el){
     var txt = el.textContent.trim();
     if(txt.includes('Obra Social') || txt.includes('Mutua') || txt.includes('Prepaga')){
-      el.textContent = t.obraSocial;
+      _setLabelText(el, t.obraSocial);
     }
     if(txt.includes('Afiliado') || txt.includes('Seg. Social') && !txt.includes('Matrícula')){
-      el.textContent = t.afiliado;
+      _setLabelText(el, t.afiliado);
     }
     if(txt === 'DNI' || txt === 'DNI / NIE' || txt === 'DNI / NIE / CURP'){
-      el.textContent = t.dni;
+      _setLabelText(el, t.dni);
     }
     if(txt === 'Matrícula' || txt === 'N° de Colegiado' || txt === 'Cédula Profesional'){
-      el.textContent = t.matricula;
+      _setLabelText(el, t.matricula);
     }
   });
+
 
   // Adaptar placeholders
   document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(function(el){
