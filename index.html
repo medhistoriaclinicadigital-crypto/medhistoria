@@ -11206,8 +11206,7 @@ function generarPDFbase64(tipo, callback){
   // Caja verde claro
   var contenidoLines = doc.splitTextToSize(d.contenido || '', W - margin*2 - 20);
   var antLines = (tipo==='derivacion' && d.ant) ? doc.splitTextToSize(d.ant, W-margin*2-20) : [];
-  var cajaH = tipo==='pedido' ? Math.max(150, contenidoLines.length * 6 + 16) : tipo==='derivacion' ? Math.max(120, contenidoLines.length * 6 + (antLines.length>0 ? antLines.length*6+22 : 0) + 30) : Math.max(90, contenidoLines.length * 6 + 16);
-  doc.setFillColor(240,253,244); doc.setDrawColor(134,239,172);
+  var cajaH = tipo==='pedido' ? Math.max(90, contenidoLines.length * 6 + 16) : tipo==='derivacion' ? Math.max(120, contenidoLines.length * 6 + (antLines.length>0 ? antLines.length*6+22 : 0) + 30) : Math.max(90, contenidoLines.length * 6 + 16);
   doc.rect(x, y, W-margin*2, cajaH, 'FD');
 
   // S/P centrado con especialidad para derivaciones
