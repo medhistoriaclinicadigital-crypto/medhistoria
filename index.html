@@ -13766,7 +13766,7 @@ function mlRegistrar(){
       auth_id: authId,
       nombre: nombre, email: email,
       especialidad: esp, matricula: (mn?'M.N. '+mn:(mp?'M.P. '+mp:'')),
-      telefono: tel, dni: dni, rol: 'medico'
+      telefono: tel, dni: dni, rol: 'medico', pais: pais
     }]).then(function(r2){ if(r2.error) console.error('Error guardando en Supabase:', r2.error); });
 
     ['ml-reg-nombre','ml-reg-dni','ml-reg-cuil','ml-reg-tel','ml-reg-mn','ml-reg-mp','ml-reg-esp','ml-reg-subesp','ml-reg-inst','ml-reg-provincia','ml-reg-ciudad','ml-reg-email','ml-reg-pass','ml-reg-pass2'].forEach(function(id){
