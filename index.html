@@ -6154,22 +6154,22 @@ function guardarFirma(){
 }
 
 function cargarPreviewFirma(){
-  var saved=localStorage.getItem('medhistoria_firma');
+  var saved = (usuarioActual && usuarioActual.firma_imagen) || localStorage.getItem('medhistoria_firma');
   var prev=document.getElementById('firma-guardada-preview');
   var img=document.getElementById('preview-firma-img');
   var p2=document.getElementById('paso2-ok');
   if(saved&&prev&&img){img.src=saved;prev.style.display='block';if(p2)p2.style.display='inline-block';}
   else if(prev){prev.style.display='none';}
   // Restaurar paso 1
-  if(localStorage.getItem('medhistoria_firma_paso1')==='1'){
+  if((usuarioActual && usuarioActual.firma_paso1) || localStorage.getItem('medhistoria_firma_paso1')==='1'){
     var p1=document.getElementById('paso1-ok');
     if(p1) p1.style.display='inline-block';
   }
   // Restaurar consentimiento
-  var yaAcepto = localStorage.getItem('medhistoria_firma_consentimiento')==='1';
+  var yaAcepto = tieneConsentimientoFirma();
   var chk=document.getElementById('chk-consentimiento-firma');
   if(chk){ chk.checked = yaAcepto; }
-  toggleConsentimientoFirma(yaAcepto);
+  toggleConsentimientoFirma(yaAcepto, true);
 }
 function borrarFirmaGuardada(){
   if(!confirm('¿Eliminar la firma guardada?'))return;
