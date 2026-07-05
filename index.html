@@ -11239,9 +11239,12 @@ function generarPDFbase64(tipo, callback){
   }
 
   // Texto legal abajo a la DERECHA dentro del recuadro
-  var legalTxt = tipo==='receta' ? 'Receta emitida bajo Ley 25.506 · Firma Digital · MedHistoriaClinicaOnline'
-    : tipo==='derivacion' ? 'Derivación emitida bajo Ley 25.506 · Firma Digital · MedHistoriaClinicaOnline'
-    : 'Pedido emitido bajo Ley 25.506 · Firma Digital · MedHistoriaClinicaOnline';
+  var _paisMedico = (usuarioActual && usuarioActual.pais) ? usuarioActual.pais : (typeof paisActual !== 'undefined' ? paisActual : 'ar');
+  var _leyFirmaPais = (firmaInfo[_paisMedico] && firmaInfo[_paisMedico].ley) ? firmaInfo[_paisMedico].ley : firmaInfo.ar.ley;
+  var _paisNombreMedico = (firmaInfo[_paisMedico] && firmaInfo[_paisMedico].pais) ? firmaInfo[_paisMedico].pais : 'Argentina';
+  var legalTxt = tipo==='receta' ? 'Receta emitida bajo '+_leyFirmaPais+' · Firma Digital · MedHistoriaClinicaOnline'
+    : tipo==='derivacion' ? 'Derivación emitida bajo '+_leyFirmaPais+' · Firma Digital · MedHistoriaClinicaOnline'
+    : 'Pedido emitido bajo '+_leyFirmaPais+' · Firma Digital · MedHistoriaClinicaOnline';
   doc.setTextColor(100,140,100); doc.setFontSize(6.5); doc.setFont('helvetica','italic');
   doc.text(legalTxt, x + W - margin*2 - 2, y + cajaH - 4, {align:'right'});
 
