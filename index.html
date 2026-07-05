@@ -6193,6 +6193,10 @@ function borrarFirmaGuardada(){
 
 function marcarPaso1(){
   localStorage.setItem('medhistoria_firma_paso1','1');
+  if(usuarioActual){ usuarioActual.firma_paso1 = true; }
+  if(usuarioActual && usuarioActual.auth_id){
+    sb.from('usuarios').update({firma_paso1:true}).eq('auth_id', usuarioActual.auth_id).then(function(){});
+  }
   var p1=document.getElementById('paso1-ok');
   if(p1) p1.style.display='inline-block';
   var btn=document.getElementById('btn-paso1-completado');
