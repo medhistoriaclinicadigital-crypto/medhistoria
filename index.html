@@ -11270,8 +11270,8 @@ function generarPDFbase64(tipo, callback){
   // Texto legal abajo a la DERECHA dentro del recuadro (antes de la línea)
   var legalX = W - margin;
   doc.setTextColor(100,140,100); doc.setFontSize(6.5); doc.setFont('helvetica','italic');
-  doc.text('Emitido con firma digital conforme Ley Nacional 25.506.', legalX, footerY - 16, {align:'right'});
-  doc.text('Válido en todo el territorio nacional argentino.', legalX, footerY - 11, {align:'right'});
+  doc.text('Emitido con firma digital conforme '+_leyFirmaPais+'.', legalX, footerY - 16, {align:'right'});
+    doc.text('Válido conforme a la normativa vigente en '+_paisNombreMedico+'.', legalX, footerY - 11, {align:'right'});
   doc.setFont('helvetica','bold'); doc.setTextColor(20,90,50);
   doc.text('MedHistoriaClinicaOnline · medhistoriaclinicaonline@gmail.com', legalX, footerY - 6, {align:'right'});
 
