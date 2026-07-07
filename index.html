@@ -13642,9 +13642,8 @@ function mlIngresar(){
     var authId = r.data && r.data.user ? r.data.user.id : null;
 
     sb.from('usuarios').select('*').eq('auth_id', authId).then(function(rPerfil){
-      var perfil = (rPerfil.data && rPerfil.data[0]) || { nombre: u, email: u };
-      perfil.id = authId;
-      perfil.auth_id = authId;
+    var perfil = (rPerfil.data && rPerfil.data[0]) || { nombre: u, email: u }; 
+   perfil.auth_id = authId;  
 
       var rEl0 = document.getElementById('ml-recordar');
       if(rEl0 && rEl0.checked){
