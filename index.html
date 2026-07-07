@@ -10541,6 +10541,7 @@ if(tipo==='part' && usuarioActual && usuarioActual.id){
   }
 }
 
+
 function renderHistorial(){
   var cont = document.getElementById('fact-historial-lista');
   if(!cont) return;
@@ -10549,7 +10550,7 @@ function renderHistorial(){
     return;
   }
   cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px;">Cargando facturas...</div>';
-  sb.from('facturas').select('id,paciente_id,fecha_prestacion,total,tipo,obra_social').eq('medico_id', usuarioActual.id).order('fecha_prestacion', {ascending:false}).then(function(rFact){
+  sb.from('facturas').select('id,paciente_id,fecha_prestacion,total,tipo,obra_social,paciente_nombre,dni_paciente,condicion_iva,forma_pago,subtotal,descuento,cuit_prestador').eq('medico_id', usuarioActual.id).order('fecha_prestacion', {ascending:false}).then(function(rFact){
     var lista = rFact.data || [];
     if(!lista.length){
       cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px;">No hay facturas emitidas aún.</div>';
@@ -10576,7 +10577,13 @@ function pintarHistorial(lista, mapaPacientes){
   window._histFacturas = lista.map(function(f){
     return {
       id: f.id,
-      nombrePac: mapaPacientes[f.paciente_id] || '(Paciente)',
+      nombrePac: mapaPacientes[f.paciente_id] || f.paciente_nombre || '(Paciente)',
+      dniPac: f.dni_paciente || '',
+      condicionIva: f.condicion_iva || '',
+      formaPago: f.forma_pago || '',
+      cuitPrestador: f.cuit_prestador || '',
+      subtotal: f.subtotal,
+      descuento: f.descuento,
       tipo: f.tipo,
       obra_social: f.obra_social,
       total: f.total,
@@ -10594,12 +10601,44 @@ function pintarHistorial(lista, mapaPacientes){
 function imprimirFacturaHistorial(idx){
   var f = window._histFacturas && window._histFacturas[idx];
   if(!f) return;
+  sb.from('factura_items').select('descripcion,codigo,cantidad,valor').eq('factura_id', f.id).then(function(rItems){
+    pintarFacturaParaImprimir(f, rItems.data || []);
+  }, function(){
+    pintarFacturaParaImprimir(f, []);
+  });
+}
+
+function pintarFacturaParaImprimir(f, items){
   var titulo = f.tipo==='particular' ? 'RECIBO A PACIENTE PARTICULAR' : 'FACTURA A OBRA SOCIAL';
   var medNombre = (usuarioActual && typeof nombreConTitulo==='function') ? nombreConTitulo(usuarioActual) : '';
   var totalTxt = '$ '+(parseFloat(f.total)||0).toFixed(2);
+  var subtotalTxt = (f.subtotal!=null && f.subtotal!=='') ? '$ '+(parseFloat(f.subtotal)||0).toFixed(2) : '';
+  var descuentoTxt = (f.descuento) ? f.descuento+'%' : '';
   var fechaTxt = f.fecha_prestacion ? f.fecha_prestacion.split('-').reverse().join('/') : '';
   var osExtra = (f.tipo!=='particular' && f.obra_social) ? '<div class="ps"><div class="pl">Obra Social</div><div class="pv">'+f.obra_social+'</div></div>' : '';
-  var html = '<div class="pdoc"><div class="ph"><div class="pb">Med <span>Historias Clínicas Online</span><small>Facturación Online</small></div><div class="pt">'+titulo+'<small>Fecha: '+fechaTxt+'</small></div></div><div class="pg2">'+osExtra+'<div class="ps"><div class="pl">Paciente</div><div class="pv">'+f.nombrePac+'</div></div><div class="ps"><div class="pl">Total</div><div class="pv" style="font-weight:700;font-size:1.2rem;color:var(--g2);">'+totalTxt+'</div></div></div><div class="pf"><div><div class="pfl"></div><div class="pfs">'+medNombre+'</div></div><div class="plg">MedHistoriaClinicaOnline · Facturación Online · Argentina</div></div></div>';
+  var extraPart = f.tipo==='particular' ? (
+    (f.dniPac ? '<div class="ps"><div class="pl">DNI</div><div class="pv">'+f.dniPac+'</div></div>' : '') +
+    (f.condicionIva ? '<div class="ps"><div class="pl">Condición IVA</div><div class="pv">'+f.condicionIva+'</div></div>' : '') +
+    (f.formaPago ? '<div class="ps"><div class="pl">Forma de pago</div><div class="pv">'+f.formaPago+'</div></div>' : '')
+  ) : '';
+  var itemsHtml = '';
+  if(items.length){
+    itemsHtml = '<table style="width:100%;border-collapse:collapse;margin:18px 0;font-size:.85rem;"><thead><tr style="border-bottom:2px solid #145a32;text-align:left;"><th style="padding:6px 4px;">Descripción</th><th style="padding:6px 4px;text-align:right;">Cant.</th><th style="padding:6px 4px;text-align:right;">Valor</th></tr></thead><tbody>'
+      +items.map(function(it){
+        return '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px 4px;">'+(it.descripcion||'')+'</td><td style="padding:6px 4px;text-align:right;">'+(it.cantidad||1)+'</td><td style="padding:6px 4px;text-align:right;">$ '+(parseFloat(it.valor)||0).toFixed(2)+'</td></tr>';
+      }).join('')
+      +'</tbody></table>';
+  }
+  var totalesHtml = '<div class="pg2">'
+    + (subtotalTxt ? '<div class="ps"><div class="pl">Subtotal</div><div class="pv">'+subtotalTxt+'</div></div>' : '')
+    + (descuentoTxt ? '<div class="ps"><div class="pl">Descuento</div><div class="pv">'+descuentoTxt+'</div></div>' : '')
+    + '<div class="ps"><div class="pl">Total</div><div class="pv" style="font-weight:700;font-size:1.2rem;color:var(--g2);">'+totalTxt+'</div></div>'
+    + '</div>';
+  var html = '<div class="pdoc"><div class="ph"><div class="pb">Med <span>Historias Clínicas Online</span><small>Facturación Online</small></div><div class="pt">'+titulo+'<small>Fecha: '+fechaTxt+'</small></div></div>'
+    +'<div class="pg2">'+osExtra+'<div class="ps"><div class="pl">Paciente</div><div class="pv">'+f.nombrePac+'</div></div>'+extraPart+'</div>'
+    +itemsHtml
+    +totalesHtml
+    +'<div class="pf"><div><div class="pfl"></div><div class="pfs">'+medNombre+'</div></div><div class="plg">MedHistoriaClinicaOnline · Facturación Online · Argentina</div></div></div>';
   document.getElementById('printArea').innerHTML = html;
   setTimeout(function(){ window.print(); },150);
 }
