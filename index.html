@@ -10570,13 +10570,35 @@ function renderHistorial(){
 function pintarHistorial(lista, mapaPacientes){
   var cont = document.getElementById('fact-historial-lista');
   if(!cont) return;
-  cont.innerHTML = lista.map(function(f){
-    var nombrePac = mapaPacientes[f.paciente_id] || '(Paciente)';
+  window._histFacturas = lista.map(function(f){
+    return {
+      id: f.id,
+      nombrePac: mapaPacientes[f.paciente_id] || '(Paciente)',
+      tipo: f.tipo,
+      obra_social: f.obra_social,
+      total: f.total,
+      fecha_prestacion: f.fecha_prestacion
+    };
+  });
+  cont.innerHTML = window._histFacturas.map(function(f, idx){
     var tipoTxt = f.tipo==='particular' ? 'Particular' : (f.obra_social || 'Obra Social');
     var totalTxt = '$ '+(parseFloat(f.total)||0).toFixed(2);
     var fechaTxt = f.fecha_prestacion ? f.fecha_prestacion.split('-').reverse().join('/') : '';
-    return '<div class="agenda-item"><div class="agenda-hora" style="font-size:.72rem;width:auto;min-width:62px;white-space:nowrap;padding:6px 10px;">'+fechaTxt+'</div><div class="agenda-info"><div class="agenda-pac">'+nombrePac+'</div><div class="agenda-mot">'+tipoTxt+' · '+totalTxt+'</div></div><span class="pac-tag tag-ok">Emitida</span></div>';
+    return '<div class="agenda-item" style="cursor:pointer;" onclick="imprimirFacturaHistorial('+idx+')" title="Ver / Imprimir"><div class="agenda-hora" style="font-size:.72rem;width:auto;min-width:62px;white-space:nowrap;padding:6px 10px;">'+fechaTxt+'</div><div class="agenda-info"><div class="agenda-pac">'+f.nombrePac+'</div><div class="agenda-mot">'+tipoTxt+' · '+totalTxt+'</div></div><span class="pac-tag tag-ok" style="margin-right:8px;">Emitida</span><button onclick="event.stopPropagation();imprimirFacturaHistorial('+idx+')" style="background:none;border:none;color:var(--g4);cursor:pointer;font-size:1.15rem;" title="Ver / Imprimir">🖨️</button></div>';
   }).join('');
+}
+
+function imprimirFacturaHistorial(idx){
+  var f = window._histFacturas && window._histFacturas[idx];
+  if(!f) return;
+  var titulo = f.tipo==='particular' ? 'RECIBO A PACIENTE PARTICULAR' : 'FACTURA A OBRA SOCIAL';
+  var medNombre = (usuarioActual && typeof nombreConTitulo==='function') ? nombreConTitulo(usuarioActual) : '';
+  var totalTxt = '$ '+(parseFloat(f.total)||0).toFixed(2);
+  var fechaTxt = f.fecha_prestacion ? f.fecha_prestacion.split('-').reverse().join('/') : '';
+  var osExtra = (f.tipo!=='particular' && f.obra_social) ? '<div class="ps"><div class="pl">Obra Social</div><div class="pv">'+f.obra_social+'</div></div>' : '';
+  var html = '<div class="pdoc"><div class="ph"><div class="pb">Med <span>Historias Clínicas Online</span><small>Facturación Online</small></div><div class="pt">'+titulo+'<small>Fecha: '+fechaTxt+'</small></div></div><div class="pg2">'+osExtra+'<div class="ps"><div class="pl">Paciente</div><div class="pv">'+f.nombrePac+'</div></div><div class="ps"><div class="pl">Total</div><div class="pv" style="font-weight:700;font-size:1.2rem;color:var(--g2);">'+totalTxt+'</div></div></div><div class="pf"><div><div class="pfl"></div><div class="pfs">'+medNombre+'</div></div><div class="plg">MedHistoriaClinicaOnline · Facturación Online · Argentina</div></div></div>';
+  document.getElementById('printArea').innerHTML = html;
+  setTimeout(function(){ window.print(); },150);
 }
 
 function imprimirFactura(tipo){
