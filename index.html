@@ -10493,7 +10493,10 @@ if(tipo==='part' && usuarioActual && usuarioActual.id){
 		        n_liquidacion: '',
 		        whatsapp_envio: '',
 		        email_envio: '',
-		        tipo: 'particular'
+		        tipo: 'particular',paciente_nombre: pacienteNombre,
+        dni_paciente: dniFp,
+        condicion_iva: (document.getElementById('fp-iva')||{}).value||'',
+        forma_pago: (document.getElementById('fp-pago')||{}).value||''
 		      };
 		      sb.from('facturas').insert(factSB).select().then(function(rFact){
 		        var facturaId = (rFact.data && rFact.data.length>0) ? rFact.data[0].id : null;
