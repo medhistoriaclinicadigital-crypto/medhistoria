@@ -3699,11 +3699,9 @@ document.addEventListener('DOMContentLoaded', function(){
 
             </div>
             <div style="display:flex;gap:12px;margin-top:18px;flex-wrap:wrap;">
-              <button class="form-submit" style="flex:1;" onclick="guardarFactura('part')">✦ Emitir Recibo</button>
-              <button class="form-submit" style="flex:1;background:linear-gradient(135deg,var(--g4),var(--g3));" onclick="imprimirFactura('part')">🖨️ Imprimir</button>
-              <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#075e54,#128c7e);" onclick="enviarFacturaWA('part')">📱 WhatsApp</button>
-              <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#1a6aab,#0e4d8a);" onclick="enviarFacturaEmail('part')">✉️ Email</button>
-            </div>
+              <button class="form-submit" style="flex:1;background:linear-gradient(135deg,var(--g4),var(--g3));" onclick="accionFacturaParticular('imprimir')">🖨️ Imprimir</button>
+              <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#075e54,#128c7e);" onclick="accionFacturaParticular('wa')">📱 WhatsApp</button>
+              <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#1a6aab,#0e4d8a);" onclick="accionFacturaParticular('email')">✉️ Email</button> 
           </div>
         </div>
 
