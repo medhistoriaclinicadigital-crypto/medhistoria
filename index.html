@@ -10599,16 +10599,26 @@ function pintarHistorial(lista, mapaPacientes){
 }).join('');
 	}
 
-function imprimirFacturaHistorial(idx){
+function enviarFacturaHistorialWA(idx){
   var f = window._histFacturas && window._histFacturas[idx];
   if(!f) return;
-  sb.from('factura_items').select('descripcion,codigo,cantidad,valor').eq('factura_id', f.id).then(function(rItems){
-    pintarFacturaParaImprimir(f, rItems.data || []);
-  }, function(){
-    pintarFacturaParaImprimir(f, []);
-  });
+  var totalTxt = '$ '+(parseFloat(f.total)||0).toFixed(2);
+  var tel = prompt('N° de WhatsApp (con código de área):');
+  if(!tel) return;
+  var txt = '🏥 *MedHistoriaClinicaOnline - '+(f.tipo==='particular'?'Recibo Particular':'Factura Obra Social')+'*\n\nPaciente: '+f.nombrePac+'\nTotal: '+totalTxt+'\n\n_MedHistoriaClinicaOnline · medhistoriasclinicasdigitales.com.ar_';
+  window.open('https://wa.me/54'+tel+'?text='+encodeURIComponent(txt),'_blank');
 }
-	
+
+function enviarFacturaHistorialEmail(idx){
+  var f = window._histFacturas && window._histFacturas[idx];
+  if(!f) return;
+  var totalTxt = '$ '+(parseFloat(f.total)||0).toFixed(2);
+  var email = prompt('Email del destinatario:');
+  if(!email) return;
+  var asunto = f.tipo==='particular' ? 'Recibo - MedHistoriaClinicaOnline' : 'Factura Obra Social - MedHistoriaClinicaOnline';
+  var cuerpo = 'Paciente: '+f.nombrePac+'\nTotal: '+totalTxt+'\n\nMedHistoriaClinicaOnline · medhistoriasclinicasdigitales.com.ar';
+  window.location.href = 'mailto:'+email+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
+}
 
 function pintarFacturaParaImprimir(f, items){
   var titulo = f.tipo==='particular' ? 'RECIBO A PACIENTE PARTICULAR' : 'FACTURA A OBRA SOCIAL';
