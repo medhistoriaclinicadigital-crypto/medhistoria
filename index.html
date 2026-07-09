@@ -10454,7 +10454,77 @@ function calcularTotal(prefix){
   totEl.value = '$ '+(sub*(1-desc/100)).toFixed(2);
 }
 
-function guardarFactura(tipo){
+function accionFacturaParticular(accion){
+  var pacienteNombre = (document.getElementById('fp-paciente')||{}).value||'';
+  var dniFp = (document.getElementById('fp-dni')||{}).value||'';
+  var ejecutarAccion = function(){
+    if(accion==='imprimir') imprimirFactura('part');
+    else if(accion==='wa') enviarFacturaWA('part');
+    else if(accion==='email') enviarFacturaEmail('part');
+  };
+  if(!(usuarioActual && usuarioActual.id && dniFp)){
+    ejecutarAccion();
+    return;
+  }
+  var subtotalFp = parseFloat(((document.getElementById('fp-subtotal')||{}).value||'0').replace('$','').replace(',','').trim()) || 0;
+  var totalFp = parseFloat(((document.getElementById('fp-total')||{}).value||'0').replace('$','').replace(',','').trim()) || 0;
+  var cuitFp = (document.getElementById('fp-cuit')||{}).value||'';
+  var fechaFp = (document.getElementById('fp-fecha')||{}).value||null;
+  var descuentoFp = parseFloat((document.getElementById('fp-descuento')||{}).value||0) || 0;
+  var prestacionesFp = [];
+  document.querySelectorAll('#fp-prestaciones > div').forEach(function(fila){
+    var inputs = fila.querySelectorAll('input');
+    var desc = inputs[0] ? inputs[0].value : '';
+    var cant = inputs[1] ? inputs[1].value : '1';
+    var val = inputs[2] ? inputs[2].value : '0';
+    if(desc) prestacionesFp.push({descripcion: desc, cantidad: parseFloat(cant)||1, valor: parseFloat(val)||0});
+  });
+  sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', dniFp).then(function(rPac){
+    var pacienteIdFp = (rPac.data && rPac.data.length>0) ? rPac.data[0].id : null;
+    var factSB = {
+      paciente_id: pacienteIdFp,
+      medico_id: usuarioActual.id,
+      cuit_prestador: cuitFp,
+      obra_social: '',
+      cuit_obra_social: '',
+      razon_social: '',
+      n_convenio: '',
+      fecha_prestacion: fechaFp,
+      subtotal: subtotalFp,
+      descuento: descuentoFp,
+      total: totalFp,
+      n_liquidacion: '',
+      whatsapp_envio: '',
+      email_envio: '',
+      tipo: 'particular',
+      paciente_nombre: pacienteNombre,
+      dni_paciente: dniFp,
+      condicion_iva: (document.getElementById('fp-iva')||{}).value||'',
+      forma_pago: (document.getElementById('fp-pago')||{}).value||''
+    };
+    sb.from('facturas').insert(factSB).select().then(function(rFact){
+      var facturaId = (rFact.data && rFact.data.length>0) ? rFact.data[0].id : null;
+      if(facturaId){
+        prestacionesFp.forEach(function(p){
+          sb.from('factura_items').insert({
+            factura_id: facturaId,
+            descripcion: p.descripcion,
+            codigo: '',
+            cantidad: p.cantidad,
+            valor: p.valor
+          }).then(function(){});
+        });
+      }
+      ejecutarAccion();
+    }, function(errFact){
+      alert('⚠️ No se pudo guardar la factura en la nube. Revisá tu conexión y probá de nuevo.');
+      ejecutarAccion();
+    });
+  }, function(errPac){
+    alert('⚠️ No se pudo guardar la factura en la nube. Revisá tu conexión y probá de nuevo.');
+    ejecutarAccion();
+  });
+}function guardarFactura(tipo){
   var prefix = tipo==='os'?'fo':'fp';
   var pacienteNombre = (document.getElementById(prefix+'-paciente')||{}).value||'';
   var totalTexto = (document.getElementById(prefix+'-total')||{}).value||'$ 0.00';
