@@ -10599,8 +10599,18 @@ function pintarHistorial(lista, mapaPacientes){
 }).join('');
 	}
 
-function enviarFacturaHistorialWA(idx){
+function imprimirFacturaHistorial(idx){
   var f = window._histFacturas && window._histFacturas[idx];
+  if(!f) return;
+  sb.from('factura_items').select('descripcion,codigo,cantidad,valor').eq('factura_id', f.id).then(function(rItems){
+    pintarFacturaParaImprimir(f, rItems.data || []);
+  }, function(){
+    pintarFacturaParaImprimir(f, []);
+  });
+}
+  
+  function enviarFacturaHistorialWA(idx){
+	  var f = window._histFacturas && window._histFacturas[idx];
   if(!f) return;
   var totalTxt = '$ '+(parseFloat(f.total)||0).toFixed(2);
   var tel = prompt('N° de WhatsApp (con código de área):');
