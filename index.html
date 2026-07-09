@@ -10524,7 +10524,8 @@ function accionFacturaParticular(accion){
     alert('⚠️ No se pudo guardar la factura en la nube. Revisá tu conexión y probá de nuevo.');
     ejecutarAccion();
   });
-}function guardarFactura(tipo){
+}
+	function guardarFactura(tipo){
   var prefix = tipo==='os'?'fo':'fp';
   var pacienteNombre = (document.getElementById(prefix+'-paciente')||{}).value||'';
   var totalTexto = (document.getElementById(prefix+'-total')||{}).value||'$ 0.00';
