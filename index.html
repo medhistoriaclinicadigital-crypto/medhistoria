@@ -10665,22 +10665,55 @@ function pintarFacturaParaImprimir(f, items){
   setTimeout(function(){ window.print(); },150);
 }
 
-function imprimirFactura(tipo){
+	function imprimirFactura(tipo){
   var prefix = tipo==='os'?'fo':'fp';
   var pac = (document.getElementById(prefix+'-paciente')||{}).value||'';
   var med = (document.getElementById(prefix+'-medico')||{}).value||'';
   var total = (document.getElementById(prefix+'-total')||{}).value||'$ 0.00';
+  var subtotal = (document.getElementById(prefix+'-subtotal')||{}).value||'';
+  var descuento = (document.getElementById(prefix+'-descuento')||{}).value||'';
   var fecha = (document.getElementById(prefix+'-fecha')||{}).value||new Date().toLocaleDateString('es-AR');
   var titulo = tipo==='os'?'FACTURA A OBRA SOCIAL':'RECIBO A PACIENTE PARTICULAR';
   var osNombre = tipo==='os'?(document.getElementById('fo-os')||{}).value||'':'';
   var osCuit = tipo==='os'?(document.getElementById('fo-cuit-os')||{}).value||'':'';
   var osRazon = tipo==='os'?(document.getElementById('fo-razon-social')||{}).value||'':'';
   var osExtra = tipo==='os' && (osCuit||osRazon) ? '<div class="ps"><div class="pl">Razón Social</div><div class="pv">'+(osRazon||osNombre)+'</div></div><div class="ps"><div class="pl">CUIT Obra Social</div><div class="pv">'+osCuit+'</div></div>' : '';
-  var html = '<div class="pdoc"><div class="ph"><div class="pb">Med <span>Historias Clínicas Online</span><small>Facturación Online</small></div><div class="pt">'+titulo+'<small>Fecha: '+fecha+'</small></div></div><div class="pg2">'+osExtra+'<div class="ps"><div class="pl">Paciente</div><div class="pv">'+pac+'</div></div><div class="ps"><div class="pl">Total</div><div class="pv" style="font-weight:700;font-size:1.2rem;color:var(--g2);">'+total+'</div></div></div><div class="pf"><div><div class="pfl"></div><div class="pfs">'+med+'</div></div><div class="plg">MedHistoriaClinicaOnline · Facturación Online · Argentina</div></div></div>';
+  var extraPart = tipo!=='os' ? (
+    ((document.getElementById('fp-dni')||{}).value ? '<div class="ps"><div class="pl">DNI</div><div class="pv">'+(document.getElementById('fp-dni')||{}).value+'</div></div>' : '') +
+    ((document.getElementById('fp-iva')||{}).value ? '<div class="ps"><div class="pl">Condición IVA</div><div class="pv">'+(document.getElementById('fp-iva')||{}).value+'</div></div>' : '') +
+    ((document.getElementById('fp-pago')||{}).value ? '<div class="ps"><div class="pl">Forma de pago</div><div class="pv">'+(document.getElementById('fp-pago')||{}).value+'</div></div>' : '')
+  ) : '';
+  var items = [];
+  document.querySelectorAll('#'+prefix+'-prestaciones > div').forEach(function(fila){
+    var inputs = fila.querySelectorAll('input');
+    var desc = inputs[0] ? inputs[0].value : '';
+    var cantIdx = tipo==='os' ? 2 : 1;
+    var valIdx = tipo==='os' ? 3 : 2;
+    var cant = inputs[cantIdx] ? inputs[cantIdx].value : '1';
+    var val = inputs[valIdx] ? inputs[valIdx].value : '0';
+    if(desc) items.push({descripcion:desc, cantidad:cant||1, valor:parseFloat(val)||0});
+  });
+  var itemsHtml = '';
+  if(items.length){
+    itemsHtml = '<table style="width:100%;border-collapse:collapse;margin:18px 0;font-size:.85rem;"><thead><tr style="border-bottom:2px solid #145a32;text-align:left;"><th style="padding:6px 4px;">Descripción</th><th style="padding:6px 4px;text-align:right;">Cant.</th><th style="padding:6px 4px;text-align:right;">Valor</th></tr></thead><tbody>'
+      +items.map(function(it){
+        return '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px 4px;">'+it.descripcion+'</td><td style="padding:6px 4px;text-align:right;">'+it.cantidad+'</td><td style="padding:6px 4px;text-align:right;">$ '+it.valor.toFixed(2)+'</td></tr>';
+      }).join('')
+      +'</tbody></table>';
+  }
+  var totalesHtml = '<div class="pg2">'
+    + (subtotal ? '<div class="ps"><div class="pl">Subtotal</div><div class="pv">'+subtotal+'</div></div>' : '')
+    + (descuento ? '<div class="ps"><div class="pl">Descuento</div><div class="pv">'+descuento+'%</div></div>' : '')
+    + '<div class="ps"><div class="pl">Total</div><div class="pv" style="font-weight:700;font-size:1.2rem;color:var(--g2);">'+total+'</div></div>'
+    + '</div>';
+  var html = '<div class="pdoc"><div class="ph"><div class="pb">Med <span>Historias Clínicas Online</span><small>Facturación Online</small></div><div class="pt">'+titulo+'<small>Fecha: '+fecha+'</small></div></div>'
+    +'<div class="pg2">'+osExtra+'<div class="ps"><div class="pl">Paciente</div><div class="pv">'+pac+'</div></div>'+extraPart+'</div>'
+    +itemsHtml
+    +totalesHtml
+    +'<div class="pf"><div><div class="pfl"></div><div class="pfs">'+med+'</div></div><div class="plg">MedHistoriaClinicaOnline · Facturación Online · Argentina</div></div></div>';
   document.getElementById('printArea').innerHTML = html;
   setTimeout(function(){ window.print(); },150);
 }
-
 function enviarFacturaWA(tipo){
   var prefix = tipo==='os'?'fo':'fp';
   var pac = (document.getElementById(prefix+'-paciente')||{}).value||'';
