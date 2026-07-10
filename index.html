@@ -10309,11 +10309,10 @@ var facturas = [];
 function switchFactTab(btn, id){
   document.querySelectorAll('#panel-facturacion .hc-tab').forEach(function(b){ b.classList.remove('on'); });
   btn.classList.add('on');
-  ['fact-os','fact-part','fact-hist','fact-suscripcion'].forEach(function(t){
+ ['fact-part','fact-suscripcion'].forEach(function(t){
     var el = document.getElementById(t);
     if(el) el.style.display = t===id ? 'block' : 'none';
   });
-  if(id==='fact-hist') renderHistorial();
 }
 
 function solicitarFactura(){
