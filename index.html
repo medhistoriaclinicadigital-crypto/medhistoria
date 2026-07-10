@@ -10289,8 +10289,9 @@ function enviarLinkExterno(nombre){
 
   var msg = '🏥 *MedHistoriaClinicaOnline*\n\nHola '+d.pac+', le confirmamos su videoconsulta por *'+nombre+'*:\n\n📅 Fecha: '+d.fechaDisplay+'\n🕐 Hora: '+d.hora+' hs\n⏱ Duración: '+d.duracion+'\n📋 Motivo: '+d.motivo+'\n\n🎥 *Link para entrar:*\n'+linkExt+'\n\nHacé clic en el link a la hora acordada.\n\n_MedHistoriaClinicaOnline_';
 
-  videoconsultas.unshift({pac:d.pac, fecha:d.fechaInput, fechaDisplay:d.fechaDisplay, hora:d.hora, duracion:d.duracion, motivo:d.motivo, plataforma:nombre, link:linkExt});
-  guardarLocal();
+  var nuevaVC = {pac:d.pac, fecha:d.fechaInput, fechaDisplay:d.fechaDisplay, hora:d.hora, duracion:d.duracion, motivo:d.motivo, plataforma:nombre, link:linkExt};
+  videoconsultas.unshift(nuevaVC);
+  guardarVideoconsultaSupabase(nuevaVC);
   renderVideoconsultas();
 
   // Mostrar modal con opciones de envío
