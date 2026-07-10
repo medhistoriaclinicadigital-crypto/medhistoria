@@ -10313,7 +10313,58 @@ function enviarLinkExterno(nombre){
   var bt=document.getElementById('btn-enviar-teams'); if(bt) bt.style.display='none';
 }
 
-function renderVideoconsultas(){
+function guardarVideoconsultaSupabase(v){
+  if(!usuarioActual || !usuarioActual.id) return;
+  sb.from('videoconsultas').insert({
+    medico_id: usuarioActual.id,
+    paciente_nombre: v.pac,
+    fecha: v.fecha,
+    hora: v.hora,
+    duracion: v.duracion,
+    motivo: v.motivo,
+    plataforma: v.plataforma||'',
+    link: v.link||'',
+    estado: 'programada'
+  }).select().then(function(r){
+    if(r.data && r.data[0]) v._sbId = r.data[0].id;
+  });
+}
+
+function eliminarVideoconsulta(i){
+  var v = videoconsultas[i];
+  if(v && v._sbId){ sb.from('videoconsultas').delete().eq('id', v._sbId).then(function(){}); }
+  videoconsultas.splice(i,1);
+  guardarLocal();
+  renderVideoconsultas();
+}
+
+function sincronizarVideoconsultasSupabase(){
+  if(!usuarioActual || !usuarioActual.id) return;
+  sb.from('videoconsultas').select('*').eq('medico_id', usuarioActual.id).then(function(r){
+    if(r.data){
+      r.data.forEach(function(remoto){
+        var yaExiste = videoconsultas.find(function(vv){ return vv._sbId === remoto.id; });
+        if(!yaExiste){
+          var partesF = (remoto.fecha||'').split('-');
+          var fechaDisp = partesF.length===3 ? (partesF[2]+'/'+partesF[1]+'/'+partesF[0]) : '';
+          videoconsultas.unshift({
+            _sbId: remoto.id,
+            pac: remoto.paciente_nombre||'(paciente sin datos)',
+            fecha: remoto.fecha||'',
+            fechaDisplay: fechaDisp,
+            hora: (remoto.hora||'').slice(0,5),
+            duracion: remoto.duracion||'',
+            motivo: remoto.motivo||'',
+            plataforma: remoto.plataforma||'',
+            link: remoto.link||''
+          });
+        }
+      });
+      localStorage.setItem(_userKey('mhcd_videoconsultas'), JSON.stringify(videoconsultas));
+      renderVideoconsultas();
+    }
+  });
+}function renderVideoconsultas(){
   var c = document.getElementById('tele-lista');
   if(!c) return;
   if(!videoconsultas.length){ c.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;">No hay videoconsultas programadas aún.</div>'; return; }
