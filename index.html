@@ -13928,6 +13928,7 @@ function mlIngresar(){
       try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
       try{ sincronizarPacientesSupabase(); }catch(e){}
       try{ sincronizarTurnosSupabase(); }catch(e){}
+		 try{ sincronizarVideoconsultasSupabase(); }catch(e){}
       try{ sincronizarHistoriasClinicasSupabase(); }catch(e){}
       try{ sincronizarEvolucionesSupabase(); }catch(e){}
       try{ showPanel('dash'); }catch(e){}
