@@ -10158,10 +10158,12 @@ function generarVideollamada(){
   var partes = fecha.split('-');
   var fechaDisplay = partes[2]+'/'+partes[1]+'/'+partes[0];
 
-  videoconsultas.unshift({
+  var nuevaVC = {
     pac:pac, fecha:fecha, fechaDisplay:fechaDisplay,
-    hora:hora, duracion:duracion, motivo:motivo, link:linkVideollamada
-  });
+    hora:hora, duracion:duracion, motivo:motivo, link:linkVideollamada, plataforma:'Meet'
+  };
+  videoconsultas.unshift(nuevaVC);
+  guardarVideoconsultaSupabase(nuevaVC);
 
   var msg = '🏥 *MedHistoriaClinicaOnline · Videoconsulta*\n\n'
     +'Hola '+pac+', tu videoconsulta está confirmada.\n\n'
