@@ -10383,7 +10383,7 @@ function sincronizarVideoconsultasSupabase(){
       +'<div class="agenda-hora">'+v.hora+'</div>'
       +'<div class="agenda-info"><div class="agenda-pac">'+v.pac+' <span style="font-size:.75rem;color:var(--g4);">· '+v.fechaDisplay+' · '+plat+'</span></div><div class="agenda-mot">'+v.motivo+' · '+v.duracion+'</div></div>'
       +linkBtn
-      +'<button onclick="videoconsultas.splice('+i+',1);renderVideoconsultas();" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:0 4px;">✕</button>'
+     +'<button onclick="eliminarVideoconsulta('+i+');" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:0 4px;">✕</button>'
       +'</div>';
   }).join('');
 }
