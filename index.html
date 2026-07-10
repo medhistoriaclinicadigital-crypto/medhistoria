@@ -10326,6 +10326,7 @@ function guardarVideoconsultaSupabase(v){
     motivo: v.motivo,
     plataforma: v.plataforma||'',
     link: v.link||'',
+    telefono: v.telefono||'',
     estado: 'programada'
   }).select().then(function(r){
     if(r.data && r.data[0]) v._sbId = r.data[0].id;
