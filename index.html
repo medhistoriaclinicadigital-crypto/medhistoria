@@ -10241,17 +10241,14 @@ function iniciarVideollamadaWA(){
   if(!d.pac){ alert('Ingresá el nombre del paciente.'); return; }
   if(!d.tel){ alert('Ingresá el número de WhatsApp del paciente.'); return; }
 
-  var msg = 'MedHistoriaClinicaOnline\n\nHola '+d.pac+', le confirmamos su videoconsulta medica:\n\nFecha: '+d.fechaDisplay+'\nHora: '+d.hora+' hs\nDuracion: '+d.duracion+'\nMotivo: '+d.motivo+'\n\nA la hora acordada llamenos por videollamada de WhatsApp al mismo numero desde donde recibio este mensaje.\n\nNo necesita instalar nada, use el WhatsApp que ya tiene.\n\nMedHistoriaClinicaOnline\nmedhistoriasclinicasdigitales.netlify.app';
-
-  var nuevaVC = {pac:d.pac, fecha:d.fechaInput, fechaDisplay:d.fechaDisplay, hora:d.hora, duracion:d.duracion, motivo:d.motivo, plataforma:'WhatsApp', link:'whatsapp'};
+  var nuevaVC = {pac:d.pac, fecha:d.fechaInput, fechaDisplay:d.fechaDisplay, hora:d.hora, duracion:d.duracion, motivo:d.motivo, plataforma:'WhatsApp', link:'whatsapp', telefono:d.tel};
     videoconsultas.unshift(nuevaVC);
     guardarVideoconsultaSupabase(nuevaVC);
   guardarLocal();
   renderVideoconsultas();
-  window.open('https://wa.me/54'+d.tel+'?text='+encodeURIComponent(msg),'_blank');
+  alert('✅ Videoconsulta guardada. La vas a ver en la lista de abajo.');
   ['tele-paciente','tele-tel','tele-email','tele-motivo'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
 }
-
 function abrirZoomYPegar(){
   var d = getDatosTele();
   if(!d.pac){ alert('Ingresá el nombre del paciente primero.'); return; }
