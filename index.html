@@ -10333,7 +10333,31 @@ function guardarVideoconsultaSupabase(v){
   });
 }
 
-function eliminarVideoconsulta(i){
+function mostrarOpcionesLlamada(i){
+  var v = videoconsultas[i];
+  if(!v) return;
+  var opciones = '';
+  if(v.link==='whatsapp'){
+    if(v.telefono){
+      opciones += '<button onclick="window.open(\'https://wa.me/54'+v.telefono+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;width:100%;">📱 Abrir WhatsApp con '+v.pac+'</button>';
+    } else {
+      opciones += '<div style="color:#6b7280;font-size:.85rem;margin-bottom:8px;">No hay teléfono guardado para este paciente.</div>';
+    }
+  } else if(v.link){
+    opciones += '<button onclick="window.open(\''+v.link+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;width:100%;">🎥 Entrar a la sala</button>'
+      +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+v.link+'\');this.textContent=\'✅ Copiado!\';" style="padding:12px;background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;color:#145a32;width:100%;">📋 Copiar link</button>';
+  }
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px;max-width:380px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.4);">'
+    +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.25rem;font-weight:700;color:#042b10;margin-bottom:4px;">Iniciar videoconsulta</div>'
+    +'<div style="font-size:.8rem;color:#5a7362;margin-bottom:16px;">'+v.pac+' · '+v.hora+' hs</div>'
+    +opciones
+    +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="margin-top:8px;padding:10px;background:none;border:1.5px solid #e5e7eb;border-radius:9px;font-size:.88rem;cursor:pointer;color:#6b7280;width:100%;">Cerrar</button>'
+    +'</div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+}function eliminarVideoconsulta(i){
   var v = videoconsultas[i];
   if(v && v._sbId){ sb.from('videoconsultas').delete().eq('id', v._sbId).then(function(){}); }
   videoconsultas.splice(i,1);
