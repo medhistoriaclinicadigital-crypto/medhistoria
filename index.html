@@ -5519,6 +5519,17 @@ function abrirAdmin(){
 }
 
 function cerrarAdmin(){
+	sb.auth.signOut();
+5. Verificá que te quedó así (líneas 5521 a 5526)
+function cerrarAdmin(){
+  sb.auth.signOut();
+  document.getElementById('adminOverlay').style.display='none';
+  document.getElementById('admin-user').value='';
+  document.getElementById('admin-pass').value='';
+}
+6. Bajá al final de la página y hacé clic en el botón verde "Commit changes..."
+Poné un mensaje corto como "cerrarAdmin cierra sesión de Supabase" y confirmá el commit.
+Avisame cuando lo hayas comiteado y lo verifico en el archivo real para confirmar que quedó bien.
   document.getElementById('adminOverlay').style.display='none';
   document.getElementById('admin-user').value='';
   document.getElementById('admin-pass').value='';
