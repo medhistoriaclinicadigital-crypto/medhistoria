@@ -13908,8 +13908,7 @@ function mlTab(t){
   document.getElementById('ml-form-reg').style.display = t==='reg'?'block':'none';
   document.getElementById('tab-ing').style.color = t==='ing'?'#22a050':'#aaa';
   document.getElementById('tab-ing').style.borderBottom = t==='ing'?'2px solid #22a050':'none';
-  document.getElementById('tab-reg').style.color = t==='reg'?'#22a050':'#aaa';
-  document.getElementById('tab-reg').style.borderBottom = t==='reg'?'2px solid #22a050':'none';
+  var tr=document.getElementById('tab-reg'); if(tr){ tr.style.color = t==='reg'?'#22a050':'#aaa'; tr.style.borderBottom = t==='reg'?'2px solid #22a050':'none'; }
   if(t==='reg'){
     ['ml-reg-nombre','ml-reg-cuil','ml-reg-mn','ml-reg-mp','ml-reg-esp','ml-reg-ciudad','ml-reg-email','ml-reg-pass','ml-reg-pass2'].forEach(function(id){
       var el=document.getElementById(id); if(el) el.value='';
