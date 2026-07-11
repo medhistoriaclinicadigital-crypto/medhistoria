@@ -14154,8 +14154,7 @@ function mlRegistrar(){
   });
 }
 // ══ PDF REAL con html2canvas + jsPDF ══
- var firmaImgResumen = usuarioActual ? usuarioActual.firma_imagen : localStorage.getItem('medhistoria_firma');
-  var html = _buildResumenHTML(nombre, medicoNombre, contenido.innerHTML, firmaImgResumen);
+ function generarPDFResumen(autoPrint){
   var contenido = document.getElementById('resumen-hc-contenido');
   if(!contenido||contenido.style.display==='none'){ alert('Seleccioná un paciente primero.'); return; }
   var sel = document.getElementById('resumen-pac-select');
@@ -14163,7 +14162,8 @@ function mlRegistrar(){
   var p = pacientes[idx];
   var nombre = p ? (p.apellido ? (p.apellido+' '+p.nombre) : (p.nombre||'Paciente')) : 'Paciente';
   var medicoNombre = usuarioActual?(usuarioActual.nombre||'Médico'):'Médico';
-  var html = _buildResumenHTML(nombre, medicoNombre, contenido.innerHTML);
+  var firmaImgResumen = usuarioActual ? usuarioActual.firma_imagen : localStorage.getItem('medhistoria_firma');
+  var html = _buildResumenHTML(nombre, medicoNombre, contenido.innerHTML, firmaImgResumen);
   var w = window.open('','_blank','width=960,height=780');
   w.document.write(html);
   w.document.close();
@@ -14171,7 +14171,6 @@ function mlRegistrar(){
     setTimeout(function(){ if(w && !w.closed){ w.print(); } }, 900);
   }
 }
-
 // ══ MODALES WA / EMAIL ══
 function _getPacienteSeleccionado(){
   var sel = document.getElementById('resumen-pac-select');
