@@ -12548,9 +12548,9 @@ function imprimirResumenHC(){
   if(!contenido||contenido.style.display==='none'){ alert('Seleccioná un paciente primero.'); return; }
   var sel = document.getElementById('resumen-pac-select');
   var idx = parseInt(sel.value);
-  var medicoNombre = usuarioActual?(usuarioActual.nombre||'Médico'):'Médico';
-  var firmaImgResumen = usuarioActual ? usuarioActual.firma_imagen : localStorage.getItem('medhistoria_firma');
+  var p = pacientes[idx];
   var nombre = p ? (p.apellido ? (p.apellido+' '+p.nombre) : (p.nombre||'Paciente')) : 'Paciente';
+  var medicoNombre = usuarioActual?(usuarioActual.nombre||'Médico'):'Médico';
   var firmaImgResumen = usuarioActual ? usuarioActual.firma_imagen : localStorage.getItem('medhistoria_firma');
   var baseHTML = _buildResumenHTML(nombre, medicoNombre, contenido.innerHTML, firmaImgResumen);
   // Inject a top bar with print/PDF instructions (hidden on actual print)
