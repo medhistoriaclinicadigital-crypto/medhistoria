@@ -4535,30 +4535,7 @@ document.getElementById('pacienteOverlay').addEventListener('click',function(e){
 function v(id){return(document.getElementById(id)||{value:''}).value||'—';}
 function hoy(){return new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});}
 
-// ── AUTH MODAL ──
-function abrirModal(tipo){
-  var el = document.getElementById('authOverlay');
-  if(el){ el.style.display='block'; cambiarTab(tipo||'login'); }
-}
-function cerrarModal(){
-  var el = document.getElementById('authOverlay');
-  if(el){ el.style.display='none'; }
-}
-function cambiarTab(t){
-  var ml = document.getElementById('mt-login');
-  var mr = document.getElementById('mt-reg');
-  var fl = document.getElementById('mf-login');
-  var fr = document.getElementById('mf-reg');
-  if(ml) ml.classList.toggle('on',t==='login');
-  if(mr) mr.classList.toggle('on',t==='registro');
-  if(fl) fl.style.display=t==='login'?'flex':'none';
-  if(fr) fr.style.display=t==='registro'?'flex':'none';
-}
-// Cerrar al hacer clic fuera
-window.addEventListener('click', function(e){
-  var overlay = document.getElementById('authOverlay');
-  if(overlay && e.target === overlay) cerrarModal();
-});
+
 
 // ── ADAPTACIÓN POR PAÍS ──
 var paisActual = 'ar';
