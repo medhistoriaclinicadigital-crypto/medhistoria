@@ -13933,11 +13933,12 @@ function mlIngresar(){
       if(rEl0 && rEl0.checked){
         localStorage.setItem('mhcd_recordar','1');
         localStorage.setItem('mhcd_user_guardado', u);
+        localStorage.setItem('mhcd_pass_guardado', p);
       } else {
         localStorage.removeItem('mhcd_recordar');
         localStorage.removeItem('mhcd_user_guardado');
+        localStorage.removeItem('mhcd_pass_guardado');
       }
-      localStorage.removeItem('mhcd_pass_guardado');
 
       usuarioActual = perfil;
       document.getElementById('miLoginModal').style.display='none';
