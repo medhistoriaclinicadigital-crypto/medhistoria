@@ -538,20 +538,13 @@ function solicitarAddon(nombre, precio){
 
 // Auto-capitalizar primera letra en inputs y textareas
 document.addEventListener('DOMContentLoaded', function(){
-  // Detectar link de restablecer contraseña (?reset=TOKEN)
+  // Detectar cuando Supabase confirma que estamos en modo "recuperar contraseña"
   try{
-    var params = new URLSearchParams(window.location.search);
-    var tokenURL = params.get('reset');
-    if(tokenURL){
-      var guardado = JSON.parse(localStorage.getItem('mhcd_reset_token')||'null');
-      if(guardado && guardado.token === tokenURL && Date.now() < guardado.expira){
-        mostrarFormNuevaPass(guardado.email);
-      } else {
-        alert('⚠️ Este link para restablecer la contraseña ya no es válido (expiró o ya fue usado). Pedí uno nuevo desde "¿Olvidaste tu contraseña?".');
+    sb.auth.onAuthStateChange(function(event, session){
+      if(event === 'PASSWORD_RECOVERY'){
+        mostrarFormNuevaPass();
       }
-      // Limpiar el ?reset= de la URL para que no quede visible
-      history.replaceState(null, '', window.location.pathname);
-    }
+    });
   }catch(e){}
   function aplicarMayuscula(el){
     // Excluir campos de contraseña, números, fechas, horas, teléfonos
