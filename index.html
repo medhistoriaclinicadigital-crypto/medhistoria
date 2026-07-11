@@ -12430,7 +12430,7 @@ function compartirResumenEmail(){
   window.open('mailto:'+email+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo));
 }
 
-function _buildResumenHTML(nombre, medicoNombre, contenidoHTML){
+function _buildResumenHTML(nombre, medicoNombre, contenidoHTML, firmaImg){
   var fecha = new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'});
   var logoSVG = '<svg width="32" height="38" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">'
     +'<linearGradient id="vara_exp" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#0a3d1f"/><stop offset="40%" stop-color="#34c464"/><stop offset="60%" stop-color="#6dde96"/><stop offset="100%" stop-color="#0a3d1f"/></linearGradient>'
@@ -12521,7 +12521,8 @@ function _buildResumenHTML(nombre, medicoNombre, contenidoHTML){
     +'</div>'
     +'<div class="badge-strip"><span class="badge">Ley 25.506</span><span class="badge">Ley 25.326</span><span class="badge">Documento digital</span></div>'
     +contenidoHTML
-    +'<div class="footer"><div class="footer-brand">Med<em>Historia</em>Clinica<em>Online</em></div><div class="footer-legal">Documento generado digitalmente · Válido conforme Ley 25.506<br>No requiere firma ológrafa</div></div>'
+    +(firmaImg ? '<div style="margin-top:24px;display:flex;justify-content:flex-end;"><div style="text-align:center;"><img src="'+firmaImg+'" style="max-height:50px;display:block;margin:0 auto 4px;"><div style="border-top:1.5px solid #145a32;padding-top:4px;font-weight:700;font-size:.82rem;color:#1a2e1e;min-width:180px;">'+medicoNombre+'</div><div style="font-size:.62rem;color:#5a7362;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">Firma del profesional</div></div></div>' : '')
+	  +'<div class="footer"><div class="footer-brand">Med<em>Historia</em>Clinica<em>Online</em></div><div class="footer-legal">Documento generado digitalmente · Válido conforme Ley 25.506<br>No requiere firma ológrafa</div></div>'
     +'</div></body></html>';
 }
 
