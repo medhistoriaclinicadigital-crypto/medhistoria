@@ -4748,6 +4748,7 @@ function guardarPerfil(){
 }
 
 function mostrarFormNuevaPass(){
+	var existente = document.getElementById('modal-nueva-pass'); if(existente) existente.remove();
   var html = '<div id="modal-nueva-pass" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;">'
     +'<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.18);position:relative;">'
     +'<button onclick="document.getElementById(\'modal-nueva-pass\').remove(); _pendingPasswordRecovery=false;" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:1.2rem;color:#999;cursor:pointer;">✕</button>'
