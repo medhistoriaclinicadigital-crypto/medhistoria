@@ -660,11 +660,11 @@ document.addEventListener('DOMContentLoaded', function(){
     <p style="color:#888;margin:0 0 20px;font-size:.82rem;">Historia clínica online con inteligencia artificial</p>
     <div style="display:flex;border-bottom:2px solid #eee;margin-bottom:20px;">
       <button id="tab-ing" onclick="mlTab('ing')" style="flex:1;padding:10px;border:none;background:none;color:#22a050;font-weight:700;border-bottom:2px solid #22a050;margin-bottom:-2px;cursor:pointer;font-size:.95rem;">Ingresar</button>
-      <button id="tab-reg" onclick="mlTab('reg')" style="flex:1;padding:10px;border:none;background:none;color:#aaa;font-weight:600;cursor:pointer;font-size:.95rem;">Registrarse</button>
+     
     </div>
     <div id="ml-form-ing">
       <input id="ml-user" type="email" placeholder="Usuario o correo electrónico" autocapitalize="none" autocomplete="off" style="width:100%;padding:12px 14px;margin:5px 0;border:none;border-bottom:1.5px solid #ddd;box-sizing:border-box;font-size:.95rem;display:block;outline:none;background:transparent;">
-      <div style="position:relative;">
+     <p style="margin:8px 0 0;font-size:.83rem;color:#666;">¿No tenés cuenta? <span style="color:#22a050;font-weight:700;cursor:pointer;" onclick="document.getElementById('miLoginModal').style.display='none';document.getElementById('sec-planes').scrollIntoView({behavior:'smooth'});">Ver planes</span></p>
         <input id="ml-pass" type="password" placeholder="Contraseña" autocomplete="off" style="width:100%;padding:12px 14px;margin:5px 0;border:none;border-bottom:1.5px solid #ddd;box-sizing:border-box;font-size:.95rem;display:block;outline:none;background:transparent;padding-right:40px;">
         <button type="button" onclick="togglePass('ml-pass',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;color:#aaa;padding:4px;"><span style="position:relative;display:inline-block;font-size:1.1rem;">👁<span style="position:absolute;left:0;top:50%;transform:translateY(-50%) rotate(-45deg);width:100%;height:2px;background:#888;display:block;border-radius:2px;"></span></span></button>
       </div>
