@@ -658,13 +658,12 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
     <h2 style="color:#145a32;margin:0 0 4px;font-size:1.35rem;font-family:'Cormorant Garamond',Georgia,serif;font-weight:700;white-space:nowrap;">Med<span style="color:var(--g5);">Historia</span>Clinica<span style="color:var(--g5);">Online</span></h2>
     <p style="color:#888;margin:0 0 20px;font-size:.82rem;">Historia clínica online con inteligencia artificial</p>
-    <div style="display:flex;border-bottom:2px solid #eee;margin-bottom:20px;">
+     <div style="display:flex;border-bottom:2px solid #eee;margin-bottom:20px;">
       <button id="tab-ing" onclick="mlTab('ing')" style="flex:1;padding:10px;border:none;background:none;color:#22a050;font-weight:700;border-bottom:2px solid #22a050;margin-bottom:-2px;cursor:pointer;font-size:.95rem;">Ingresar</button>
-     
     </div>
     <div id="ml-form-ing">
       <input id="ml-user" type="email" placeholder="Usuario o correo electrónico" autocapitalize="none" autocomplete="off" style="width:100%;padding:12px 14px;margin:5px 0;border:none;border-bottom:1.5px solid #ddd;box-sizing:border-box;font-size:.95rem;display:block;outline:none;background:transparent;">
-     <p style="margin:8px 0 0;font-size:.83rem;color:#666;">¿No tenés cuenta? <span style="color:#22a050;font-weight:700;cursor:pointer;" onclick="document.getElementById('miLoginModal').style.display='none';document.getElementById('sec-planes').scrollIntoView({behavior:'smooth'});">Ver planes</span></p>
+      <div style="position:relative;">
         <input id="ml-pass" type="password" placeholder="Contraseña" autocomplete="off" style="width:100%;padding:12px 14px;margin:5px 0;border:none;border-bottom:1.5px solid #ddd;box-sizing:border-box;font-size:.95rem;display:block;outline:none;background:transparent;padding-right:40px;">
         <button type="button" onclick="togglePass('ml-pass',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;color:#aaa;padding:4px;"><span style="position:relative;display:inline-block;font-size:1.1rem;">👁<span style="position:absolute;left:0;top:50%;transform:translateY(-50%) rotate(-45deg);width:100%;height:2px;background:#888;display:block;border-radius:2px;"></span></span></button>
       </div>
@@ -674,7 +673,7 @@ document.addEventListener('DOMContentLoaded', function(){
       </label>
       <button onclick="mlIngresar()" style="width:100%;padding:13px;margin-top:12px;background:linear-gradient(135deg,#22a050,#145a32);color:white;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">Ingresar a mi cuenta</button>
       <p style="margin:14px 0 0;font-size:.83rem;color:#22a050;cursor:pointer;" onclick="mostrarRecuperarPass()">¿Olvidaste tu contraseña?</p>
-      <p style="margin:8px 0 0;font-size:.83rem;color:#666;">¿No tenés cuenta? <span style="color:#22a050;font-weight:700;cursor:pointer;" onclick="mlTab('reg')">Registrate gratis</span></p>
+      <p style="margin:8px 0 0;font-size:.83rem;color:#666;">¿No tenés cuenta? <span style="color:#22a050;font-weight:700;cursor:pointer;" onclick="document.getElementById('miLoginModal').style.display='none';document.getElementById('sec-planes').scrollIntoView({behavior:'smooth'});">Ver planes</span></p>
     </div>
     <div id="ml-form-reg" style="display:none;max-height:65vh;overflow-y:auto;padding-right:4px;scroll-behavior:smooth;">
       <div style="font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:6px 0 4px;">Plan</div>
