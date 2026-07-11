@@ -12305,7 +12305,8 @@ function nuevaOrden(tipo){
   };
   (campos[tipo]||[]).forEach(function(id){
     var el = document.getElementById(id);
-    if(el) el.value = '';
+   if(!el) return;
+    if(el.tagName==='SELECT'){ el.selectedIndex = 0; } else { el.value = ''; }
   });
   // Scroll al inicio del formulario
   var panel = document.getElementById('panel-'+(tipo==='pedido'?'estudios':tipo==='receta'?'recetas':'derivaciones'));
