@@ -14254,6 +14254,22 @@ function finalizarAtencion(){
   showPanel('pacientes');
 }
 
+function limpiarReceta(){
+  ['rx2-paciente','rx2-dni','rx2-fnac','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind','rx2-wa','rx2-email'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  var s=document.getElementById('rx2-sexo'); if(s) s.selectedIndex=0;
+  showPanel('hc');
+}
+
+function limpiarDerivacion(){
+  ['der-paciente','der-dni','der-fnac','der-os','der-afiliado','der-plan','der-diag','der-motivo','der-especialidad','der-ant','der-wa','der-email'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  var s=document.getElementById('der-sexo'); if(s) s.selectedIndex=0;
+  var u=document.getElementById('der-urgencia'); if(u) u.selectedIndex=0;
+  showPanel('hc');
+}
 function limpiarEstudios(){
   ['est-paciente','est-dni','est-os','est-afiliado','est-plan','est-diag','est-det','est-medico','est-wa','est-email','est-otro'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
