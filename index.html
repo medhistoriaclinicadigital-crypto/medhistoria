@@ -12300,7 +12300,7 @@ function nuevaOrden(tipo){
     (tipo==='receta'?'receta':tipo==='derivacion'?'derivación':'orden de estudios')+'?')) return;
   var campos = {
     receta: ['rx2-paciente','rx2-dni','rx2-fnac','rx2-sexo','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind','rx2-wa','rx2-email'],
-    derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afiliado','der-plan','der-diag','der-motivo','der-especialidad','der-wa','der-email'],
+    derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afiliado','der-plan','der-diag','der-motivo','der-especialidad','der-ant','der-urgencia','der-medico','der-wa','der-email'],
     pedido: ['est-paciente','est-dni','est-fnac','est-sexo','est-os','est-afiliado','est-diag','est-det','est-wa','est-email']
   };
   (campos[tipo]||[]).forEach(function(id){
