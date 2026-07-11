@@ -4749,7 +4749,8 @@ function guardarPerfil(){
 
 function mostrarFormNuevaPass(){
   var html = '<div id="modal-nueva-pass" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;">'
-    +'<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.18);">'
+    +'<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.18);position:relative;">'
+    +'<button onclick="document.getElementById(\'modal-nueva-pass\').remove(); _pendingPasswordRecovery=false;" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:1.2rem;color:#999;cursor:pointer;">✕</button>'
     +'<h3 style="margin:0 0 8px;color:#145a32;font-size:1.15rem;">🔑 Elegí tu nueva contraseña</h3>'
     +'<label style="font-size:.8rem;font-weight:700;color:#555;display:block;margin-bottom:4px;">Nueva contraseña (mínimo 8 caracteres)</label>'
     +'<input id="np-pass1" type="password" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:12px;font-size:.95rem;">'
