@@ -538,14 +538,9 @@ function solicitarAddon(nombre, precio){
 
 // Auto-capitalizar primera letra en inputs y textareas
 document.addEventListener('DOMContentLoaded', function(){
-  // Detectar cuando Supabase confirma que estamos en modo "recuperar contraseña"
-  try{
-    sb.auth.onAuthStateChange(function(event, session){
-      if(event === 'PASSWORD_RECOVERY'){
-        mostrarFormNuevaPass();
-      }
-    });
-  }catch(e){}
+  window._appListoParaRecuperarPass = true;
+  if(typeof _pendingPasswordRecovery !== 'undefined' && _pendingPasswordRecovery){ mostrarFormNuevaPass(); }
+  
   function aplicarMayuscula(el){
     // Excluir campos de contraseña, números, fechas, horas, teléfonos
     var tipo = (el.type||'').toLowerCase();
@@ -594,6 +589,7 @@ document.addEventListener('DOMContentLoaded', function(){
   const SUPABASE_URL = "https://rgwqiguojmwmkifrxfra.supabase.co";
   const SUPABASE_KEY = "sb_publishable_vgopqXd1JPlJtUrI_NBklQ_5sgGlO9u";
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+	var _pendingPasswordRecovery = false; sb.auth.onAuthStateChange(function(event, session){ if(event === 'PASSWORD_RECOVERY'){ _pendingPasswordRecovery = true; if(window._appListoParaRecuperarPass){ mostrarFormNuevaPass(); } } });
 </script>
 </head>
 <body>
