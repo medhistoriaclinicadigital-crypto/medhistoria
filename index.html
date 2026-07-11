@@ -4758,74 +4758,49 @@ function guardarPerfil(){
   alert('✅ Perfil actualizado correctamente.');
 }
 
-function mostrarFormNuevaPass(email){
+function mostrarFormNuevaPass(){
   var html = '<div id="modal-nueva-pass" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;">'
     +'<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.18);">'
     +'<h3 style="margin:0 0 8px;color:#145a32;font-size:1.15rem;">🔑 Elegí tu nueva contraseña</h3>'
-    +'<p style="margin:0 0 18px;font-size:.85rem;color:#666;">Cuenta: '+email+'</p>'
     +'<label style="font-size:.8rem;font-weight:700;color:#555;display:block;margin-bottom:4px;">Nueva contraseña (mínimo 8 caracteres)</label>'
     +'<input id="np-pass1" type="password" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:12px;font-size:.95rem;">'
     +'<label style="font-size:.8rem;font-weight:700;color:#555;display:block;margin-bottom:4px;">Repetí la nueva contraseña</label>'
     +'<input id="np-pass2" type="password" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:18px;font-size:.95rem;">'
-    +'<button onclick="guardarNuevaPass(\''+email.replace(/'/g,"\\'")+'\')" style="width:100%;padding:11px;background:linear-gradient(135deg,#1a7a3a,#2ecc71);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">💾 Guardar nueva contraseña</button>'
+    +'<button onclick="guardarNuevaPass()" style="width:100%;padding:11px;background:linear-gradient(135deg,#1a7a3a,#2ecc71);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">💾 Guardar nueva contraseña</button>'
     +'</div></div>';
   var div = document.createElement('div');
   div.innerHTML = html;
   document.body.appendChild(div);
 }
-function guardarNuevaPass(email){
+function guardarNuevaPass(){
   var p1 = (document.getElementById('np-pass1')||{}).value||'';
   var p2 = (document.getElementById('np-pass2')||{}).value||'';
   if(p1.length < 8){ alert('La contraseña debe tener al menos 8 caracteres.'); return; }
   if(p1 !== p2){ alert('Las contraseñas no coinciden.'); return; }
-  try{
-    var guardados = JSON.parse(localStorage.getItem('med_usuarios')||'[]');
-    var idx = guardados.findIndex(function(u){ return (u.email||'').toLowerCase() === email.toLowerCase(); });
-    if(idx<0){ alert('No se encontró la cuenta.'); return; }
-    guardados[idx].pass = p1;
-    localStorage.setItem('med_usuarios', JSON.stringify(guardados));
-    localStorage.removeItem('mhcd_reset_token');
+  sb.auth.updateUser({ password: p1 }).then(function(r){
+    if(r.error){
+      alert('No se pudo guardar la nueva contraseña. Pedí el link de nuevo desde "¿Olvidaste tu contraseña?".');
+      return;
+    }
     var modal = document.getElementById('modal-nueva-pass');
     if(modal) modal.remove();
     alert('✅ Tu contraseña se actualizó correctamente. Ya podés ingresar con la nueva.');
-  }catch(e){
-    alert('No se pudo guardar la nueva contraseña. Intentá de nuevo.');
-  }
+    history.replaceState(null, '', window.location.pathname);
+  });
 }
-
 function mostrarRecuperarPass(){
-  try {
-    var guardados = JSON.parse(localStorage.getItem('med_usuarios')||'[]');
-    if(!guardados.length){
-      var r = confirm('No hay cuentas registradas en este dispositivo.\n\n¿Querés crear una cuenta nueva?');
-      if(r){ mlTab('reg'); }
+  var email = prompt('Ingresá tu email para recuperar tu contraseña:');
+  if(!email) return;
+  email = email.trim().toLowerCase();
+  sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname + '?reset=1'
+  }).then(function(r){
+    if(r.error){
+      alert('No se pudo enviar el email. Verificá que el correo esté bien escrito e intentá de nuevo.');
       return;
     }
-    var email = prompt('Ingresá tu email para recuperar tu contraseña:');
-    if(!email) return;
-    email = email.trim().toLowerCase();
-    var usuario = guardados.find(function(u){ return (u.email||'').toLowerCase() === email; });
-    if(!usuario){ alert('No se encontró ninguna cuenta con ese email.'); return; }
-    var token = Math.random().toString(36).slice(2) + Date.now().toString(36);
-    var expira = Date.now() + (24*60*60*1000); // 24 horas
-    try{
-      localStorage.setItem('mhcd_reset_token', JSON.stringify({email: usuario.email, token: token, expira: expira}));
-    }catch(e){}
-    var resetLink = window.location.origin + window.location.pathname + '?reset=' + token;
-    emailjs.send('service_3cprmeh', 'template_r9q8hm8', {
-      nombre_usuario: usuario.nombre || 'Doctor/a',
-      email: usuario.email,
-      message: '⚠️ Importante: abrí este link desde la misma computadora/navegador donde pediste el cambio de contraseña. Si lo abrís desde otro dispositivo (por ejemplo el celular, si lo pediste desde la PC), el link no va a funcionar.\n\nHacé clic en el botón de abajo para elegir una contraseña nueva. El link es válido por 24 horas.',
-      reset_link: resetLink
-    }).then(function(){
-      alert('✅ Te enviamos un link para restablecer tu contraseña al email registrado (' + usuario.email + ').\n\nRevisá tu bandeja de entrada (y la carpeta de spam).\n\n⚠️ Importante: abrí el link desde esta misma computadora/navegador donde pediste el cambio. Si lo abrís desde otro dispositivo, te va a decir que no es válido.');
-    }).catch(function(err){
-      console.log('EmailJS error:', err);
-      alert('No se pudo enviar el email. Intentá de nuevo en unos minutos.');
-    });
-  } catch(e) {
-    alert('No se pudo recuperar la contraseña. Intentá registrarte con una cuenta nueva.');
-  }
+    alert('✅ Si existe una cuenta con ese email, te enviamos un link para restablecer tu contraseña.\n\nRevisá tu bandeja de entrada (y la carpeta de spam).');
+  });
 }
 function cerrarApp(){
   try{ sb.auth.signOut(); }catch(e){}
