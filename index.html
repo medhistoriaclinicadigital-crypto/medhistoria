@@ -12534,7 +12534,8 @@ function descargarResumenHC(){
   var p = pacientes[idx];
   var nombre = p ? (p.apellido ? (p.apellido+' '+p.nombre) : (p.nombre||'Paciente')) : 'Paciente';
   var medicoNombre = usuarioActual?(usuarioActual.nombre||'Médico'):'Médico';
-  var html = _buildResumenHTML(nombre, medicoNombre, contenido.innerHTML);
+ var firmaImgResumen = usuarioActual ? usuarioActual.firma_imagen : localStorage.getItem('medhistoria_firma');
+  var html = _buildResumenHTML(nombre, medicoNombre, contenido.innerHTML, firmaImgResumen);
   var blob = new Blob([html],{type:'text/html'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
