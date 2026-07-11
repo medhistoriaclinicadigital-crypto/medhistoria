@@ -4852,58 +4852,6 @@ function entrarDirecto(){
   try{ fixScroll(); }catch(e){}
   try{ showPanel('dash'); }catch(e){}
 }
-function entrarApp(){
-  var uEl = document.getElementById('login-usuario');
-  var pEl = document.getElementById('login-pass');
-  var errEl = document.getElementById('login-error');
-  var u = uEl ? uEl.value.trim() : '';
-  var p = pEl ? pEl.value : '';
-
-  if(!u || !p){ 
-    if(errEl){ errEl.textContent='Completá usuario y contraseña.'; errEl.style.display='block'; }
-    return; 
-  }
-
-sb.from('usuarios').select('*').eq('email', u).eq('password', p).then(function(r){
-    var encontrado = (r.data && r.data[0]) || null;
-    if(!encontrado){
-      var guardados = [];
-      try { guardados = JSON.parse(localStorage.getItem('med_usuarios')||'[]'); } catch(e){}
-      encontrado = guardados.find(function(usr){
-        return (usr.email===u || usr.usuario===u) && usr.pass===p;
-      });
-    }
-    if(!encontrado){
-      if(errEl){ errEl.textContent='Usuario o contraseña incorrectos.'; errEl.style.display='block'; }
-      return;
-    }
-    if(errEl) errEl.style.display='none';
-    usuarioActual = encontrado;
-    continuarLogin(encontrado);
-  });
-}
-  
-
-function continuarLogin(encontrado){
-
-  var landing = document.getElementById('landing');
-  var app = document.getElementById('app');
-  if(landing) landing.style.display='none';
-  document.body.classList.add('in-app');
-  if(app){ app.style.display='block'; }
-  window.scrollTo(0,0); document.documentElement.scrollTop=0; document.body.scrollTop=0;
-  setTimeout(function(){ window.scrollTo(0,0); document.documentElement.scrollTop=0; document.body.scrollTop=0; },50);
-  setTimeout(function(){ window.scrollTo(0,0); document.documentElement.scrollTop=0; document.body.scrollTop=0; },200);
-  try{ cerrarAuthOverlay(); }catch(e){}
-  try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){}
-  try{ document.getElementById('hc-fecha-auto').value = hoy(); }catch(e){}
-  var nombre = encontrado.nombre || encontrado.email || 'Dr. Usuario';
-  try{ document.getElementById('app-user-name').textContent = nombreConTitulo(usuarioActual||{nombre:nombre}) + ' ✏️'; }catch(e){}
-  try{ actualizarFechaHC(); }catch(e){}
-  try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
-  try{ fixScroll(); }catch(e){}
-  try{ showPanel('dash'); }catch(e){}
-}
 
 
 // ── EDITAR PERFIL ──
