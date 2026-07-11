@@ -12551,7 +12551,6 @@ function imprimirResumenHC(){
   var nombre = p ? (p.apellido ? (p.apellido+' '+p.nombre) : (p.nombre||'Paciente')) : 'Paciente';
   var firmaImgResumen = usuarioActual ? usuarioActual.firma_imagen : localStorage.getItem('medhistoria_firma');
   var baseHTML = _buildResumenHTML(nombre, medicoNombre, contenido.innerHTML, firmaImgResumen);
-  var baseHTML = _buildResumenHTML(nombre, medicoNombre, contenido.innerHTML);
   // Inject a top bar with print/PDF instructions (hidden on actual print)
   var barHTML = '<div class="no-print" style="background:#042b10;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">'
     +'<div style="color:#6dde96;font-family:Outfit,sans-serif;font-size:.85rem;font-weight:600;">Para guardar como PDF: elegí <strong style=\'color:#fff\'>Guardar como PDF</strong> en el destino de impresión.</div>'
