@@ -1,4 +1,4 @@
-<!-- redeploy 4 -->
+<!-- redeploy 4 -->function loginAdmin()
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5525,15 +5525,19 @@ function cerrarAdmin(){
 }
 
 function loginAdmin(){
+ function loginAdmin(){
   var u = document.getElementById('admin-user').value.trim();
   var p = document.getElementById('admin-pass').value;
-  if(u===ADMIN_USER && p===ADMIN_PASS){
+  sb.auth.signInWithPassword({email:u, password:p}).then(function(r){
+    if(r.error || !r.data || !r.data.user){
+      alert('Usuario o contraseña incorrectos.');
+      return;
+    }
     document.getElementById('admin-login').style.display='none';
     document.getElementById('admin-panel').style.display='block';
     renderAdmin();
-  } else {
-    alert('Usuario o contraseña incorrectos.');
-  }
+  });
+} 
 }
 
 function switchAdminTab(btn, id){
