@@ -9385,7 +9385,42 @@ function guardarDiagnostico(){
 
 // ══ RENDER HISTORIAL DE EVOLUCIONES EN LA PESTAÑA ══
 // ══ IA: GENERAR RESUMEN NARRATIVO DE CONSULTA ══
-async function generarResumenNarrativoIA(){
+async function generarResumenCompletoIA(){
+  var p = (pacienteHCActualIdx>=0 && pacientes[pacienteHCActualIdx]) ? pacientes[pacienteHCActualIdx] : {};
+  var btn = document.querySelector('[onclick="generarResumenCompletoIA()"]');
+  if(btn){ btn.textContent = '⏳ Generando...'; btn.disabled = true; }
+  var datos = '';
+  if(p.edad) datos += 'Edad: '+p.edad+'\n';
+  if(p.sexo) datos += 'Sexo: '+p.sexo+'\n';
+  if(p.antPersonal) datos += 'Antecedentes personales: '+p.antPersonal+'\n';
+  if(p.antFamiliar) datos += 'Antecedentes familiares: '+p.antFamiliar+'\n';
+  if(p.antQuirurgico) datos += 'Antecedentes quirúrgicos: '+p.antQuirurgico+'\n';
+  if(p.alergias) datos += 'Alergias: '+p.alergias+'\n';
+  if(p.medicacion) datos += 'Medicación habitual: '+p.medicacion+'\n';
+  var evolTexto = '';
+  (evoluciones||[]).forEach(function(e){
+    evolTexto += '- '+(e.fecha||'')+': Motivo: '+(e.motivo||'')+'. Evolución: '+(e.cuadro||'')+'. Plan: '+(e.plan||'')+'\n';
+  });
+  if(evolTexto) datos += 'Evoluciones registradas:\n'+evolTexto;
+  if(!datos){ alert('No hay datos clínicos cargados todavía para este paciente.'); if(btn){ btn.textContent = '✨ Generar Resumen con IA'; btn.disabled = false; } return; }
+  var prompt = 'Sos un médico redactando un resumen clínico conciso en español argentino, para entregarle al paciente o a otro profesional.\n'
+    + 'Datos clínicos del caso (sin nombre, por privacidad):\n\n' + datos
+    + '\nRedactá un RESUMEN breve (2 a 4 párrafos) que cubra: antecedentes relevantes, evolución general del cuadro, y estado/plan actual. Lenguaje médico claro y profesional, en tercera persona.';
+  try{
+    var response = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:getHeaders(),
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:600, messages:[{role:'user', content: prompt}] })
+    });
+    var data = await response.json();
+    var texto = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : 'No se pudo generar el resumen.';
+    document.getElementById('res-ia-texto').textContent = texto;
+    document.getElementById('res-ia-box').style.display = 'block';
+  }catch(e){
+    alert('No se pudo generar el resumen con IA. Verificá tu clave de API en Configuración.');
+  }
+  if(btn){ btn.textContent = '✨ Generar Resumen con IA'; btn.disabled = false; }
+}
+	async function generarResumenNarrativoIA(){
   var apiKey = localStorage.getItem('anthropic_api_key') || '';
   if(!apiKey){
     alert('⚠️ Para usar esta función necesitás configurar la API Key de IA.\nAndá a Configurar IA en el menú lateral.');
