@@ -9403,7 +9403,7 @@ async function generarResumenNarrativoIA(){
 
   var prompt = 'Sos un médico especialista redactando una evolución clínica en español argentino.\n'
     + 'Generá un texto narrativo médico profesional y conciso basado en estos datos:\n\n'
-    + 'PACIENTE: ' + (p.nombre||'Sin nombre') + (p.edad?' · '+p.edad+' años':'') + (p.sexo?' · '+p.sexo:'') + '\n'
+   + 'PACIENTE: paciente' + (p.edad?' de '+p.edad+' años':'') + (p.sexo?', sexo '+p.sexo:'') + ' (sin identificar por privacidad)' + '\n'
     + (p.antPersonal?'ANTECEDENTES: '+p.antPersonal+'\n':'')
     + (p.medicacion?'MEDICACIÓN HABITUAL: '+p.medicacion+'\n':'')
     + 'MOTIVO DE CONSULTA: ' + (motivo||'No especificado') + '\n'
