@@ -9820,6 +9820,9 @@ function generarResumen(){
   // MÉDICO PIE
   var medPie = document.getElementById('res-medico-pie');
   if(medPie) medPie.textContent = ga('evol-medico') || (usuarioActual?usuarioActual.nombre:'Médico tratante');
+	var firmaImgEl = document.getElementById('res-firma-img');
+  var firmaGuardadaRes = usuarioActual ? usuarioActual.firma_imagen : localStorage.getItem('medhistoria_firma');
+  if(firmaImgEl){ if(firmaGuardadaRes){ firmaImgEl.src = firmaGuardadaRes; firmaImgEl.style.display='block'; } else { firmaImgEl.style.display='none'; } }
 }
 
 function imprimirResumenTab(){
@@ -9830,10 +9833,7 @@ function imprimirResumenTab(){
   w.document.write('<html><head><title>Historia Clínica</title>'
     +'<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">'
     +'<style>:root{--g2:#0a3d1f;--g3:#145a32;--g4:#1a7a42;--g5:#22a050;--g6:#34c464;--g9:#e3fbed;--cream:#f6fcf8;--text:#1a2e1e;--muted:#5a7362;}body{font-family:Outfit,sans-serif;background:#fff;padding:24px;color:var(--text);}</style>'
-				  var firmaImgEl = document.getElementById('res-firma-img');
-  var firmaGuardadaRes = usuarioActual ? usuarioActual.firma_imagen : localStorage.getItem('medhistoria_firma');
-  if(firmaImgEl){ if(firmaGuardadaRes){ firmaImgEl.src = firmaGuardadaRes; firmaImgEl.style.display='block'; } else { firmaImgEl.style.display='none'; } } 
-    +'</head><body>'+doc.innerHTML+'</body></html>');
+				
   w.document.close();
   setTimeout(function(){ w.print(); }, 500);
 }
