@@ -2132,7 +2132,11 @@ document.addEventListener('DOMContentLoaded', function(){
 
             <!-- Datos personales -->
             <div style="margin-bottom:20px;">
-              <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:700;color:var(--g2);padding:10px 0 8px;border-bottom:2px solid var(--g6);margin-bottom:12px;">👤 Datos del paciente</div>
+             <div id="res-ia-box" style="display:none;background:var(--g9);border-radius:12px;padding:18px 20px;margin-bottom:20px;">
+                <div style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:700;color:var(--g2);margin-bottom:8px;">✨ Resumen (generado con IA)</div>
+                <div id="res-ia-texto" style="font-size:.9rem;color:var(--text);line-height:1.6;white-space:pre-wrap;"></div>
+              </div>
+				<div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:700;color:var(--g2);padding:10px 0 8px;border-bottom:2px solid var(--g6);margin-bottom:12px;">👤 Datos del paciente</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;" id="res-datos-personales">
                 <div style="color:var(--muted);">Cargando...</div>
               </div>
