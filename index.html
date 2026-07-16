@@ -827,7 +827,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <span class="law-badge">Decreto 393/2023</span>
         <span class="law-badge">Ley 26.529 — Derechos del Paciente</span>
         <span class="law-badge">Ley 25.326 — Datos Personales</span>
-        <span class="law-badge">Ley 25.506 — Firma Digital</span>
+        <span class="law-badge">Ley 27.553 – Firma Electrónica</span>
         <span class="law-badge">Ley 26.682 — Medicina Prepaga</span>
         <span class="law-badge">Ley 26.285 — Receta Electrónica</span>
         <span class="law-badge">Ley 17.132 — Ejercicio de la Medicina</span>
@@ -1047,7 +1047,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <div style="background:rgba(255,255,255,.06);border:1px solid rgba(109,222,150,.2);border-radius:16px;padding:28px 24px;text-align:center;">
         <div style="font-size:2.5rem;margin-bottom:12px;">💊</div>
         <h3 style="color:#fff;font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin-bottom:8px;">Receta Médica Online</h3>
-        <p style="color:var(--g8);font-size:.85rem;margin-bottom:16px;line-height:1.6;">Generá recetas con firma digital con validez legal según Ley 25.506. Enviá por WhatsApp o Email al instante.</p>
+       <p style="color:var(--g8);font-size:.85rem;margin-bottom:16px;line-height:1.6;">Generá recetas con firma electrónica con validez legal según Ley 27.553. Enviá por WhatsApp o Email al instante.</p>
         <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px;">
           <div style="background:rgba(109,222,150,.1);border-radius:8px;padding:6px 12px;font-size:.78rem;color:var(--g7);">✓ Firma digital incluida</div>
           <div style="background:rgba(109,222,150,.1);border-radius:8px;padding:6px 12px;font-size:.78rem;color:var(--g7);">✓ Envío por WhatsApp y Email</div>
@@ -2226,7 +2226,7 @@ document.addEventListener('DOMContentLoaded', function(){
               </div>
             </div>
           <div style="margin-top:18px;">
-            <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('receta')">✦ Generar Receta (Ley 25.506)</button>
+ <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('receta')">✦ Generar Receta (Ley 27.553)</button>
           </div>
           <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
             <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#dc2626,#991b1b);" onclick="descargarPDF('receta')">📄 Descargar PDF</button>
@@ -2366,8 +2366,7 @@ document.addEventListener('DOMContentLoaded', function(){
             </div>
           </div>
           <div style="margin-top:18px;">
-            <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('derivacion')">✦ Generar Derivación (Ley 25.506)</button>
-          </div>
+            <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('derivacion')">✦ Generar Derivación (Ley 27.553)</button>
           <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
             <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#dc2626,#991b1b);" onclick="descargarPDF('derivacion')">📄 Descargar PDF</button>
             <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#374151,#1f2937);" onclick="imprimirDoc('derivacion')">🖨️ Imprimir</button>
@@ -2422,7 +2421,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
           </div>
           <div style="margin-top:18px;">
-            <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('pedido')">✦ Generar Pedido de Estudios (Ley 25.506)</button>
+             <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('pedido')">✦ Generar Pedido de Estudios (Ley 27.553)</button>
           </div>
           <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
             <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#dc2626,#991b1b);" onclick="descargarPDF('pedido')">📄 Descargar PDF</button>
@@ -4857,9 +4856,8 @@ async function consultarIA(){
 // ── GENERAR DOCUMENTOS ──
 function generarDocumento(tipo){
   var nombres = {receta:'Receta Médica', pedido:'Pedido de Estudios', derivacion:'Derivación'};
-  var leyes = {receta:'Ley 25.506 · Ley 26.285', pedido:'Ley 25.506 · Ley 27.706', derivacion:'Ley 25.506 · Ley 27.706'};
-  var nombre = nombres[tipo] || tipo;
-  var ley = leyes[tipo] || 'Ley 25.506';
+  var leyes = {receta:'Ley 27.553 · Ley 26.285', pedido:'Ley 27.553 · Ley 27.706', derivacion:'Ley 27.553 · Ley 27.706'};
+  var ley = leyes[tipo] || 'Ley 27.553';
   // Mostrar confirmación visual
   var btn = event.currentTarget;
   var original = btn.innerHTML;
@@ -4873,7 +4871,7 @@ function generarDocumento(tipo){
   }, 3000);
   // Ofrecer imprimir
   setTimeout(function(){
-    if(confirm('✅ ' + nombre + ' generada con firma digital.\n\n' + ley + '\n\n¿Querés imprimirla ahora?')){
+   if(confirm('✅ ' + nombre + ' generada con firma electrónica.\n\n' + ley + '\n\n¿Querés imprimirla ahora?')){
       imprimirDoc(tipo);
     }
   }, 400);
@@ -11473,7 +11471,7 @@ function enviarAutoEmail(tipo){
         +'ADJUNTO PDF: El archivo PDF "'+ nombre +'" se descargó automáticamente\n'
         +'en tu carpeta de Descargas. Adjuntalo a este email antes de enviarlo.\n'
         +'====================================\n'
-        +'Firma Digital - Ley 25.506\n'
+       +'Firma Electrónica - Ley 27.553\n'
         +'MedHistoriaClinicaOnline\nmedhistoriaclinicaonline@gmail.com';
       window.location.href='mailto:'+email+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
     }, 800);
@@ -11561,7 +11559,7 @@ function _enviarWhatsAppDoc(d, tel){
     +'\n\n👨‍⚕️ *'+d.medico+'*\n\n'
     +'📎 *El PDF ya se descargó en tu dispositivo.*\n'
     +'Adjuntalo a este mensaje desde el clip 📎\n\n'
-    +'_Firma Digital · Ley 25.506 · MedHistoriaClinicaOnline_';
+    +'_Firma Electrónica · Ley 27.553 · MedHistoriaClinicaOnline_';
 
   window.open('https://wa.me/54'+tel.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
 }
@@ -11652,7 +11650,7 @@ function enviarWhatsApp(tipo){
       + '\n💊 *Medicación prescripta:*\n'+(med||'(no indicada)')
       + (ind ? '\n\n📋 *Indicaciones:*\n'+ind : '')
       + '\n\n👨‍⚕️ '+medico
-      + '\n\n_Emitida con firma digital · Ley 25.506 · medhistoriasclinicasdigitales.netlify.app_';
+      + '\n\n_Emitida con firma electrónica · Ley 27.553 · medhistoriasclinicasdigitales.netlify.app_';
   } else if(tipo === 'derivacion'){
     var pac = (document.getElementById('der-paciente')||{}).value || '';
     var mot = (document.getElementById('der-motivo')||{}).value || '';
@@ -11666,7 +11664,7 @@ function enviarWhatsApp(tipo){
       +'🏥 Especialidad: '+(esp||'(no indicada)')+'\n'
       +'\n📋 *Motivo de derivación:*\n'+(mot||'(no indicado)')
       +'\n\n👨‍⚕️ '+medico
-      +'\n\n_Emitida con firma digital · Ley 25.506 · medhistoriasclinicasdigitales.netlify.app_';
+    +'\n\n_Emitida con firma electrónica · Ley 27.553 · medhistoriasclinicasdigitales.netlify.app_';
   } else {
     var pac = (document.getElementById('est-paciente')||{}).value || '';
     var det = (document.getElementById('est-det')||{}).value || '';
@@ -11678,7 +11676,7 @@ function enviarWhatsApp(tipo){
       +'👤 Paciente: '+(pac||'(no indicado)')+'\n'
       +'\n🔬 *Estudios solicitados:*\n'+(det||'(no indicado)')
       +'\n\n👨‍⚕️ '+medico
-      +'\n\n_Emitido con firma digital · Ley 25.506 · medhistoriasclinicasdigitales.netlify.app_';
+      +'\n\n_Emitido con firma electrónica · Ley 27.553 · medhistoriasclinicasdigitales.netlify.app_';
   }
   var url = 'https://wa.me/54'+tel+'?text='+encodeURIComponent(texto);
   window.open(url, '_blank');
@@ -11734,20 +11732,20 @@ function enviarEmail(tipo){
       +'\nMEDICACIÓN PRESCRIPTA:\n'+(med||'(no indicada)')
       +(ind?'\n\nINDICACIONES:\n'+ind:'')
       +'\n\n'+medico
-      +'\n\nEmitida con firma digital · Ley 25.506\nMedHistoriaClinicaOnline · medhistoriasclinicasdigitales.netlify.app';
+     +'\n\nEmitida con firma electrónica · Ley 27.553\nMedHistoriaClinicaOnline · medhistoriasclinicasdigitales.netlify.app';
   } else if(tipo === 'derivacion'){
     var pac = (document.getElementById('der-paciente')||{}).value || '';
     var mot = (document.getElementById('der-motivo')||{}).value || '';
     var esp = (document.getElementById('der-especialidad')||{}).value || '';
     var medico = (document.getElementById('der-medico')||{}).value || '';
     asunto = 'Derivación Médica - MedHistoriaClinicaOnline';
-    cuerpo = 'Derivación Médica\n\nPaciente: '+pac+'\nEspecialidad: '+esp+'\n\nMotivo:\n'+mot+'\n\n'+medico+'\n\nEmitida con firma digital · Ley 25.506 · MedHistoriaClinicaOnline';
+   cuerpo = 'Derivación Médica\n\nPaciente: '+pac+'\nEspecialidad: '+esp+'\n\nMotivo:\n'+mot+'\n\n'+medico+'\n\nEmitida con firma electrónica · Ley 27.553 · MedHistoriaClinicaOnline';
   } else {
     var pac = (document.getElementById('est-paciente')||{}).value || '';
     var det = (document.getElementById('est-det')||{}).value || '';
     var medico = (document.getElementById('est-medico')||{}).value || '';
     asunto = 'Pedido de Estudios - MedHistoriaClinicaOnline';
-    cuerpo = 'Pedido de Estudios\n\nPaciente: '+pac+'\n\nEstudios:\n'+det+'\n\n'+medico+'\n\nEmitido con firma digital · Ley 25.506 · MedHistoriaClinicaOnline';
+    cuerpo = 'Pedido de Estudios\n\nPaciente: '+pac+'\n\nEstudios:\n'+det+'\n\n'+medico+'\n\nEmitido con firma electrónica · Ley 27.553 · MedHistoriaClinicaOnline';
   }
   window.location.href = 'mailto:'+email+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
 }
@@ -11831,9 +11829,9 @@ function imprimirDoc(tipo){
       +'<div class="pwm">MedHistoriaClinicaOnline · Historia Clínica Online · Argentina · '+f+'</div>'
       +'</div>';
   } else if(tipo==='rx'){
-    html=`<div class="pdoc"><div class="ph"><div class="pb">Med <span>Historias Clínicas Online</span><small>Receta Médica Online · medhistoriasclinicasdigitales.com.ar</small></div><div class="pt">RECETA MÉDICA<small>Fecha: ${f} · Validez: ${v('rx-validez')}</small></div></div><div class="pg2"><div class="ps"><div class="pl">Paciente</div><div class="pv">${v('rx-paciente')}</div></div><div class="ps"><div class="pl">DNI</div><div class="pv">${v('rx-dni')}</div></div><div class="ps"><div class="pl">Sexo</div><div class="pv">${v('rx-sexo')}</div></div><div class="ps"><div class="pl">Fecha de nac.</div><div class="pv">${v('rx-fnac')}</div></div><div class="ps"><div class="pl">Diagnóstico CIE-10</div><div class="pv">${v('rx-diag')}</div></div><div class="ps"><div class="pl">Obra Social / Prepaga</div><div class="pv">${v('rx-os')}</div></div><div class="ps"><div class="pl">N° Afiliado / N° Seg. Social / N° Colegiado</div><div class="pv">${v('rx-afiliado')}</div></div><div class="ps"><div class="pl">Plan</div><div class="pv">${v('rx2-plan')}</div></div></div><div class="ps"><div class="pl">Medicación prescripta</div><div class="pvb" style="min-height:90px;">${v('rx-med')}</div></div><div class="ps"><div class="pl">Indicaciones</div><div class="pvb">${v('rx-ind')}</div></div><div class="pf"><div><div class="pfl"></div><div class="pfs">${v('rx-medico')}</div></div><div class="plg">Ley 26.285 · Ley 25.506<br>Validez: ${v('rx-validez')}</div></div><div class="pwm">MedHistoriaClinicaOnline · Receta Online · Argentina · ${f}</div></div>`;
+   html=`<div class="pdoc"><div class="ph"><div class="pb">Med <span>Historias Clínicas Online</span><small>Receta Médica Online · medhistoriasclinicasdigitales.com.ar</small></div><div class="pt">RECETA MÉDICA<small>Fecha: ${f} · Validez: ${v('rx-validez')}</small></div></div><div class="pg2"><div class="ps"><div class="pl">Paciente</div><div class="pv">${v('rx-paciente')}</div></div><div class="ps"><div class="pl">DNI</div><div class="pv">${v('rx-dni')}</div></div><div class="ps"><div class="pl">Sexo</div><div class="pv">${v('rx-sexo')}</div></div><div class="ps"><div class="pl">Fecha de nac.</div><div class="pv">${v('rx-fnac')}</div></div><div class="ps"><div class="pl">Diagnóstico CIE-10</div><div class="pv">${v('rx-diag')}</div></div><div class="ps"><div class="pl">Obra Social / Prepaga</div><div class="pv">${v('rx-os')}</div></div><div class="ps"><div class="pl">N° Afiliado / N° Seg. Social / N° Colegiado</div><div class="pv">${v('rx-afiliado')}</div></div><div class="ps"><div class="pl">Plan</div><div class="pv">${v('rx2-plan')}</div></div></div><div class="ps"><div class="pl">Medicación prescripta</div><div class="pvb" style="min-height:90px;">${v('rx-med')}</div></div><div class="ps"><div class="pl">Indicaciones</div><div class="pvb">${v('rx-ind')}</div></div><div class="pf"><div><div class="pfl"></div><div class="pfs">${v('rx-medico')}</div></div><div class="plg">Ley 26.285 · Ley 27.553<br>Validez: ${v('rx-validez')}</div></div><div class="pwm">MedHistoriaClinicaOnline · Receta Online · Argentina · ${f}</div></div>`;
   } else {
-    html=`<div class="pdoc"><div class="ph"><div class="pb">Med <span>Historias Clínicas Online</span><small>Orden Médica Online · medhistoriasclinicasdigitales.com.ar</small></div><div class="pt">${v('ord-tipo').toUpperCase()}<small>Fecha: ${f} · ${v('ord-urgencia')}</small></div></div><div class="pg2"><div class="ps"><div class="pl">Paciente</div><div class="pv">${v('ord-paciente')}</div></div><div class="ps"><div class="pl">DNI</div><div class="pv">${v('ord-dni')}</div></div><div class="ps"><div class="pl">Sexo</div><div class="pv">${v('ord-sexo')}</div></div><div class="ps"><div class="pl">Fecha de nac.</div><div class="pv">${v('ord-fnac')}</div></div><div class="ps"><div class="pl">Diagnóstico</div><div class="pv">${v('ord-diag')}</div></div><div class="ps"><div class="pl">Obra Social / Prepaga</div><div class="pv">${v('ord-os')}</div></div><div class="ps"><div class="pl">N° Afiliado / N° Seg. Social / N° Colegiado</div><div class="pv">${v('ord-afiliado')}</div></div><div class="ps"><div class="pl">Plan</div><div class="pv">${v('est-plan')}</div></div></div><div class="ps"><div class="pl">Detalle de la orden</div><div class="pvb" style="min-height:90px;">${v('ord-det')}</div></div><div class="ps"><div class="pl">Antecedentes</div><div class="pvb">${v('ord-ant')}</div></div><div class="pf"><div><div class="pfl"></div><div class="pfs">${v('ord-medico')}</div></div><div class="plg">Ley 27.706 · Ley 25.506<br>Validez legal en todo el territorio nacional</div></div><div class="pwm">MedHistoriaClinicaOnline · Orden Médica Online · Argentina · ${f}</div></div>`;
+    html=`<div class="pdoc"><div class="ph"><div class="pb">Med <span>Historias Clínicas Online</span><small>Orden Médica Online · medhistoriasclinicasdigitales.com.ar</small></div><div class="pt">${v('ord-tipo').toUpperCase()}<small>Fecha: ${f} · ${v('ord-urgencia')}</small></div></div><div class="pg2"><div class="ps"><div class="pl">Paciente</div><div class="pv">${v('ord-paciente')}</div></div><div class="ps"><div class="pl">DNI</div><div class="pv">${v('ord-dni')}</div></div><div class="ps"><div class="pl">Sexo</div><div class="pv">${v('ord-sexo')}</div></div><div class="ps"><div class="pl">Fecha de nac.</div><div class="pv">${v('ord-fnac')}</div></div><div class="ps"><div class="pl">Diagnóstico</div><div class="pv">${v('ord-diag')}</div></div><div class="ps"><div class="pl">Obra Social / Prepaga</div><div class="pv">${v('ord-os')}</div></div><div class="ps"><div class="pl">N° Afiliado / N° Seg. Social / N° Colegiado</div><div class="pv">${v('ord-afiliado')}</div></div><div class="ps"><div class="pl">Plan</div><div class="pv">${v('est-plan')}</div></div></div><div class="ps"><div class="pl">Detalle de la orden</div><div class="pvb" style="min-height:90px;">${v('ord-det')}</div></div><div class="ps"><div class="pl">Antecedentes</div><div class="pvb">${v('ord-ant')}</div></div><div class="pf"><div><div class="pfl"></div><div class="pfs">${v('ord-medico')}</div></div><div class="plg">Ley 27.706 · Ley 27.553<br>Validez legal en todo el territorio nacional</div></div><div class="pwm">MedHistoriaClinicaOnline · Orden Médica Online · Argentina · ${f}</div></div>`;
   }
   document.getElementById('printArea').innerHTML=html;
   cerrarPrint();
@@ -12246,10 +12244,10 @@ function _buildResumenHTML(nombre, medicoNombre, contenidoHTML, firmaImg){
       +'<div class="hdr-brand">'+logoSVG+'<div class="hdr-brand-text"><div class="hdr-brand-name">Med<em>Historia</em>Clinica<em>Online</em></div><div class="hdr-brand-sub">Historia clínica online con IA</div></div></div>'
       +'<div class="hdr-doc"><div class="hdr-doc-title">Resumen de Historia Clínica</div><div class="hdr-doc-meta">'+fecha+'<br>'+medicoNombre+'</div></div>'
     +'</div>'
-    +'<div class="badge-strip"><span class="badge">Ley 25.506</span><span class="badge">Ley 25.326</span><span class="badge">Documento digital</span></div>'
+     +'<div class="badge-strip"><span class="badge">Ley 27.553</span><span class="badge">Ley 25.326</span><span class="badge">Documento digital</span></div>'
     +contenidoHTML
     +(firmaImg ? '<div style="margin-top:24px;display:flex;justify-content:flex-end;"><div style="text-align:center;"><img src="'+firmaImg+'" style="max-height:50px;display:block;margin:0 auto 4px;"><div style="border-top:1.5px solid #145a32;padding-top:4px;font-weight:700;font-size:.82rem;color:#1a2e1e;min-width:180px;">'+medicoNombre+'</div><div style="font-size:.62rem;color:#5a7362;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">Firma del profesional</div></div></div>' : '')
-	  +'<div class="footer"><div class="footer-brand">Med<em>Historia</em>Clinica<em>Online</em></div><div class="footer-legal">Documento generado digitalmente · Válido conforme Ley 25.506<br>No requiere firma ológrafa</div></div>'
+	 +'<div class="footer"><div class="footer-brand">Med<em>Historia</em>Clinica<em>Online</em></div><div class="footer-legal">Documento generado electrónicamente · Válido conforme Ley 27.553<br>No requiere firma ológrafa</div></div>'
     +'</div></body></html>';
 }
 
