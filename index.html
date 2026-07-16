@@ -5363,7 +5363,7 @@ function enviarLandingWA(tipo){
   var tel = prompt('N° de WhatsApp del paciente (con código de área):');
   if(!tel) return;
   var labels = {receta:'Receta Médica Online', derivacion:'Derivación Médica', estudios:'Pedido de Estudios'};
-  var txt = '🏥 *MedHistoriaClinicaOnline · '+labels[tipo]+'*\n\nFirmado digitalmente · Ley 25.506\n\n_medhistoriasclinicasdigitales.com.ar_';
+  var txt = '🏥 *MedHistoriaClinicaOnline · '+labels[tipo]+'*\n\nFirmado electrónicamente · Ley 27.553\n\n_medhistoriasclinicasdigitales.com.ar_';
   window.open('https://wa.me/54'+tel+'?text='+encodeURIComponent(txt),'_blank');
 }
 
@@ -5372,7 +5372,7 @@ function enviarLandingEmail(tipo){
   if(!email) return;
   var labels = {receta:'Receta Médica Online', derivacion:'Derivación Médica', estudios:'Pedido de Estudios'};
   var asunto = labels[tipo]+' - MedHistoriaClinicaOnline';
-  var cuerpo = labels[tipo]+'\n\nFirmado digitalmente · Ley 25.506\n\nMedHistoriaClinicaOnline · medhistoriasclinicasdigitales.com.ar';
+  var cuerpo = labels[tipo]+'\n\nFirmado electrónicamente · Ley 27.553\n\nMedHistoriaClinicaOnline · medhistoriasclinicasdigitales.com.ar';
   window.location.href = 'mailto:'+email+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
 }
 
@@ -11434,7 +11434,7 @@ function enviarAutoWA(tipo){
         +'\n\n👨‍⚕️ *'+d.medico+'*\n\n'
         +'📎 *El PDF se descargó automáticamente en tu dispositivo.*\n'
         +'_Adjuntá el archivo PDF a este mensaje para enviarlo al paciente._\n\n'
-        +'_Firma Digital · Ley 25.506 · MedHistoriaClinicaOnline_';
+      +'_Firma Electrónica · Ley 27.553 · MedHistoriaClinicaOnline_'; 
       var numLimpio = tel.replace(/\D/g,'');
       window.open('https://wa.me/54'+numLimpio+'?text='+encodeURIComponent(msg),'_blank');
     }, 800);
