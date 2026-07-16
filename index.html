@@ -11291,9 +11291,9 @@ function generarPDFbase64(tipo, callback){
   var _paisMedico = (usuarioActual && usuarioActual.pais) ? usuarioActual.pais : (typeof paisActual !== 'undefined' ? paisActual : 'ar');
   var _leyFirmaPais = (firmaInfo[_paisMedico] && firmaInfo[_paisMedico].ley) ? firmaInfo[_paisMedico].ley : firmaInfo.ar.ley;
   var _paisNombreMedico = (firmaInfo[_paisMedico] && firmaInfo[_paisMedico].pais) ? firmaInfo[_paisMedico].pais : 'Argentina';
-  var legalTxt = tipo==='receta' ? 'Receta emitida bajo '+_leyFirmaPais+' · Firma Digital · MedHistoriaClinicaOnline'
-    : tipo==='derivacion' ? 'Derivación emitida bajo '+_leyFirmaPais+' · Firma Digital · MedHistoriaClinicaOnline'
-    : 'Pedido emitido bajo '+_leyFirmaPais+' · Firma Digital · MedHistoriaClinicaOnline';
+  var legalTxt = tipo==='receta' ? 'Receta emitida bajo '+_leyFirmaPais+' · Firma Electrónica · MedHistoriaClinicaOnline'
+    : tipo==='derivacion' ? 'Derivación emitida bajo '+_leyFirmaPais+' · Firma Electrónica · MedHistoriaClinicaOnline'
+    : 'Pedido emitido bajo '+_leyFirmaPais+' · Firma Electrónica · MedHistoriaClinicaOnline';
   doc.setTextColor(100,140,100); doc.setFontSize(6.5); doc.setFont('helvetica','italic');
   doc.text(legalTxt, x + W - margin*2 - 2, y + cajaH - 4, {align:'right'});
 
@@ -11319,7 +11319,7 @@ function generarPDFbase64(tipo, callback){
   // Texto legal abajo a la DERECHA dentro del recuadro (antes de la línea)
   var legalX = W - margin;
   doc.setTextColor(100,140,100); doc.setFontSize(6.5); doc.setFont('helvetica','italic');
-  doc.text('Emitido con firma digital conforme '+_leyFirmaPais+'.', legalX, footerY - 16, {align:'right'});
+   doc.text('Emitido con firma electrónica conforme '+_leyFirmaPais+'.', legalX, footerY - 16, {align:'right'});
     doc.text('Válido conforme a la normativa vigente en '+_paisNombreMedico+'.', legalX, footerY - 11, {align:'right'});
   doc.setFont('helvetica','bold'); doc.setTextColor(20,90,50);
   doc.text('MedHistoriaClinicaOnline · medhistoriaclinicaonline@gmail.com', legalX, footerY - 6, {align:'right'});
