@@ -4861,7 +4861,7 @@ function generarDocumento(tipo){
   // Mostrar confirmación visual
   var btn = event.currentTarget;
   var original = btn.innerHTML;
-  btn.innerHTML = '✅ ' + nombre + ' generada correctamente';
+ btn.innerHTML = '✅ ' + nombres[tipo] + ' generada correctamente';
   btn.style.background = 'linear-gradient(135deg,#145a32,#0a3d1f)';
   btn.disabled = true;
   setTimeout(function(){
@@ -4871,7 +4871,7 @@ function generarDocumento(tipo){
   }, 3000);
   // Ofrecer imprimir
   setTimeout(function(){
-   if(confirm('✅ ' + nombre + ' generada con firma electrónica.\n\n' + ley + '\n\n¿Querés imprimirla ahora?')){
+    if(confirm('✅ ' + nombres[tipo] + ' generada con firma electrónica.\n\n' + ley + '\n\n¿Querés imprimirla ahora?')){
       imprimirDoc(tipo);
     }
   }, 400);
