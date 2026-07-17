@@ -11483,6 +11483,7 @@ function mostrarOpcionesEnvio(tipo){
   if(!d.pac){ alert('Completá el nombre del paciente primero.'); return; }
   _tipoEnvioActual = tipo;
   var overlay = document.getElementById('envioOverlay');
+  document.body.appendChild(overlay); // evita que quede oculto si terminó anidado dentro de otro panel
   var nom = document.getElementById('envioOverlay-nombre');
   if(nom) nom.textContent = d.pac;
   overlay.style.display = 'flex';
