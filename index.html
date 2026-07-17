@@ -5039,7 +5039,7 @@ function abrirHC(nombre, dni, edad, os){
   evoluciones = p.evoluciones || [];
 
   // Helper para setear campos
-  var set = function(id, val){ var el=document.getElementById(id); if(el&&val!==undefined) el.value=val||''; };
+ var set = function(id, val){ var el=document.getElementById(id); if(el) el.value = (val===undefined||val===null) ? '' : val; };
 
   // Datos de anamnesis
   set('hc-paciente', p.nombre);
