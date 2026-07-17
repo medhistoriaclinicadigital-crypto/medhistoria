@@ -5060,25 +5060,23 @@ function abrirHC(nombre, dni, edad, os){
   set('hc-medicacion', p.medicacion);
   set('hc-alergias', p.alergias);
 
-  // Datos de examen físico
-  if(p.examen){
-    set('ex-peso', p.examen.peso);
-    set('ex-talla', p.examen.talla);
-    set('ex-ta', p.examen.ta);
-    set('ex-fc', p.examen.fc);
-    set('ex-fr', p.examen.fr);
-    set('ex-temp', p.examen.temp);
-    set('ex-sat', p.examen.sat);
-    set('ex-imc', p.examen.imc);
-    set('ex-sistemas', p.examen.sistemas);
-    set('ex-obs', p.examen.obs);
-  }
+  // Datos de examen físico (se limpia siempre, tenga o no datos guardados el paciente)
+  var examen = p.examen || {};
+  set('ex-peso', examen.peso);
+  set('ex-talla', examen.talla);
+  set('ex-ta', examen.ta);
+  set('ex-fc', examen.fc);
+  set('ex-fr', examen.fr);
+  set('ex-temp', examen.temp);
+  set('ex-sat', examen.sat);
+  set('ex-imc', examen.imc);
+  set('ex-sistemas', examen.sistemas);
+  set('ex-obs', examen.obs);
 
-  // Datos de diagnóstico
-  if(p.diagnostico){
-    set('hc-diag-principal', p.diagnostico.principal);
-    set('hc-diag-secundarios', p.diagnostico.secundarios);
-  }
+  // Datos de diagnóstico (se limpia siempre, tenga o no datos guardados el paciente)
+  var diagnostico = p.diagnostico || {};
+  set('hc-diag-principal', diagnostico.principal);
+  set('hc-diag-secundarios', diagnostico.secundarios);
 
   // Mostrar panel HC
   showPanel('hc');
