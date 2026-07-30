@@ -11918,6 +11918,8 @@ function guardarTurno(){
 }
 
 // Renderizar al cargar agenda
+	function escHtml(s){s=(s===null||s===undefined)?'':String(s);return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function escJs(s){s=(s===null||s===undefined)?'':String(s);return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 document.addEventListener('DOMContentLoaded', function(){
   // Cargar pacientes guardados en localStorage al DOM
   try {
