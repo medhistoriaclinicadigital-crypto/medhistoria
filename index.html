@@ -14297,17 +14297,18 @@ function verImagen(i){
 
 <script>
 function mostrarLogin(){
-  document.getElementById('miLoginModal').style.display='block';
-  if(localStorage.getItem('mhcd_recordar')==='1'){
-    var uG = localStorage.getItem('mhcd_user_guardado')||'';
-    var pG = localStorage.getItem('mhcd_pass_guardado')||'';
-    var uEl = document.getElementById('ml-user');
-    var pEl = document.getElementById('ml-pass');
-    var rEl = document.getElementById('ml-recordar');
-    if(uEl) uEl.value = uG;
-    if(pEl) pEl.value = pG;
-    if(rEl) rEl.checked = true;
-  }
+    document.getElementById('miLoginModal').style.display='block';
+    mlTab('ing');
+    if(localStorage.getItem('mhcd_recordar')==='1'){
+      var uG = localStorage.getItem('mhcd_user_guardado')||'';
+      var pG = localStorage.getItem('mhcd_pass_guardado')||'';
+      var uEl = document.getElementById('ml-user');
+      var pEl = document.getElementById('ml-pass');
+      var rEl = document.getElementById('ml-recordar');
+      if(uEl) uEl.value = uG;
+      if(pEl) pEl.value = pG;
+      if(rEl) rEl.checked = true;
+    }
 }
 function togglePass(id, btn){
   var el = document.getElementById(id);
