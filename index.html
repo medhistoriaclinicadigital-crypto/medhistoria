@@ -11920,17 +11920,15 @@ function guardarTurno(){
 // Renderizar al cargar agenda
 	function escHtml(s){s=(s===null||s===undefined)?'':String(s);return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function escJs(s){s=(s===null||s===undefined)?'':String(s);return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-document.addEventListener('DOMContentLoaded', function(){
-  // Cargar pacientes guardados en localStorage al DOM
-  try {
+try {
     var reales = JSON.parse(localStorage.getItem(_userKey('mhcd_pacientes'))||'[]');
-    reales.forEach(function(pac){
+    var lista = document.getElementById('lista-pacientes');
+    if(lista && reales.length > 0){
+      reales.forEach(function(pac){
         var card = document.createElement('div');
         card.className = 'pac-card';
         card.setAttribute('onclick', "abrirHC('"+escJs(pac.nombre)+"','"+escJs(pac.dni)+"','"+escJs(pac.edad)+"','"+escJs(pac.os)+"')");
         card.innerHTML = '<div class="pac-card-top"><span class="pac-card-name">'+escHtml(pac.nombre)+'</span>'+(pac.edad?'<span style="background:#e8f5e9;color:#2e7d32;border-radius:10px;padding:2px 8px;font-size:.75rem;font-weight:600;">'+escHtml(pac.edad)+' años</span>':'')+'</div>'          +'<div class="pac-card-info">DNI '+(escHtml(pac.dni)||'—')+(pac.os?' · '+escHtml(pac.os):'')+'</div>'          +'<div class="pac-card-fecha">Última consulta: '+escHtml(pac.ultima||pac.ultimaConsulta||'—')+'</div>'          +'<div style="margin-top:8px;text-align:right;"><button onclick="event.stopPropagation();borrarPaciente(\''+escJs(pac.nombre)+'\',this.parentNode)" style="background:none;border:1px solid #dc2626;color:#dc2626;border-radius:6px;padding:3px 10px;font-size:.72rem;cursor:pointer;">🗑 Borrar</button></div>';
-        card.setAttribute('onclick', "abrirHC('"+pac.nombre+"','"+pac.dni+"','"+pac.edad+"','"+pac.os+"')");
-        card.innerHTML = '<div class="pac-card-top"><span class="pac-card-name">'+pac.nombre+'</span>'+(pac.edad?'<span style="background:#e8f5e9;color:#2e7d32;border-radius:10px;padding:2px 8px;font-size:.75rem;font-weight:600;">'+pac.edad+' años</span>':'')+'</div>'          +'<div class="pac-card-info">DNI '+(pac.dni||'—')+(pac.os?' · '+pac.os:'')+'</div>'          +'<div class="pac-card-fecha">Última consulta: '+(pac.ultima||pac.ultimaConsulta||'—')+'</div>'          +'<div style="margin-top:8px;text-align:right;"><button onclick="event.stopPropagation();borrarPaciente(\''+pac.nombre+'\',this.parentNode)" style="background:none;border:1px solid #dc2626;color:#dc2626;border-radius:6px;padding:3px 10px;font-size:.72rem;cursor:pointer;">🗑 Borrar</button></div>';
         lista.insertBefore(card, lista.firstChild);
       });
     }
