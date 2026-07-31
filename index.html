@@ -5443,7 +5443,7 @@ function cargarReportesReales(){
 
   sb.from('solicitudes_suscripcion').select('*').order('created_at', {ascending:false}).then(function(r){
     if(r.error){
-      var msgErr = '⚠️ No se pudo cargar (¿corriste el SQL que prepara la tabla?): '+r.error.message;
+      var msgErr = '⚠️ No se pudo cargar (¿corriste el SQL que prepara la tabla?): '+escHtml(r.error.message);
       if(elHoy) elHoy.innerHTML = msgErr;
       if(elSemana) elSemana.innerHTML = '';
       if(elMes) elMes.innerHTML = '';
@@ -5468,8 +5468,8 @@ function cargarReportesReales(){
       } else {
         elHoy.innerHTML = deHoy.map(function(f){
           return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(52,196,100,.08);">'
-            +'<div><strong style="color:#fff;">'+(f.medico_nombre||'(sin nombre)')+'</strong> <span style="color:rgba(109,222,150,.4);font-size:.78rem;">'+(f.medico_email||'')+'</span></div>'
-            +'<div style="color:var(--g6);">'+(f.plan||'-')+' · u$s '+(f.precio||0)+'</div>'
+            +'<div><strong style="color:#fff;">'+escHtml(f.medico_nombre||'(sin nombre)')+'</strong> <span style="color:rgba(109,222,150,.4);font-size:.78rem;">'+escHtml(f.medico_email||'')+'</span></div>'
+            +'<div style="color:var(--g6);">'+escHtml(f.plan||'-')+' · u$s '+escHtml(f.precio||0)+'</div>'
             +'</div>';
         }).join('');
       }
@@ -5514,12 +5514,12 @@ function cargarReportesReales(){
         tbodyFact.innerHTML = filas.map(function(f){
           var fechaTxt = f.created_at ? new Date(f.created_at).toLocaleDateString('es-AR') : '-';
           return '<tr style="border-bottom:1px solid rgba(52,196,100,.08);">'
-            +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+fechaTxt+'</td>'
-            +'<td style="padding:10px 12px;color:#fff;">'+(f.medico_nombre||'-')+'</td>'
-            +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+(f.medico_email||'-')+'</td>'
-            +'<td style="padding:10px 12px;color:var(--g6);font-weight:600;">'+(f.plan||'-')+'</td>'
-            +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+(f.cuit||'—')+'</td>'
-            +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+(f.direccion||'—')+'</td>'
+            +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+escHtml(fechaTxt)+'</td>'
+            +'<td style="padding:10px 12px;color:#fff;">'+escHtml(f.medico_nombre||'-')+'</td>'
+            +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+escHtml(f.medico_email||'-')+'</td>'
+            +'<td style="padding:10px 12px;color:var(--g6);font-weight:600;">'+escHtml(f.plan||'-')+'</td>'
+            +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+escHtml(f.cuit||'—')+'</td>'
+            +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+escHtml(f.direccion||'—')+'</td>'
             +'</tr>';
         }).join('');
       }
@@ -5546,7 +5546,7 @@ function cargarFacturacionEditable(){
 
   sb.from('solicitudes_suscripcion').select('*').order('created_at', {ascending:false}).then(function(r){
     if(r.error){
-      tbody.innerHTML = '<tr><td colspan="5" style="padding:14px;color:#ff8080;">⚠️ No se pudo cargar: '+r.error.message+'</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="padding:14px;color:#ff8080;">⚠️ No se pudo cargar: '+escHtml(r.error.message)+'</td></tr>';
       return;
     }
     var filas = r.data || [];
@@ -5557,11 +5557,11 @@ function cargarFacturacionEditable(){
     tbody.innerHTML = filas.map(function(f){
       var fechaTxt = f.created_at ? new Date(f.created_at).toLocaleDateString('es-AR') : '-';
       return '<tr style="border-bottom:1px solid rgba(52,196,100,.08);">'
-        +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);white-space:nowrap;">'+fechaTxt+'</td>'
-        +'<td style="padding:10px 12px;color:#fff;">'+(f.medico_nombre||'-')+'<br><span style="color:rgba(255,255,255,.4);font-size:.75rem;">'+(f.medico_email||'')+'</span></td>'
-        +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+(f.cuit||'—')+'</td>'
-        +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+(f.direccion||'—')+'</td>'
-        +'<td style="padding:10px 12px;color:var(--g6);font-weight:600;white-space:nowrap;">'+(f.plan||'-')+'</td>'
+        +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);white-space:nowrap;">'+escHtml(fechaTxt)+'</td>'
+        +'<td style="padding:10px 12px;color:#fff;">'+escHtml(f.medico_nombre||'-')+'<br><span style="color:rgba(255,255,255,.4);font-size:.75rem;">'+escHtml(f.medico_email||'')+'</span></td>'
+        +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+escHtml(f.cuit||'—')+'</td>'
+        +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+escHtml(f.direccion||'—')+'</td>'
+        +'<td style="padding:10px 12px;color:var(--g6);font-weight:600;white-space:nowrap;">'+escHtml(f.plan||'-')+'</td>'
         +'</tr>';
     }).join('');
   });
@@ -5614,8 +5614,8 @@ function renderAdmin(){
     detEl.innerHTML = '<div style="color:rgba(109,222,150,.6);font-size:.8rem;text-transform:uppercase;margin-bottom:16px;">Historial de cobros (simulado)</div>'
       + suscriptores.filter(function(s){ return s.estado==='activo'; }).map(function(s){
         return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(52,196,100,.08);">'
-          +'<div><div style="color:#fff;font-size:.88rem;">'+s.nombre+'</div><div style="color:rgba(109,222,150,.4);font-size:.75rem;">Plan '+s.plan+' · '+s.desde+'</div></div>'
-          +'<div style="color:var(--g6);font-weight:700;">u$s '+s.monto+'</div>'
+          +'<div><div style="color:#fff;font-size:.88rem;">'+escHtml(s.nombre)+'</div><div style="color:rgba(109,222,150,.4);font-size:.75rem;">Plan '+escHtml(s.plan)+' · '+escHtml(s.desde)+'</div></div>'
+          +'<div style="color:var(--g6);font-weight:700;">u$s '+escHtml(s.monto)+'</div>'
           +'</div>';
       }).join('');
   }
@@ -5628,13 +5628,13 @@ function renderTabla(lista){
     var estadoColor = s.estado==='activo' ? '#6dde96' : s.estado==='prueba' ? '#fbbf24' : '#f87171';
     var estadoLabel = s.estado==='activo' ? '● Activo' : s.estado==='prueba' ? '● Prueba' : '● Inactivo';
     return '<tr class="admin-tr">'
-      +'<td class="admin-td">'+s.nombre+'</td>'
-      +'<td class="admin-td" style="color:rgba(255,255,255,.5);">'+s.email+'</td>'
-      +'<td class="admin-td"><span style="background:rgba(52,196,100,.15);color:var(--g6);padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:600;">'+s.plan+'</span></td>'
-      +'<td class="admin-td" style="color:rgba(255,255,255,.5);">'+s.desde+'</td>'
-      +'<td class="admin-td" style="color:rgba(255,255,255,.5);">'+s.proximoCobro+'</td>'
+      +'<td class="admin-td">'+escHtml(s.nombre)+'</td>'
+      +'<td class="admin-td" style="color:rgba(255,255,255,.5);">'+escHtml(s.email)+'</td>'
+      +'<td class="admin-td"><span style="background:rgba(52,196,100,.15);color:var(--g6);padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:600;">'+escHtml(s.plan)+'</span></td>'
+      +'<td class="admin-td" style="color:rgba(255,255,255,.5);">'+escHtml(s.desde)+'</td>'
+      +'<td class="admin-td" style="color:rgba(255,255,255,.5);">'+escHtml(s.proximoCobro)+'</td>'
       +'<td class="admin-td"><span style="color:'+estadoColor+';font-size:.82rem;font-weight:600;">'+estadoLabel+'</span></td>'
-      +'<td class="admin-td" style="color:var(--g6);font-weight:700;">'+(s.monto>0?'u$s '+s.monto:'Gratis')+'</td>'
+      +'<td class="admin-td" style="color:var(--g6);font-weight:700;">'+(s.monto>0?'u$s '+escHtml(s.monto):'Gratis')+'</td>'
       +'</tr>';
   }).join('');
 }
@@ -6094,7 +6094,7 @@ function renderAnalitica(){
   if(diagEl) diagEl.innerHTML = d.topDiag.map(function(e,i){
     var pct=Math.round(e[1]/d.totalConsultas*100)||0;
     return '<div class="pac-row" style="flex-direction:column;align-items:flex-start;gap:3px;">'+
-      '<div style="display:flex;justify-content:space-between;width:100%;"><span style="font-size:.8rem;color:var(--g2);font-weight:600;">'+e[0]+'</span><span class="pac-tag tag-ok">'+e[1]+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;width:100%;"><span style="font-size:.8rem;color:var(--g2);font-weight:600;">'+escHtml(e[0])+'</span><span class="pac-tag tag-ok">'+escHtml(e[1])+'</span></div>'+
       '<div style="background:#e8f5e9;border-radius:4px;height:5px;width:100%;"><div style="background:var(--g5);height:5px;border-radius:4px;width:'+pct+'%;"></div></div>'+
       '</div>';
   }).join('');
@@ -6104,7 +6104,7 @@ function renderAnalitica(){
   if(medEl) medEl.innerHTML = d.topMeds.map(function(e){
     var pct=Math.round(e[1]/d.totalRecetas*100)||0;
     return '<div class="pac-row" style="flex-direction:column;align-items:flex-start;gap:3px;">'+
-      '<div style="display:flex;justify-content:space-between;width:100%;"><span style="font-size:.8rem;color:var(--g2);font-weight:600;">'+e[0]+'</span><span class="pac-tag tag-pend">'+e[1]+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;width:100%;"><span style="font-size:.8rem;color:var(--g2);font-weight:600;">'+escHtml(e[0])+'</span><span class="pac-tag tag-pend">'+escHtml(e[1])+'</span></div>'+
       '<div style="background:#e8f5e9;border-radius:4px;height:5px;width:100%;"><div style="background:var(--g4);height:5px;border-radius:4px;width:'+pct+'%;"></div></div>'+
       '</div>';
   }).join('');
@@ -6114,7 +6114,7 @@ function renderAnalitica(){
   if(osEl) osEl.innerHTML = d.topOS.map(function(e){
     var pct=Math.round(e[1]/(d.totalConsultas||1)*100)||0;
     return '<div class="pac-row" style="flex-direction:column;align-items:flex-start;gap:3px;">'+
-      '<div style="display:flex;justify-content:space-between;width:100%;"><span style="font-size:.8rem;color:var(--g2);font-weight:600;">'+e[0]+'</span><span class="pac-tag" style="background:#dbeafe;color:#1e40af;">'+e[1]+' pac.</span></div>'+
+      '<div style="display:flex;justify-content:space-between;width:100%;"><span style="font-size:.8rem;color:var(--g2);font-weight:600;">'+escHtml(e[0])+'</span><span class="pac-tag" style="background:#dbeafe;color:#1e40af;">'+escHtml(e[1])+' pac.</span></div>'+
       '<div style="background:#e8f5e9;border-radius:4px;height:5px;width:100%;"><div style="background:#2563eb;height:5px;border-radius:4px;width:'+pct+'%;"></div></div>'+
       '</div>';
   }).join('');
@@ -6133,9 +6133,9 @@ function renderAnalitica(){
   // Alertas
   var alertas = [];
   var topDiag0 = d.topDiag[0];
-  if(topDiag0 && topDiag0[1]>10) alertas.push('📈 <strong>'+topDiag0[0]+'</strong> es el diagnóstico más frecuente con '+topDiag0[1]+' casos.');
+  if(topDiag0 && topDiag0[1]>10) alertas.push('📈 <strong>'+escHtml(topDiag0[0])+'</strong> es el diagnóstico más frecuente con '+topDiag0[1]+' casos.');
   var edadMayor = Object.entries(d.edadBuckets).sort(function(a,b){return b[1]-a[1];})[0];
-  if(edadMayor) alertas.push('👥 La franja etaria más atendida es <strong>'+edadMayor[0]+' años</strong> ('+edadMayor[1]+' pacientes).');
+  if(edadMayor) alertas.push('👥 La franja etaria más atendida es <strong>'+escHtml(edadMayor[0])+' años</strong> ('+edadMayor[1]+' pacientes).');
   if(d.totalRecetas > 0) alertas.push('💊 Emitiste <strong>'+d.totalRecetas+' recetas</strong> en el período — promedio de '+Math.round(d.totalRecetas/4)+' por semana.');
   if(alertas.length===0) alertas.push('✅ Sin alertas por el momento. Seguí cargando consultas para ver tendencias.');
   var alertEl = document.getElementById('analitica-alertas');
@@ -9882,7 +9882,7 @@ function buscarVademecum(q){
     res.innerHTML='';
   } else {
     sug.style.display='none';
-    res.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px;"><div style="font-size:2rem;margin-bottom:8px;">🔍</div>No se encontró "'+q+'" en el vademécum.<br><small>Probá con el nombre comercial (ej: Ozempic, Jardiance) o la clase (ej: GLP-1, SGLT-2)</small></div>';
+    res.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px;"><div style="font-size:2rem;margin-bottom:8px;">🔍</div>No se encontró "'+escHtml(q)+'" en el vademécum.<br><small>Probá con el nombre comercial (ej: Ozempic, Jardiance) o la clase (ej: GLP-1, SGLT-2)</small></div>';
   }
 }
 
@@ -9995,32 +9995,32 @@ function verImagenEstudio(id){
   var barStyle = 'position:fixed;top:0;left:0;right:0;background:#042b10;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;z-index:9999;';
 
   if(esPDF){
-    w.document.write('<!DOCTYPE html><html><head><title>'+estudio.nombre+'</title>'+cerrarScript+'</head>'
+    w.document.write('<!DOCTYPE html><html><head><title>'+escHtml(estudio.nombre)+'</title>'+cerrarScript+'</head>'
       +'<body style="margin:0;background:#1a1a1a;">'
       +'<div style="'+barStyle+'">'
-        +'<span style="color:#6dde96;font-family:sans-serif;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">'+estudio.nombre+'</span>'
+        +'<span style="color:#6dde96;font-family:sans-serif;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">'+escHtml(estudio.nombre)+'</span>'
         +btnCerrar
       +'</div>'
       +'<embed src="'+estudio.data+'" type="application/pdf" style="position:fixed;top:50px;left:0;width:100%;height:calc(100% - 50px);">'
       +'</body></html>');
   } else if(esImagen){
-    w.document.write('<!DOCTYPE html><html><head><title>'+estudio.nombre+'</title>'+cerrarScript
+    w.document.write('<!DOCTYPE html><html><head><title>'+escHtml(estudio.nombre)+'</title>'+cerrarScript
       +'<style>body{margin:0;background:#111;}img{max-width:100%;max-height:calc(100vh - 55px);object-fit:contain;display:block;margin:0 auto;}</style>'
       +'</head><body>'
       +'<div style="'+barStyle+'">'
-        +'<span style="color:#6dde96;font-family:sans-serif;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">'+estudio.nombre+'</span>'
+        +'<span style="color:#6dde96;font-family:sans-serif;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">'+escHtml(estudio.nombre)+'</span>'
         +btnCerrar
       +'</div>'
       +'<div style="padding-top:55px;display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 55px);">'
-        +'<img src="'+estudio.data+'" alt="'+estudio.nombre+'">'
+        +'<img src="'+estudio.data+'" alt="'+escHtml(estudio.nombre)+'">'
       +'</div>'
       +'</body></html>');
   } else {
-    w.document.write('<!DOCTYPE html><html><head><title>'+estudio.nombre+'</title>'+cerrarScript
+    w.document.write('<!DOCTYPE html><html><head><title>'+escHtml(estudio.nombre)+'</title>'+cerrarScript
       +'<style>body{margin:0;}iframe{position:fixed;top:50px;left:0;width:100%;height:calc(100% - 50px);border:none;}</style>'
       +'</head><body>'
       +'<div style="'+barStyle+'">'
-        +'<span style="color:#6dde96;font-family:sans-serif;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">'+estudio.nombre+'</span>'
+        +'<span style="color:#6dde96;font-family:sans-serif;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">'+escHtml(estudio.nombre)+'</span>'
         +btnCerrar
       +'</div>'
       +'<iframe src="'+estudio.data+'"></iframe>'
@@ -10048,13 +10048,13 @@ function renderEstudios(){
       return '<div style="background:var(--g9);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">'
         +miniatura
         +'<div style="flex:1;min-width:0;">'
-          +'<div style="font-weight:600;color:var(--g2);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+e.nombre+'</div>'
-          +'<div style="font-size:.75rem;color:var(--muted);">'+e.cat+' · '+e.fecha+' · '+e.size+'</div>'
-          +(e.desc?'<div style="font-size:.78rem;color:var(--g3);margin-top:2px;">'+e.desc+'</div>':'')
+          +'<div style="font-weight:600;color:var(--g2);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(e.nombre)+'</div>'
+          +'<div style="font-size:.75rem;color:var(--muted);">'+escHtml(e.cat)+' · '+escHtml(e.fecha)+' · '+escHtml(e.size)+'</div>'
+          +(e.desc?'<div style="font-size:.78rem;color:var(--g3);margin-top:2px;">'+escHtml(e.desc)+'</div>':'')
         +'</div>'
         +'<div style="display:flex;gap:6px;flex-shrink:0;">'
           +'<button onclick="verImagenEstudio('+e.id+')" style="background:var(--g4);color:#fff;padding:5px 12px;border-radius:6px;font-size:.75rem;font-weight:600;border:none;cursor:pointer;">👁️ Ver</button>'
-          +'<a href="'+e.data+'" download="'+e.nombre+'" style="background:var(--g3);color:#fff;padding:5px 10px;border-radius:6px;font-size:.75rem;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;">⬇️</a>'
+          +'<a href="'+e.data+'" download="'+escHtml(e.nombre)+'" style="background:var(--g3);color:#fff;padding:5px 10px;border-radius:6px;font-size:.75rem;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;">⬇️</a>'
           +'<button onclick="eliminarEstudio('+e.id+')" style="background:none;border:1px solid #ddd;color:#aaa;padding:5px 9px;border-radius:6px;font-size:.8rem;cursor:pointer;">✕</button>'
         +'</div>'
         +'</div>';
@@ -10192,11 +10192,11 @@ function renderAuditoriaHC(){
   lista.forEach(function(a){
     html += '<div style="background:#fff;border:1px solid var(--g9);border-radius:10px;padding:14px 16px;margin-bottom:10px;">'
       + '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">'
-      + '<div style="font-weight:700;color:var(--g3);font-size:.85rem;">' + (a.campo||'') + '</div>'
-      + '<div style="font-size:.75rem;color:var(--muted);">' + (a.fecha||'') + ' · ' + (a.hora||'') + (a.medico?' · '+a.medico:'') + '</div>'
+      + '<div style="font-weight:700;color:var(--g3);font-size:.85rem;">' + escHtml(a.campo||'') + '</div>'
+      + '<div style="font-size:.75rem;color:var(--muted);">' + escHtml(a.fecha||'') + ' · ' + escHtml(a.hora||'') + (a.medico?' · '+escHtml(a.medico):'') + '</div>'
       + '</div>'
-      + '<div style="font-size:.82rem;color:#991b1b;background:#fef2f2;border-radius:8px;padding:8px 10px;margin-bottom:4px;"><strong>Antes:</strong> ' + (a.anterior || '<em>(vacío)</em>') + '</div>'
-      + '<div style="font-size:.82rem;color:#166534;background:#f0fdf4;border-radius:8px;padding:8px 10px;"><strong>Después:</strong> ' + (a.nuevo || '<em>(vacío)</em>') + '</div>'
+      + '<div style="font-size:.82rem;color:#991b1b;background:#fef2f2;border-radius:8px;padding:8px 10px;margin-bottom:4px;"><strong>Antes:</strong> ' + (a.anterior ? escHtml(a.anterior) : '<em>(vacío)</em>') + '</div>'
+      + '<div style="font-size:.82rem;color:#166534;background:#f0fdf4;border-radius:8px;padding:8px 10px;"><strong>Después:</strong> ' + (a.nuevo ? escHtml(a.nuevo) : '<em>(vacío)</em>') + '</div>'
       + '</div>';
   });
   cont.innerHTML = html;
@@ -10361,16 +10361,16 @@ function renderEvolucionesHistorial(){
     return (a.fechaISO||a.fecha||'').localeCompare(b.fechaISO||b.fecha||'');
   });
 
-  var rb = function(l,v){ return v?'<div style="margin-bottom:6px;"><div style="font-size:.78rem;font-weight:700;color:var(--g3);margin-bottom:2px;">'+l+'</div><div style="background:var(--g9);border-radius:6px;padding:8px 12px;font-size:.85rem;white-space:pre-wrap;font-family:\'Outfit\',sans-serif;">'+v+'</div></div>':''; };
+  var rb = function(l,v){ return v?'<div style="margin-bottom:6px;"><div style="font-size:.78rem;font-weight:700;color:var(--g3);margin-bottom:2px;">'+escHtml(l)+'</div><div style="background:var(--g9);border-radius:6px;padding:8px 12px;font-size:.85rem;white-space:pre-wrap;font-family:\'Outfit\',sans-serif;">'+escHtml(v)+'</div></div>':''; };
 
-  lista.innerHTML = evols.map(function(e,i){ 
+  lista.innerHTML = evols.map(function(e,i){
     var sv = [e.ta&&('TA: '+e.ta), e.fc&&('FC: '+e.fc), e.peso&&('Peso: '+e.peso+'kg'), e.temp&&('Temp: '+e.temp+'°C')].filter(Boolean).join(' · ');
     return '<div style="border:1.5px solid var(--g9);border-radius:10px;padding:14px;background:#fff;">'
       +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--g9);">'
       +'<span>📅</span>'
-      +'<span style="font-family:\'Cormorant Garamond\',serif;font-weight:700;color:var(--g2);font-size:1rem;">'+e.fecha+'</span>'
-      +(e.hora?'<span style="font-size:.8rem;color:var(--muted);"> · 🕐 '+e.hora+' hs</span>':'')
-      +(e.medico?'<span style="font-size:.78rem;color:var(--g4);font-weight:700;margin-left:auto;">👨‍⚕️ '+e.medico+'</span>':'')
+      +'<span style="font-family:\'Cormorant Garamond\',serif;font-weight:700;color:var(--g2);font-size:1rem;">'+escHtml(e.fecha)+'</span>'
+      +(e.hora?'<span style="font-size:.8rem;color:var(--muted);"> · 🕐 '+escHtml(e.hora)+' hs</span>':'')
+      +(e.medico?'<span style="font-size:.78rem;color:var(--g4);font-weight:700;margin-left:auto;">👨‍⚕️ '+escHtml(e.medico)+'</span>':'')
       +'<button onclick="editarEvolucion('+i+')" style="margin-left:8px;padding:3px 10px;background:#f0fdf4;border:1px solid var(--g8);border-radius:6px;font-size:.75rem;color:var(--g3);cursor:pointer;font-family:\'Outfit\',sans-serif;">✏️ Editar</button>'
       +'</div>'
       +(sv?rb('Signos vitales',sv):'')
@@ -10404,15 +10404,15 @@ function editarEvolucion(idx){
   var html = '<div id="modal-editar-evol" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)this.remove()">'
     +'<div style="background:#fff;border-radius:16px;padding:28px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">'
-    +'<h3 style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;color:var(--g2);margin:0;">✏️ Editar evolución — '+e.fecha+'</h3>'
+    +'<h3 style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;color:var(--g2);margin:0;">✏️ Editar evolución — '+escHtml(e.fecha)+'</h3>'
     +'<button onclick="document.getElementById(\'modal-editar-evol\').remove()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted);">✕</button>'
     +'</div>'
     +'<label style="display:block;font-size:.8rem;font-weight:700;color:var(--g3);margin-bottom:4px;">Evolución clínica</label>'
-    +'<textarea id="edit-evol-cuadro" style="width:100%;min-height:100px;padding:10px;border:1.5px solid var(--g8);border-radius:8px;font-family:\'Outfit\',sans-serif;font-size:.88rem;margin-bottom:14px;box-sizing:border-box;">'+( e.cuadro||'')+'</textarea>'
+    +'<textarea id="edit-evol-cuadro" style="width:100%;min-height:100px;padding:10px;border:1.5px solid var(--g8);border-radius:8px;font-family:\'Outfit\',sans-serif;font-size:.88rem;margin-bottom:14px;box-sizing:border-box;">'+escHtml(e.cuadro||'')+'</textarea>'
     +'<label style="display:block;font-size:.8rem;font-weight:700;color:var(--g3);margin-bottom:4px;">Indicaciones y plan</label>'
-    +'<textarea id="edit-evol-plan" style="width:100%;min-height:70px;padding:10px;border:1.5px solid var(--g8);border-radius:8px;font-family:\'Outfit\',sans-serif;font-size:.88rem;margin-bottom:14px;box-sizing:border-box;">'+( e.plan||'')+'</textarea>'
+    +'<textarea id="edit-evol-plan" style="width:100%;min-height:70px;padding:10px;border:1.5px solid var(--g8);border-radius:8px;font-family:\'Outfit\',sans-serif;font-size:.88rem;margin-bottom:14px;box-sizing:border-box;">'+escHtml(e.plan||'')+'</textarea>'
     +'<label style="display:block;font-size:.8rem;font-weight:700;color:var(--g3);margin-bottom:4px;">Próxima consulta</label>'
-    +'<input id="edit-evol-proxima" type="text" value="'+(e.proxima||'')+'" style="width:100%;padding:10px;border:1.5px solid var(--g8);border-radius:8px;font-family:\'Outfit\',sans-serif;font-size:.88rem;margin-bottom:20px;box-sizing:border-box;">'
+    +'<input id="edit-evol-proxima" type="text" value="'+escHtml(e.proxima||'')+'" style="width:100%;padding:10px;border:1.5px solid var(--g8);border-radius:8px;font-family:\'Outfit\',sans-serif;font-size:.88rem;margin-bottom:20px;box-sizing:border-box;">'
     +'<div style="display:flex;gap:10px;justify-content:flex-end;">'
     +'<button onclick="document.getElementById(\'modal-editar-evol\').remove()" style="padding:10px 20px;background:#f5f5f5;border:1px solid #ddd;border-radius:8px;font-size:.88rem;cursor:pointer;font-family:\'Outfit\',sans-serif;">Cancelar</button>'
     +'<button onclick="guardarEdicionEvolucion('+idx+')" style="padding:10px 24px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">💾 Guardar cambios</button>'
@@ -10579,8 +10579,8 @@ function generarResumen(){
   var fMed      = ga('hc-medicacion')     || p.medicacion   || '';
   var fAler     = ga('hc-alergias')       || p.alergias     || '';
 
-  var row = function(l,v){ return v?'<div style="padding:6px 0;border-bottom:1px solid var(--g9);"><span style="font-family:\'Cormorant Garamond\',serif;font-size:.85rem;font-weight:700;color:var(--g3);display:block;">'+l+'</span><div style="font-weight:600;color:var(--g2);font-size:.9rem;">'+v+'</div></div>':''; };
-  var rowb = function(l,v){ return v?'<div style="margin-bottom:10px;"><div style="font-family:\'Cormorant Garamond\',serif;font-size:.95rem;font-weight:700;color:var(--g2);margin-bottom:4px;">'+l+'</div><div style="background:var(--g9);border-radius:8px;padding:10px 14px;font-size:.87rem;color:var(--text);white-space:pre-wrap;line-height:1.6;font-family:\'Outfit\',sans-serif;">'+v+'</div></div>':''; };
+  var row = function(l,v){ return v?'<div style="padding:6px 0;border-bottom:1px solid var(--g9);"><span style="font-family:\'Cormorant Garamond\',serif;font-size:.85rem;font-weight:700;color:var(--g3);display:block;">'+escHtml(l)+'</span><div style="font-weight:600;color:var(--g2);font-size:.9rem;">'+escHtml(v)+'</div></div>':''; };
+  var rowb = function(l,v){ return v?'<div style="margin-bottom:10px;"><div style="font-family:\'Cormorant Garamond\',serif;font-size:.95rem;font-weight:700;color:var(--g2);margin-bottom:4px;">'+escHtml(l)+'</div><div style="background:var(--g9);border-radius:8px;padding:10px 14px;font-size:.87rem;color:var(--text);white-space:pre-wrap;line-height:1.6;font-family:\'Outfit\',sans-serif;">'+escHtml(v)+'</div></div>':''; };
 
   // DATOS PERSONALES
   var dpEl = document.getElementById('res-datos-personales');
@@ -10662,7 +10662,7 @@ function generarResumen(){
   // EVOLUCIONES — mostrar todas las guardadas + la actual si tiene contenido
   var evolEl = document.getElementById('res-evoluciones');
   if(evolEl){
-    var rowb2 = function(l,v){ return v?'<div style="margin-bottom:6px;"><span style="font-family:\'Cormorant Garamond\',serif;font-size:.9rem;font-weight:700;color:var(--g2);">'+l+'</span><div style="background:var(--g9);border-radius:6px;padding:8px 12px;font-size:.85rem;white-space:pre-wrap;margin-top:2px;font-family:\'Outfit\',sans-serif;">'+v+'</div></div>':''; };
+    var rowb2 = function(l,v){ return v?'<div style="margin-bottom:6px;"><span style="font-family:\'Cormorant Garamond\',serif;font-size:.9rem;font-weight:700;color:var(--g2);">'+escHtml(l)+'</span><div style="background:var(--g9);border-radius:6px;padding:8px 12px;font-size:.85rem;white-space:pre-wrap;margin-top:2px;font-family:\'Outfit\',sans-serif;">'+escHtml(v)+'</div></div>':''; };
     
     var todasEvoluciones = [];
     // Tomar evoluciones del paciente activo (más confiable que el array global)
@@ -10699,9 +10699,9 @@ function generarResumen(){
         return '<div style="border:1.5px solid var(--g9);border-radius:10px;padding:14px;margin-bottom:12px;">'
           +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--g9);">'
           +'<span style="font-size:1rem;">📅</span>'
-          +'<span style="font-family:\'Cormorant Garamond\',serif;font-weight:700;color:var(--g2);font-size:1rem;">'+e.fecha+'</span>'
-          +(e.hora?'<span style="font-size:.8rem;color:var(--muted);"> · 🕐 '+e.hora+' hs</span>':'')
-          +(e.medico?'<span style="font-size:.8rem;color:var(--g4);margin-left:auto;">'+e.medico+'</span>':'')
+          +'<span style="font-family:\'Cormorant Garamond\',serif;font-weight:700;color:var(--g2);font-size:1rem;">'+escHtml(e.fecha)+'</span>'
+          +(e.hora?'<span style="font-size:.8rem;color:var(--muted);"> · 🕐 '+escHtml(e.hora)+' hs</span>':'')
+          +(e.medico?'<span style="font-size:.8rem;color:var(--g4);margin-left:auto;">'+escHtml(e.medico)+'</span>':'')
           +'</div>'
           +(sv?rowb2('Signos vitales', sv):'')
           +rowb2('Evolución clínica', e.cuadro)
@@ -10780,16 +10780,16 @@ function generarVideollamada(){
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
   modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px;max-width:440px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.4);">'
     +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;font-weight:700;color:#042b10;margin-bottom:4px;">🎥 Videoconsulta lista</div>'
-    +'<div style="font-size:.78rem;color:#5a7362;margin-bottom:16px;">Sala creada para <strong>'+pac+'</strong> · '+fechaDisplay+' a las '+hora+' hs</div>'
+    +'<div style="font-size:.78rem;color:#5a7362;margin-bottom:16px;">Sala creada para <strong>'+escHtml(pac)+'</strong> · '+escHtml(fechaDisplay)+' a las '+escHtml(hora)+' hs</div>'
     +'<div style="background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:10px;padding:12px 14px;margin-bottom:16px;">'
       +'<div style="font-size:.7rem;font-weight:700;color:#145a32;margin-bottom:4px;">LINK DE LA SALA</div>'
-      +'<div style="font-size:.82rem;color:#042b10;word-break:break-all;font-weight:600;">'+linkVideollamada+'</div>'
+      +'<div style="font-size:.82rem;color:#042b10;word-break:break-all;font-weight:600;">'+escHtml(linkVideollamada)+'</div>'
     +'</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px;">'
-      +'<button onclick="window.open(\''+linkVideollamada+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">🎥 Entrar a la videollamada ahora</button>'
+      +'<button onclick="window.open(\''+escJs(linkVideollamada)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">🎥 Entrar a la videollamada ahora</button>'
       +(tel?'<button onclick="window.open(\'https://wa.me/54'+tel.replace(/\D/g,'')+'?text='+encodeURIComponent(msg)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">📱 Enviar link al paciente por WhatsApp</button>':'')
-      +(email?'<button onclick="window.location.href=\'mailto:'+email+'?subject='+encodeURIComponent('Videoconsulta · '+fechaDisplay)+'&body='+encodeURIComponent(msg.replace(/\*/g,'').replace(/_/g,''))+'\';" style="padding:12px;background:linear-gradient(135deg,#1a6aab,#0e4d8a);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">✉️ Enviar link por Email</button>':'')
-      +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+linkVideollamada+'\');this.textContent=\'✅ Copiado!\';" style="padding:12px;background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;color:#145a32;">📋 Copiar link</button>'
+      +(email?'<button onclick="window.location.href=\'mailto:'+escJs(email)+'?subject='+encodeURIComponent('Videoconsulta · '+fechaDisplay)+'&body='+encodeURIComponent(msg.replace(/\*/g,'').replace(/_/g,''))+'\';" style="padding:12px;background:linear-gradient(135deg,#1a6aab,#0e4d8a);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">✉️ Enviar link por Email</button>':'')
+      +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+escJs(linkVideollamada)+'\');this.textContent=\'✅ Copiado!\';" style="padding:12px;background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;color:#145a32;">📋 Copiar link</button>'
       +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:10px;background:none;border:1.5px solid #e5e7eb;border-radius:9px;font-size:.88rem;cursor:pointer;color:#6b7280;">Cerrar</button>'
     +'</div>'
     +'</div>';
@@ -10896,11 +10896,11 @@ function enviarLinkExterno(nombre){
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
   modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px;max-width:400px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.4);">'
     +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;font-weight:700;color:#042b10;margin-bottom:12px;">📤 Enviar al paciente</div>'
-    +'<div style="background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:.82rem;word-break:break-all;color:#145a32;"><strong>Link:</strong> '+linkExt+'</div>'
+    +'<div style="background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:.82rem;word-break:break-all;color:#145a32;"><strong>Link:</strong> '+escHtml(linkExt)+'</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px;">'
       +(d.tel?'<button onclick="window.open(\'https://wa.me/54'+d.tel+'?text='+encodeURIComponent(msg)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">📱 Enviar por WhatsApp</button>':'')
-      +(d.email?'<button onclick="window.location.href=\'mailto:'+d.email+'?subject='+encodeURIComponent('Videoconsulta '+nombre+' · '+d.fechaDisplay)+'&body='+encodeURIComponent(msg.replace(/\*/g,'').replace(/_/g,''))+'\';" style="padding:12px;background:linear-gradient(135deg,#1a6aab,#0e4d8a);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">✉️ Enviar por Email</button>':'')
-      +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+linkExt+'\');this.textContent=\'✅ Copiado!\';" style="padding:12px;background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;color:#145a32;">📋 Copiar link</button>'
+      +(d.email?'<button onclick="window.location.href=\'mailto:'+escJs(d.email)+'?subject='+encodeURIComponent('Videoconsulta '+nombre+' · '+d.fechaDisplay)+'&body='+encodeURIComponent(msg.replace(/\*/g,'').replace(/_/g,''))+'\';" style="padding:12px;background:linear-gradient(135deg,#1a6aab,#0e4d8a);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">✉️ Enviar por Email</button>':'')
+      +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+escJs(linkExt)+'\');this.textContent=\'✅ Copiado!\';" style="padding:12px;background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;color:#145a32;">📋 Copiar link</button>'
       +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:10px;background:none;border:1.5px solid #e5e7eb;border-radius:9px;font-size:.88rem;cursor:pointer;color:#6b7280;">Cerrar</button>'
     +'</div></div>';
   document.body.appendChild(modal);
@@ -10939,19 +10939,19 @@ function mostrarOpcionesLlamada(i){
   var opciones = '';
   if(v.link==='whatsapp'){
     if(v.telefono){
-      opciones += '<button onclick="window.open(\'https://wa.me/54'+v.telefono+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;width:100%;">📱 Abrir WhatsApp con '+v.pac+'</button>';
+      opciones += '<button onclick="window.open(\'https://wa.me/54'+v.telefono+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;width:100%;">📱 Abrir WhatsApp con '+escHtml(v.pac)+'</button>';
     } else {
       opciones += '<div style="color:#6b7280;font-size:.85rem;margin-bottom:8px;">No hay teléfono guardado para este paciente.</div>';
     }
   } else if(v.link){
-    opciones += '<button onclick="window.open(\''+v.link+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;width:100%;">🎥 Entrar a la sala</button>'
-      +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+v.link+'\');this.textContent=\'✅ Copiado!\';" style="padding:12px;background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;color:#145a32;width:100%;">📋 Copiar link</button>';
+    opciones += '<button onclick="window.open(\''+escJs(v.link)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;width:100%;">🎥 Entrar a la sala</button>'
+      +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+escJs(v.link)+'\');this.textContent=\'✅ Copiado!\';" style="padding:12px;background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;color:#145a32;width:100%;">📋 Copiar link</button>';
   }
   var modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
   modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px;max-width:380px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.4);">'
     +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.25rem;font-weight:700;color:#042b10;margin-bottom:4px;">Iniciar videoconsulta</div>'
-    +'<div style="font-size:.8rem;color:#5a7362;margin-bottom:16px;">'+v.pac+' · '+v.hora+' hs</div>'
+    +'<div style="font-size:.8rem;color:#5a7362;margin-bottom:16px;">'+escHtml(v.pac)+' · '+escHtml(v.hora)+' hs</div>'
     +opciones
     +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="margin-top:8px;padding:10px;background:none;border:1.5px solid #e5e7eb;border-radius:9px;font-size:.88rem;cursor:pointer;color:#6b7280;width:100%;">Cerrar</button>'
     +'</div>';
@@ -10999,8 +10999,8 @@ function sincronizarVideoconsultasSupabase(){
   c.innerHTML = videoconsultas.map(function(v,i){
     var plat = v.plataforma || 'Meet';
     return '<div class="agenda-item">'
-      +'<div class="agenda-hora">'+v.hora+'</div>'
-      +'<div class="agenda-info"><div class="agenda-pac">'+v.pac+' <span style="font-size:.75rem;color:var(--g4);">· '+v.fechaDisplay+' · '+plat+'</span></div><div class="agenda-mot">'+v.motivo+' · '+v.duracion+'</div></div>'
+      +'<div class="agenda-hora">'+escHtml(v.hora)+'</div>'
+      +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(v.pac)+' <span style="font-size:.75rem;color:var(--g4);">· '+escHtml(v.fechaDisplay)+' · '+escHtml(plat)+'</span></div><div class="agenda-mot">'+escHtml(v.motivo)+' · '+escHtml(v.duracion)+'</div></div>'
       +'<button onclick="mostrarOpcionesLlamada('+i+')" style="background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;margin-left:6px;">▶ Iniciar</button>'
      +'<button onclick="eliminarVideoconsulta('+i+');" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:0 4px;">✕</button>'
       +'</div>';
@@ -11348,7 +11348,7 @@ function pintarHistorial(lista, mapaPacientes){
     var totalTxt = '$ '+(parseFloat(f.total)||0).toFixed(2);
     var fechaTxt = f.fecha_prestacion ? f.fecha_prestacion.split('-').reverse().join('/') : '';
     
-  return '<div class="agenda-item" style="cursor:pointer;" onclick="imprimirFacturaHistorial('+idx+')" title="Ver / Imprimir"><div class="agenda-hora" style="font-size:.72rem;width:auto;min-width:62px;white-space:nowrap;padding:6px 10px;">'+fechaTxt+'</div><div class="agenda-info"><div class="agenda-pac">'+f.nombrePac+'</div><div class="agenda-mot">'+tipoTxt+' · '+totalTxt+'</div></div><span class="pac-tag tag-ok" style="margin-right:8px;">Emitida</span><button onclick="event.stopPropagation();imprimirFacturaHistorial('+idx+')" style="background:none;border:none;color:var(--g4);cursor:pointer;font-size:1.15rem;margin-right:6px;" title="Ver / Imprimir">🖨️</button><button onclick="event.stopPropagation();enviarFacturaHistorialWA('+idx+')" style="background:none;border:none;color:#25d366;cursor:pointer;font-size:1.15rem;margin-right:6px;" title="Enviar por WhatsApp">💬</button><button onclick="event.stopPropagation();enviarFacturaHistorialEmail('+idx+')" style="background:none;border:none;color:#1a6aab;cursor:pointer;font-size:1.15rem;" title="Enviar por Email">✉️</button></div>';
+  return '<div class="agenda-item" style="cursor:pointer;" onclick="imprimirFacturaHistorial('+idx+')" title="Ver / Imprimir"><div class="agenda-hora" style="font-size:.72rem;width:auto;min-width:62px;white-space:nowrap;padding:6px 10px;">'+escHtml(fechaTxt)+'</div><div class="agenda-info"><div class="agenda-pac">'+escHtml(f.nombrePac)+'</div><div class="agenda-mot">'+escHtml(tipoTxt)+' · '+escHtml(totalTxt)+'</div></div><span class="pac-tag tag-ok" style="margin-right:8px;">Emitida</span><button onclick="event.stopPropagation();imprimirFacturaHistorial('+idx+')" style="background:none;border:none;color:var(--g4);cursor:pointer;font-size:1.15rem;margin-right:6px;" title="Ver / Imprimir">🖨️</button><button onclick="event.stopPropagation();enviarFacturaHistorialWA('+idx+')" style="background:none;border:none;color:#25d366;cursor:pointer;font-size:1.15rem;margin-right:6px;" title="Enviar por WhatsApp">💬</button><button onclick="event.stopPropagation();enviarFacturaHistorialEmail('+idx+')" style="background:none;border:none;color:#1a6aab;cursor:pointer;font-size:1.15rem;" title="Enviar por Email">✉️</button></div>';
 }).join('');
 	}
 
@@ -11390,30 +11390,30 @@ function pintarFacturaParaImprimir(f, items){
   var subtotalTxt = (f.subtotal!=null && f.subtotal!=='') ? '$ '+(parseFloat(f.subtotal)||0).toFixed(2) : '';
   var descuentoTxt = (f.descuento) ? f.descuento+'%' : '';
   var fechaTxt = f.fecha_prestacion ? f.fecha_prestacion.split('-').reverse().join('/') : '';
-  var osExtra = (f.tipo!=='particular' && f.obra_social) ? '<div class="ps"><div class="pl">Obra Social</div><div class="pv">'+f.obra_social+'</div></div>' : '';
+  var osExtra = (f.tipo!=='particular' && f.obra_social) ? '<div class="ps"><div class="pl">Obra Social</div><div class="pv">'+escHtml(f.obra_social)+'</div></div>' : '';
   var extraPart = f.tipo==='particular' ? (
-    (f.dniPac ? '<div class="ps"><div class="pl">DNI</div><div class="pv">'+f.dniPac+'</div></div>' : '') +
-    (f.condicionIva ? '<div class="ps"><div class="pl">Condición IVA</div><div class="pv">'+f.condicionIva+'</div></div>' : '') +
-    (f.formaPago ? '<div class="ps"><div class="pl">Forma de pago</div><div class="pv">'+f.formaPago+'</div></div>' : '')
+    (f.dniPac ? '<div class="ps"><div class="pl">DNI</div><div class="pv">'+escHtml(f.dniPac)+'</div></div>' : '') +
+    (f.condicionIva ? '<div class="ps"><div class="pl">Condición IVA</div><div class="pv">'+escHtml(f.condicionIva)+'</div></div>' : '') +
+    (f.formaPago ? '<div class="ps"><div class="pl">Forma de pago</div><div class="pv">'+escHtml(f.formaPago)+'</div></div>' : '')
   ) : '';
   var itemsHtml = '';
   if(items.length){
     itemsHtml = '<table style="width:100%;border-collapse:collapse;margin:18px 0;font-size:.85rem;"><thead><tr style="border-bottom:2px solid #145a32;text-align:left;"><th style="padding:6px 4px;">Descripción</th><th style="padding:6px 4px;text-align:right;">Cant.</th><th style="padding:6px 4px;text-align:right;">Valor</th></tr></thead><tbody>'
       +items.map(function(it){
-        return '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px 4px;">'+(it.descripcion||'')+'</td><td style="padding:6px 4px;text-align:right;">'+(it.cantidad||1)+'</td><td style="padding:6px 4px;text-align:right;">$ '+(parseFloat(it.valor)||0).toFixed(2)+'</td></tr>';
+        return '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px 4px;">'+escHtml(it.descripcion||'')+'</td><td style="padding:6px 4px;text-align:right;">'+escHtml(it.cantidad||1)+'</td><td style="padding:6px 4px;text-align:right;">$ '+(parseFloat(it.valor)||0).toFixed(2)+'</td></tr>';
       }).join('')
       +'</tbody></table>';
   }
   var totalesHtml = '<div class="pg2">'
-    + (subtotalTxt ? '<div class="ps"><div class="pl">Subtotal</div><div class="pv">'+subtotalTxt+'</div></div>' : '')
-    + (descuentoTxt ? '<div class="ps"><div class="pl">Descuento</div><div class="pv">'+descuentoTxt+'</div></div>' : '')
-    + '<div class="ps"><div class="pl">Total</div><div class="pv" style="font-weight:700;font-size:1.2rem;color:var(--g2);">'+totalTxt+'</div></div>'
+    + (subtotalTxt ? '<div class="ps"><div class="pl">Subtotal</div><div class="pv">'+escHtml(subtotalTxt)+'</div></div>' : '')
+    + (descuentoTxt ? '<div class="ps"><div class="pl">Descuento</div><div class="pv">'+escHtml(descuentoTxt)+'</div></div>' : '')
+    + '<div class="ps"><div class="pl">Total</div><div class="pv" style="font-weight:700;font-size:1.2rem;color:var(--g2);">'+escHtml(totalTxt)+'</div></div>'
     + '</div>';
-  var html = '<div class="pdoc"><div class="ph"><div class="pb">Med <span>Historias Clínicas Online</span><small>Facturación Online</small></div><div class="pt">'+titulo+'<small>Fecha: '+fechaTxt+'</small></div></div>'
-    +'<div class="pg2">'+osExtra+'<div class="ps"><div class="pl">Paciente</div><div class="pv">'+f.nombrePac+'</div></div>'+extraPart+'</div>'
+  var html = '<div class="pdoc"><div class="ph"><div class="pb">Med <span>Historias Clínicas Online</span><small>Facturación Online</small></div><div class="pt">'+escHtml(titulo)+'<small>Fecha: '+escHtml(fechaTxt)+'</small></div></div>'
+    +'<div class="pg2">'+osExtra+'<div class="ps"><div class="pl">Paciente</div><div class="pv">'+escHtml(f.nombrePac)+'</div></div>'+extraPart+'</div>'
     +itemsHtml
     +totalesHtml
-    +'<div class="pf"><div><div class="pfl"></div><div class="pfs">'+medNombre+'</div></div><div class="plg">MedHistoriaClinicaOnline · Facturación Online · Argentina</div></div></div>';
+    +'<div class="pf"><div><div class="pfl"></div><div class="pfs">'+escHtml(medNombre)+'</div></div><div class="plg">MedHistoriaClinicaOnline · Facturación Online · Argentina</div></div></div>';
   document.getElementById('printArea').innerHTML = html;
   setTimeout(function(){ window.print(); },150);
 }
@@ -11430,11 +11430,11 @@ function pintarFacturaParaImprimir(f, items){
   var osNombre = tipo==='os'?(document.getElementById('fo-os')||{}).value||'':'';
   var osCuit = tipo==='os'?(document.getElementById('fo-cuit-os')||{}).value||'':'';
   var osRazon = tipo==='os'?(document.getElementById('fo-razon-social')||{}).value||'':'';
-  var osExtra = tipo==='os' && (osCuit||osRazon) ? '<div class="ps"><div class="pl">Razón Social</div><div class="pv">'+(osRazon||osNombre)+'</div></div><div class="ps"><div class="pl">CUIT Obra Social</div><div class="pv">'+osCuit+'</div></div>' : '';
+  var osExtra = tipo==='os' && (osCuit||osRazon) ? '<div class="ps"><div class="pl">Razón Social</div><div class="pv">'+escHtml(osRazon||osNombre)+'</div></div><div class="ps"><div class="pl">CUIT Obra Social</div><div class="pv">'+escHtml(osCuit)+'</div></div>' : '';
   var extraPart = tipo!=='os' ? (
-    ((document.getElementById('fp-dni')||{}).value ? '<div class="ps"><div class="pl">DNI</div><div class="pv">'+(document.getElementById('fp-dni')||{}).value+'</div></div>' : '') +
-    ((document.getElementById('fp-iva')||{}).value ? '<div class="ps"><div class="pl">Condición IVA</div><div class="pv">'+(document.getElementById('fp-iva')||{}).value+'</div></div>' : '') +
-    ((document.getElementById('fp-pago')||{}).value ? '<div class="ps"><div class="pl">Forma de pago</div><div class="pv">'+(document.getElementById('fp-pago')||{}).value+'</div></div>' : '')
+    ((document.getElementById('fp-dni')||{}).value ? '<div class="ps"><div class="pl">DNI</div><div class="pv">'+escHtml((document.getElementById('fp-dni')||{}).value)+'</div></div>' : '') +
+    ((document.getElementById('fp-iva')||{}).value ? '<div class="ps"><div class="pl">Condición IVA</div><div class="pv">'+escHtml((document.getElementById('fp-iva')||{}).value)+'</div></div>' : '') +
+    ((document.getElementById('fp-pago')||{}).value ? '<div class="ps"><div class="pl">Forma de pago</div><div class="pv">'+escHtml((document.getElementById('fp-pago')||{}).value)+'</div></div>' : '')
   ) : '';
   var items = [];
   document.querySelectorAll('#'+prefix+'-prestaciones > div').forEach(function(fila){
@@ -11450,20 +11450,20 @@ function pintarFacturaParaImprimir(f, items){
   if(items.length){
     itemsHtml = '<table style="width:100%;border-collapse:collapse;margin:18px 0;font-size:.85rem;"><thead><tr style="border-bottom:2px solid #145a32;text-align:left;"><th style="padding:6px 4px;">Descripción</th><th style="padding:6px 4px;text-align:right;">Cant.</th><th style="padding:6px 4px;text-align:right;">Valor</th></tr></thead><tbody>'
       +items.map(function(it){
-        return '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px 4px;">'+it.descripcion+'</td><td style="padding:6px 4px;text-align:right;">'+it.cantidad+'</td><td style="padding:6px 4px;text-align:right;">$ '+it.valor.toFixed(2)+'</td></tr>';
+        return '<tr style="border-bottom:1px solid #eee;"><td style="padding:6px 4px;">'+escHtml(it.descripcion)+'</td><td style="padding:6px 4px;text-align:right;">'+escHtml(it.cantidad)+'</td><td style="padding:6px 4px;text-align:right;">$ '+it.valor.toFixed(2)+'</td></tr>';
       }).join('')
       +'</tbody></table>';
   }
   var totalesHtml = '<div class="pg2">'
-    + (subtotal ? '<div class="ps"><div class="pl">Subtotal</div><div class="pv">'+subtotal+'</div></div>' : '')
-    + (descuento ? '<div class="ps"><div class="pl">Descuento</div><div class="pv">'+descuento+'%</div></div>' : '')
-    + '<div class="ps"><div class="pl">Total</div><div class="pv" style="font-weight:700;font-size:1.2rem;color:var(--g2);">'+total+'</div></div>'
+    + (subtotal ? '<div class="ps"><div class="pl">Subtotal</div><div class="pv">'+escHtml(subtotal)+'</div></div>' : '')
+    + (descuento ? '<div class="ps"><div class="pl">Descuento</div><div class="pv">'+escHtml(descuento)+'%</div></div>' : '')
+    + '<div class="ps"><div class="pl">Total</div><div class="pv" style="font-weight:700;font-size:1.2rem;color:var(--g2);">'+escHtml(total)+'</div></div>'
     + '</div>';
-  var html = '<div class="pdoc"><div class="ph"><div class="pb">Med <span>Historias Clínicas Online</span><small>Facturación Online</small></div><div class="pt">'+titulo+'<small>Fecha: '+fecha+'</small></div></div>'
-    +'<div class="pg2">'+osExtra+'<div class="ps"><div class="pl">Paciente</div><div class="pv">'+pac+'</div></div>'+extraPart+'</div>'
+  var html = '<div class="pdoc"><div class="ph"><div class="pb">Med <span>Historias Clínicas Online</span><small>Facturación Online</small></div><div class="pt">'+escHtml(titulo)+'<small>Fecha: '+escHtml(fecha)+'</small></div></div>'
+    +'<div class="pg2">'+osExtra+'<div class="ps"><div class="pl">Paciente</div><div class="pv">'+escHtml(pac)+'</div></div>'+extraPart+'</div>'
     +itemsHtml
     +totalesHtml
-    +'<div class="pf"><div><div class="pfl"></div><div class="pfs">'+med+'</div></div><div class="plg">MedHistoriaClinicaOnline · Facturación Online · Argentina</div></div></div>';
+    +'<div class="pf"><div><div class="pfl"></div><div class="pfs">'+escHtml(med)+'</div></div><div class="plg">MedHistoriaClinicaOnline · Facturación Online · Argentina</div></div></div>';
   document.getElementById('printArea').innerHTML = html;
   setTimeout(function(){ window.print(); },150);
 }
@@ -11520,7 +11520,7 @@ function cambiarTabPacientes(tab){
       medicosEl.innerHTML = 'Cargando médicos del centro...';
       sb.from('centro_medicos_usuarios').select('usuarios(nombre,email)').eq('centro_id', miCentro.id).then(function(r){
         if(!r.data || !r.data.length){ medicosEl.innerHTML = 'Sin médicos cargados todavía.'; return; }
-        var nombres = r.data.map(function(row){ return row.usuarios ? '👨‍⚕️ '+(row.usuarios.nombre||'(sin nombre)') : null; }).filter(Boolean);
+        var nombres = r.data.map(function(row){ return row.usuarios ? '👨‍⚕️ '+escHtml(row.usuarios.nombre||'(sin nombre)') : null; }).filter(Boolean);
         medicosEl.innerHTML = '<strong>Médicos del centro:</strong> ' + nombres.join(' &nbsp;·&nbsp; ');
       });
     } else {
@@ -11590,22 +11590,22 @@ function renderPacientes(lista){
   });
 
   grid.innerHTML = lista.map(function(p, i){
-    var nomEsc = (p.nombre||'').replace(/'/g,"\'");
-    var dniEsc = (p.dni||'').replace(/'/g,"\'");
-    var centroBadge = p.esDeCentro ? '<span style="background:#eef2ff;color:#4338ca;border-radius:10px;padding:2px 8px;font-size:.7rem;font-weight:600;margin-left:4px;" title="Paciente compartido del centro médico">🏥 '+(p.centroNombre||'Centro')+'</span>' : '';
+    var nomEsc = escJs(p.nombre||'');
+    var dniEsc = escJs(p.dni||'');
+    var centroBadge = p.esDeCentro ? '<span style="background:#eef2ff;color:#4338ca;border-radius:10px;padding:2px 8px;font-size:.7rem;font-weight:600;margin-left:4px;" title="Paciente compartido del centro médico">🏥 '+escHtml(p.centroNombre||'Centro')+'</span>' : '';
     return '<div class="pac-card">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">'
-      +'<div style="font-weight:700;font-size:.9rem;color:var(--g2);">'+p.nombre+'</div>'
+      +'<div style="font-weight:700;font-size:.9rem;color:var(--g2);">'+escHtml(p.nombre)+'</div>'
       +'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end;">'+centroBadge+'</div>'
       +'</div>'
-      +'<div style="font-size:.75rem;color:var(--muted);margin-bottom:4px;">DNI '+(p.dni||'—')+(p.os?' · '+p.os:'')+'</div>'
-      +(p.ultima?'<div style="font-size:.72rem;color:var(--muted);">Última: '+p.ultima+'</div>':'')
-      +(p.prox?'<div style="font-size:.72rem;color:var(--g3);margin-top:4px;">📅 Próx: '+p.prox+'</div>':'')
+      +'<div style="font-size:.75rem;color:var(--muted);margin-bottom:4px;">DNI '+escHtml(p.dni||'—')+(p.os?' · '+escHtml(p.os):'')+'</div>'
+      +(p.ultima?'<div style="font-size:.72rem;color:var(--muted);">Última: '+escHtml(p.ultima)+'</div>':'')
+      +(p.prox?'<div style="font-size:.72rem;color:var(--g3);margin-top:4px;">📅 Próx: '+escHtml(p.prox)+'</div>':'')
       +'<div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;">'
       +'<button onclick="borrarPacienteIdx('+i+')" style="background:none;border:1px solid #dc2626;color:#dc2626;border-radius:6px;padding:4px 10px;font-size:.72rem;cursor:pointer;">🗑 Borrar</button>'
       +'<div style="display:flex;gap:8px;">'
       +'<button onclick="abrirEditarPacienteDNI(\''+dniEsc+'\',\''+nomEsc+'\')" style="background:none;border:1px solid var(--g3);color:var(--g3);border-radius:6px;padding:4px 12px;font-size:.75rem;font-weight:600;cursor:pointer;">✏️ Editar</button>'
-      +'<button onclick="abrirHC(\''+nomEsc+'\',\''+dniEsc+'\',\''+p.edad+'\',\''+p.os+'\')" style="background:linear-gradient(135deg,#22a050,#1a7a42);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:.75rem;font-weight:600;cursor:pointer;">📋 Historia Clínica</button>'
+      +'<button onclick="abrirHC(\''+nomEsc+'\',\''+dniEsc+'\',\''+escJs(p.edad)+'\',\''+escJs(p.os)+'\')" style="background:linear-gradient(135deg,#22a050,#1a7a42);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:.75rem;font-weight:600;cursor:pointer;">📋 Historia Clínica</button>'
       +'</div>'
       +'</div>'
       +'</div>';
@@ -11663,12 +11663,12 @@ function renderTurnos(lista){
 
   function renderFila(t, mostrarFecha){
     var idx = turnos.indexOf(t);
-    var fecha = (mostrarFecha && t.fechaDisplay)?'<span style="font-size:.76rem;color:var(--g4);font-weight:600;"> '+t.fechaDisplay+'</span>':'';
+    var fecha = (mostrarFecha && t.fechaDisplay)?'<span style="font-size:.76rem;color:var(--g4);font-weight:600;"> '+escHtml(t.fechaDisplay)+'</span>':'';
     var op = t.estado==='ok'?'opacity:.65;':'';
     var waBtn = '<button onclick="enviarRecordatorioWA('+idx+')" title="Enviar recordatorio por WhatsApp" style="background:none;border:none;color:#25D366;cursor:pointer;font-size:1rem;padding:0 4px;">📱</button>';
     return '<div class="agenda-item" style="'+op+'">'
-      +'<div class="agenda-hora">'+t.hora+'</div>'
-      +'<div class="agenda-info"><div class="agenda-pac">'+t.pac+fecha+'</div><div class="agenda-mot">'+(t.motivo||'Consulta')+(t.os?' · '+t.os:'')+'</div></div>'
+      +'<div class="agenda-hora">'+escHtml(t.hora)+'</div>'
+      +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(t.pac)+fecha+'</div><div class="agenda-mot">'+escHtml(t.motivo||'Consulta')+(t.os?' · '+escHtml(t.os):'')+'</div></div>'
       +waBtn
       +'<span class="pac-tag '+tagInfo(t)+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;">'+tagTxt(t)+'</span>'
       +'<button onclick="eliminarTurno('+idx+')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:0 4px;">✕</button>'
@@ -11782,9 +11782,9 @@ function filtrarPorFecha(){
       var tagClass = tagInfo(t);
       var tagText = tagTxt(t);
       return '<div class="agenda-item" style="">'
-        +'<div class="agenda-hora">'+t.hora+'</div>'
-        +'<div class="agenda-info"><div class="agenda-pac">'+t.paciente+'</div>'
-        +'<div class="agenda-mot">'+t.motivo+(t.os?' · '+t.os:'')+'</div></div>'
+        +'<div class="agenda-hora">'+escHtml(t.hora)+'</div>'
+        +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(t.paciente)+'</div>'
+        +'<div class="agenda-mot">'+escHtml(t.motivo)+(t.os?' · '+escHtml(t.os):'')+'</div></div>'
         +'<span class="pac-tag '+tagClass+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;">'+tagText+'</span>'
         +'<button onclick="eliminarTurno('+idx+')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:0 4px;">✕</button>'
         +'</div>';
@@ -12758,8 +12758,8 @@ function imprimirDoc(tipo){
     if(areas[4]) motivoCons = areas[4].value;
     if(areas[5]) enfActual = areas[5].value;
 
-    var row = function(label, val){ return val ? '<div class="ps"><div class="pl">'+label+'</div><div class="pv">'+val+'</div></div>' : ''; };
-    var rowb = function(label, val){ return val ? '<div class="ps"><div class="pl">'+label+'</div><div class="pvb">'+val+'</div></div>' : ''; };
+    var row = function(label, val){ return val ? '<div class="ps"><div class="pl">'+label+'</div><div class="pv">'+escHtml(val)+'</div></div>' : ''; };
+    var rowb = function(label, val){ return val ? '<div class="ps"><div class="pl">'+label+'</div><div class="pvb">'+escHtml(val)+'</div></div>' : ''; };
 
     html = '<div class="pdoc">'
       +'<div class="ph"><div class="pb">Med<span>Historia</span>Clinica<span>Online</span><small>Historia Clínica Online · medhistoriasclinicasdigitales.com.ar</small></div><div class="pt">RESUMEN DE HISTORIA CLÍNICA<small>Fecha: '+f+'</small></div></div>'
@@ -12794,7 +12794,7 @@ function imprimirDoc(tipo){
       +rowb('Motivo de consulta', motivoCons)
       +rowb('Enfermedad actual', enfActual)
 
-      +'<div class="pf"><div><div class="pfl"></div><div class="pfs">'+medico+'</div></div><div class="plg">Ley 27.706 · Ley 26.529 · Ley 25.506<br>HC Digital según normativa vigente</div></div>'
+      +'<div class="pf"><div><div class="pfl"></div><div class="pfs">'+escHtml(medico)+'</div></div><div class="plg">Ley 27.706 · Ley 26.529 · Ley 25.506<br>HC Digital según normativa vigente</div></div>'
       +'<div class="pwm">MedHistoriaClinicaOnline · Historia Clínica Online · Argentina · '+f+'</div>'
       +'</div>';
   } else if(tipo==='rx'){
@@ -12892,7 +12892,7 @@ async function enviarIA(){
 
     var aiDiv = document.createElement('div');
     aiDiv.className = 'ia-msg ai';
-    aiDiv.innerHTML = aiMsg.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>');
+    aiDiv.innerHTML = escHtml(aiMsg).replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>');
     chat.appendChild(aiDiv);
     chat.scrollTop = chat.scrollHeight;
 
@@ -13545,10 +13545,10 @@ function abrirDictado(){
   var datosDiv = document.getElementById('dictado-datos-pac');
   if(datosDiv){
     var partes = [];
-    if(pac) partes.push('<strong>Paciente:</strong> '+pac);
-    if(edad) partes.push('<strong>Edad:</strong> '+edad);
-    if(sexo) partes.push('<strong>Sexo:</strong> '+sexo);
-    if(os) partes.push('<strong>Obra social:</strong> '+os);
+    if(pac) partes.push('<strong>Paciente:</strong> '+escHtml(pac));
+    if(edad) partes.push('<strong>Edad:</strong> '+escHtml(edad));
+    if(sexo) partes.push('<strong>Sexo:</strong> '+escHtml(sexo));
+    if(os) partes.push('<strong>Obra social:</strong> '+escHtml(os));
     datosDiv.innerHTML = partes.length ? partes.join(' · ') : 'Completá los datos del paciente en la anamnesis primero.';
   }
 }
@@ -13897,9 +13897,9 @@ function renderImagenes(){
   if(!hcImagenes.length){ grid.innerHTML='<div style="color:var(--muted);font-size:.82rem;">No hay imágenes adjuntas</div>'; return; }
   grid.innerHTML = hcImagenes.map(function(img,i){
     return '<div class="img-thumb" onclick="verImagen('+i+')">'
-      +'<img src="'+img.data+'" alt="'+img.nombre+'">'
+      +'<img src="'+img.data+'" alt="'+escHtml(img.nombre)+'">'
       +'<button class="del-img" onclick="event.stopPropagation();borrarImagen('+i+')">✕</button>'
-      +'<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.5);color:#fff;font-size:.6rem;padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+img.nombre+'</div>'
+      +'<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.5);color:#fff;font-size:.6rem;padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escHtml(img.nombre)+'</div>'
       +'</div>';
   }).join('');
 }
