@@ -2314,12 +2314,16 @@ document.addEventListener('DOMContentLoaded', function(){
               <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:12px;margin-bottom:10px;">
                 <div style="font-size:.75rem;font-weight:700;color:#145a32;margin-bottom:8px;">➕ Agregar medicamento (completá cada dato por separado — así se arma solo, sin que te olvides de nada)</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                  <input type="text" id="rx2-med-ifa" placeholder="Nombre genérico / IFA (ej: Enalapril)" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
-                  <input type="text" id="rx2-med-comercial" placeholder="Nombre comercial (opcional)" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
-                  <input type="text" id="rx2-med-forma" placeholder="Forma farmacéutica (ej: comprimidos 10mg)" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
-                  <input type="text" id="rx2-med-presentacion" placeholder="Presentación (ej: caja x 30 comp.)" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
-                  <input type="text" id="rx2-med-cantidad" placeholder="Cantidad de unidades (ej: 1 caja)" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
-                  <input type="text" id="rx2-med-posologia" placeholder="Posología (ej: 1 comp. cada 12hs × 30 días)" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
+                  <input type="text" id="rx2-med-ifa" placeholder="Nombre genérico / IFA (ej: Enalapril)" oninput="actualizarPreviaMedicamento()" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
+                  <input type="text" id="rx2-med-comercial" placeholder="Nombre comercial (opcional)" oninput="actualizarPreviaMedicamento()" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
+                  <input type="text" id="rx2-med-forma" placeholder="Forma farmacéutica (ej: comprimidos 10mg)" oninput="actualizarPreviaMedicamento()" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
+                  <input type="text" id="rx2-med-presentacion" placeholder="Presentación (ej: caja x 30 comp.)" oninput="actualizarPreviaMedicamento()" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
+                  <input type="text" id="rx2-med-cantidad" placeholder="Cantidad de unidades (ej: 1 caja)" oninput="actualizarPreviaMedicamento()" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
+                  <input type="text" id="rx2-med-posologia" placeholder="Posología (ej: 1 comp. cada 12hs × 30 días)" oninput="actualizarPreviaMedicamento()" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
+                </div>
+                <div style="padding:8px 12px;background:#fff;border:1.5px dashed #86efac;border-radius:8px;font-size:.82rem;margin-bottom:8px;">
+                  <div style="font-weight:700;color:#145a32;margin-bottom:2px;">👁️ Vista previa de la línea:</div>
+                  <div id="rx2-med-preview-texto" style="color:#6b7280;font-style:italic;">Completá los datos de arriba para ver cómo va a quedar.</div>
                 </div>
                 <button type="button" onclick="agregarMedicamentoReceta()" style="padding:7px 16px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">+ Agregar a la receta</button>
               </div>
@@ -6664,6 +6668,48 @@ function crearCentroMedico(){
   });
 }
 
+// Arma la línea de medicamento con el mismo formato que usa la receta final.
+// La usan tanto agregarMedicamentoReceta() (al confirmar) como actualizarPreviaMedicamento() (vista previa en vivo).
+function construirLineaMedicamento(ifa, comercial, forma, presentacion, cantidad, posologia){
+  ifa = (ifa||'').trim();
+  comercial = (comercial||'').trim();
+  forma = (forma||'').trim();
+  presentacion = (presentacion||'').trim();
+  cantidad = (cantidad||'').trim();
+  posologia = (posologia||'').trim();
+
+  var linea = ifa;
+  if(comercial) linea += (linea ? ' ' : '') + '('+comercial+')';
+
+  var partes = [];
+  if(forma) partes.push(forma);
+  if(presentacion) partes.push(presentacion);
+  if(cantidad) partes.push('Cant.: '+cantidad);
+  if(posologia) partes.push(posologia);
+  if(partes.length) linea += (linea ? ' — ' : '') + partes.join(' — ');
+
+  return linea;
+}
+
+function actualizarPreviaMedicamento(){
+  var g = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
+  var linea = construirLineaMedicamento(
+    g('rx2-med-ifa'), g('rx2-med-comercial'), g('rx2-med-forma'),
+    g('rx2-med-presentacion'), g('rx2-med-cantidad'), g('rx2-med-posologia')
+  );
+  var prev = document.getElementById('rx2-med-preview-texto');
+  if(!prev) return;
+  if(linea){
+    prev.textContent = linea;
+    prev.style.fontStyle = 'normal';
+    prev.style.color = '#145a32';
+  } else {
+    prev.textContent = 'Completá los datos de arriba para ver cómo va a quedar.';
+    prev.style.fontStyle = 'italic';
+    prev.style.color = '#6b7280';
+  }
+}
+
 function agregarMedicamentoReceta(){
   var ifa = (document.getElementById('rx2-med-ifa')||{}).value||'';
   var comercial = (document.getElementById('rx2-med-comercial')||{}).value||'';
@@ -6682,10 +6728,7 @@ function agregarMedicamentoReceta(){
     return;
   }
 
-  var linea = ifa.trim();
-  if(comercial.trim()) linea += ' ('+comercial.trim()+')';
-  linea += ' — '+forma.trim()+' — '+presentacion.trim()+' — Cant.: '+cantidad.trim();
-  if(posologia.trim()) linea += ' — '+posologia.trim();
+  var linea = construirLineaMedicamento(ifa, comercial, forma, presentacion, cantidad, posologia);
 
   var textarea = document.getElementById('rx2-med');
   if(textarea){
@@ -6696,6 +6739,7 @@ function agregarMedicamentoReceta(){
     var el = document.getElementById(id);
     if(el) el.value = '';
   });
+  actualizarPreviaMedicamento();
 }
 
 function agregarMedicoACentro(){
@@ -12109,19 +12153,22 @@ function generarPDFbase64(tipo, callback){
   doc.setDrawColor(20,90,50); doc.setLineWidth(0.8);
   doc.line(margin, 45, W-margin, 45);
 
-  // ── Bloque de información del profesional + código de barras (solo recetas) ──
+  // ── Bloque de información del profesional + espacio reservado para el CUIR (solo recetas) ──
   var yProf = 45;
   if(tipo === 'receta'){
-    // Código de barras único e irrepetible (identificador de la receta)
-    var _codigoReceta = 'RX'+Date.now().toString(36).toUpperCase()+Math.floor(Math.random()*900+100);
-    try {
-      var _bcCanvas = document.createElement('canvas');
-      window.JsBarcode(_bcCanvas, _codigoReceta, { format:'CODE128', displayValue:false, height:32, width:1.6, margin:0 });
-      var _bcData = _bcCanvas.toDataURL('image/png');
-      doc.addImage(_bcData, 'PNG', W-margin-38, 48, 38, 10);
-      doc.setTextColor(100,100,100); doc.setFontSize(6); doc.setFont('helvetica','normal');
-      doc.text(_codigoReceta, W-margin-19, 61, {align:'center'});
-    } catch(e){}
+    // Espacio reservado para el código de barras con la Clave Única de Identificación de Receta (CUIR).
+    // La asigna el Ministerio de Salud al aprobarse la inscripción en el Registro de Recetarios
+    // Electrónicos (Ley 27.553, Res. 1959/2024) — hasta entonces se muestra un placeholder,
+    // nunca un código inventado.
+    var cuirW = 40, cuirH = 13, cuirX = W-margin-cuirW, cuirY = 48;
+    doc.setDrawColor(160,160,160); doc.setLineWidth(0.3);
+    doc.setLineDashPattern([1.3,1], 0);
+    doc.rect(cuirX, cuirY, cuirW, cuirH, 'S');
+    doc.setLineDashPattern([], 0);
+    doc.setTextColor(130,130,130); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+    doc.text('CUIR', cuirX+cuirW/2, cuirY+5, {align:'center'});
+    doc.setFontSize(5.5); doc.setFont('helvetica','normal');
+    doc.text('[pendiente de asignación]', cuirX+cuirW/2, cuirY+9, {align:'center', maxWidth:cuirW-3});
 
     yProf = 51;
     doc.setTextColor(20,90,50); doc.setFontSize(7); doc.setFont('helvetica','bold');
