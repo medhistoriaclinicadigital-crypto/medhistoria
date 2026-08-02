@@ -12986,8 +12986,13 @@ function instalarPWA(){
   if(deferredPrompt){
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then(function(r){
+      // El cartel del navegador solo se puede usar una vez, se haya aceptado o no.
+      // Si lo cancelaron, dejamos el botón visible: el próximo clic va a mostrar
+      // las instrucciones manuales (más abajo) en vez de no hacer nada.
       deferredPrompt = null;
-      document.getElementById('pwa-install-btn').style.display='none';
+      if(r.outcome==='accepted'){
+        document.getElementById('pwa-install-btn').style.display='none';
+      }
     });
   } else {
     alert('Para instalar:\n\niOS: Safari → Compartir → "Agregar a pantalla de inicio"\n\nAndroid: menú del navegador (⋮) → "Instalar aplicación"\n\nComputadora (Chrome/Edge): ícono ⬇ en la barra de direcciones, o menú (⋮) → "Instalar MedHistoriaClinicaOnline"');
