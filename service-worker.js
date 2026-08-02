@@ -2,15 +2,19 @@
 // Solo cachea el "shell" de la app (HTML/manifest/íconos) para que abra rápido
 // y funcione offline como pantalla básica. NUNCA cachea llamadas a Supabase
 // ni a los CDNs externos (jsPDF, JsBarcode, EmailJS) — esas siempre van a la red.
+//
+// Rutas relativas a propósito: este archivo puede vivir en la raíz del sitio
+// (staging, Netlify) o en un subdirectorio (producción, GitHub Pages en /medhistoria/),
+// y las rutas relativas se resuelven bien en los dos casos.
 
 var CACHE_NAME = 'medhistoria-shell-v1';
 var APP_SHELL = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/icon-maskable-512.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png'
 ];
 
 self.addEventListener('install', function(event){
@@ -49,7 +53,7 @@ self.addEventListener('fetch', function(event){
       return res;
     }).catch(function(){
       return caches.match(req).then(function(cached){
-        return cached || caches.match('/index.html');
+        return cached || caches.match('./index.html');
       });
     })
   );
