@@ -655,11 +655,15 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   }
   var deferredPrompt = null;
+  var _esMovil = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   window.addEventListener('beforeinstallprompt', function(e){
     e.preventDefault();
     deferredPrompt = e;
     var btn = document.getElementById('pwa-install-btn');
-    if(btn) btn.style.display = 'flex';
+    if(btn){
+      btn.textContent = _esMovil ? '📲 Instalar app en tu celular' : '💻 Instalar app en tu computadora';
+      btn.style.display = 'flex';
+    }
   });
   window.addEventListener('appinstalled', function(){
     deferredPrompt = null;
@@ -679,7 +683,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <!-- PWA INSTALL BUTTON -->
 <button id="pwa-install-btn" onclick="instalarPWA()">
-  📲 Instalar app en tu celular
+  ⬇️ Instalar app
 </button>
 
 
@@ -12986,7 +12990,7 @@ function instalarPWA(){
       document.getElementById('pwa-install-btn').style.display='none';
     });
   } else {
-    alert('Para instalar:\n\niOS: Safari → Compartir → "Agregar a pantalla de inicio"\n\nAndroid: menú del navegador → "Instalar aplicación"');
+    alert('Para instalar:\n\niOS: Safari → Compartir → "Agregar a pantalla de inicio"\n\nAndroid: menú del navegador (⋮) → "Instalar aplicación"\n\nComputadora (Chrome/Edge): ícono ⬇ en la barra de direcciones, o menú (⋮) → "Instalar MedHistoriaClinicaOnline"');
   }
 }
 
