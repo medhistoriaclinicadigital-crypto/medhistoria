@@ -5202,6 +5202,9 @@ function limpiarFormularioHC(){
   });
   pacienteHCActualIdx = -1;
   evoluciones = [];
+  estudiosAdjuntos = [];
+  _pacienteIdEstudiosActual = null;
+  renderEstudios();
   var contAud = document.getElementById('hc-auditoria-lista');
   if(contAud) contAud.innerHTML = '';
   var titulo = document.querySelector('#panel-hc .app-page-title');
@@ -5231,6 +5234,10 @@ function abrirHC(nombre, dni, edad, os){
 
   // Cargar evoluciones del paciente
   evoluciones = p.evoluciones || [];
+
+  // Cargar estudios/imágenes adjuntas del paciente desde Supabase Storage
+  _pacienteIdEstudiosActual = null;
+  cargarEstudiosPaciente();
 
   // Helper para setear campos
  var set = function(id, val){ var el=document.getElementById(id); if(el) el.value = (val===undefined||val===null) ? '' : val; };
@@ -9992,34 +9999,82 @@ function filtrarCategoria(cat){
 
 
 var estudiosAdjuntos = [];
+var _pacienteIdEstudiosActual = null; // id real (Supabase) del paciente de HC abierto, resuelto de forma perezosa
+
+var ESTUDIOS_BUCKET = 'estudios-adjuntos';
+
+// Resuelve el paciente_id real de Supabase para el paciente de HC actualmente abierto.
+function _resolverPacienteIdEstudios(callback){
+  if(_pacienteIdEstudiosActual){ callback(_pacienteIdEstudiosActual); return; }
+  var p = (pacienteHCActualIdx>=0 && pacientes[pacienteHCActualIdx]) ? pacientes[pacienteHCActualIdx] : null;
+  if(!p || !p.dni){ callback(null); return; }
+  buscarPacienteIdCompartido(p.dni, function(id){ _pacienteIdEstudiosActual = id; callback(id); });
+}
+
+// Carga desde Supabase (tabla estudios + Storage) los archivos del paciente de HC abierto.
+function cargarEstudiosPaciente(){
+  estudiosAdjuntos = [];
+  renderEstudios();
+  _resolverPacienteIdEstudios(function(pacienteId){
+    if(!pacienteId) return;
+    sb.from('estudios').select('*').eq('paciente_id', pacienteId).order('created_at', {ascending:false}).then(function(r){
+      if(r.error){ console.error('Error cargando estudios:', r.error); return; }
+      estudiosAdjuntos = (r.data||[]).map(function(e){
+        return {
+          id: e.id,
+          nombre: e.nombre_archivo || '',
+          tipo: e.tipo_archivo || 'application/octet-stream',
+          cat: e.categoria || '',
+          desc: e.descripcion || '',
+          fecha: e.created_at ? new Date(e.created_at).toLocaleDateString('es-AR') : '',
+          path: e.url_archivo || ''
+        };
+      });
+      renderEstudios();
+    });
+  });
+}
+
+// Sube un archivo a Supabase Storage y registra la fila en la tabla estudios.
+function _subirArchivoAEstudios(file, meta){
+  if(file.size > 10*1024*1024){ alert('El archivo "'+file.name+'" supera los 10MB.'); return; }
+  _resolverPacienteIdEstudios(function(pacienteId){
+    if(!pacienteId){ alert('Abrí un paciente ya guardado (con DNI) desde "Pacientes" antes de adjuntar archivos.'); return; }
+    var punto = file.name.lastIndexOf('.');
+    var ext = punto>-1 ? file.name.slice(punto) : '';
+    var path = pacienteId+'/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+ext;
+    sb.storage.from(ESTUDIOS_BUCKET).upload(path, file, {contentType: file.type||'application/octet-stream'}).then(function(rUp){
+      if(rUp.error){ alert('Error al subir "'+file.name+'": '+rUp.error.message); return; }
+      sb.from('estudios').insert({
+        paciente_id: pacienteId,
+        nombre_archivo: file.name,
+        url_archivo: path,
+        tipo_archivo: file.type||'application/octet-stream',
+        categoria: meta.categoria||null,
+        descripcion: meta.descripcion||null
+      }).then(function(rIns){
+        if(rIns.error){
+          alert('El archivo se subió pero no se pudo registrar: '+rIns.error.message);
+          sb.storage.from(ESTUDIOS_BUCKET).remove([path]).then(function(){});
+          return;
+        }
+        cargarEstudiosPaciente();
+      });
+    });
+  });
+}
 
 function subirEstudios(files){
   var cat = (document.getElementById('estudio-categoria')||{}).value||'Laboratorio';
-  var fecha = (document.getElementById('estudio-fecha')||{}).value||new Date().toLocaleDateString('es-AR');
   var desc = (document.getElementById('estudio-desc')||{}).value||'';
   var filesArr = Array.from(files);
   if(!filesArr.length) return;
-  filesArr.forEach(function(file){
-    if(file.size > 10*1024*1024){ alert('El archivo "'+file.name+'" supera los 10MB.'); return; }
-    var reader = new FileReader();
-    reader.onload = function(e){
-      estudiosAdjuntos.unshift({
-        nombre: file.name, tipo: file.type||'application/octet-stream',
-        size: file.size > 1024*1024 ? (file.size/1024/1024).toFixed(1)+' MB' : (file.size/1024).toFixed(1)+' KB',
-        cat: cat, fecha: fecha, desc: desc,
-        data: e.target.result, id: Date.now() + Math.random()
-      });
-      guardarLocal();
-      renderEstudios();
-      var descEl = document.getElementById('estudio-desc');
-      if(descEl) descEl.value = '';
-      // Reset file input so the same file can be re-uploaded
-      var fi = document.getElementById('file-input');
-      if(fi) fi.value = '';
-    };
-    reader.onerror = function(){ alert('Error al leer el archivo "'+file.name+'". Intentá con otro formato.'); };
-    reader.readAsDataURL(file);
-  });
+  filesArr.forEach(function(file){ _subirArchivoAEstudios(file, {categoria:cat, descripcion:desc}); });
+  var descEl = document.getElementById('estudio-desc');
+  if(descEl) descEl.value = '';
+  // Reset file input so the same file can be re-uploaded
+  var fi = document.getElementById('file-input');
+  if(fi) fi.value = '';
 }
 
 function handleDrop(event){
@@ -10028,49 +10083,69 @@ function handleDrop(event){
   subirEstudios(event.dataTransfer.files);
 }
 
+// El bucket es privado: para ver/descargar hay que pedir una URL firmada al momento,
+// nunca se guarda una URL pública ni permanente.
 function verImagenEstudio(id){
   var estudio = estudiosAdjuntos.find(function(e){ return e.id === id; });
   if(!estudio) return;
-  var w = window.open('','_blank','width=960,height=750');
-  var esImagen = estudio.tipo.includes('image');
-  var esPDF = estudio.tipo.includes('pdf');
-  var cerrarScript = '<script>function cerrarVentana(){try{window.close();}catch(e){}}<\/script>';
-  var btnCerrar = '<button onclick="cerrarVentana()" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:8px 20px;cursor:pointer;font-size:.9rem;font-weight:700;">✕ Cerrar</button>';
-  var barStyle = 'position:fixed;top:0;left:0;right:0;background:#042b10;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;z-index:9999;';
+  sb.storage.from(ESTUDIOS_BUCKET).createSignedUrl(estudio.path, 3600).then(function(r){
+    if(r.error || !r.data){ alert('No se pudo abrir el archivo: '+(r.error?r.error.message:'')); return; }
+    var urlFirmada = r.data.signedUrl;
+    var w = window.open('','_blank','width=960,height=750');
+    var esImagen = estudio.tipo.includes('image');
+    var esPDF = estudio.tipo.includes('pdf');
+    var cerrarScript = '<script>function cerrarVentana(){try{window.close();}catch(e){}}<\/script>';
+    var btnCerrar = '<button onclick="cerrarVentana()" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:8px 20px;cursor:pointer;font-size:.9rem;font-weight:700;">✕ Cerrar</button>';
+    var barStyle = 'position:fixed;top:0;left:0;right:0;background:#042b10;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;z-index:9999;';
 
-  if(esPDF){
-    w.document.write('<!DOCTYPE html><html><head><title>'+escHtml(estudio.nombre)+'</title>'+cerrarScript+'</head>'
-      +'<body style="margin:0;background:#1a1a1a;">'
-      +'<div style="'+barStyle+'">'
-        +'<span style="color:#6dde96;font-family:sans-serif;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">'+escHtml(estudio.nombre)+'</span>'
-        +btnCerrar
-      +'</div>'
-      +'<embed src="'+estudio.data+'" type="application/pdf" style="position:fixed;top:50px;left:0;width:100%;height:calc(100% - 50px);">'
-      +'</body></html>');
-  } else if(esImagen){
-    w.document.write('<!DOCTYPE html><html><head><title>'+escHtml(estudio.nombre)+'</title>'+cerrarScript
-      +'<style>body{margin:0;background:#111;}img{max-width:100%;max-height:calc(100vh - 55px);object-fit:contain;display:block;margin:0 auto;}</style>'
-      +'</head><body>'
-      +'<div style="'+barStyle+'">'
-        +'<span style="color:#6dde96;font-family:sans-serif;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">'+escHtml(estudio.nombre)+'</span>'
-        +btnCerrar
-      +'</div>'
-      +'<div style="padding-top:55px;display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 55px);">'
-        +'<img src="'+estudio.data+'" alt="'+escHtml(estudio.nombre)+'">'
-      +'</div>'
-      +'</body></html>');
-  } else {
-    w.document.write('<!DOCTYPE html><html><head><title>'+escHtml(estudio.nombre)+'</title>'+cerrarScript
-      +'<style>body{margin:0;}iframe{position:fixed;top:50px;left:0;width:100%;height:calc(100% - 50px);border:none;}</style>'
-      +'</head><body>'
-      +'<div style="'+barStyle+'">'
-        +'<span style="color:#6dde96;font-family:sans-serif;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">'+escHtml(estudio.nombre)+'</span>'
-        +btnCerrar
-      +'</div>'
-      +'<iframe src="'+estudio.data+'"></iframe>'
-      +'</body></html>');
-  }
-  w.document.close();
+    if(esPDF){
+      w.document.write('<!DOCTYPE html><html><head><title>'+escHtml(estudio.nombre)+'</title>'+cerrarScript+'</head>'
+        +'<body style="margin:0;background:#1a1a1a;">'
+        +'<div style="'+barStyle+'">'
+          +'<span style="color:#6dde96;font-family:sans-serif;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">'+escHtml(estudio.nombre)+'</span>'
+          +btnCerrar
+        +'</div>'
+        +'<embed src="'+urlFirmada+'" type="application/pdf" style="position:fixed;top:50px;left:0;width:100%;height:calc(100% - 50px);">'
+        +'</body></html>');
+    } else if(esImagen){
+      w.document.write('<!DOCTYPE html><html><head><title>'+escHtml(estudio.nombre)+'</title>'+cerrarScript
+        +'<style>body{margin:0;background:#111;}img{max-width:100%;max-height:calc(100vh - 55px);object-fit:contain;display:block;margin:0 auto;}</style>'
+        +'</head><body>'
+        +'<div style="'+barStyle+'">'
+          +'<span style="color:#6dde96;font-family:sans-serif;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">'+escHtml(estudio.nombre)+'</span>'
+          +btnCerrar
+        +'</div>'
+        +'<div style="padding-top:55px;display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 55px);">'
+          +'<img src="'+urlFirmada+'" alt="'+escHtml(estudio.nombre)+'">'
+        +'</div>'
+        +'</body></html>');
+    } else {
+      w.document.write('<!DOCTYPE html><html><head><title>'+escHtml(estudio.nombre)+'</title>'+cerrarScript
+        +'<style>body{margin:0;}iframe{position:fixed;top:50px;left:0;width:100%;height:calc(100% - 50px);border:none;}</style>'
+        +'</head><body>'
+        +'<div style="'+barStyle+'">'
+          +'<span style="color:#6dde96;font-family:sans-serif;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">'+escHtml(estudio.nombre)+'</span>'
+          +btnCerrar
+        +'</div>'
+        +'<iframe src="'+urlFirmada+'"></iframe>'
+        +'</body></html>');
+    }
+    w.document.close();
+  });
+}
+
+function descargarEstudio(id){
+  var estudio = estudiosAdjuntos.find(function(e){ return e.id === id; });
+  if(!estudio) return;
+  sb.storage.from(ESTUDIOS_BUCKET).createSignedUrl(estudio.path, 60, {download: estudio.nombre}).then(function(r){
+    if(r.error || !r.data){ alert('No se pudo descargar el archivo: '+(r.error?r.error.message:'')); return; }
+    var a = document.createElement('a');
+    a.href = r.data.signedUrl;
+    a.download = estudio.nombre;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
 }
 
 function renderEstudios(){
@@ -10086,19 +10161,17 @@ function renderEstudios(){
       var esPDF = e.tipo.includes('pdf');
       var iconoFondo = esPDF ? '#fee2e2' : esImagen ? '#e0f2fe' : '#f0fdf4';
       var iconoEmoji = esPDF ? '📄' : esImagen ? '🖼️' : '📋';
-      var miniatura = esImagen
-        ? '<img src="'+e.data+'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0;">'
-        : '<div style="width:48px;height:48px;background:'+iconoFondo+';border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">'+iconoEmoji+'</div>';
+      var miniatura = '<div style="width:48px;height:48px;background:'+iconoFondo+';border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">'+iconoEmoji+'</div>';
       return '<div style="background:var(--g9);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">'
         +miniatura
         +'<div style="flex:1;min-width:0;">'
           +'<div style="font-weight:600;color:var(--g2);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(e.nombre)+'</div>'
-          +'<div style="font-size:.75rem;color:var(--muted);">'+escHtml(e.cat)+' · '+escHtml(e.fecha)+' · '+escHtml(e.size)+'</div>'
+          +'<div style="font-size:.75rem;color:var(--muted);">'+escHtml(e.cat)+' · '+escHtml(e.fecha)+'</div>'
           +(e.desc?'<div style="font-size:.78rem;color:var(--g3);margin-top:2px;">'+escHtml(e.desc)+'</div>':'')
         +'</div>'
         +'<div style="display:flex;gap:6px;flex-shrink:0;">'
           +'<button onclick="verImagenEstudio('+e.id+')" style="background:var(--g4);color:#fff;padding:5px 12px;border-radius:6px;font-size:.75rem;font-weight:600;border:none;cursor:pointer;">👁️ Ver</button>'
-          +'<a href="'+e.data+'" download="'+escHtml(e.nombre)+'" style="background:var(--g3);color:#fff;padding:5px 10px;border-radius:6px;font-size:.75rem;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;">⬇️</a>'
+          +'<button onclick="descargarEstudio('+e.id+')" style="background:var(--g3);color:#fff;padding:5px 10px;border-radius:6px;font-size:.75rem;font-weight:600;border:none;cursor:pointer;">⬇️</button>'
           +'<button onclick="eliminarEstudio('+e.id+')" style="background:none;border:1px solid #ddd;color:#aaa;padding:5px 9px;border-radius:6px;font-size:.8rem;cursor:pointer;">✕</button>'
         +'</div>'
         +'</div>';
@@ -10106,8 +10179,16 @@ function renderEstudios(){
 }
 
 function eliminarEstudio(id){
-  estudiosAdjuntos = estudiosAdjuntos.filter(function(e){ return e.id !== id; });
-  renderEstudios();
+  var estudio = estudiosAdjuntos.find(function(e){ return e.id === id; });
+  if(!estudio) return;
+  if(!confirm('¿Eliminar "'+estudio.nombre+'"? Esta acción no se puede deshacer.')) return;
+  sb.storage.from(ESTUDIOS_BUCKET).remove([estudio.path]).then(function(){
+    sb.from('estudios').delete().eq('id', id).then(function(r){
+      if(r.error){ alert('No se pudo eliminar el registro: '+r.error.message); return; }
+      estudiosAdjuntos = estudiosAdjuntos.filter(function(e){ return e.id !== id; });
+      renderEstudios();
+    });
+  });
 }
 
 // ══ GUARDAR EXAMEN FÍSICO EN PACIENTE ══
@@ -13921,49 +14002,6 @@ setInterval(guardarLocal, 30000);
 window.addEventListener('beforeunload', guardarLocal);
 
 // ── SUBIR IMÁGENES A HC ──
-var hcImagenes = [];
-function abrirImagen(){
-  var input = document.createElement('input');
-  input.type='file'; input.accept='image/*'; input.multiple=true;
-  input.onchange = function(){
-    Array.from(input.files).forEach(function(file){
-      var reader = new FileReader();
-      reader.onload = function(e){
-        hcImagenes.push({nombre:file.name, data:e.target.result, fecha:hoy()});
-        renderImagenes();
-        guardarLocal();
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-  input.click();
-}
-function renderImagenes(){
-  var grid = document.getElementById('hc-img-grid');
-  if(!grid) return;
-  if(!hcImagenes.length){ grid.innerHTML='<div style="color:var(--muted);font-size:.82rem;">No hay imágenes adjuntas</div>'; return; }
-  grid.innerHTML = hcImagenes.map(function(img,i){
-    return '<div class="img-thumb" onclick="verImagen('+i+')">'
-      +'<img src="'+img.data+'" alt="'+escHtml(img.nombre)+'">'
-      +'<button class="del-img" onclick="event.stopPropagation();borrarImagen('+i+')">✕</button>'
-      +'<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.5);color:#fff;font-size:.6rem;padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escHtml(img.nombre)+'</div>'
-      +'</div>';
-  }).join('');
-}
-function borrarImagen(i){
-  if(confirm('¿Eliminar esta imagen?')){ hcImagenes.splice(i,1); renderImagenes(); }
-}
-function verImagen(i){
-  var existing = document.getElementById('img-viewer-modal');
-  if(existing) existing.remove();
-  var modal = document.createElement('div');
-  modal.id = 'img-viewer-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
-  modal.innerHTML = '<img src="'+hcImagenes[i].data+'" style="max-width:95vw;max-height:95vh;object-fit:contain;border-radius:8px;">';
-  modal.onclick = function(){ modal.remove(); };
-  document.body.appendChild(modal);
-}
-
 </script>
 
 <!-- ÁREA DE IMPRESIÓN -->
