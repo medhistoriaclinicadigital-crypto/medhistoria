@@ -18,8 +18,8 @@
 <meta name="description" content="Sistema de historia clínica digital online para médicos. Gestioná pacientes, recetas, derivaciones y agenda desde cualquier dispositivo. Con inteligencia artificial médica. Gratis para empezar.">
 <meta name="keywords" content="historia clínica online, historia clínica digital, software médico online, sistema de gestión médica, historia clínica Argentina, recetas médicas online, historia clínica electrónica, software para médicos Argentina, gestión de pacientes online, historia clínica con IA">
 <meta name="author" content="MedHistoriaClínicaOnline">
-<meta name="robots" content="index, follow">
-<link rel="canonical" href="https://medhistoriaclinicadigital-crypto.github.io/medhistoria/">
+<meta name="robots" content="noindex, nofollow">
+<!-- STAGING: canonical de producción removido a propósito para no confundir buscadores -->
 
 <!-- SEO GEOGRÁFICO -->
 <meta name="geo.region" content="AR">
@@ -639,8 +639,9 @@ document.addEventListener('DOMContentLoaded', function(){
 <script>emailjs.init("QozXFRWJ4ZY55kKxT");</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = "https://rgwqiguojmwmkifrxfra.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_vgopqXd1JPlJtUrI_NBklQ_5sgGlO9u";
+  // STAGING: apunta al proyecto medhistoria-staging (zkppmeayukqxavknhsoe), NO a producción.
+  const SUPABASE_URL = "https://zkppmeayukqxavknhsoe.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_JsY8PfRTQZXN1r76gcwJVA_QDyHfa61";
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 	var _pendingPasswordRecovery = false; sb.auth.onAuthStateChange(function(event, session){ if(event === 'PASSWORD_RECOVERY'){ _pendingPasswordRecovery = true; if(window._appListoParaRecuperarPass){ mostrarFormNuevaPass(); } } });
 </script>

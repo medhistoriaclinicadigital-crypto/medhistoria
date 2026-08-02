@@ -1,4 +1,3 @@
+# STAGING — no indexar. Este es el ambiente de pruebas para el pentest, no el sitio de producción.
 User-agent: *
-Allow: /
-
-Sitemap: https://medhistoriaclinicadigital-crypto.github.io/medhistoria/sitemap.xml
+Disallow: /
