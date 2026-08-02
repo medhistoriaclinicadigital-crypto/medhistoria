@@ -67,6 +67,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MedHistoriaClínicaOnline">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -644,6 +647,25 @@ document.addEventListener('DOMContentLoaded', function(){
   const SUPABASE_KEY = "sb_publishable_JsY8PfRTQZXN1r76gcwJVA_QDyHfa61";
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 	var _pendingPasswordRecovery = false; sb.auth.onAuthStateChange(function(event, session){ if(event === 'PASSWORD_RECOVERY'){ _pendingPasswordRecovery = true; if(window._appListoParaRecuperarPass){ mostrarFormNuevaPass(); } } });
+
+  // ── PWA: registro del service worker + captura del prompt de instalación ──
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('/service-worker.js').catch(function(e){ console.warn('No se pudo registrar el service worker:', e); });
+    });
+  }
+  var deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    var btn = document.getElementById('pwa-install-btn');
+    if(btn) btn.style.display = 'flex';
+  });
+  window.addEventListener('appinstalled', function(){
+    deferredPrompt = null;
+    var btn = document.getElementById('pwa-install-btn');
+    if(btn) btn.style.display = 'none';
+  });
 </script>
 </head>
 <body>
