@@ -67,9 +67,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MedHistoriaClínicaOnline">
-<link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -650,7 +650,7 @@ document.addEventListener('DOMContentLoaded', function(){
   // ── PWA: registro del service worker + captura del prompt de instalación ──
   if('serviceWorker' in navigator){
     window.addEventListener('load', function(){
-      navigator.serviceWorker.register('/service-worker.js').catch(function(e){ console.warn('No se pudo registrar el service worker:', e); });
+      navigator.serviceWorker.register('service-worker.js').catch(function(e){ console.warn('No se pudo registrar el service worker:', e); });
     });
   }
   var deferredPrompt = null;
