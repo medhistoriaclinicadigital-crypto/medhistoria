@@ -4889,18 +4889,18 @@ function cambiarNombreUsuario(){
     +'<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.18);max-height:90vh;overflow-y:auto;">'
     +'<h3 style="margin:0 0 18px;color:#1a3a2a;font-size:1.1rem;">✏️ Editar perfil</h3>'
     +'<label style="font-size:.8rem;font-weight:700;color:#555;display:block;margin-bottom:4px;">Nombre y apellido</label>'
-    +'<input id="ep-nombre" value="'+(u.nombre||'')+'" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:12px;font-size:.95rem;">'
+    +'<input id="ep-nombre" value="'+escHtml(u.nombre||'')+'" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:12px;font-size:.95rem;">'
     +'<label style="font-size:.8rem;font-weight:700;color:#555;display:block;margin-bottom:4px;">Sexo</label>'
     +'<select id="ep-sexo" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:12px;font-size:.95rem;">'
     +'<option value="M"'+(u.sexo==='M'?' selected':'')+'>Masculino (Dr.)</option>'
     +'<option value="F"'+(u.sexo==='F'?' selected':'')+'>Femenino (Dra.)</option>'
     +'</select>'
     +'<label style="font-size:.8rem;font-weight:700;color:#555;display:block;margin-bottom:4px;">CUIL / CUIT</label>'
-    +'<input id="ep-cuil" value="'+(u.cuil||'')+'" placeholder="27-12345678-9" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:12px;font-size:.95rem;">'
+    +'<input id="ep-cuil" value="'+escHtml(u.cuil||'')+'" placeholder="27-12345678-9" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:12px;font-size:.95rem;">'
     +'<label style="font-size:.8rem;font-weight:700;color:#555;display:block;margin-bottom:4px;">M.N. (Matrícula Nacional)</label>'
-    +'<input id="ep-mn" value="'+(u.mn||'')+'" placeholder="Ej: 120124" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:12px;font-size:.95rem;">'
+    +'<input id="ep-mn" value="'+escHtml(u.mn||'')+'" placeholder="Ej: 120124" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:12px;font-size:.95rem;">'
     +'<label style="font-size:.8rem;font-weight:700;color:#555;display:block;margin-bottom:4px;">M.P. (Matrícula Provincial, opcional)</label>'
-    +'<input id="ep-mp" value="'+(u.mp||'')+'" placeholder="Ej: 45678" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:18px;font-size:.95rem;">'
+    +'<input id="ep-mp" value="'+escHtml(u.mp||'')+'" placeholder="Ej: 45678" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:18px;font-size:.95rem;">'
     +'<div style="display:flex;gap:10px;">'
     +'<button onclick="guardarPerfil()" style="flex:1;padding:11px;background:linear-gradient(135deg,#1a7a3a,#2ecc71);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">💾 Guardar</button>'
     +'<button onclick="document.getElementById(\'modal-perfil\').remove()" style="flex:1;padding:11px;background:#f3f4f6;border:none;border-radius:8px;font-size:.95rem;cursor:pointer;">Cancelar</button>'
@@ -6482,7 +6482,7 @@ function renderCentroMedico(){
     r.data.forEach(function(row){
       var u = row.usuarios;
       if(!u) return;
-      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:.85rem;color:var(--g3);">👨‍⚕️ <strong>'+(u.nombre||'(sin nombre)')+'</strong> <span style="color:var(--muted);font-size:.78rem;">'+(u.email||'')+'</span></div>';
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:.85rem;color:var(--g3);">👨‍⚕️ <strong>'+escHtml(u.nombre||'(sin nombre)')+'</strong> <span style="color:var(--muted);font-size:.78rem;">'+escHtml(u.email||'')+'</span></div>';
     });
     listaEl.innerHTML = html || '<div style="font-size:.82rem;color:var(--muted);">Sin médicos todavía.</div>';
   });
@@ -7268,10 +7268,10 @@ function resultBox(color, titulo, valor, descripcion, detalle){
   var border = color==='verde'?'#bbf7d0':color==='rojo'?'#fecaca':color==='amarillo'?'#fde68a':'#bae6fd';
   var textColor = color==='verde'?'#166534':color==='rojo'?'#991b1b':color==='amarillo'?'#92400e':'#0c4a6e';
   return '<div style="background:'+bg+';border:1.5px solid '+border+';border-radius:12px;padding:18px 20px;">'
-    +'<div style="font-size:.75rem;font-weight:700;color:'+textColor+';text-transform:uppercase;margin-bottom:6px;">'+titulo+'</div>'
-    +'<div style="font-size:2.2rem;font-weight:800;color:'+textColor+';margin-bottom:4px;">'+valor+'</div>'
-    +'<div style="font-size:.9rem;font-weight:600;color:'+textColor+';margin-bottom:8px;">'+descripcion+'</div>'
-    +(detalle?'<div style="font-size:.82rem;color:'+textColor+';opacity:.8;line-height:1.5;">'+detalle+'</div>':'')
+    +'<div style="font-size:.75rem;font-weight:700;color:'+textColor+';text-transform:uppercase;margin-bottom:6px;">'+escHtml(titulo)+'</div>'
+    +'<div style="font-size:2.2rem;font-weight:800;color:'+textColor+';margin-bottom:4px;">'+escHtml(valor)+'</div>'
+    +'<div style="font-size:.9rem;font-weight:600;color:'+textColor+';margin-bottom:8px;">'+escHtml(descripcion)+'</div>'
+    +(detalle?'<div style="font-size:.82rem;color:'+textColor+';opacity:.8;line-height:1.5;">'+escHtml(detalle)+'</div>':'')
     +'</div>';
 }
 
@@ -7501,7 +7501,7 @@ function calcDosis(){
   if(present){
     var compsPorToma = porToma/present;
     html += '<div style="margin-top:10px;background:var(--g9);border-radius:8px;padding:12px;font-size:.85rem;">'
-      +'<strong>'+(med||'Medicamento')+':</strong> '+compsPorToma.toFixed(2)+' comp./mL por toma'
+      +'<strong>'+escHtml(med||'Medicamento')+':</strong> '+compsPorToma.toFixed(2)+' comp./mL por toma'
       +(compsPorToma>=0.5&&compsPorToma<=3?' ✅ Dosis razonable':' ⚠️ Verificar presentación disponible')
       +'</div>';
   }
