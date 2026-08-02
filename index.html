@@ -12991,6 +12991,13 @@ function instalarPWA(){
       deferredPrompt = null;
       if(r.outcome==='accepted'){
         document.getElementById('pwa-install-btn').style.display='none';
+        setTimeout(function(){
+          if(_esMovil){
+            alert('✅ ¡Listo! La app quedó instalada — buscala en tu pantalla de inicio.');
+          } else {
+            alert('✅ ¡Listo! La app quedó instalada.\n\nPara tenerla siempre a mano en la barra de tareas (un paso extra de Windows, no de la app):\n\n1. Apretá la tecla Windows y escribí "MedHistoria"\n2. Clic derecho sobre el resultado → "Anclar a la barra de tareas"');
+          }
+        }, 300);
       }
     });
   } else {
