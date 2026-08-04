@@ -11698,17 +11698,17 @@ function renderPacientes(lista){
   if(!grid) return;
 
   var pertenceACentroTab = (typeof miCentro !== 'undefined' && miCentro && miCentro.id);
-  // Un médico de centro no tiene consultorio particular aparte: no puede tener
-  // pacientes propios separados. Solo mostramos "Mis pacientes" como opción si
-  // le quedan pacientes propios de antes de sumarse al centro (caso legacy).
-  var tieneLegacyPropios = pertenceACentroTab && contarPacientesPropios() > 0;
-  if(pertenceACentroTab && !tieneLegacyPropios && _tabPacientesActual === 'mios'){
+  // Un médico vinculado a un centro NO tiene consultorio particular aparte: la app
+  // nunca le crea una cuenta propia con pacientes separados. Si en algún momento
+  // quiere eso, tiene que suscribirse él mismo, independiente del centro. Por eso
+  // "Mis pacientes" nunca es una opción disponible mientras esté vinculado a un centro.
+  if(pertenceACentroTab){
     _tabPacientesActual = 'centro';
   }
   var tabsEl = document.getElementById('pac-tabs');
   var btnTabMios = document.getElementById('pac-tab-mios');
   if(tabsEl) tabsEl.style.display = pertenceACentroTab ? 'flex' : 'none';
-  if(btnTabMios) btnTabMios.style.display = (pertenceACentroTab && !tieneLegacyPropios) ? 'none' : '';
+  if(btnTabMios) btnTabMios.style.display = pertenceACentroTab ? 'none' : '';
   if(pertenceACentroTab){
     lista = lista.filter(function(p){
       return _tabPacientesActual === 'centro' ? !!p.esDeCentro : !p.esDeCentro;
