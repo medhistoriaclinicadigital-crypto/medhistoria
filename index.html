@@ -518,7 +518,7 @@ function abrirRegistroCentro(){
   var overlay = document.getElementById('pagoOverlay');
   if(!overlay) return;
   _pagoPrecioActual = 0;
-  _pagoPlanActual = 'Registro de Centro Médico (Prueba)';
+  _pagoPlanActual = 'Registro de Centro Médico';
   overlay.style.display='block';
   overlay.style.zIndex='99999';
   var lbl=document.getElementById('pago-plan-label');
@@ -5860,14 +5860,10 @@ function procesarPago(){
 
   var overlayPago = document.getElementById('pagoOverlay');
   var esIlimitado = overlayPago && overlayPago.getAttribute('data-registro-centro') === 'true';
-  var centroNombre = '', centroPass = '', centroPass2 = '';
+  var centroNombre = '';
   if(esIlimitado){
     centroNombre = ((document.getElementById('pago-centro-nombre')||{}).value||'').trim();
-    centroPass = ((document.getElementById('pago-centro-pass')||{}).value||'');
-    centroPass2 = ((document.getElementById('pago-centro-pass2')||{}).value||'');
     if(!centroNombre){ alert('Ingresá el nombre de tu Centro Médico.'); return; }
-    if(!centroPass || centroPass.length < 8){ alert('La contraseña debe tener al menos 8 caracteres.'); return; }
-    if(centroPass !== centroPass2){ alert('Las contraseñas no coinciden.'); return; }
   }
 
   var msg = '🏥 *NUEVA SOLICITUD DE SUSCRIPCIÓN*\n\n'
@@ -5921,75 +5917,9 @@ function procesarPago(){
     direccion: direccion
   }).then(function(r){ if(r.error) console.error('Error guardando solicitud de suscripción:', r.error); });
 
-  if(esIlimitado){
-    crearCuentaYCentroDesdePortada(nombre, apellido, email, centroPass, dni, tel, matricula, tipomat, especialidad, institucion, provincia, ciudad, centroNombre, msg);
-    return;
-  }
-
   cerrarPago();
   alert('✅ ¡Solicitud enviada!\n\nTe contactaremos en menos de 24hs al email:\n'+email);
 }
-
-// ── Crear cuenta + Centro Médico automáticamente al elegir el Plan Ilimitado desde la portada ──
-function crearCuentaYCentroDesdePortada(nombre, apellido, email, pass, dni, tel, matricula, tipomat, especialidad, institucion, provincia, ciudad, centroNombre, mensajeWA){
-  var btn = document.querySelector('#pagoOverlay button[onclick="procesarPago()"]');
-  if(btn){ btn.disabled = true; btn.textContent = 'Creando tu cuenta...'; }
-
-  sb.auth.signUp({ email: email, password: pass }).then(function(r){
-    if(r.error){
-      if(btn){ btn.disabled = false; btn.textContent = 'Confirmar suscripción'; }
-      if(r.error.message && r.error.message.toLowerCase().indexOf('already') !== -1){
-        alert('Ya existe una cuenta con ese email. Iniciá sesión normalmente y creá tu centro desde "Mi Centro Médico".');
-      } else {
-        alert('No se pudo crear la cuenta: ' + r.error.message);
-      }
-      return;
-    }
-    var authId = r.data && r.data.user ? r.data.user.id : null;
-    var nombreCompleto = nombre + (apellido?' '+apellido:'');
-
-    sb.from('usuarios').insert([{
-      auth_id: authId, nombre: nombreCompleto, email: email,
-      especialidad: especialidad, matricula: (tipomat+' '+matricula),
-      telefono: tel, dni: dni, rol: 'medico'
-    }]).select().then(function(r2){
-      if(r2.error || !r2.data || !r2.data[0]){
-        if(btn){ btn.disabled = false; btn.textContent = 'Confirmar suscripción'; }
-        alert('Tu cuenta de acceso se creó, pero hubo un problema guardando tu perfil.\n\nDetalle: '+(r2.error?r2.error.message:'sin datos devueltos')+'\n\nEscribinos a medhistoriaclinicaonline@gmail.com para que lo resolvamos.');
-        console.error('Error guardando usuario:', r2.error);
-        return;
-      }
-      var medicoId = r2.data[0].id;
-
-      sb.from('centros_medicos').insert({nombre: centroNombre, creado_por: medicoId, plan: 'trial'}).select().then(function(r3){
-        if(r3.error || !r3.data || !r3.data[0]){
-          if(btn){ btn.disabled = false; btn.textContent = 'Confirmar suscripción'; }
-          alert('Tu cuenta se creó, pero hubo un problema creando el Centro Médico. Iniciá sesión y probá crearlo desde "Mi Centro Médico", o escribinos si persiste.');
-          console.error('Error creando centro:', r3.error);
-          return;
-        }
-        var centroId = r3.data[0].id;
-        sb.from('centro_medicos_usuarios').insert({centro_id: centroId, medico_id: medicoId}).then(function(r4){
-          cerrarPago();
-          alert('✅ ¡Listo! Tu cuenta y tu Centro Médico "'+centroNombre+'" ya están creados.\n\nAhora entrá a "Mi Centro Médico" para elegir el plan que más se adapte a tu equipo, y para empezar a agregar a los médicos que van a trabajar con vos.');
-          // Loguear directamente en la app
-          try{
-            var landing = document.getElementById('landing');
-            var app = document.getElementById('app');
-            if(landing) landing.style.display='none';
-            document.body.classList.add('in-app');
-            if(app){ app.style.display='block'; }
-            usuarioActual = { id: medicoId, auth_id: authId, nombre: nombreCompleto, email: email, especialidad: especialidad, matricula: tipomat+' '+matricula, telefono: tel, dni: dni, rol:'medico' };
-            document.getElementById('app-user-name').textContent = nombreConTitulo(usuarioActual) + ' ✏️';
-            cargarLocal();
-            cargarMiCentro(function(){ sincronizarPacientesSupabase(); showPanel('centro-medico'); });
-          }catch(eNav){ console.error(eNav); }
-        });
-      });
-    });
-  });
-}
-
 
 // ── FIRMA DIGITAL ──
 // ══════════════════════════════════════════
@@ -6685,6 +6615,9 @@ function confirmarMejorarPlan(){
   alert('✅ ¡Listo! Pedimos el plan '+planInfo.nombre+' para tu centro.\n\nTe contactaremos en menos de 24hs al mail de tu cuenta para coordinar el pago y activarlo.');
 }
 
+// Crear un Centro Médico NUNCA es instantáneo ni gratis: esto solo guarda una
+// solicitud (misma tabla y flujo que el resto de las suscripciones). El dueño
+// del centro se activa a mano después de coordinar el pago — sin excepciones.
 function crearCentroMedico(){
   var inp = document.getElementById('centro-nombre-nuevo');
   var nombre = inp ? (inp.value||'').trim() : '';
@@ -6692,24 +6625,27 @@ function crearCentroMedico(){
   var planElegido = planSel ? (planSel.value||'trial') : 'trial';
   if(!nombre){ alert('Ingresá el nombre del centro médico.'); return; }
   if(!usuarioActual || !usuarioActual.id){ alert('Tenés que estar logueada para hacer esto.'); return; }
-  sb.from('centros_medicos').insert({nombre: nombre, creado_por: usuarioActual.id, plan: planElegido}).select().then(function(r){
-    if(r.error || !r.data || !r.data[0]){
-      alert('❌ Hubo un problema creando el centro. Detalle: '+(r.error ? r.error.message : 'sin datos devueltos'));
-      console.error('Error creando centro:', r.error);
-      return;
-    }
-    var centroId = r.data[0].id;
-    sb.from('centro_medicos_usuarios').insert({centro_id: centroId, medico_id: usuarioActual.id}).then(function(r2){
-      if(r2.error){
-        alert('❌ El centro se creó pero hubo un problema al sumarte como miembro. Detalle: '+r2.error.message);
-        console.error('Error sumando miembro:', r2.error);
-        return;
-      }
-      miCentro = { id: centroId, nombre: nombre, plan: planElegido };
-      alert('✅ ¡Centro Médico "'+nombre+'" creado! Ya podés agregar a otros médicos.');
-      renderCentroMedico();
-    });
-  });
+
+  sb.from('solicitudes_suscripcion').insert({
+    medico_nombre: nombreConTitulo(usuarioActual),
+    medico_email: usuarioActual.email || '',
+    plan: planElegido,
+    tipo: 'nuevo_centro_medico'
+  }).then(function(r){ if(r.error) console.error('Error guardando solicitud de centro:', r.error); });
+
+  fetch('https://formspree.io/f/meenywzq',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({
+      asunto: '🏥 SOLICITUD DE NUEVO CENTRO MÉDICO',
+      name: nombreConTitulo(usuarioActual),
+      email: usuarioActual.email || '',
+      message: 'Médico: '+nombreConTitulo(usuarioActual)+' ('+(usuarioActual.email||'')+')\nNombre del centro solicitado: '+nombre+'\nPlan de interés: '+planElegido
+    })
+  }).catch(function(){});
+
+  alert('✅ Solicitud enviada.\n\nTu Centro Médico "'+nombre+'" todavía no está activo — te vamos a contactar para coordinar el pago y activarlo. Escribinos a medhistoriaclinicaonline@gmail.com si querés acelerarlo.');
+  if(inp) inp.value = '';
 }
 
 // Arma la línea de medicamento con el mismo formato que usa la receta final.
