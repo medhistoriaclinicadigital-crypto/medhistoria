@@ -4548,6 +4548,13 @@ function guardarPaciente(){
     pac.edad = age;
   }
 
+  // Un médico vinculado a un Centro Médico no tiene pacientes propios separados:
+  // todo paciente que carga o edita queda del centro (coherente con pacSB.centro_id más abajo).
+  if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
+    pac.esDeCentro = true;
+    pac.centroNombre = miCentro.nombre;
+  }
+
   // Guardar o actualizar en localStorage
   var reales = [];
   try { reales = JSON.parse(localStorage.getItem(_userKey('mhcd_pacientes'))||'[]'); } catch(e){}
@@ -11690,8 +11697,17 @@ function renderPacientes(lista){
   if(!grid) return;
 
   var pertenceACentroTab = (typeof miCentro !== 'undefined' && miCentro && miCentro.id);
+  // Un médico de centro no tiene consultorio particular aparte: no puede tener
+  // pacientes propios separados. Solo mostramos "Mis pacientes" como opción si
+  // le quedan pacientes propios de antes de sumarse al centro (caso legacy).
+  var tieneLegacyPropios = pertenceACentroTab && contarPacientesPropios() > 0;
+  if(pertenceACentroTab && !tieneLegacyPropios && _tabPacientesActual === 'mios'){
+    _tabPacientesActual = 'centro';
+  }
   var tabsEl = document.getElementById('pac-tabs');
+  var btnTabMios = document.getElementById('pac-tab-mios');
   if(tabsEl) tabsEl.style.display = pertenceACentroTab ? 'flex' : 'none';
+  if(btnTabMios) btnTabMios.style.display = (pertenceACentroTab && !tieneLegacyPropios) ? 'none' : '';
   if(pertenceACentroTab){
     lista = lista.filter(function(p){
       return _tabPacientesActual === 'centro' ? !!p.esDeCentro : !p.esDeCentro;
