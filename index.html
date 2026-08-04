@@ -12091,30 +12091,8 @@ try {
   } catch(e){}
   cargarLocal();
   renderTurnos();
-  setTimeout(function(){ 
+  setTimeout(function(){
     renderPacientes();
-    // Forzar re-render con pacientes del localStorage
-    var grid = document.getElementById('lista-pacientes');
-    if(grid && pacientes.length > 0){
-    grid.innerHTML = pacientes.map(function(p, i){
-        var edadBadge = (p.edad && String(p.edad).trim() && String(p.edad).trim()!=='0')
-          ? '<span style="background:var(--g9);color:var(--g3);border-radius:10px;padding:2px 8px;font-size:.7rem;font-weight:600;">'+escHtml(p.edad)+' años</span>'
-          : '';
-        var nomEsc = escJs(p.nombre);
-        var dniEsc = escJs(p.dni);
-        var edadEsc = escJs(p.edad);
-        var osEsc = escJs(p.os);
-        return '<div class="pac-card" style="cursor:pointer;">'
-          +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;" onclick="abrirHC(\''+nomEsc+'\',\''+dniEsc+'\',\''+edadEsc+'\',\''+osEsc+'\')">'
-          +'<div style="font-weight:700;font-size:.9rem;color:var(--g2);">'+escHtml(p.nombre)+'</div>'
-          +edadBadge
-          +'</div>'
-          +'<div style="font-size:.75rem;color:var(--muted);margin-bottom:4px;" onclick="abrirHC(\''+nomEsc+'\',\''+dniEsc+'\',\''+edadEsc+'\',\''+osEsc+'\')">DNI '+escHtml(p.dni||'—')+(p.os?' · '+escHtml(p.os):'')+'</div>'
-          +(p.ultima?'<div style="font-size:.72rem;color:var(--muted);" onclick="abrirHC(\''+nomEsc+'\',\''+dniEsc+'\',\''+edadEsc+'\',\''+osEsc+'\')">Última: '+escHtml(p.ultima)+'</div>':'')
-          +'<div style="margin-top:8px;text-align:right;"><button onclick="event.stopPropagation();borrarPacienteIdx('+i+')" style="background:none;border:1px solid #dc2626;color:#dc2626;border-radius:6px;padding:3px 10px;font-size:.72rem;cursor:pointer;">🗑 Borrar</button></div>'
-          +'</div>';
-      }).join(''); 
-    }
   }, 300);
   // Auto-fill fecha actual en campos type="date" (formato YYYY-MM-DD)
   var hoyISO = new Date().toISOString().split('T')[0];
