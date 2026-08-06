@@ -972,7 +972,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="pname">Premium</div>
         <div class="pdesc">Para profesionales con alta demanda y múltiples consultorios.</div>
         <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">89</span><span class="pprice-p">/mes</span></div>
-        <div class="ppat">Hasta 1.000 pacientes</div>
+        <div class="ppat">Hasta 500 pacientes</div>
         <hr class="pline">
         <ul class="pfeats">
           <li>Todo lo de Pro</li>
@@ -4071,7 +4071,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <option value="trial">Prueba gratuita (35 pacientes)</option>
             <option value="starter">Starter (50 pacientes)</option>
             <option value="pro">Pro (200 pacientes)</option>
-            <option value="premium">Premium (1.000 pacientes)</option>
+            <option value="premium">Premium (500 pacientes)</option>
             <option value="ilimitado">Ilimitado</option>
           </select>
           <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-bottom:12px;">⚠️ Elegir un plan acá no incluye el pago todavía — es para que quede registrado qué plan pediste. Escribinos a medhistoriaclinicaonline@gmail.com para coordinar el pago y la activación real.</div>
@@ -13302,7 +13302,7 @@ function getLimitePacientes(){
   if(!usuarioActual) return 35; // free por defecto
   var plan = (usuarioActual.plan || 'free').toLowerCase();
   if(plan.includes('ilimitado') || plan.includes('unlimited')) return Infinity;
-  if(plan.includes('premium')) return 1000;
+  if(plan.includes('premium')) return 500;
   if(plan.includes('pro'))     return 200;
   if(plan.includes('starter')) return 50;
   return 35; // free / prueba gratuita
@@ -13313,7 +13313,7 @@ function getLimiteCentroPacientes(){
   if(typeof miCentro === 'undefined' || !miCentro) return null; // no pertenece a ningún centro
   var planCentro = (miCentro.plan||'trial').toLowerCase();
   if(planCentro.includes('ilimitado') || planCentro.includes('unlimited')) return Infinity;
-  if(planCentro.includes('premium')) return 1000;
+  if(planCentro.includes('premium')) return 500;
   if(planCentro.includes('pro'))     return 200;
   if(planCentro.includes('starter')) return 50;
   return 35; // trial / centro recién creado, todavía sin el plan pago activado
