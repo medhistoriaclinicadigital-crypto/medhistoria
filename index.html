@@ -4112,6 +4112,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
           </div>
 
+          <div id="centro-dispositivos-seccion" style="display:none;background:#fff;border-radius:14px;border:1.5px solid var(--g9);border-left:4px solid #4338ca;padding:22px 20px;margin-bottom:16px;max-width:640px;">
+            <div style="font-weight:700;color:var(--g2);font-size:1.05rem;margin-bottom:4px;">🔒 Dispositivos autorizados</div>
+            <p style="font-size:.78rem;color:var(--muted);margin-bottom:16px;">Los médicos que invitás solo pueden entrar a la app desde un dispositivo que apruebes acá (computadora o tablet). Vos, como dueña del centro, siempre tenés acceso desde cualquier dispositivo.</p>
+            <div id="centro-dispositivos-lista" style="font-size:.85rem;color:var(--muted);">Cargando...</div>
+          </div>
+
           <div style="background:linear-gradient(135deg,#f0fdf4,#eef2ff);border:1.5px solid var(--g8);border-radius:14px;padding:20px 22px;max-width:640px;">
             <div style="font-weight:700;color:var(--g2);font-size:.92rem;margin-bottom:6px;">💼 ¿Tenés también tu propio consultorio?</div>
             <p style="font-size:.83rem;color:var(--muted);line-height:1.6;margin-bottom:14px;">Además de atender en este centro, si llevás pacientes particulares por tu cuenta podés contratar tu propio plan individual — elegís el que más se adapte a cuántos pacientes personales manejás, totalmente aparte del cupo del centro.</p>
@@ -6458,6 +6464,118 @@ function renderCentroMedico(){
       html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:.85rem;color:var(--g3);">👨‍⚕️ <strong>'+escHtml(u.nombre||'(sin nombre)')+'</strong> <span style="color:var(--muted);font-size:.78rem;">'+escHtml(u.email||'')+'</span></div>';
     });
     listaEl.innerHTML = html || '<div style="font-size:.82rem;color:var(--muted);">Sin médicos todavía.</div>';
+  });
+
+  var dispSeccion = document.getElementById('centro-dispositivos-seccion');
+  if(dispSeccion){
+    if(esDuenioDeCentro()){
+      dispSeccion.style.display = 'block';
+      renderDispositivosCentro();
+    } else {
+      dispSeccion.style.display = 'none';
+    }
+  }
+}
+
+// ══ DISPOSITIVOS AUTORIZADOS (Centro Médico) ══
+// Genera y guarda un identificador único para ESTE navegador/dispositivo.
+// No es una huella de hardware (no existe eso de forma confiable en un
+// navegador) — es un token propio que persiste en localStorage. Si se borra
+// el navegador o se usa otro, cuenta como "dispositivo nuevo" a propósito.
+function _deviceToken(){
+  var KEY = 'mhcd_device_token';
+  var t = localStorage.getItem(KEY);
+  if(!t){
+    t = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('dev-'+Date.now()+'-'+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2));
+    localStorage.setItem(KEY, t);
+  }
+  return t;
+}
+
+// Descripción cosmética del dispositivo (solo para que el dueño lo reconozca
+// en la lista — no se usa para decidir nada de seguridad).
+function _descripcionDispositivo(){
+  var ua = navigator.userAgent || '';
+  var nav = 'Navegador';
+  if(ua.indexOf('Edg/')>-1) nav = 'Edge';
+  else if(ua.indexOf('Chrome/')>-1) nav = 'Chrome';
+  else if(ua.indexOf('Firefox/')>-1) nav = 'Firefox';
+  else if(ua.indexOf('Safari/')>-1) nav = 'Safari';
+  var so = 'SO desconocido';
+  if(ua.indexOf('Windows')>-1) so = 'Windows';
+  else if(ua.indexOf('Mac OS')>-1) so = 'Mac';
+  else if(ua.indexOf('Android')>-1) so = 'Android';
+  else if(ua.indexOf('iPhone')>-1 || ua.indexOf('iPad')>-1) so = 'iOS';
+  else if(ua.indexOf('Linux')>-1) so = 'Linux';
+  return nav+' · '+so+' · '+(screen.width||'?')+'x'+(screen.height||'?');
+}
+
+// Elige entre leer una tabla directo (pacientes/HC propios) o a través de la
+// función RPC "obtener_*_centro" (pacientes/HC de centro, exige dispositivo
+// aprobado). Un médico vinculado a un centro nunca tiene pacientes propios
+// separados, así que si tiene centro, SIEMPRE es la rama RPC.
+function _queryCentroOProp(tablaDirecta, rpcCentro){
+  if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
+    return sb.rpc(rpcCentro, {p_device_token: _deviceToken()});
+  }
+  return sb.from(tablaDirecta).select('*');
+}
+
+function renderDispositivosCentro(){
+  var cont = document.getElementById('centro-dispositivos-lista');
+  if(!cont) return;
+  cont.innerHTML = 'Cargando...';
+  sb.rpc('listar_dispositivos_centro').then(function(r){
+    if(r.error){
+      cont.innerHTML = '<div style="color:#dc2626;">No se pudo cargar la lista de dispositivos.</div>';
+      console.error('Error listando dispositivos:', r.error);
+      return;
+    }
+    var filas = r.data || [];
+    if(!filas.length){
+      cont.innerHTML = 'Todavía no hay dispositivos registrados. Van a aparecer acá apenas un médico invitado intente entrar por primera vez.';
+      return;
+    }
+    var badges = {
+      pendiente: ['#fffbeb','#92400e','⏳ Pendiente'],
+      aprobado: ['#dcfce7','#15803d','✓ Aprobado'],
+      rechazado: ['#fee2e2','#b91c1c','✕ Rechazado']
+    };
+    cont.innerHTML = filas.map(function(d){
+      var b = badges[d.estado] || ['#f3f4f6','#374151', d.estado];
+      var fecha = d.creado_en ? new Date(d.creado_en).toLocaleDateString('es-AR') : '';
+      var botones = '';
+      if(d.estado === 'pendiente'){
+        botones = '<button onclick="aprobarDispositivoUI('+d.id+')" style="padding:5px 12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:7px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;margin-right:6px;">Aprobar</button>'
+          +'<button onclick="rechazarDispositivoUI('+d.id+')" style="padding:5px 12px;background:#fff;color:#dc2626;border:1px solid #fca5a5;border-radius:7px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">Rechazar</button>';
+      } else if(d.estado === 'aprobado'){
+        botones = '<button onclick="rechazarDispositivoUI('+d.id+')" style="padding:5px 12px;background:#fff;color:#dc2626;border:1px solid #fca5a5;border-radius:7px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">Revocar</button>';
+      } else {
+        botones = '<button onclick="aprobarDispositivoUI('+d.id+')" style="padding:5px 12px;background:#fff;color:#15803d;border:1px solid #bbf7d0;border-radius:7px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">Volver a aprobar</button>';
+      }
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--g9);flex-wrap:wrap;">'
+        +'<div>'
+          +'<div style="font-weight:700;color:var(--g3);font-size:.85rem;">'+escHtml(d.medico_nombre||'(sin nombre)')+' <span style="font-weight:400;color:var(--muted);font-size:.78rem;">'+escHtml(d.medico_email||'')+'</span></div>'
+          +'<div style="font-size:.75rem;color:var(--muted);margin-top:2px;">'+escHtml(d.descripcion||'Dispositivo sin descripción')+' · desde '+fecha+' · <span style="background:'+b[0]+';color:'+b[1]+';border-radius:10px;padding:1px 8px;font-weight:700;">'+b[2]+'</span></div>'
+        +'</div>'
+        +'<div>'+botones+'</div>'
+      +'</div>';
+    }).join('');
+  });
+}
+
+function aprobarDispositivoUI(id){
+  sb.rpc('aprobar_dispositivo', {p_dispositivo_id: id}).then(function(r){
+    if(r.error || !r.data){ alert('No se pudo aprobar el dispositivo.'); console.error('Error aprobando dispositivo:', r.error); return; }
+    renderDispositivosCentro();
+  });
+}
+
+function rechazarDispositivoUI(id){
+  if(!confirm('¿Seguro que querés bloquear el acceso desde este dispositivo?')) return;
+  sb.rpc('rechazar_dispositivo', {p_dispositivo_id: id}).then(function(r){
+    if(r.error || !r.data){ alert('No se pudo actualizar el dispositivo.'); console.error('Error rechazando dispositivo:', r.error); return; }
+    renderDispositivosCentro();
   });
 }
 
@@ -9990,7 +10108,7 @@ function cargarEstudiosPaciente(){
   renderEstudios();
   _resolverPacienteIdEstudios(function(pacienteId){
     if(!pacienteId) return;
-    sb.from('estudios').select('*').eq('paciente_id', pacienteId).order('created_at', {ascending:false}).then(function(r){
+    _queryCentroOProp('estudios','obtener_estudios_centro').eq('paciente_id', pacienteId).order('created_at', {ascending:false}).then(function(r){
       if(r.error){ console.error('Error cargando estudios:', r.error); return; }
       estudiosAdjuntos = (r.data||[]).map(function(e){
         return {
@@ -10217,7 +10335,7 @@ function guardarExamenFisico(){
               saturacion_o2: examen.sat||null,
               examen_aparatos_sistemas: examen.sistemas||''
             };
-            sb.from('historias_clinicas').select('id').eq('paciente_id', pacienteId).then(function(rHC){
+            _queryCentroOProp('historias_clinicas','obtener_historias_centro').eq('paciente_id', pacienteId).then(function(rHC){
               if(rHC.data && rHC.data.length>0){
                 sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando examen fisico en Supabase:', r.error); });
               } else {
@@ -10322,7 +10440,7 @@ function guardarDiagnostico(){
               paciente_id: pacienteId,
               diagnostico: (diagnostico.principal||'') + (diagnostico.secundarios? (' / '+diagnostico.secundarios) : '')
             };
-            sb.from('historias_clinicas').select('id').eq('paciente_id', pacienteId).then(function(rHC){
+            _queryCentroOProp('historias_clinicas','obtener_historias_centro').eq('paciente_id', pacienteId).then(function(rHC){
               if(rHC.data && rHC.data.length>0){
                 sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando diagnostico en Supabase:', r.error); });
               } else {
@@ -13316,7 +13434,7 @@ function guardarDesdeHC(){
             medicacion_habitual: medicacion||'',
             alergias: alergias||''
           };
-          sb.from('historias_clinicas').select('id').eq('paciente_id', pacienteId).then(function(rHC){
+          _queryCentroOProp('historias_clinicas','obtener_historias_centro').eq('paciente_id', pacienteId).then(function(rHC){
             if(rHC.data && rHC.data.length>0){
               sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando HC en Supabase:', r.error); });
             } else {
@@ -14417,9 +14535,38 @@ function mlIngresar(){
     }
     var authId = r.data && r.data.user ? r.data.user.id : null;
 
+    // Si el médico está vinculado a un Centro Médico, este dispositivo tiene
+    // que estar aprobado por el dueño del centro para poder entrar. El dueño
+    // siempre queda aprobado automáticamente; un médico sin centro no pasa
+    // por este chequeo (verificar_dispositivo() lo deja pasar directo).
+    sb.rpc('verificar_dispositivo', { p_device_token: _deviceToken(), p_descripcion: _descripcionDispositivo() }).then(function(rDisp){
+      if(rDisp.error){
+        console.error('Error verificando dispositivo:', rDisp.error);
+        alert('No pudimos verificar el acceso desde este dispositivo. Probá de nuevo en unos segundos, o escribinos a medhistoriaclinicaonline@gmail.com si el problema persiste.');
+        sb.auth.signOut();
+        return;
+      }
+      var estadoDisp = (rDisp.data && rDisp.data[0]) || { permitido:false, estado:'error' };
+      if(!estadoDisp.permitido){
+        sb.auth.signOut();
+        if(estadoDisp.estado === 'pendiente'){
+          alert('🔒 Este dispositivo todavía no fue aprobado.\n\nPedile al dueño del Centro Médico que lo apruebe desde "Mi Centro Médico" → Dispositivos autorizados, y volvé a intentar.');
+        } else if(estadoDisp.estado === 'rechazado'){
+          alert('🔒 El acceso desde este dispositivo fue bloqueado por el dueño del Centro Médico.\n\nSi creés que es un error, contactalo directamente.');
+        } else {
+          alert('🔒 No se pudo verificar el acceso desde este dispositivo. Escribinos a medhistoriaclinicaonline@gmail.com si el problema persiste.');
+        }
+        return;
+      }
+      continuarLoginTrasDispositivo(u, p, authId);
+    });
+  });
+}
+
+function continuarLoginTrasDispositivo(u, p, authId){
     sb.from('usuarios').select('*').eq('auth_id', authId).then(function(rPerfil){
-    var perfil = (rPerfil.data && rPerfil.data[0]) || { nombre: u, email: u }; 
-   perfil.auth_id = authId;  
+    var perfil = (rPerfil.data && rPerfil.data[0]) || { nombre: u, email: u };
+   perfil.auth_id = authId;
 
       var rEl0 = document.getElementById('ml-recordar');
       if(rEl0 && rEl0.checked){
@@ -14452,7 +14599,6 @@ function mlIngresar(){
       try{ showPanel('dash'); }catch(e){}
       try{ precargarDatosMedico(perfil); }catch(e){}
     });
-  });
 }
 
 function guardarLegajoRenapdis(){
