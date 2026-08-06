@@ -10316,7 +10316,7 @@ function buscarPacienteIdCompartido(dni, callback){
     if(pacienteId){ callback(pacienteId); return; }
     // No es un paciente propio — si pertenezco a un Centro Médico, busco entre los del centro
     if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
-      sb.from('pacientes').select('id').eq('centro_id', miCentro.id).eq('dni', dni).then(function(rPac2){
+      sb.rpc('obtener_pacientes_centro', {p_device_token: _deviceToken()}).eq('dni', dni).then(function(rPac2){
         var pacienteIdCentro = (rPac2.data && rPac2.data.length>0) ? rPac2.data[0].id : null;
         callback(pacienteIdCentro);
       });
@@ -13601,7 +13601,7 @@ function sincronizarPacientesSupabase(){
     }
     // Si pertenezco a un Centro Médico, traigo también los pacientes compartidos del centro
     if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
-      sb.from('pacientes').select('*').eq('centro_id', miCentro.id).then(function(r2){
+      sb.rpc('obtener_pacientes_centro', {p_device_token: _deviceToken()}).then(function(r2){
         if(r2.data){
           r2.data.forEach(function(remoto){
             var existe = pacientes.find(function(p){ return p.dni && remoto.dni && p.dni.trim()===remoto.dni.trim(); });
