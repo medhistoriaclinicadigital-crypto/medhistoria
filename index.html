@@ -10176,12 +10176,34 @@ function handleDrop(event){
 
 // El bucket es privado: para ver/descargar hay que pedir una URL firmada al momento,
 // nunca se guarda una URL pública ni permanente.
+// Consigue el link firmado de un estudio. Si el médico pertenece a un
+// centro, pasa por la Edge Function "estudio-signed-url" (exige dispositivo
+// aprobado); si no, genera el link directo como siempre (los archivos
+// propios no están gateados por dispositivo).
+function _obtenerUrlEstudio(estudio, downloadName){
+  if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
+    return sb.functions.invoke('estudio-signed-url', {
+      body: { estudio_id: estudio.id, device_token: _deviceToken(), download: downloadName || undefined }
+    }).then(function(r){
+      if(r.error || !r.data || !r.data.url){
+        alert('No se pudo generar el link del archivo. Si el problema persiste, puede ser que tu dispositivo todavía no esté aprobado.');
+        return null;
+      }
+      return r.data.url;
+    });
+  }
+  var opts = downloadName ? {download: downloadName} : undefined;
+  return sb.storage.from(ESTUDIOS_BUCKET).createSignedUrl(estudio.path, downloadName ? 60 : 3600, opts).then(function(r){
+    if(r.error || !r.data){ alert('No se pudo generar el link del archivo: '+(r.error?r.error.message:'')); return null; }
+    return r.data.signedUrl;
+  });
+}
+
 function verImagenEstudio(id){
   var estudio = estudiosAdjuntos.find(function(e){ return e.id === id; });
   if(!estudio) return;
-  sb.storage.from(ESTUDIOS_BUCKET).createSignedUrl(estudio.path, 3600).then(function(r){
-    if(r.error || !r.data){ alert('No se pudo abrir el archivo: '+(r.error?r.error.message:'')); return; }
-    var urlFirmada = r.data.signedUrl;
+  _obtenerUrlEstudio(estudio, null).then(function(urlFirmada){
+    if(!urlFirmada) return;
     var w = window.open('','_blank','width=960,height=750');
     var esImagen = estudio.tipo.includes('image');
     var esPDF = estudio.tipo.includes('pdf');
@@ -10228,10 +10250,10 @@ function verImagenEstudio(id){
 function descargarEstudio(id){
   var estudio = estudiosAdjuntos.find(function(e){ return e.id === id; });
   if(!estudio) return;
-  sb.storage.from(ESTUDIOS_BUCKET).createSignedUrl(estudio.path, 60, {download: estudio.nombre}).then(function(r){
-    if(r.error || !r.data){ alert('No se pudo descargar el archivo: '+(r.error?r.error.message:'')); return; }
+  _obtenerUrlEstudio(estudio, estudio.nombre).then(function(urlFirmada){
+    if(!urlFirmada) return;
     var a = document.createElement('a');
-    a.href = r.data.signedUrl;
+    a.href = urlFirmada;
     a.download = estudio.nombre;
     document.body.appendChild(a);
     a.click();
