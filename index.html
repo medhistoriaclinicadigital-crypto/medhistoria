@@ -754,7 +754,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <option value="Starter">⚕️ Starter — U$S 34/mes</option>
         <option value="Pro">💊 Pro — U$S 49/mes</option>
         <option value="Premium">👑 Premium — U$S 89/mes</option>
-        <option value="Empresarial">🏢 Empresarial — U$S 129/mes</option>
         <option value="Ilimitado">♾️ Ilimitado — U$S 199/mes</option>
       </select>
       <div style="font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:6px 0 4px;">¿Te invitó un Centro Médico?</div>
@@ -942,11 +941,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="pname">Starter</div>
         <div class="pdesc">Para el médico que da el primer paso hacia la digitalización.</div>
         <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">34</span><span class="pprice-p">/mes</span></div>
-        <div class="ppat">Hasta 3 usuarios</div>
+        <div class="ppat">Hasta 50 pacientes</div>
 
         <hr class="pline">
         <ul class="pfeats">
-          <li>IA incluida</li><li>Pacientes ilimitados</li>
+          <li>IA incluida</li>
           <li>Recetas y derivaciones digitales</li><li>Videoconsulta integrada</li>
           <li>📱 Recordatorio de turno por WhatsApp</li>
          <li>📧 Email automático de citas</li><li>Firma electrónica (Ley 27.553)</li><li>Soporte prioritario</li>
@@ -956,14 +955,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="plan">
         <span class="plan-icon">⚕️</span>
         <div class="pname">Pro</div>
-        <div class="pdesc">Para el médico con consulta establecida que necesita más lugar para su equipo.</div>
+        <div class="pdesc">Para el médico con consulta establecida.</div>
         <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">49</span><span class="pprice-p">/mes</span></div>
-        <div class="ppat">Hasta 10 usuarios</div>
+        <div class="ppat">Hasta 200 pacientes</div>
         <hr class="pline">
         <ul class="pfeats">
-          <li>Todo lo de Starter</li><li>Pacientes ilimitados</li>
+          <li>Todo lo de Starter</li>
           <li>Vademecum inteligente</li>
-          <li>Fisiogramas y odontogramas</li><li>100 imágenes y archivos</li>
+          <li>Fisiogramas y odontogramas</li><li>100 imágenes y archivos · 10 usuarios</li>
           <li>Backup automático diario</li>
         </ul>
         <button class="pbtn" onclick="abrirPago('Pro','49')">Elegir Pro</button>
@@ -971,32 +970,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="plan">
         <span class="plan-icon">👑</span>
         <div class="pname">Premium</div>
-        <div class="pdesc">Para profesionales con alta demanda y equipos más grandes.</div>
+        <div class="pdesc">Para profesionales con alta demanda y múltiples consultorios.</div>
         <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">89</span><span class="pprice-p">/mes</span></div>
-        <div class="ppat">Hasta 25 usuarios</div>
+        <div class="ppat">Hasta 1.000 pacientes</div>
         <hr class="pline">
         <ul class="pfeats">
-          <li>Todo lo de Pro</li><li>Pacientes ilimitados</li>
-          <li>Citas, consultas y recetas ilimitadas</li>
+          <li>Todo lo de Pro</li>
+          <li>Citas, consultas y recetas ilimitadas</li><li>Usuarios ilimitados</li>
           <li>10.000 imágenes y archivos</li><li>Permisos por usuario</li>
           <li>API de integración</li><li>Soporte dedicado 24/7</li>
         </ul>
         <button class="pbtn" onclick="abrirPago('Premium','89')">Elegir Premium</button>
-      </div>
-      <div class="plan">
-        <span class="plan-icon">🏢</span>
-        <div class="pname">Empresarial</div>
-        <div class="pdesc">Para clínicas y centros médicos con equipos grandes.</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">129</span><span class="pprice-p">/mes</span></div>
-        <div class="ppat">Hasta 60 usuarios</div>
-        <hr class="pline">
-        <ul class="pfeats">
-          <li>Todo lo de Premium</li><li>Pacientes ilimitados</li>
-          <li>Imágenes y archivos ilimitados</li>
-          <li>Consultorios ilimitados</li>
-          <li>Soporte prioritario 24/7</li>
-        </ul>
-        <button class="pbtn" onclick="abrirPago('Empresarial','129')">Elegir Empresarial</button>
       </div>
 
       <!-- PLAN ILIMITADO -->
@@ -1009,7 +993,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="ppat">Pacientes, usuarios y todo — sin límite</div>
         <hr class="pline">
         <ul class="pfeats">
-          <li>Todo lo de Empresarial</li>
+          <li>Todo lo de Premium</li>
           <li>Pacientes ilimitados</li>
           <li>Usuarios ilimitados</li>
           <li>Imágenes y archivos ilimitados</li>
@@ -3923,7 +3907,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <option>Starter — U$S 34/mes</option>
 <option>Pro — U$S 49/mes</option>
 <option>Premium — U$S 89/mes</option>
-<option>Empresarial — U$S 129/mes</option>
 <option>Ilimitado — U$S 199/mes</option>
                 </select>
               </div>
@@ -4085,12 +4068,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <input type="text" id="centro-nombre-nuevo" placeholder="Nombre del centro médico" style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--g8);border-radius:8px;font-size:.9rem;font-family:'Outfit',sans-serif;margin-bottom:12px;">
           <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Plan del centro:</label>
           <select id="centro-plan-nuevo" style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--g8);border-radius:8px;font-size:.9rem;font-family:'Outfit',sans-serif;margin-bottom:12px;">
-            <option value="trial">Prueba gratuita (35 pacientes, hasta 3 usuarios)</option>
-            <option value="starter">Starter (pacientes ilimitados, hasta 3 usuarios)</option>
-            <option value="pro">Pro (pacientes ilimitados, hasta 10 usuarios)</option>
-            <option value="premium">Premium (pacientes ilimitados, hasta 25 usuarios)</option>
-            <option value="empresarial">Empresarial (pacientes ilimitados, hasta 60 usuarios)</option>
-            <option value="ilimitado">Ilimitado (todo sin límite)</option>
+            <option value="trial">Prueba gratuita (35 pacientes)</option>
+            <option value="starter">Starter (50 pacientes)</option>
+            <option value="pro">Pro (200 pacientes)</option>
+            <option value="premium">Premium (1.000 pacientes)</option>
+            <option value="ilimitado">Ilimitado</option>
           </select>
           <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-bottom:12px;">⚠️ Elegir un plan acá no incluye el pago todavía — es para que quede registrado qué plan pediste. Escribinos a medhistoriaclinicaonline@gmail.com para coordinar el pago y la activación real.</div>
           <button onclick="crearCentroMedico()" style="padding:10px 24px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Crear Centro Médico</button>
@@ -4902,7 +4884,7 @@ function abrirRegistro(plan){
         var mapPlan = {
           'free':'Prueba Gratuita','gratis':'Prueba Gratuita',
           'starter':'Starter','pro':'Pro',
-          'premium':'Premium','empresarial':'Empresarial','ilimitado':'Ilimitado'
+          'premium':'Premium','ilimitado':'Ilimitado'
         };
         var valorBuscado = mapPlan[plan.toLowerCase()] || plan;
         for(var i=0;i<planSel.options.length;i++){
@@ -5548,7 +5530,7 @@ function cargarReportesReales(){
 
     // Helper: agrupar por plan y sumar precio
     function agruparPorPlan(lista){
-      var porPlan = {Starter:0, Pro:0, Premium:0, Empresarial:0, Ilimitado:0};
+      var porPlan = {Starter:0, Pro:0, Premium:0, Ilimitado:0};
       var total = 0;
       lista.forEach(function(f){
         var p = f.plan || '(sin plan)';
@@ -6461,7 +6443,7 @@ function renderCentroMedico(){
   var planBadgeEl = document.getElementById('centro-plan-badge');
   if(planBadgeEl){
     var planCentro = (miCentro.plan||'trial').toLowerCase();
-    var nombresPlan = {trial:'Prueba gratuita', starter:'Starter', pro:'Pro', premium:'Premium', empresarial:'Empresarial', ilimitado:'Ilimitado'};
+    var nombresPlan = {trial:'Prueba gratuita', starter:'Starter', pro:'Pro', premium:'Premium', ilimitado:'Ilimitado'};
     var nombrePlanTxt = nombresPlan[planCentro] || planCentro;
     if(planCentro === 'trial'){
       planBadgeEl.innerHTML = '<span style="background:#fffbeb;color:#92400e;border-radius:20px;padding:3px 12px;font-size:.75rem;font-weight:700;">⏳ '+nombrePlanTxt+' — 35 pacientes máx.</span> <button onclick="abrirMejorarPlan()" style="margin-left:8px;padding:5px 14px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:20px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">⬆️ Mejorar plan</button>';
@@ -6601,7 +6583,6 @@ var MP_PLANES = [
   {id:'starter', nombre:'Starter', precio:34},
   {id:'pro', nombre:'Pro', precio:49},
   {id:'premium', nombre:'Premium', precio:89},
-  {id:'empresarial', nombre:'Empresarial', precio:129},
   {id:'ilimitado', nombre:'Ilimitado', precio:199}
 ];
 var mpPlanElegido = null;
@@ -13320,10 +13301,10 @@ function _enviarRecordatorioTurno(t, tel){
 function getLimitePacientes(){
   if(!usuarioActual) return 35; // free por defecto
   var plan = (usuarioActual.plan || 'free').toLowerCase();
-  // Desde el nuevo esquema de precios, la diferenciación entre planes pagos
-  // es por cantidad de usuarios, no de pacientes — todos los pagos son
-  // pacientes ilimitados. Solo la Prueba Gratuita mantiene el tope de 35.
-  if(plan.includes('starter') || plan.includes('pro') || plan.includes('premium') || plan.includes('empresarial') || plan.includes('ilimitado') || plan.includes('unlimited')) return Infinity;
+  if(plan.includes('ilimitado') || plan.includes('unlimited')) return Infinity;
+  if(plan.includes('premium')) return 1000;
+  if(plan.includes('pro'))     return 200;
+  if(plan.includes('starter')) return 50;
   return 35; // free / prueba gratuita
 }
 
@@ -13331,7 +13312,10 @@ function getLimitePacientes(){
 function getLimiteCentroPacientes(){
   if(typeof miCentro === 'undefined' || !miCentro) return null; // no pertenece a ningún centro
   var planCentro = (miCentro.plan||'trial').toLowerCase();
-  if(planCentro.includes('starter') || planCentro.includes('pro') || planCentro.includes('premium') || planCentro.includes('empresarial') || planCentro.includes('ilimitado') || planCentro.includes('unlimited')) return Infinity;
+  if(planCentro.includes('ilimitado') || planCentro.includes('unlimited')) return Infinity;
+  if(planCentro.includes('premium')) return 1000;
+  if(planCentro.includes('pro'))     return 200;
+  if(planCentro.includes('starter')) return 50;
   return 35; // trial / centro recién creado, todavía sin el plan pago activado
 }
 
@@ -13345,11 +13329,10 @@ function contarPacientesCentro(){
 function getNombrePlan(){
   if(!usuarioActual) return 'Prueba Gratuita';
   var plan = (usuarioActual.plan || 'free').toLowerCase();
-  if(plan.includes('ilimitado'))   return 'Ilimitado';
-  if(plan.includes('empresarial')) return 'Empresarial';
-  if(plan.includes('premium'))     return 'Premium';
-  if(plan.includes('pro'))         return 'Pro';
-  if(plan.includes('starter'))     return 'Starter';
+  if(plan.includes('ilimitado')) return 'Ilimitado';
+  if(plan.includes('premium'))   return 'Premium';
+  if(plan.includes('pro'))       return 'Pro';
+  if(plan.includes('starter'))   return 'Starter';
   return 'Prueba Gratuita';
 }
 
@@ -14230,7 +14213,6 @@ window.addEventListener('beforeunload', guardarLocal);
               <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Link de pago Plan Starter (u$s34/mes)<input class="mi" id="mp-link-starter" type="text" placeholder="https://buy.stripe.com/... o https://paypal.com/..." style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></div>
               <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Link de pago Plan Pro (u$s49/mes)<input class="mi" id="mp-link-pro" type="text" placeholder="https://buy.stripe.com/... o https://paypal.com/..." style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></div>
               <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Link de pago Plan Premium (u$s89/mes)<input class="mi" id="mp-link-premium" type="text" placeholder="https://buy.stripe.com/... o https://paypal.com/..." style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></div>
-              <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Link de pago Plan Empresarial (u$s129/mes)<input class="mi" id="mp-link-empresarial" type="text" placeholder="https://buy.stripe.com/... o https://paypal.com/..." style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></div>
               <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Link de pago Plan Ilimitado (u$s199/mes)<input class="mi" id="mp-link-ilimitado" type="text" placeholder="https://buy.stripe.com/... o https://paypal.com/..." style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></div>
               <button onclick="guardarDatosMP()" style="padding:12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:6px;">✓ Guardar links de pago</button>
             </div>
@@ -14791,7 +14773,7 @@ function mlRegistrar(){
       if(r2.error) console.error('Error guardando en Supabase:', r2.error);
 
       // Guardar la solicitud real en el reporte del panel admin (incluida Prueba Gratuita)
-      var preciosPlan = {'Prueba Gratuita':0, 'Starter':34, 'Pro':49, 'Premium':89, 'Empresarial':129, 'Ilimitado':199};
+      var preciosPlan = {'Prueba Gratuita':0, 'Starter':34, 'Pro':49, 'Premium':89, 'Ilimitado':199};
       sb.from('solicitudes_suscripcion').insert({
         medico_nombre: nombre,
         medico_email: email,
