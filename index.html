@@ -10246,15 +10246,12 @@ function verImagenEstudio(id){
         +'</div>'
         +'</body></html>');
     } else {
-      w.document.write('<!DOCTYPE html><html><head><title>'+escHtml(estudio.nombre)+'</title>'+cerrarScript
-        +'<style>body{margin:0;}iframe{position:fixed;top:50px;left:0;width:100%;height:calc(100% - 50px);border:none;}</style>'
-        +'</head><body>'
-        +'<div style="'+barStyle+'">'
-          +'<span style="color:#6dde96;font-family:sans-serif;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">'+escHtml(estudio.nombre)+'</span>'
-          +btnCerrar
-        +'</div>'
-        +'<iframe src="'+urlFirmada+'"></iframe>'
-        +'</body></html>');
+      // Tipo no reconocido claramente como imagen o PDF: no lo mostramos embebido
+      // (un <iframe> con contenido que no sea realmente lo que dice ser podría
+      // ejecutar HTML/JS) — se descarga directo en su lugar, igual que "Descargar".
+      w.close();
+      descargarEstudio(id);
+      return;
     }
     w.document.close();
   });
