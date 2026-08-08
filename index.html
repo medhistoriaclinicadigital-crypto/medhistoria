@@ -1495,7 +1495,7 @@ function mhcdRechazarCookies(){
     <div id="seccion-tyc">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
         <h2 style="font-size:1.15rem;color:#042b10;margin:0;">Términos y Condiciones de Uso</h2>
-        <span style="background:#e3fbed;color:#145a32;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">Versión 2.0 · Mayo 2026</span>
+        <span style="background:#e3fbed;color:#145a32;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">Versión 2.1 · Agosto 2026</span>
       </div>
       <p style="font-size:.78rem;color:#5a7362;margin:0 0 24px;">Estos Términos y Condiciones regulan el acceso y uso de la plataforma MedHistoriaClinicaOnline. Al registrarse o utilizar la plataforma, el usuario acepta íntegramente las presentes condiciones.</p>
 
@@ -14766,7 +14766,7 @@ function mlRegistrar(){
   var pass = ((document.getElementById('ml-reg-pass')||{}).value||'');
   var pass2 = ((document.getElementById('ml-reg-pass2')||{}).value||'');
   var codigoCentro = ((document.getElementById('ml-reg-codigo-centro')||{}).value||'').trim();
-  var terminos = document.getElementById('ml-reg-terminos');
+  var chkTerminos = document.getElementById('reg-acepto-todo');
 
   if(!nombre){ alert('Ingresá tu nombre completo.'); return; }
   if(!sexo){ alert('Seleccioná tu sexo.'); return; }
@@ -14775,6 +14775,7 @@ function mlRegistrar(){
   if(!email){ alert('Ingresá tu email.'); return; }
   if(!pass || pass.length < 8){ alert('La contraseña debe tener al menos 8 caracteres.'); return; }
   if(pass !== pass2){ alert('Las contraseñas no coinciden.'); return; }
+  if(!chkTerminos || !chkTerminos.checked){ alert('Tenés que aceptar los Términos y Condiciones, la Política de Privacidad y la Política de Cookies para crear tu cuenta.'); return; }
 
   var planElegido = ((document.getElementById('ml-reg-plan')||document.getElementById('reg-plan')||{}).value||'Prueba Gratuita');
   var btnReg = document.querySelector('#ml-form-reg .form-submit') || document.querySelector('#ml-form-reg button[onclick="mlRegistrar()"]');
