@@ -10986,6 +10986,15 @@ function imprimirResumenTab(){
 
 var videoconsultas = [];
 
+// Nombre de sala Jitsi imposible de adivinar: 16 bytes al azar generados con
+// crypto.getRandomValues (no Math.random, que no es criptográficamente seguro).
+function _generarSalaJitsiSegura(){
+  var bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  var hex = Array.prototype.map.call(bytes, function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+  return 'consulta-' + hex;
+}
+
 function generarVideollamada(){
   var pac = (document.getElementById('tele-paciente')||{}).value||'';
   var fecha = (document.getElementById('tele-fecha')||{}).value||'';
@@ -10999,9 +11008,11 @@ function generarVideollamada(){
   if(!hora){ alert('Ingresá la hora.'); return; }
   if(!tel && !email){ alert('Ingresá teléfono o email del paciente.'); return; }
 
-  // Generar sala Jitsi única (funciona sin cuenta, sin instalar nada)
-  var sala = 'consulta-' + pac.split(' ')[0].toLowerCase().replace(/[^a-z]/g,'')
-    + '-' + Math.random().toString(36).substring(2,7);
+  // Generar sala Jitsi única (funciona sin cuenta, sin instalar nada).
+  // Nombre totalmente al azar (sin el nombre del paciente ni nada adivinable):
+  // meet.jit.si es público y no pide contraseña, así que quien tenga el link
+  // entra — la única protección real es que sea imposible de adivinar.
+  var sala = _generarSalaJitsiSegura();
   var linkVideollamada = 'https://meet.jit.si/' + sala;
 
   var partes = fecha.split('-');
