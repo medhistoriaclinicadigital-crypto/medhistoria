@@ -2,12 +2,21 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-	<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-NQV3C23M');</script>
+	<!-- Google Tag Manager: NO se carga automáticamente — solo si el usuario acepta
+	     cookies analíticas en el banner de consentimiento (ver body). -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function _cargarGTM(){
+  if(window._gtmCargado) return;
+  window._gtmCargado = true;
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-NQV3C23M');
+}
+if(localStorage.getItem('mhcd_cookies_consent') === 'aceptado'){ _cargarGTM(); }
+</script>
 <!-- End Google Tag Manager -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -672,10 +681,37 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 </head>
 <body>
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NQV3C23M"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
+
+<!-- BANNER DE CONSENTIMIENTO DE COOKIES -->
+<div id="cookieBanner" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:9999998;background:#042b10;color:#fff;padding:16px 20px;box-shadow:0 -4px 20px rgba(0,0,0,.25);font-family:'Outfit',sans-serif;">
+  <div style="max-width:960px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between;">
+    <p style="margin:0;font-size:.82rem;line-height:1.5;color:rgba(255,255,255,.9);flex:1;min-width:240px;">
+      🍪 Usamos cookies analíticas para entender cómo se usa la plataforma y mejorarla. Solo se activan si las aceptás.
+      <a href="#" onclick="document.getElementById('terminosOverlay').style.display='block';document.getElementById('seccion-tyc').style.display='none';document.getElementById('seccion-privacidad').style.display='none';document.getElementById('seccion-cookies').style.display='block';document.getElementById('btn-cookies').style.display='block';document.getElementById('btn-cookies').style.background='rgba(255,255,255,.95)';document.getElementById('btn-cookies').style.color='#042b10';document.getElementById('btn-tyc').style.background='rgba(255,255,255,.2)';document.getElementById('btn-tyc').style.color='#fff';document.getElementById('btn-privacidad').style.background='rgba(255,255,255,.2)';document.getElementById('btn-privacidad').style.color='#fff';return false;" style="color:#6dde96;font-weight:700;white-space:nowrap;">Más información</a>
+    </p>
+    <div style="display:flex;gap:10px;flex-shrink:0;">
+      <button onclick="mhcdRechazarCookies()" style="padding:10px 18px;background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Rechazar</button>
+      <button onclick="mhcdAceptarCookies()" style="padding:10px 18px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Aceptar</button>
+    </div>
+  </div>
+</div>
+<script>
+function mhcdAceptarCookies(){
+  localStorage.setItem('mhcd_cookies_consent','aceptado');
+  var b=document.getElementById('cookieBanner'); if(b) b.style.display='none';
+  _cargarGTM();
+}
+function mhcdRechazarCookies(){
+  localStorage.setItem('mhcd_cookies_consent','rechazado');
+  var b=document.getElementById('cookieBanner'); if(b) b.style.display='none';
+}
+(function(){
+  if(!localStorage.getItem('mhcd_cookies_consent')){
+    var b=document.getElementById('cookieBanner');
+    if(b) b.style.display='block';
+  }
+})();
+</script>
 
 <!-- SPLASH SCREEN -->
 <div id="splash">
