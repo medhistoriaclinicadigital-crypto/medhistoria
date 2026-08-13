@@ -520,6 +520,19 @@ function abrirPago(plan, precio){
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
+  toggleCentroTambienMedico();
+}
+
+// Muestra u oculta "Datos profesionales" según si quien registra un centro también va a atender pacientes.
+// Fuera del registro de centro (suscripción individual), siempre se muestran.
+function toggleCentroTambienMedico(){
+  var overlay = document.getElementById('pagoOverlay');
+  var esCentro = overlay && overlay.getAttribute('data-registro-centro') === 'true';
+  var chk = document.getElementById('pago-centro-tambien-medico');
+  var datos = document.getElementById('pago-datos-profesionales');
+  if(!datos) return;
+  var mostrar = !esCentro || !chk || chk.checked;
+  datos.style.display = mostrar ? 'block' : 'none';
 }
 
 // Abre el mismo formulario, pero para inscribir un Centro Médico — el plan se elige después, adentro de la app
@@ -545,6 +558,9 @@ function abrirRegistroCentro(){
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
+  var chkTM = document.getElementById('pago-centro-tambien-medico');
+  if(chkTM) chkTM.checked = true;
+  toggleCentroTambienMedico();
 }
 
 function cerrarPago(){
@@ -4201,6 +4217,10 @@ function mhcdRechazarCookies(){
       <div style="font-size:.72rem;font-weight:700;color:#22a050;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🏥 Tu Centro Médico</div>
       <label style="font-size:.72rem;color:#888;display:block;margin-bottom:3px;">Nombre del Centro Médico *<input class="mi" id="pago-centro-nombre" type="text" placeholder="Ej: Centro Médico San Martín" style="margin:0;width:100%;box-sizing:border-box;"></label>
       <div style="font-size:.75rem;color:#666;margin-top:6px;line-height:1.5;">Vas a poder agregar a los demás médicos de tu equipo apenas termines este paso.</div>
+      <label style="display:flex;align-items:flex-start;gap:8px;font-size:.8rem;color:#145a32;font-weight:600;margin-top:12px;padding-top:12px;border-top:1px solid #bbf7d0;cursor:pointer;">
+        <input type="checkbox" id="pago-centro-tambien-medico" checked onchange="toggleCentroTambienMedico()" style="margin-top:2px;flex-shrink:0;accent-color:#22a050;width:16px;height:16px;">
+        <span>¿Sos médico y también vas a atender pacientes en este centro? Si tildás esto, además de administrador quedás como su primer médico — completá tu matrícula y especialidad abajo. Si el centro lo administra alguien que no es médico, destildá esto.</span>
+      </label>
     </div>
 
     <!-- Datos personales -->
@@ -4215,6 +4235,7 @@ function mhcdRechazarCookies(){
     </div>
 
     <!-- Datos profesionales -->
+    <div id="pago-datos-profesionales">
     <div style="font-size:.72rem;font-weight:700;color:#22a050;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🩺 Datos profesionales</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
       <div><label style="font-size:.72rem;color:#888;display:block;margin-bottom:3px;">Matrícula *<input class="mi" id="pago-matricula" type="text" placeholder="Nº matrícula" style="margin:0;"></div>
@@ -4228,6 +4249,7 @@ function mhcdRechazarCookies(){
       <div style="grid-column:1/-1;"><label style="font-size:.72rem;color:#888;display:block;margin-bottom:3px;">Hospital / Clínica / Consultorio<input class="mi" id="pago-institucion" type="text" placeholder="Nombre del lugar de trabajo" style="margin:0;"></div>
       <div><label style="font-size:.72rem;color:#888;display:block;margin-bottom:3px;">Provincia<input class="mi" id="pago-provincia" type="text" placeholder="Provincia" style="margin:0;"></div>
       <div><label style="font-size:.72rem;color:#888;display:block;margin-bottom:3px;">Ciudad<input class="mi" id="pago-ciudad" type="text" placeholder="Ciudad" style="margin:0;"></div>
+    </div>
     </div>
 
     <!-- Contraseña del Centro Médico (solo registro de centro; el nombre del centro ya se pidió arriba de todo) -->
@@ -5893,16 +5915,26 @@ function procesarPago(){
 
   if(!nombre){ alert('Ingresá tu nombre.'); return; }
   if(!email){ alert('Ingresá tu email.'); return; }
-  if(!matricula){ alert('Ingresá tu matrícula.'); return; }
-  if(!especialidad){ alert('Ingresá tu especialidad.'); return; }
 
   var overlayPago = document.getElementById('pagoOverlay');
   var esIlimitado = overlayPago && overlayPago.getAttribute('data-registro-centro') === 'true';
+  var chkTambienMedico = document.getElementById('pago-centro-tambien-medico');
+  var esTambienMedico = !esIlimitado || !chkTambienMedico || chkTambienMedico.checked;
+
+  if(esTambienMedico){
+    if(!matricula){ alert('Ingresá tu matrícula.'); return; }
+    if(!especialidad){ alert('Ingresá tu especialidad.'); return; }
+  }
+
   var centroNombre = '';
   if(esIlimitado){
     centroNombre = ((document.getElementById('pago-centro-nombre')||{}).value||'').trim();
     if(!centroNombre){ alert('Ingresá el nombre de tu Centro Médico.'); return; }
   }
+
+  var rolCentroTxt = esIlimitado
+    ? (esTambienMedico ? '👨‍⚕️ Además de administrador, TAMBIÉN va a atender pacientes (dar de alta como médico + dueño del centro)' : '🏢 Es SOLO administrador del centro (no va a atender pacientes — no dar de alta como médico)')
+    : '';
 
   var msg = '🏥 *NUEVA SOLICITUD DE SUSCRIPCIÓN*\n\n'
     +'📋 *'+plan+'*\n\n'
@@ -5915,13 +5947,13 @@ function procesarPago(){
     +'Nombre y apellido: '+nombre+' '+apellido+'\n'
     +'CUIT: '+(dni||'(no informado)')+'\n'
     +'Dirección: '+(direccion||'(no informada)')+'\n'
-    +'\n🩺 *DATOS PROFESIONALES*\n'
-    +'Matrícula: '+tipomat+' '+matricula+'\n'
-    +'Especialidad: '+especialidad+'\n'
-    +(institucion?'Institución: '+institucion+'\n':'')
-    +(provincia?'Provincia: '+provincia+'\n':'')
-    +(ciudad?'Ciudad: '+ciudad+'\n':'')
-    +(esIlimitado?'\n🏥 *CENTRO MÉDICO:* '+centroNombre:'')
+    +(esTambienMedico ? ('\n🩺 *DATOS PROFESIONALES*\n'
+      +'Matrícula: '+tipomat+' '+matricula+'\n'
+      +'Especialidad: '+especialidad+'\n'
+      +(institucion?'Institución: '+institucion+'\n':'')
+      +(provincia?'Provincia: '+provincia+'\n':'')
+      +(ciudad?'Ciudad: '+ciudad+'\n':'')) : '')
+    +(esIlimitado?'\n🏥 *CENTRO MÉDICO:* '+centroNombre+'\n'+rolCentroTxt:'')
     +'\n💰 *FORMA DE PAGO:* '+pago.toUpperCase()
     +'\n\n_Enviado desde MedHistoriaClinicaOnline_';
 
@@ -5939,7 +5971,9 @@ function procesarPago(){
       asunto: '🏥 NUEVA SUSCRIPCIÓN - '+plan,
       name: nombre+' '+apellido,
       email: email,
-      message: '📋 PLAN: '+plan+'\n👤 Nombre: '+nombre+' '+apellido+'\nEmail: '+email+'\nDNI/CUIT: '+dni+'\nWhatsApp: '+tel+'\n\n🧾 DATOS PARA FACTURAR\nNombre y apellido: '+nombre+' '+apellido+'\nCUIT: '+(dni||'(no informado)')+'\nDirección: '+(direccion||'(no informada)')+'\n\n🩺 Matrícula: '+tipomat+' '+matricula+'\nEspecialidad: '+especialidad+'\nInstitución: '+institucion+'\nProvincia: '+provincia+' - '+ciudad+(esIlimitado?'\n\n🏥 Centro Médico: '+centroNombre:'')+'\n\n💰 Forma de pago: '+pago.toUpperCase()
+      message: '📋 PLAN: '+plan+'\n👤 Nombre: '+nombre+' '+apellido+'\nEmail: '+email+'\nDNI/CUIT: '+dni+'\nWhatsApp: '+tel+'\n\n🧾 DATOS PARA FACTURAR\nNombre y apellido: '+nombre+' '+apellido+'\nCUIT: '+(dni||'(no informado)')+'\nDirección: '+(direccion||'(no informada)')
+        +(esTambienMedico ? ('\n\n🩺 Matrícula: '+tipomat+' '+matricula+'\nEspecialidad: '+especialidad+'\nInstitución: '+institucion+'\nProvincia: '+provincia+' - '+ciudad) : '')
+        +(esIlimitado?'\n\n🏥 Centro Médico: '+centroNombre+'\n'+rolCentroTxt:'')+'\n\n💰 Forma de pago: '+pago.toUpperCase()
     })
   }).catch(function(){});
 
@@ -5949,7 +5983,7 @@ function procesarPago(){
     medico_email: email,
     plan: _pagoPlanActual || plan,
     precio: _pagoPrecioActual || 0,
-    tipo: esIlimitado ? 'registro_centro' : 'nueva_suscripcion',
+    tipo: esIlimitado ? (esTambienMedico ? 'registro_centro' : 'registro_centro_solo_admin') : 'nueva_suscripcion',
     forma_pago: pago,
     cuit: dni,
     direccion: direccion
