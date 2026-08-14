@@ -10198,7 +10198,9 @@ function _subirArchivoAEstudios(file, meta){
   _resolverPacienteIdEstudios(function(pacienteId){
     if(!pacienteId){ alert('Abrí un paciente ya guardado (con DNI) desde "Pacientes" antes de adjuntar archivos.'); return; }
     var punto = file.name.lastIndexOf('.');
-    var ext = punto>-1 ? file.name.slice(punto) : '';
+    var ext = punto>-1 ? file.name.slice(punto).toLowerCase() : '';
+    var extsPermitidas = ['.pdf','.jpg','.jpeg','.png','.gif','.webp'];
+    if(extsPermitidas.indexOf(ext)===-1){ alert('Tipo de archivo no permitido: "'+file.name+'". Solo se aceptan PDF, JPG, PNG, GIF o WEBP.'); return; }
     var path = pacienteId+'/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+ext;
     sb.storage.from(ESTUDIOS_BUCKET).upload(path, file, {contentType: file.type||'application/octet-stream'}).then(function(rUp){
       if(rUp.error){ alert('Error al subir "'+file.name+'": '+rUp.error.message); return; }
