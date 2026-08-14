@@ -792,7 +792,7 @@ function mhcdRechazarCookies(){
         <button type="button" onclick="togglePass('ml-pass',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;color:#aaa;padding:4px;"><span style="position:relative;display:inline-block;font-size:1.1rem;">👁<span style="position:absolute;left:0;top:50%;transform:translateY(-50%) rotate(-45deg);width:100%;height:2px;background:#888;display:block;border-radius:2px;"></span></span></button>
       </div>
       <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#666;margin:10px 0 4px;cursor:pointer;">
-       <input type="checkbox" id="ml-recordar" style="accent-color:#22a050;width:15px;height:15px;" onchange="(function(c){if(c){localStorage.setItem('mhcd_recordar','1');}else{localStorage.removeItem('mhcd_recordar');localStorage.removeItem('mhcd_user_guardado');localStorage.removeItem('mhcd_pass_guardado');}})( this.checked)">
+       <input type="checkbox" id="ml-recordar" style="accent-color:#22a050;width:15px;height:15px;" onchange="(function(c,chk){var u=(document.getElementById('ml-user')||{}).value||'';var p=(document.getElementById('ml-pass')||{}).value||'';if(c && (!u.trim()||!p.trim())){chk.checked=false;alert('Completá usuario y contraseña antes de tildar \'Recordar usuario y contraseña\'.');return;}if(c){localStorage.setItem('mhcd_recordar','1');}else{localStorage.removeItem('mhcd_recordar');localStorage.removeItem('mhcd_user_guardado');localStorage.removeItem('mhcd_pass_guardado');}})(this.checked,this)">
         Recordar usuario y contraseña
       </label>
       <button onclick="mlIngresar()" style="width:100%;padding:13px;margin-top:12px;background:linear-gradient(135deg,#22a050,#145a32);color:white;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">Ingresar a mi cuenta</button>
@@ -14800,8 +14800,17 @@ function continuarLoginTrasDispositivo(authId, emailFallback){
 // la última vez y todavía hay una sesión válida, entra directo a la app.
 function intentarAutoLogin(){
   if(localStorage.getItem('mhcd_recordar') !== '1') return;
-  sb.auth.getSession().then(function(r){
-    var session = r.data && r.data.session;
+  // Usamos el evento INITIAL_SESSION de onAuthStateChange en vez de llamar
+  // a sb.auth.getSession() directo: ese evento se dispara recién cuando el
+  // cliente de Supabase ya terminó de restaurar la sesión guardada desde
+  // el storage, evitando una condición de carrera donde getSession()
+  // devuelve "sin sesión" por haberse llamado antes de que termine esa
+  // restauración interna.
+  var _yaProceso = false;
+  sb.auth.onAuthStateChange(function(event, session){
+    if(event !== 'INITIAL_SESSION') return;
+    if(_yaProceso) return;
+    _yaProceso = true;
     if(!session || !session.user) return;
     var authId = session.user.id;
     sb.rpc('verificar_dispositivo', { p_device_token: _deviceToken(), p_descripcion: _descripcionDispositivo() }).then(function(rDisp){
