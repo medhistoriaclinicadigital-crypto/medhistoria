@@ -4653,7 +4653,9 @@ function guardarPaciente(){
         };
       if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){ pacSB.centro_id = miCentro.id; }
       buscarPacienteIdCompartido(dniOriginalSB || pac.dni || '', function(pacienteIdExistente){
-        if(pacienteIdExistente){
+        if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
+          sb.rpc('guardar_paciente_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteIdExistente||null, p_campos: pacSB}).then(function(r){ if(r.error) console.error('Error guardando paciente de centro:', r.error); });
+        } else if(pacienteIdExistente){
           sb.from('pacientes').update(pacSB).eq('id', pacienteIdExistente).then(function(){});
         } else {
           sb.from('pacientes').insert(pacSB).then(function(){});
@@ -10426,7 +10428,9 @@ function guardarExamenFisico(){
               examen_aparatos_sistemas: examen.sistemas||''
             };
             _queryCentroOProp('historias_clinicas','obtener_historias_centro').eq('paciente_id', pacienteId).then(function(rHC){
-              if(rHC.data && rHC.data.length>0){
+              if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
+                sb.rpc('guardar_historia_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB}).then(function(r){ if(r.error) console.error('Error guardando examen fisico de centro:', r.error); });
+              } else if(rHC.data && rHC.data.length>0){
                 sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando examen fisico en Supabase:', r.error); });
               } else {
                 sb.from('historias_clinicas').insert(hcSB).then(function(r){ if(r.error) console.error('Error guardando examen fisico en Supabase:', r.error); });
@@ -10531,7 +10535,9 @@ function guardarDiagnostico(){
               diagnostico: (diagnostico.principal||'') + (diagnostico.secundarios? (' / '+diagnostico.secundarios) : '')
             };
             _queryCentroOProp('historias_clinicas','obtener_historias_centro').eq('paciente_id', pacienteId).then(function(rHC){
-              if(rHC.data && rHC.data.length>0){
+              if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
+                sb.rpc('guardar_historia_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB}).then(function(r){ if(r.error) console.error('Error guardando diagnostico de centro:', r.error); });
+              } else if(rHC.data && rHC.data.length>0){
                 sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando diagnostico en Supabase:', r.error); });
               } else {
                 sb.from('historias_clinicas').insert(hcSB).then(function(r){ if(r.error) console.error('Error guardando diagnostico en Supabase:', r.error); });
@@ -13612,7 +13618,9 @@ function guardarDesdeHC(){
             alergias: alergias||''
           };
           _queryCentroOProp('historias_clinicas','obtener_historias_centro').eq('paciente_id', pacienteId).then(function(rHC){
-            if(rHC.data && rHC.data.length>0){
+            if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
+              sb.rpc('guardar_historia_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB}).then(function(r){ if(r.error) console.error('Error guardando HC de centro:', r.error); });
+            } else if(rHC.data && rHC.data.length>0){
               sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando HC en Supabase:', r.error); });
             } else {
               sb.from('historias_clinicas').insert(hcSB).then(function(r){ if(r.error) console.error('Error guardando HC en Supabase:', r.error); });
