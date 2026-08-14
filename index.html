@@ -10195,6 +10195,8 @@ function cargarEstudiosPaciente(){
 // Sube un archivo a Supabase Storage y registra la fila en la tabla estudios.
 function _subirArchivoAEstudios(file, meta){
   if(file.size > 10*1024*1024){ alert('El archivo "'+file.name+'" supera los 10MB.'); return; }
+  var tiposPermitidos = ['application/pdf','image/jpeg','image/png','image/gif','image/webp'];
+  if(tiposPermitidos.indexOf(file.type)===-1){ alert('Tipo de archivo no permitido: "'+file.name+'". Solo se aceptan PDF, JPG, PNG, GIF o WEBP.'); return; }
   _resolverPacienteIdEstudios(function(pacienteId){
     if(!pacienteId){ alert('Abrí un paciente ya guardado (con DNI) desde "Pacientes" antes de adjuntar archivos.'); return; }
     var punto = file.name.lastIndexOf('.');
