@@ -4400,7 +4400,7 @@ function mhcdRechazarCookies(){
         <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Indicaciones<textarea class="mi" id="rx-ind" style="min-height:50px;" placeholder="Indicaciones al paciente..."></textarea></div>
         <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Médico<input class="mi" id="rx-medico" type="text" placeholder="Dr. Apellido · Especialidad · Mat. 00000"></div>
       </div>
-      <button class="mbtn" onclick="imprimirDoc('rx')">🖨️ Imprimir Receta</button>
+      <button class="mbtn" onclick="imprimirDoc('receta')">🖨️ Imprimir Receta</button>
     </div>
     <!-- ORD -->
     <div id="pf-ord" class="mform" style="display:none;gap:10px;">
@@ -12355,7 +12355,7 @@ function checkAddonFirmaDocumentos(){
 }
 
 function generarPDFbase64(tipo, callback){
-  if((tipo==='receta'||tipo==='derivacion'||tipo==='pedido'||tipo==='ord') && !checkAddonFirmaDocumentos()) return;
+  if((tipo==='receta'||tipo==='derivacion'||tipo==='pedido'||tipo==='ord'||tipo==='hc') && !checkAddonFirmaDocumentos()) return;
   var d = getDatosDocumento(tipo);
 
   // ── Validación obligatoria para recetas: no se genera nada (ni descarga, ni impresión,
@@ -12572,6 +12572,7 @@ function generarPDFbase64(tipo, callback){
   var _paisNombreMedico = (firmaInfo[_paisMedico] && firmaInfo[_paisMedico].pais) ? firmaInfo[_paisMedico].pais : 'Argentina';
   var legalTxt = tipo==='receta' ? 'Receta emitida bajo '+_leyFirmaPais+' · Firma Electrónica · MedHistoriaClinicaOnline'
     : tipo==='derivacion' ? 'Derivación emitida bajo '+_leyFirmaPais+' · Firma Electrónica · MedHistoriaClinicaOnline'
+    : tipo==='hc' ? 'Resumen emitido bajo '+_leyFirmaPais+' · Firma Electrónica · MedHistoriaClinicaOnline'
     : 'Pedido emitido bajo '+_leyFirmaPais+' · Firma Electrónica · MedHistoriaClinicaOnline';
   doc.setTextColor(100,140,100); doc.setFontSize(6.5); doc.setFont('helvetica','italic');
   doc.text(legalTxt, x + W - margin*2 - 2, y + cajaH - 4, {align:'right'});
@@ -12581,7 +12582,7 @@ function generarPDFbase64(tipo, callback){
   // ── Indicaciones ──
   if(d.ind){
     doc.setTextColor(20,90,50); doc.setFontSize(7); doc.setFont('helvetica','bold');
-    doc.text('INDICACIONES AL PACIENTE', x, y);
+    doc.text(tipo==='hc' ? 'ANTECEDENTES' : 'INDICACIONES AL PACIENTE', x, y);
     y += 4;
     var indLines = doc.splitTextToSize(d.ind, W-margin*2-4);
     var indH = Math.max(16, indLines.length*6+6);
@@ -12859,17 +12860,17 @@ function getDatosDocumento(tipo){
   if(tipo==='receta'){
     datos.titulo='RECETA MÉDICA DIGITAL'; datos.icono='💊';
     datos.pac=((document.getElementById('rx2-paciente')||{}).value||(document.getElementById('rx-paciente')||{}).value||'').toUpperCase();
-    datos.dni=(document.getElementById('rx2-dni')||{}).value||'';
-    datos.fnac=(document.getElementById('rx2-fnac')||{}).value||'';
-    datos.sexo=(document.getElementById('rx2-sexo')||{}).value||'';
-    datos.os=(document.getElementById('rx2-os')||{}).value||'';
-    datos.afiliado=(document.getElementById('rx2-afiliado')||{}).value||'';
+    datos.dni=(document.getElementById('rx2-dni')||{}).value||(document.getElementById('rx-dni')||{}).value||'';
+    datos.fnac=(document.getElementById('rx2-fnac')||{}).value||(document.getElementById('rx-fnac')||{}).value||'';
+    datos.sexo=(document.getElementById('rx2-sexo')||{}).value||(document.getElementById('rx-sexo')||{}).value||'';
+    datos.os=(document.getElementById('rx2-os')||{}).value||(document.getElementById('rx-os')||{}).value||'';
+    datos.afiliado=(document.getElementById('rx2-afiliado')||{}).value||(document.getElementById('rx-afiliado')||{}).value||'';
     datos.plan=(document.getElementById('rx2-plan')||{}).value||'';
-    datos.diag=(document.getElementById('rx2-diag')||{}).value||'';
+    datos.diag=(document.getElementById('rx2-diag')||{}).value||(document.getElementById('rx-diag')||{}).value||'';
     datos.contenido=(document.getElementById('rx2-med')||{}).value||(document.getElementById('rx-med')||{}).value||'';
-    datos.ind=(document.getElementById('rx2-ind')||{}).value||'';
+    datos.ind=(document.getElementById('rx2-ind')||{}).value||(document.getElementById('rx-ind')||{}).value||'';
     datos.medico=(document.getElementById('rx2-medico')||{}).value||(document.getElementById('rx-medico')||{}).value||'';
-    datos.domicilio=(document.getElementById('rx2-domicilio')||{}).value||'';
+    datos.domicilio=(document.getElementById('rx2-domicilio')||{}).value||(usuarioActual?(localStorage.getItem('medhistoria_domicilio_'+(usuarioActual.email||usuarioActual.id||'default'))||''):'');
     datos.especialidad=(usuarioActual && usuarioActual.especialidad) || '';
     datos.legajoRL=localStorage.getItem('medhistoria_legajo_renapdis')||'';
     datos.labelContenido='MEDICACIÓN PRESCRIPTA';
@@ -12901,6 +12902,19 @@ function getDatosDocumento(tipo){
     datos.contenido=(document.getElementById('ord-det')||{}).value||'';
     datos.medico=(document.getElementById('ord-medico')||{}).value||'';
     datos.labelContenido='DETALLE';
+  } else if(tipo==='hc'){
+    datos.titulo='RESUMEN DE HISTORIA CLÍNICA'; datos.icono='📋';
+    datos.pac=((document.getElementById('hc-paciente')||{}).value||'').toUpperCase();
+    datos.dni=(document.getElementById('hc-dni')||{}).value||'';
+    datos.fnac=(document.getElementById('hc-fnac')||{}).value||'';
+    datos.os=(document.getElementById('hc-os')||{}).value||'';
+    datos.afiliado=(document.getElementById('hc-print-afiliado')||{}).value||'';
+    datos.plan=(document.getElementById('hc-print-plan')||{}).value||'';
+    datos.diag=(document.getElementById('hc-diag')||{}).value||'';
+    datos.contenido=(document.getElementById('hc-med')||{}).value||'';
+    datos.ind=(document.getElementById('hc-obs')||{}).value||'';
+    datos.medico=(document.getElementById('hc-medico')||{}).value||'';
+    datos.labelContenido='MEDICACIÓN HABITUAL';
   } else {
     datos.titulo='PEDIDO DE ESTUDIOS'; datos.icono='🔬';
     datos.pac=((document.getElementById('est-paciente')||{}).value||'').toUpperCase();
