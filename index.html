@@ -12337,7 +12337,23 @@ var _logoPNG = null;
   } catch(e){}
 })();
 
+function checkAddonFirmaDocumentos(){
+  if(tieneAddonFirma()) return true;
+  var html = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;" id="firma-doc-addon-overlay" onclick="if(event.target===this)this.remove()">'
+    +'<div style="background:#fff;border-radius:16px;padding:36px 32px;max-width:420px;width:90%;text-align:center;">'
+    +'<div style="font-size:2.5rem;margin-bottom:12px;">🔒</div>'
+    +'<h3 style="font-family:\'Cormorant Garamond\',serif;font-size:1.4rem;color:#1a3a2a;margin-bottom:8px;">Firma Digital Integrada</h3>'
+    +'<p style="color:#6b7280;font-size:.87rem;line-height:1.7;margin-bottom:20px;">Para generar, imprimir, descargar o enviar recetas, derivaciones y pedidos de estudios necesitás el add-on <strong>Firma Digital Integrada</strong> por <strong>U$S 9/mes</strong>.</p>'
+    +'<button onclick="solicitarAddon(\'Firma Digital Integrada\',\'9\')" style="padding:11px 24px;background:linear-gradient(135deg,#1a8040,#22a050);color:#fff;border:none;border-radius:9px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">Contratar por U$S 9/mes →</button>'
+    +'<br><br><button onclick="mostrarIngresarCodigo(\'firma\')" style="padding:9px 20px;background:#f0fdf4;border:1.5px solid #22a050;color:#15803d;border-radius:9px;font-size:.83rem;font-weight:600;cursor:pointer;font-family:\'Outfit\',sans-serif;">🔑 Ya tengo un código de activación</button>'
+    +'<br><br><button onclick="document.getElementById(\'firma-doc-addon-overlay\').remove()" style="margin-top:10px;background:none;border:1.5px solid #e3fbed;color:#5a7362;border-radius:9px;padding:9px 20px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:Outfit,sans-serif;">Cerrar</button>'
+    +'</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  return false;
+}
+
 function generarPDFbase64(tipo, callback){
+  if((tipo==='receta'||tipo==='derivacion'||tipo==='pedido') && !checkAddonFirmaDocumentos()) return;
   var d = getDatosDocumento(tipo);
 
   // ── Validación obligatoria para recetas: no se genera nada (ni descarga, ni impresión,
