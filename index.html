@@ -11028,6 +11028,7 @@ function generarResumen(){
 }
 
 function imprimirResumenTab(){
+  if(!checkAddonFirmaDocumentos()) return;
   generarResumen();
   var doc = document.getElementById('hc-resumen-doc');
   if(!doc) return;
@@ -12354,7 +12355,7 @@ function checkAddonFirmaDocumentos(){
 }
 
 function generarPDFbase64(tipo, callback){
-  if((tipo==='receta'||tipo==='derivacion'||tipo==='pedido') && !checkAddonFirmaDocumentos()) return;
+  if((tipo==='receta'||tipo==='derivacion'||tipo==='pedido'||tipo==='ord') && !checkAddonFirmaDocumentos()) return;
   var d = getDatosDocumento(tipo);
 
   // ── Validación obligatoria para recetas: no se genera nada (ni descarga, ni impresión,
