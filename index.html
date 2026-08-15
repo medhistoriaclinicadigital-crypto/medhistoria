@@ -14747,14 +14747,20 @@ function mlIngresar(){
         }
         return;
       }
-      continuarLoginTrasDispositivo(authId, u);
+      continuarLoginTrasDispositivo(authId, u, true);
     });
   });
 }
 
 // emailFallback solo se usa si todavía no hay fila en "usuarios" para
 // mostrar algo razonable mientras carga — nunca se guarda en ningún lado.
-function continuarLoginTrasDispositivo(authId, emailFallback){
+// esLoginManual: true cuando viene de mlIngresar() (el formulario y la
+// casilla "Recordar" están realmente en pantalla, tiene sentido leerla).
+// En el reingreso automático (intentarAutoLogin()) el formulario nunca se
+// abre, así que la casilla siempre está desmarcada por defecto — leerla
+// ahí borraría "mhcd_recordar" por error incluso si el usuario sí la
+// había tildado, apagando el reingreso automático después del primer uso.
+function continuarLoginTrasDispositivo(authId, emailFallback, esLoginManual){
     sb.from('usuarios').select('*').eq('auth_id', authId).then(function(rPerfil){
     var perfil = (rPerfil.data && rPerfil.data[0]) || { nombre: emailFallback, email: emailFallback };
    perfil.auth_id = authId;
@@ -14763,14 +14769,16 @@ function continuarLoginTrasDispositivo(authId, emailFallback){
       // próxima vez se puede reingresar solo con la sesión real de
       // Supabase (intentarAutoLogin()). Se limpia cualquier contraseña
       // vieja que haya quedado guardada de antes de esta corrección.
-      var rEl0 = document.getElementById('ml-recordar');
-      if(rEl0 && rEl0.checked){
-        localStorage.setItem('mhcd_recordar','1');
-      } else {
-        localStorage.removeItem('mhcd_recordar');
+      if(esLoginManual){
+        var rEl0 = document.getElementById('ml-recordar');
+        if(rEl0 && rEl0.checked){
+          localStorage.setItem('mhcd_recordar','1');
+        } else {
+          localStorage.removeItem('mhcd_recordar');
+        }
+        localStorage.removeItem('mhcd_user_guardado');
+        localStorage.removeItem('mhcd_pass_guardado');
       }
-      localStorage.removeItem('mhcd_user_guardado');
-      localStorage.removeItem('mhcd_pass_guardado');
 
       usuarioActual = perfil;
       document.getElementById('miLoginModal').style.display='none';
