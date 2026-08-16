@@ -14842,14 +14842,24 @@ function continuarLoginTrasDispositivo(authId, emailFallback, esLoginManual){
 // la página ya terminó de cargar.
 function _procesarReingresoAutomatico(session){
   if(localStorage.getItem('mhcd_recordar') !== '1') return;
-  if(!session || !session.user) return;
+  if(!session || !session.user){
+    // No hay sesión real de Supabase para reingresar, aunque el usuario
+    // había tildado "Recordarme". Apagamos el flag acá: si no hay nada
+    // que recordar de verdad, la casilla no debe seguir mostrándose
+    // tildada la próxima vez que se abra el login (evita el estado
+    // engañoso de "tildado pero vacío").
+    localStorage.removeItem('mhcd_recordar');
+    return;
+  }
   var authId = session.user.id;
   sb.rpc('verificar_dispositivo', { p_device_token: _deviceToken(), p_descripcion: _descripcionDispositivo() }).then(function(rDisp){
-    if(rDisp.error) return; // si falla el chequeo, se queda la pantalla de login normal
+    if(rDisp.error) return; // falla transitoria del chequeo: no tocamos el flag, puede ser de red
     var estadoDisp = (rDisp.data && rDisp.data[0]) || { permitido:false };
     if(!estadoDisp.permitido){
       // Dispositivo no aprobado o revocado desde la última vez: no
-      // reingresar solo, que inicie sesión de nuevo a mano.
+      // reingresar solo, que inicie sesión de nuevo a mano. Tampoco hay
+      // nada real para recordar en este dispositivo.
+      localStorage.removeItem('mhcd_recordar');
       sb.auth.signOut();
       return;
     }
