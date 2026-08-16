@@ -14839,20 +14839,42 @@ function continuarLoginTrasDispositivo(authId, emailFallback, esLoginManual){
 // están definidas. Se llama desde DOMContentLoaded más abajo, y también
 // directo desde ese listener temprano si el evento llega después de que
 // la página ya terminó de cargar.
-function _procesarReingresoAutomatico(session){
+// intento: reintenta hasta 3 veces (con espera entre cada una) antes de
+// asumir que no hay nada que recordar — pensado para conexiones lentas o
+// inestables, donde el primer chequeo contra Supabase puede fallar o
+// tardar de más sin que eso signifique que la sesión realmente no existe.
+function _procesarReingresoAutomatico(session, intento){
+  intento = intento || 1;
   if(localStorage.getItem('mhcd_recordar') !== '1') return;
   if(!session || !session.user){
-    // No hay sesión real de Supabase para reingresar, aunque el usuario
-    // había tildado "Recordarme". Apagamos el flag acá: si no hay nada
-    // que recordar de verdad, la casilla no debe seguir mostrándose
-    // tildada la próxima vez que se abra el login (evita el estado
-    // engañoso de "tildado pero vacío").
+    if(intento < 3){
+      setTimeout(function(){
+        sb.auth.getSession().then(function(r){
+          _procesarReingresoAutomatico(r.data && r.data.session, intento+1);
+        });
+      }, 1200);
+      return;
+    }
+    // Se agotaron los reintentos: recién ahí asumimos que no hay una
+    // sesión real para reingresar, aunque el usuario había tildado
+    // "Recordarme". Apagamos el flag acá para que la casilla no siga
+    // mostrándose tildada la próxima vez sin nada real detrás.
     localStorage.removeItem('mhcd_recordar');
     return;
   }
+  _verificarDispositivoConReintento(session, 1);
+}
+
+function _verificarDispositivoConReintento(session, intento){
   var authId = session.user.id;
   sb.rpc('verificar_dispositivo', { p_device_token: _deviceToken(), p_descripcion: _descripcionDispositivo() }).then(function(rDisp){
-    if(rDisp.error) return; // falla transitoria del chequeo: no tocamos el flag, puede ser de red
+    if(rDisp.error){
+      if(intento < 3){
+        setTimeout(function(){ _verificarDispositivoConReintento(session, intento+1); }, 1200);
+        return;
+      }
+      return; // se agotaron los reintentos: se queda en la pantalla de login normal, sin tocar el flag
+    }
     var estadoDisp = (rDisp.data && rDisp.data[0]) || { permitido:false };
     if(!estadoDisp.permitido){
       // Dispositivo no aprobado o revocado desde la última vez: no
