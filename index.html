@@ -669,7 +669,33 @@ document.addEventListener('DOMContentLoaded', function(){
   const SUPABASE_URL = "https://rgwqiguojmwmkifrxfra.supabase.co";
   const SUPABASE_KEY = "sb_publishable_vgopqXd1JPlJtUrI_NBklQ_5sgGlO9u";
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-	var _pendingPasswordRecovery = false; sb.auth.onAuthStateChange(function(event, session){ if(event === 'PASSWORD_RECOVERY'){ _pendingPasswordRecovery = true; if(window._appListoParaRecuperarPass){ mostrarFormNuevaPass(); } } });
+	var _pendingPasswordRecovery = false;
+	// Reingreso automático: escuchamos INITIAL_SESSION acá mismo, apenas se
+	// crea el cliente, en vez de esperar a DOMContentLoaded más abajo en la
+	// página. Si el listener se registra tarde, el cliente de Supabase puede
+	// haber disparado INITIAL_SESSION antes de que alguien lo escuche — en
+	// esa carga de página el aviso se pierde para siempre, y el reingreso
+	// automático nunca se intenta.
+	//
+	// OJO: por la misma razón (esto puede dispararse muy temprano, incluso
+	// antes de que el resto del <script> de más abajo termine de cargar),
+	// acá SOLO guardamos el dato de la sesión — nunca llamamos a funciones
+	// como _deviceToken() o continuarLoginTrasDispositivo() directo desde
+	// este callback, porque todavía podrían no existir. El procesamiento
+	// real pasa en _procesarReingresoAutomatico(), llamada recién en
+	// DOMContentLoaded, cuando toda la página ya cargó.
+	var _autoLoginYaProceso = false;
+	window._sesionInicial = null;
+	window._sesionInicialLlegoAntes = false;
+	sb.auth.onAuthStateChange(function(event, session){
+	  if(event === 'PASSWORD_RECOVERY'){ _pendingPasswordRecovery = true; if(window._appListoParaRecuperarPass){ mostrarFormNuevaPass(); } }
+	  if(event === 'INITIAL_SESSION' && !_autoLoginYaProceso){
+	    _autoLoginYaProceso = true;
+	    window._sesionInicial = session;
+	    window._sesionInicialLlegoAntes = true;
+	    if(window._procesarReingresoAutomatico){ window._procesarReingresoAutomatico(session); }
+	  }
+	});
 
   // ── PWA: registro del service worker + captura del prompt de instalación ──
   if('serviceWorker' in navigator){
@@ -12272,7 +12298,10 @@ try {
   setTimeout(function(){
     renderPacientes();
   }, 300);
-  try{ intentarAutoLogin(); }catch(e){}
+  // Reingreso automático ("Recordarme"): si INITIAL_SESSION ya llegó
+  // (lo normal, ver listener arriba del todo de la página, junto a
+  // "const sb = ..."), procesarlo recién ahora que toda la página cargó.
+  try{ if(window._sesionInicialLlegoAntes){ _procesarReingresoAutomatico(window._sesionInicial); } }catch(e){}
   // Auto-fill fecha actual en campos type="date" (formato YYYY-MM-DD)
   var hoyISO = new Date().toISOString().split('T')[0];
   var eaFecha = document.getElementById('hc-ea-fecha');
@@ -14674,7 +14703,8 @@ function mostrarLogin(){
     mlTab('ing');
     // Ya no se guarda ni se precarga la contraseña — "Recordarme" ahora
     // controla si la próxima vez se reingresa solo con la sesión real de
-    // Supabase (ver intentarAutoLogin()), no con usuario/contraseña guardados.
+    // Supabase (ver el onAuthStateChange de INITIAL_SESSION, arriba del
+    // todo de la página), no con usuario/contraseña guardados.
     if(localStorage.getItem('mhcd_recordar')==='1'){
       var rEl = document.getElementById('ml-recordar');
       if(rEl) rEl.checked = true;
@@ -14756,7 +14786,7 @@ function mlIngresar(){
 // mostrar algo razonable mientras carga — nunca se guarda en ningún lado.
 // esLoginManual: true cuando viene de mlIngresar() (el formulario y la
 // casilla "Recordar" están realmente en pantalla, tiene sentido leerla).
-// En el reingreso automático (intentarAutoLogin()) el formulario nunca se
+// En el reingreso automático (INITIAL_SESSION) el formulario nunca se
 // abre, así que la casilla siempre está desmarcada por defecto — leerla
 // ahí borraría "mhcd_recordar" por error incluso si el usuario sí la
 // había tildado, apagando el reingreso automático después del primer uso.
@@ -14767,7 +14797,7 @@ function continuarLoginTrasDispositivo(authId, emailFallback, esLoginManual){
 
       // "Recordarme" ya no guarda usuario/contraseña — solo indica si la
       // próxima vez se puede reingresar solo con la sesión real de
-      // Supabase (intentarAutoLogin()). Se limpia cualquier contraseña
+      // Supabase (INITIAL_SESSION, arriba del todo de la página). Se limpia cualquier contraseña
       // vieja que haya quedado guardada de antes de esta corrección.
       if(esLoginManual){
         var rEl0 = document.getElementById('ml-recordar');
@@ -14802,37 +14832,30 @@ function continuarLoginTrasDispositivo(authId, emailFallback, esLoginManual){
     });
 }
 
-// Reingreso automático usando la sesión real que Supabase ya mantiene
-// (nada de usuario/contraseña guardados). Si "Recordarme" quedó tildado
-// la última vez y todavía hay una sesión válida, entra directo a la app.
-function intentarAutoLogin(){
+// Procesa el reingreso automático ("Recordarme"). El listener que detecta
+// la sesión (INITIAL_SESSION) está registrado arriba del todo de la
+// página, apenas se crea el cliente de Supabase — pero esta función recién
+// se ejecuta acá, donde _deviceToken()/continuarLoginTrasDispositivo() ya
+// están definidas. Se llama desde DOMContentLoaded más abajo, y también
+// directo desde ese listener temprano si el evento llega después de que
+// la página ya terminó de cargar.
+function _procesarReingresoAutomatico(session){
   if(localStorage.getItem('mhcd_recordar') !== '1') return;
-  // Usamos el evento INITIAL_SESSION de onAuthStateChange en vez de llamar
-  // a sb.auth.getSession() directo: ese evento se dispara recién cuando el
-  // cliente de Supabase ya terminó de restaurar la sesión guardada desde
-  // el storage, evitando una condición de carrera donde getSession()
-  // devuelve "sin sesión" por haberse llamado antes de que termine esa
-  // restauración interna.
-  var _yaProceso = false;
-  sb.auth.onAuthStateChange(function(event, session){
-    if(event !== 'INITIAL_SESSION') return;
-    if(_yaProceso) return;
-    _yaProceso = true;
-    if(!session || !session.user) return;
-    var authId = session.user.id;
-    sb.rpc('verificar_dispositivo', { p_device_token: _deviceToken(), p_descripcion: _descripcionDispositivo() }).then(function(rDisp){
-      if(rDisp.error) return; // si falla el chequeo, se queda la pantalla de login normal
-      var estadoDisp = (rDisp.data && rDisp.data[0]) || { permitido:false };
-      if(!estadoDisp.permitido){
-        // Dispositivo no aprobado o revocado desde la última vez: no
-        // reingresar solo, que inicie sesión de nuevo a mano.
-        sb.auth.signOut();
-        return;
-      }
-      continuarLoginTrasDispositivo(authId, session.user.email);
-    });
+  if(!session || !session.user) return;
+  var authId = session.user.id;
+  sb.rpc('verificar_dispositivo', { p_device_token: _deviceToken(), p_descripcion: _descripcionDispositivo() }).then(function(rDisp){
+    if(rDisp.error) return; // si falla el chequeo, se queda la pantalla de login normal
+    var estadoDisp = (rDisp.data && rDisp.data[0]) || { permitido:false };
+    if(!estadoDisp.permitido){
+      // Dispositivo no aprobado o revocado desde la última vez: no
+      // reingresar solo, que inicie sesión de nuevo a mano.
+      sb.auth.signOut();
+      return;
+    }
+    continuarLoginTrasDispositivo(authId, session.user.email);
   });
 }
+window._procesarReingresoAutomatico = _procesarReingresoAutomatico;
 
 function guardarLegajoRenapdis(){
   var inp = document.getElementById('legajo-renapdis-input');
