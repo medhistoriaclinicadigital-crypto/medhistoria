@@ -14874,7 +14874,13 @@ function _verificarDispositivoConReintento(session, intento){
         setTimeout(function(){ _verificarDispositivoConReintento(session, intento+1); }, 1200);
         return;
       }
-      return; // se agotaron los reintentos: se queda en la pantalla de login normal, sin tocar el flag
+      // Se agotaron los reintentos y el chequeo de dispositivo sigue sin
+      // responder: no podemos dejar la casilla tildada como si el
+      // reingreso automático fuera a completarse, porque en los hechos
+      // no se completó. Se puede volver a tildar "Recordar" la próxima
+      // vez que inicie sesión a mano.
+      localStorage.removeItem('mhcd_recordar');
+      return;
     }
     var estadoDisp = (rDisp.data && rDisp.data[0]) || { permitido:false };
     if(!estadoDisp.permitido){
