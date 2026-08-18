@@ -771,7 +771,22 @@ function mhcdRechazarCookies(){
 <!-- ══════════════════════════════════════
      LANDING PAGE
 ══════════════════════════════════════ -->
-<div id="landing"><div id="miLoginModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.88);z-index:999999;backdrop-filter:blur(8px);overflow-y:auto;-webkit-overflow-scrolling:touch;">
+<div id="landing"><div id="verificandoSesionOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.92);z-index:999998;align-items:center;justify-content:center;color:#fff;font-family:inherit;font-size:1rem;text-align:center;padding:20px;box-sizing:border-box;">Verificando sesión…</div>
+<script>
+  // Si hay algo para reingresar solo, tapamos la landing (botón "Ingresar"
+  // incluido) hasta que se sepa si el reingreso automático funcionó o no.
+  // Sin esto, un clic en esa zona justo cuando la sesión se restaura sola
+  // puede terminar cayendo sobre el botón "Salir" de la app ya cargada
+  // debajo, cerrando la sesión que recién se había restaurado.
+  if(localStorage.getItem('mhcd_recordar')==='1'){
+    var _ov = document.getElementById('verificandoSesionOverlay');
+    if(_ov) _ov.style.display = 'flex';
+    // Red de seguridad: si por lo que sea ningún camino del reingreso
+    // automático llega a ocultar esto, no se queda bloqueada para siempre.
+    setTimeout(function(){ if(_ov) _ov.style.display = 'none'; }, 10000);
+  }
+</script>
+<div id="miLoginModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.88);z-index:999999;backdrop-filter:blur(8px);overflow-y:auto;-webkit-overflow-scrolling:touch;">
   <div style="position:relative;margin:20px auto;background:white;padding:36px 32px 28px;border-radius:18px;width:400px;max-width:92vw;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
     <button onclick="document.getElementById('miLoginModal').style.display='none'" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;color:#aaa;cursor:pointer;line-height:1;">✕</button>
     <div style="margin:0 auto 12px;display:flex;justify-content:center;">
@@ -14844,6 +14859,17 @@ function continuarLoginTrasDispositivo(authId, emailFallback, esLoginManual){
 // asumir que no hay nada que recordar — pensado para conexiones lentas o
 // inestables, donde el primer chequeo contra Supabase puede fallar o
 // tardar de más sin que eso signifique que la sesión realmente no existe.
+// Oculta el bloqueo "Verificando sesión…" de la landing (ver el <script>
+// justo después de <div id="landing">). Se llama en cada punto donde el
+// reingreso automático se da por vencido y hay que dejar la landing normal,
+// clickeable, a la vista. En el camino de éxito no hace falta llamarla:
+// continuarLoginTrasDispositivo() esconde toda la landing (el overlay es
+// hijo suyo) al pasar a mostrar la app.
+function _ocultarVerificandoSesion(){
+  var ov = document.getElementById('verificandoSesionOverlay');
+  if(ov) ov.style.display = 'none';
+}
+
 function _procesarReingresoAutomatico(session, intento){
   intento = intento || 1;
   if(localStorage.getItem('mhcd_recordar') !== '1') return;
@@ -14861,6 +14887,7 @@ function _procesarReingresoAutomatico(session, intento){
     // "Recordarme". Apagamos el flag acá para que la casilla no siga
     // mostrándose tildada la próxima vez sin nada real detrás.
     localStorage.removeItem('mhcd_recordar');
+    _ocultarVerificandoSesion();
     return;
   }
   _verificarDispositivoConReintento(session, 1);
@@ -14880,6 +14907,7 @@ function _verificarDispositivoConReintento(session, intento){
       // no se completó. Se puede volver a tildar "Recordar" la próxima
       // vez que inicie sesión a mano.
       localStorage.removeItem('mhcd_recordar');
+      _ocultarVerificandoSesion();
       return;
     }
     var estadoDisp = (rDisp.data && rDisp.data[0]) || { permitido:false };
@@ -14889,6 +14917,7 @@ function _verificarDispositivoConReintento(session, intento){
       // nada real para recordar en este dispositivo.
       localStorage.removeItem('mhcd_recordar');
       sb.auth.signOut();
+      _ocultarVerificandoSesion();
       return;
     }
     continuarLoginTrasDispositivo(authId, session.user.email);
