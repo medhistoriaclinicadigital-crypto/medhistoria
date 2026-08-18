@@ -772,6 +772,13 @@ function mhcdRechazarCookies(){
      LANDING PAGE
 ══════════════════════════════════════ -->
 <div id="landing"><div id="verificandoSesionOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.92);z-index:999998;align-items:center;justify-content:center;color:#fff;font-family:inherit;font-size:1rem;text-align:center;padding:20px;box-sizing:border-box;">Verificando sesión…</div>
+<div id="continuarComoOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.92);z-index:999998;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">
+  <div style="background:white;padding:32px 28px;border-radius:18px;width:380px;max-width:92vw;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+    <p id="continuarComoTexto" style="font-size:1.05rem;color:#145a32;font-weight:700;margin:0 0 20px;">¿Continuar?</p>
+    <button onclick="_confirmarContinuarSi()" style="width:100%;padding:13px;background:linear-gradient(135deg,#22a050,#145a32);color:white;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">Ingresar</button>
+    <p style="margin:14px 0 0;font-size:.83rem;color:#666;cursor:pointer;" onclick="_confirmarContinuarNo()">No soy yo — usar otra cuenta</p>
+  </div>
+</div>
 <script>
   // Si hay algo para reingresar solo, tapamos la landing (botón "Ingresar"
   // incluido) hasta que se sepa si el reingreso automático funcionó o no.
@@ -14920,10 +14927,45 @@ function _verificarDispositivoConReintento(session, intento){
       _ocultarVerificandoSesion();
       return;
     }
-    continuarLoginTrasDispositivo(authId, session.user.email);
+    _mostrarConfirmarContinuar(authId, session.user.email);
   });
 }
 window._procesarReingresoAutomatico = _procesarReingresoAutomatico;
+
+// En vez de entrar directo a la app sin avisar, mostramos un paso de
+// confirmación ("¿Continuar como...?") — pedido explícito de la usuaria:
+// no quiere reingreso 100% silencioso, quiere ver algo y apretar un botón
+// ella misma antes de entrar, aunque la sesión ya esté restaurada y lista.
+function _mostrarConfirmarContinuar(authId, email){
+  _ocultarVerificandoSesion();
+  var ov = document.getElementById('continuarComoOverlay');
+  var txt = document.getElementById('continuarComoTexto');
+  if(txt) txt.textContent = '¿Continuar como ' + email + '?';
+  if(ov){
+    ov.style.display = 'flex';
+    ov.setAttribute('data-auth-id', authId);
+    ov.setAttribute('data-email', email);
+  }
+  sb.from('usuarios').select('nombre,sexo').eq('auth_id', authId).then(function(r){
+    var perfil = (r.data && r.data[0]) || null;
+    if(perfil && txt) txt.textContent = '¿Continuar como ' + nombreConTitulo(perfil) + '?';
+  });
+}
+
+function _confirmarContinuarSi(){
+  var ov = document.getElementById('continuarComoOverlay');
+  var authId = ov ? ov.getAttribute('data-auth-id') : null;
+  var email = ov ? ov.getAttribute('data-email') : null;
+  if(ov) ov.style.display = 'none';
+  if(authId) continuarLoginTrasDispositivo(authId, email);
+}
+
+function _confirmarContinuarNo(){
+  var ov = document.getElementById('continuarComoOverlay');
+  if(ov) ov.style.display = 'none';
+  localStorage.removeItem('mhcd_recordar');
+  sb.auth.signOut();
+}
 
 function guardarLegajoRenapdis(){
   var inp = document.getElementById('legajo-renapdis-input');
