@@ -4439,8 +4439,9 @@ function mhcdRechazarCookies(){
     <div id="pf-rx" class="mform" style="display:none;gap:10px;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Paciente<input class="mi" id="rx-paciente" type="text" placeholder="Apellido y nombre"></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">DNI<input class="mi" id="rx-dni" type="text" placeholder="30.000.000"></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Sexo<select class="mi" id="rx-sexo"><option value="">-</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
+        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">DNI<input class="mi" id="rx-dni" type="text" placeholder="30.000.000" onchange="_autocompletarCuilRx()"></div>
+        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">CUIL<input class="mi" id="rx-cuil" type="text" placeholder="20-30000000-1"></div>
+        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Sexo<select class="mi" id="rx-sexo" onchange="_autocompletarCuilRx()"><option value="">-</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
         <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Fecha de nac.<input class="mi" id="rx-fnac" type="date"></div>
         <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Diagnóstico CIE-10<input class="mi" id="rx-diag" type="text" placeholder="Hipertensión — I10"></div>
         <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Medicación<textarea class="mi" id="rx-med" style="min-height:80px;" placeholder="Enalapril 10mg — 1 comp. cada 12 hs × 30 días"></textarea></div>
@@ -4542,6 +4543,17 @@ function _autocompletarCuilReceta(){
   if(!cuilEl || cuilEl.value.trim()) return; // nunca pisa un CUIL ya cargado a mano
   var dni = (document.getElementById('rx2-dni')||{}).value||'';
   var sexo = (document.getElementById('rx2-sexo')||{}).value||'';
+  var calculado = calcularCUIL(dni, sexo);
+  if(calculado) cuilEl.value = calculado;
+}
+
+// Mismo autocompletado que _autocompletarCuilReceta(), para el formulario
+// rápido de receta (modal "Imprimir documento" → pestaña Receta, campos rx-*).
+function _autocompletarCuilRx(){
+  var cuilEl = document.getElementById('rx-cuil');
+  if(!cuilEl || cuilEl.value.trim()) return; // nunca pisa un CUIL ya cargado a mano
+  var dni = (document.getElementById('rx-dni')||{}).value||'';
+  var sexo = (document.getElementById('rx-sexo')||{}).value||'';
   var calculado = calcularCUIL(dni, sexo);
   if(calculado) cuilEl.value = calculado;
 }
@@ -13209,7 +13221,7 @@ function getDatosDocumento(tipo){
     datos.titulo='RECETA MÉDICA DIGITAL'; datos.icono='💊';
     datos.pac=((document.getElementById('rx2-paciente')||{}).value||(document.getElementById('rx-paciente')||{}).value||'').toUpperCase();
     datos.dni=(document.getElementById('rx2-dni')||{}).value||(document.getElementById('rx-dni')||{}).value||'';
-    datos.cuil=(document.getElementById('rx2-cuil')||{}).value||'';
+    datos.cuil=(document.getElementById('rx2-cuil')||{}).value||(document.getElementById('rx-cuil')||{}).value||'';
     datos.fnac=(document.getElementById('rx2-fnac')||{}).value||(document.getElementById('rx-fnac')||{}).value||'';
     datos.sexo=(document.getElementById('rx2-sexo')||{}).value||(document.getElementById('rx-sexo')||{}).value||'';
     datos.os=(document.getElementById('rx2-os')||{}).value||(document.getElementById('rx-os')||{}).value||'';
@@ -15557,7 +15569,7 @@ function completarConIA(campoId, tipoCampo){
 function finalizarAtencion(){
   if(!confirm('¿Finalizar la atención? Se limpiarán los formularios de Recetas, Derivaciones y Estudios.')) return;
   // Limpiar Recetas
-  ['rx-paciente','rx-dni','rx-fnac','rx-os','rx-afiliado','rx-plan','rx-diag','rx-med','rx-ind','rx2-paciente','rx2-dni','rx2-cuil','rx2-fnac','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind'].forEach(function(id){
+  ['rx-paciente','rx-dni','rx-cuil','rx-fnac','rx-os','rx-afiliado','rx-plan','rx-diag','rx-med','rx-ind','rx2-paciente','rx2-dni','rx2-cuil','rx2-fnac','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value='';
   });
   _recetaMedicamentosData = [];
