@@ -12345,7 +12345,24 @@ try {
   // médico entra apretando "Ingresar" él mismo. Nada de sesión restaurada
   // en segundo plano.
   try{
-    if(localStorage.getItem('mhcd_recordar')==='1'){ mostrarLogin(); }
+    if(localStorage.getItem('mhcd_recordar')==='1'){
+      mostrarLogin();
+      // No hay forma de preguntarle al navegador si tiene algo guardado
+      // (por privacidad, ninguna página puede consultar eso directo) —
+      // pero si el autocompletado no llegó a completar los campos en un
+      // margen razonable, es porque en los hechos no hay nada guardado.
+      // Destildamos solos para que la casilla no mienta.
+      setTimeout(function(){
+        var uEl = document.getElementById('ml-user');
+        var pEl = document.getElementById('ml-pass');
+        var hayAlgoGuardado = uEl && pEl && uEl.value.trim() && pEl.value.trim();
+        if(!hayAlgoGuardado){
+          localStorage.removeItem('mhcd_recordar');
+          var rEl = document.getElementById('ml-recordar');
+          if(rEl) rEl.checked = false;
+        }
+      }, 600);
+    }
   }catch(e){}
   // Auto-fill fecha actual en campos type="date" (formato YYYY-MM-DD)
   var hoyISO = new Date().toISOString().split('T')[0];
