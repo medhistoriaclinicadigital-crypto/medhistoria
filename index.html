@@ -1102,7 +1102,6 @@ function mhcdRechazarCookies(){
           <li>Todo lo de Premium</li>
           <li>Pacientes ilimitados</li>
           <li>Imágenes y archivos ilimitados</li>
-          <li>Capacitación incluida para el equipo<br><span style="font-size:.68rem;opacity:.75;">Sesión de capacitación en vivo para tu equipo médico y administrativo al contratar el plan.</span></li>
         </ul>
         <button class="pbtn" onclick="abrirPago('Ilimitado','199')">Elegir Ilimitado</button>
       </div>
@@ -2408,6 +2407,7 @@ function mhcdRechazarCookies(){
           <div class="form-g2">
             <div class="fl"><label>Paciente<input type="text" id="rx2-paciente" placeholder="Apellido y nombre"></div>
             <div class="fl"><label>DNI<input type="text" id="rx2-dni" placeholder="30.000.000"></div>
+            <div class="fl"><label>CUIL<input type="text" id="rx2-cuil" placeholder="20-30000000-1"></div>
             <div class="fl"><label>Fecha de Nacimiento<input type="date" id="rx2-fnac"></div>
             <div class="fl"><label>Sexo<select id="rx2-sexo"><option value="">Seleccionar...</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
             <div class="fl"><label>Obra Social / Prepaga<input type="text" id="rx2-os" placeholder="OSDE / IOMA / Swiss Medical..."></div>
@@ -2444,8 +2444,11 @@ function mhcdRechazarCookies(){
               <button class="ai-assist" style="margin-top:6px;">🤖 IA: completar medicación según historial</button><div style="font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-top:6px;">⚠️ Este campo puede enviarse a un servicio de IA externo. No escribas el nombre del paciente acá. Vos sos responsable de que los datos que cargues sean correctos y de revisar la respuesta antes de usarla clínicamente. MedHistoriaClinicaOnline no asume responsabilidad legal por las decisiones clínicas que el profesional adopte a partir de esta sugerencia — la decisión y la responsabilidad son siempre del médico tratante.</div>
             </div>
             <div class="fl"><label>Validez<select id="rx2-validez"><option>30 días</option><option>60 días</option><option>90 días</option></select></div>
+            <div class="fl"><label>Fecha de inicio de vigencia (opcional, si es distinta a hoy)<input type="date" id="rx2-fecha-inicio-vigencia"></label></div>
             <div class="fl"><label>Médico prescriptor<input type="text" id="rx2-medico" placeholder="Dr. Apellido · Especialidad · Matrícula 00000"></div>
             <div class="fl"><label>Domicilio del consultorio (acto médico)<input type="text" id="rx2-domicilio" placeholder="Calle, número, ciudad"></label></div>
+            <div class="fl"><label>Jurisdicción / entidad que emitió la matrícula<input type="text" id="rx2-jurisdiccion" placeholder="Ej: Colegio de Médicos de la Pcia. de Buenos Aires"></label></div>
+            <div class="fl"><label>Licencia Sanitaria Federal (código REFEPS)<input type="text" id="rx2-refeps" placeholder="Código REFEPS"></label></div>
             <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 14px;grid-column:1/-1;margin-top:4px;">
               <div style="font-size:.72rem;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:8px;">📤 Envío automático — completá para enviar sin pasos adicionales</div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -4485,6 +4488,7 @@ function mhcdRechazarCookies(){
         <div><label style="font-size:.7rem;font-weight:700;color:#145a32;text-transform:uppercase;display:block;margin-bottom:4px;">Apellido<input class="mi" id="pac-apellido" type="text" placeholder="Apellido"></div>
         <div><label style="font-size:.7rem;font-weight:700;color:#145a32;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre<input class="mi" id="pac-nombre" type="text" placeholder="Nombre"></div>
         <div><label style="font-size:.7rem;font-weight:700;color:#145a32;text-transform:uppercase;display:block;margin-bottom:4px;">DNI<input class="mi" id="pac-dni" type="text" autocomplete="off" placeholder="30.000.000"></div>
+        <div><label style="font-size:.7rem;font-weight:700;color:#145a32;text-transform:uppercase;display:block;margin-bottom:4px;">CUIL<input class="mi" id="pac-cuil" type="text" autocomplete="off" placeholder="20-30000000-1"></div>
         <div><label style="font-size:.7rem;font-weight:700;color:#145a32;text-transform:uppercase;display:block;margin-bottom:4px;">Fecha de nac.<input class="mi" id="pac-fnac" type="date"></div>
         <div><label style="font-size:.7rem;font-weight:700;color:#145a32;text-transform:uppercase;display:block;margin-bottom:4px;">Sexo<select class="mi" id="pac-sexo"><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
         <div><label style="font-size:.7rem;font-weight:700;color:#145a32;text-transform:uppercase;display:block;margin-bottom:4px;">Teléfono<input class="mi" id="pac-tel" type="text" autocomplete="off" placeholder="11 1234-5678"></div>
@@ -4505,6 +4509,10 @@ function mhcdRechazarCookies(){
 
 <script>
 var _editandoPacienteIdx = -1;
+// Medicamentos de la receta actual, guardados de forma estructurada
+// (además del texto libre en el textarea rx2-med) para poder darle al
+// principio activo más relevancia visual que la marca comercial en el PDF.
+var _recetaMedicamentosData = [];
 
 function abrirNuevoPaciente(){
   _editandoPacienteIdx = -1;
@@ -4565,6 +4573,7 @@ function abrirEditarPaciente(idx){
   sa('pac-apellido', apellido);
   sa('pac-nombre', nombreSolo);
   sa('pac-dni', p.dni);
+  sa('pac-cuil', p.cuil);
   sa('pac-fnac', p.fnac);
   sa('pac-tel', p.tel);
   sa('pac-email', p.email);
@@ -4622,6 +4631,7 @@ function guardarPaciente(){
     apellido: apellido,
     nombre: apellido + ', ' + nombre,
     dni: ga('pac-dni') || pExistente.dni || '',
+    cuil: ga('pac-cuil') || pExistente.cuil || '',
     fnac: ga('pac-fnac') || pExistente.fnac || '',
     sexo: ga('pac-sexo') || pExistente.sexo || '',
     tel: ga('pac-tel') || pExistente.tel || '',
@@ -4688,6 +4698,7 @@ function guardarPaciente(){
           nombre: nombre,
           apellido: apellido,
           dni: pac.dni||'',
+          cuil: pac.cuil||'',
           fecha_nacimiento: pac.fnac||null,
           telefono: pac.tel||'',
           email: pac.email||'',
@@ -6949,6 +6960,13 @@ function agregarMedicamentoReceta(){
   if(textarea){
     textarea.value = (textarea.value ? textarea.value+'\n' : '') + linea;
   }
+  // Guardar también la versión estructurada (además del texto libre de
+  // arriba), para que el PDF pueda resaltar el principio activo por
+  // separado de la marca comercial.
+  _recetaMedicamentosData.push({
+    ifa: ifa.trim(), comercial: comercial.trim(), forma: forma.trim(),
+    presentacion: presentacion.trim(), cantidad: cantidad.trim(), posologia: posologia.trim()
+  });
   // Limpiar el mini-formulario para el próximo medicamento
   ['rx2-med-ifa','rx2-med-comercial','rx2-med-forma','rx2-med-presentacion','rx2-med-cantidad','rx2-med-posologia'].forEach(function(id){
     var el = document.getElementById(id);
@@ -12411,25 +12429,271 @@ function checkAddonFirmaDocumentos(){
   return false;
 }
 
+// Receta electrónica — modelo preparado para la Inscripción al Registro de
+// Recetarios Electrónicos (ReNaPDiS). No inventa CUIR ni código QR/de
+// identificación reales: deja los espacios reservados, listos para
+// completarse el día que la plataforma tenga esos identificadores
+// asignados por el Ministerio de Salud.
+function _generarPDFRecetaReNaPDiS(d, callback){
+  // ── Validación de campos obligatorios — no se genera nada (ni descarga,
+  // ni impresión, ni envío) si falta algo exigido ──
+  var faltantes = [];
+  if(!d.nombreProfesional || !d.nombreProfesional.trim()) faltantes.push('nombre del profesional (revisá tu perfil)');
+  if(!d.profesion) faltantes.push('profesión (revisá tu perfil)');
+  if(!d.matriculaMN && !d.matriculaMP) faltantes.push('matrícula (M.N. o M.P., revisá tu perfil)');
+  if(!d.refeps || !d.refeps.trim()) faltantes.push('Licencia Sanitaria Federal (código REFEPS)');
+  if(!d.jurisdiccion || !d.jurisdiccion.trim()) faltantes.push('jurisdicción/entidad que emitió la matrícula');
+  if(!d.domicilio || !d.domicilio.trim()) faltantes.push('domicilio del consultorio');
+  if(!d.pac || !d.pac.trim()) faltantes.push('nombre del paciente');
+  if((!d.medicamentos || !d.medicamentos.length) && (!d.contenido || !d.contenido.trim())) faltantes.push('medicación prescripta');
+  if(faltantes.length){
+    alert('Faltan estos datos obligatorios para emitir la receta:\n\n— '+faltantes.join('\n— ')+'\n\nEl domicilio, la jurisdicción de la matrícula y el código REFEPS se completan una vez y quedan guardados en tu perfil para las próximas recetas.');
+    return;
+  }
+
+  var jsPDF = window.jspdf ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if(!jsPDF){ alert('Librería PDF no cargada. Verificá tu conexión a internet.'); return; }
+
+  var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  var W = 210, margin = 14, x = margin;
+  var _paisMedico = (usuarioActual && usuarioActual.pais) ? usuarioActual.pais : (typeof paisActual !== 'undefined' ? paisActual : 'ar');
+  var _leyFirmaPais = (firmaInfo[_paisMedico] && firmaInfo[_paisMedico].ley) ? firmaInfo[_paisMedico].ley : firmaInfo.ar.ley;
+  var _paisNombreMedico = (firmaInfo[_paisMedico] && firmaInfo[_paisMedico].pais) ? firmaInfo[_paisMedico].pais : 'Argentina';
+
+  // ── HEADER ──
+  doc.setFillColor(255,255,255); doc.rect(0,0,W,52,'F');
+  doc.setFillColor(20,90,50); doc.rect(0,0,W,5,'F');
+  var logoW=7, gap=2;
+  doc.setFontSize(16); doc.setFont('times','bold');
+  var txtW = doc.getTextWidth('MedHistoriaClinicaOnline');
+  var startX2 = (W-(logoW+gap+txtW))/2;
+  if(_logoPNG){ try{ doc.addImage(_logoPNG,'PNG',startX2,8,logoW,8.5); }catch(e){} }
+  doc.setTextColor(20,90,50);
+  doc.text('MedHistoriaClinicaOnline', startX2+logoW+gap, 15, {align:'left'});
+  doc.setDrawColor(20,90,50); doc.setLineWidth(0.5);
+  doc.line(margin,18,W-margin,18);
+  doc.setFontSize(13); doc.setFont('times','bold');
+  doc.text('RECETA MÉDICA ELECTRÓNICA', W/2, 27, {align:'center'});
+  doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(90,90,90);
+  doc.text('Modelo preparado para la Inscripción al Registro Nacional de Prescripción Digital y Recetas Electrónicas (ReNaPDiS)', W/2, 32, {align:'center', maxWidth:W-margin*2-10});
+  doc.setDrawColor(20,90,50); doc.setLineWidth(0.8);
+  doc.line(margin,37,W-margin,37);
+
+  var y = 42;
+  var colIzqW = 122, colDerX = margin+colIzqW+6, colDerW = W-margin-colDerX;
+
+  // ── DATOS DEL PROFESIONAL (columna izquierda) ──
+  var profLineas = [];
+  profLineas.push(['NOMBRE Y APELLIDO', (usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ')+d.nombreProfesional]);
+  var profEsp = d.profesion + (d.especialidad ? ' — '+d.especialidad : '');
+  profLineas.push(['PROFESIÓN / ESPECIALIDAD', profEsp]);
+  var matTxt = [d.matriculaMN?('M.N. '+d.matriculaMN):'', d.matriculaMP?('M.P. '+d.matriculaMP):''].filter(Boolean).join(' · ');
+  profLineas.push(['MATRÍCULA', matTxt||'(no indicada)']);
+  profLineas.push(['LICENCIA SANITARIA FEDERAL (REFEPS)', d.refeps||'(no indicada)']);
+  profLineas.push(['JURISDICCIÓN / ENTIDAD EMISORA', d.jurisdiccion||'(no indicada)']);
+  profLineas.push(['DOMICILIO PROFESIONAL (LUGAR DEL ACTO MÉDICO)', d.domicilio||'(no indicado)']);
+  var contactoOpc = [d.telefonoProfesional?('Tel: '+d.telefonoProfesional):'', d.emailProfesional?('Email: '+d.emailProfesional):''].filter(Boolean).join('   ·   ');
+  if(contactoOpc) profLineas.push(['CONTACTO (OPCIONAL)', contactoOpc]);
+
+  var yProf = y;
+  doc.setDrawColor(180,210,190); doc.setLineWidth(0.3);
+  var profBoxH = profLineas.length*8.6+4;
+  doc.rect(margin, yProf, colIzqW, profBoxH, 'S');
+  var yp = yProf+5.5;
+  profLineas.forEach(function(par){
+    doc.setTextColor(20,90,50); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
+    doc.text(par[0], margin+3, yp);
+    doc.setTextColor(25,25,25); doc.setFontSize(8.3); doc.setFont('helvetica','normal');
+    var vLines = doc.splitTextToSize(par[1], colIzqW-6);
+    doc.text(vLines, margin+3, yp+4);
+    yp += 8.6 + (vLines.length>1 ? (vLines.length-1)*4 : 0);
+  });
+  profBoxH = (yp - yProf) + 2;
+  doc.rect(margin, yProf, colIzqW, profBoxH, 'S'); // redibuja el borde si creció por texto largo
+
+  // ── CUIR + QR reservados (columna derecha) ──
+  var cuirH=20;
+  doc.setDrawColor(160,160,160); doc.setLineWidth(0.3); doc.setLineDashPattern([1.3,1],0);
+  doc.rect(colDerX, y, colDerW, cuirH, 'S');
+  doc.setLineDashPattern([],0);
+  doc.setTextColor(130,130,130); doc.setFontSize(7); doc.setFont('helvetica','bold');
+  doc.text('CUIR', colDerX+colDerW/2, y+7, {align:'center'});
+  doc.setFontSize(5.8); doc.setFont('helvetica','normal');
+  doc.text('A ASIGNAR POR ReNaPDiS', colDerX+colDerW/2, y+12.5, {align:'center', maxWidth:colDerW-4});
+
+  var qrY = y+cuirH+4, qrH=20;
+  doc.setDrawColor(160,160,160); doc.setLineWidth(0.3); doc.setLineDashPattern([1.3,1],0);
+  doc.rect(colDerX, qrY, colDerW, qrH, 'S');
+  doc.setLineDashPattern([],0);
+  doc.setTextColor(130,130,130); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
+  doc.text('QR / CÓDIGO DE', colDerX+colDerW/2, qrY+7, {align:'center'});
+  doc.text('IDENTIFICACIÓN', colDerX+colDerW/2, qrY+10.5, {align:'center'});
+  doc.setFontSize(5.5); doc.setFont('helvetica','normal');
+  doc.text('ESPACIO RESERVADO', colDerX+colDerW/2, qrY+15, {align:'center'});
+
+  y = Math.max(profBoxH+yProf, qrY+qrH) + 6;
+
+  // ── DATOS DEL PACIENTE ──
+  var pacBoxY = y;
+  doc.setDrawColor(180,210,190); doc.setLineWidth(0.3);
+  doc.setTextColor(20,90,50); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
+  doc.text('PACIENTE', margin+3, y+6);
+  doc.setTextColor(10,10,10); doc.setFontSize(12); doc.setFont('helvetica','bold');
+  doc.text(d.pac||'(no indicado)', margin+3, y+11.5);
+  y += 16;
+  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,60);
+  var lineaPac1 = [];
+  if(d.dni) lineaPac1.push('DNI: '+d.dni);
+  if(d.cuil) lineaPac1.push('CUIL: '+d.cuil);
+  if(d.fnac){ var fn=d.fnac.split('-'); if(fn.length===3) lineaPac1.push('F. Nac.: '+fn[2]+'/'+fn[1]+'/'+fn[0]); }
+  if(d.sexo) lineaPac1.push('Sexo: '+d.sexo);
+  if(lineaPac1.length){ doc.text(lineaPac1.join('   ·   '), margin+3, y); y += 5; }
+  var lineaPac2 = [];
+  if(d.os) lineaPac2.push('Obra Social / Cobertura: '+d.os);
+  if(d.plan) lineaPac2.push('Plan: '+d.plan);
+  if(d.afiliado) lineaPac2.push('N° Afiliado: '+d.afiliado);
+  if(lineaPac2.length){ doc.text(lineaPac2.join('   ·   '), margin+3, y); y += 5; }
+  var pacBoxH = (y - pacBoxY) + 3;
+  doc.rect(margin, pacBoxY, W-margin*2, pacBoxH, 'S');
+  y = pacBoxY + pacBoxH + 6;
+
+  // ── Fechas ──
+  doc.setTextColor(20,90,50); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
+  doc.text('FECHA DE CONFECCIÓN', x, y);
+  doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text(d.fecha.toUpperCase(), x, y+4.2);
+  if(d.fechaInicioVigencia){
+    var fiv = d.fechaInicioVigencia.split('-');
+    doc.setTextColor(20,90,50); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
+    doc.text('VÁLIDA DESDE', x+90, y);
+    doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    if(fiv.length===3) doc.text(fiv[2]+'/'+fiv[1]+'/'+fiv[0], x+90, y+4.2);
+  }
+  y += 11;
+
+  // ── Diagnóstico ──
+  if(d.diag){
+    doc.setTextColor(20,90,50); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
+    doc.text('DIAGNÓSTICO', x, y);
+    doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    y += 4.2; doc.text(d.diag, x, y);
+    y += 6;
+  }
+
+  // ── MEDICAMENTOS: principio activo con más peso visual que la marca ──
+  doc.setTextColor(20,90,50); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
+  doc.text('Rp./ MEDICACIÓN PRESCRIPTA', x, y);
+  y += 4;
+  var medBoxY = y, medW = W-margin*2-6;
+  var medItems = (d.medicamentos && d.medicamentos.length) ? d.medicamentos : null;
+
+  // Precalcula la altura necesaria antes de dibujar el recuadro
+  var alturaEstimadaLineas = [];
+  if(medItems){
+    medItems.forEach(function(m){
+      var det = [m.forma,m.presentacion,m.cantidad?('Cant.: '+m.cantidad):'',m.posologia].filter(Boolean).join(' — ');
+      var dl = det ? doc.splitTextToSize(det, medW-6) : [];
+      alturaEstimadaLineas.push(dl.length);
+    });
+  }
+  var medBoxH;
+  if(medItems){
+    medBoxH = 4;
+    alturaEstimadaLineas.forEach(function(nLineas){ medBoxH += 5.5 + nLineas*4.2 + 3; });
+    medBoxH = Math.max(medBoxH, 24);
+  } else {
+    var contenidoLines = doc.splitTextToSize(d.contenido||'', medW-6);
+    medBoxH = Math.max(24, contenidoLines.length*5+8);
+  }
+
+  doc.setFillColor(240,253,244); doc.setDrawColor(134,239,172); doc.setLineWidth(0.4);
+  doc.rect(x, medBoxY, medW, medBoxH, 'FD');
+
+  var yMed = medBoxY+6;
+  if(medItems){
+    medItems.forEach(function(m, i){
+      doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(12,60,30);
+      var ifaTxt = (i+1)+'. '+(m.ifa||'(sin nombre genérico)');
+      doc.text(ifaTxt, x+3, yMed);
+      if(m.comercial){
+        var ifaW = doc.getTextWidth(ifaTxt);
+        doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(95,120,95);
+        doc.text('  ('+m.comercial+')', x+3+ifaW, yMed);
+      }
+      yMed += 5;
+      var det = [m.forma,m.presentacion,m.cantidad?('Cant.: '+m.cantidad):'',m.posologia].filter(Boolean).join(' — ');
+      if(det){
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(50,70,50);
+        var dl = doc.splitTextToSize(det, medW-6);
+        doc.text(dl, x+3, yMed);
+        yMed += dl.length*4.2;
+      }
+      yMed += 3;
+    });
+  } else {
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(15,60,30);
+    doc.text(doc.splitTextToSize(d.contenido||'', medW-6), x+3, yMed);
+  }
+
+  y = medBoxY + medBoxH + 6;
+
+  // ── Buscador Nacional de Medicamentos — recurso oficial (argentina.gob.ar)
+  // para que el paciente pueda comparar precios y elegir la opción más
+  // conveniente entre las presentaciones disponibles del medicamento. ──
+  doc.setTextColor(70,70,70); doc.setFontSize(7); doc.setFont('helvetica','normal');
+  doc.text('Para comparar precios y elegir la opción más conveniente, consultá el ', x, y);
+  var _buscadorPre = doc.getTextWidth('Para comparar precios y elegir la opción más conveniente, consultá el ');
+  doc.setTextColor(20,90,160); doc.setFont('helvetica','bold');
+  doc.textWithLink('Buscador Nacional de Medicamentos', x+_buscadorPre, y, { url: 'https://www.argentina.gob.ar/buscador-de-precios-de-medicamentos' });
+  y += 6;
+
+  // ── Indicaciones al paciente ──
+  if(d.ind){
+    doc.setTextColor(20,90,50); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
+    doc.text('INDICACIONES AL PACIENTE', x, y);
+    y += 4;
+    var indLines = doc.splitTextToSize(d.ind, W-margin*2-8);
+    var indH = Math.max(14, indLines.length*4.6+6);
+    doc.setFillColor(255,251,235); doc.setDrawColor(253,230,138);
+    doc.rect(x, y, W-margin*2, indH, 'FD');
+    doc.setTextColor(80,50,10); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+    doc.text(indLines, x+3, y+5);
+    y += indH+6;
+  }
+
+  // ── FIRMA — anclada cerca del pie de página, salvo que el contenido la empuje más abajo ──
+  var footerY = Math.max(268, y+30);
+  doc.setDrawColor(20,90,50); doc.setLineWidth(0.4);
+  doc.line(x, footerY, W-margin, footerY);
+  var _firmaImg = usuarioActual ? usuarioActual.firma_imagen : null;
+  if(_firmaImg){ try{ doc.addImage(_firmaImg,'PNG',x,footerY-22,42,17); }catch(e){} }
+  doc.setTextColor(20,20,20); doc.setFontSize(9.5); doc.setFont('helvetica','bold');
+  doc.text((usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ')+d.nombreProfesional, x, footerY-4);
+  doc.setTextColor(20,90,50); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+  doc.text('FIRMA ELECTRÓNICA / DIGITAL DEL PROFESIONAL — '+(matTxt||'MATRÍCULA NO INDICADA'), x, footerY+5);
+
+  doc.setTextColor(90,90,90); doc.setFontSize(6.3); doc.setFont('helvetica','italic');
+  var _leyendaFirma = 'Este documento ha sido firmado -electrónica o digitalmente según corresponda- por '+(usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ')+d.nombreProfesional+'.';
+  var _legajoTxt = d.legajoRL ? d.legajoRL : '(en trámite de inscripción)';
+  var _leyendaInscripcion = 'Receta emitida bajo '+_leyFirmaPais+' · Registro de Recetarios Electrónicos del Ministerio de Salud de la Nación - '+_legajoTxt+' · Válido conforme normativa vigente en '+_paisNombreMedico+'.';
+  var _lf = doc.splitTextToSize(_leyendaFirma, W-margin*2);
+  doc.text(_lf, x, footerY+11);
+  var _li = doc.splitTextToSize(_leyendaInscripcion, W-margin*2);
+  doc.text(_li, x, footerY+11+(_lf.length*3.1)+2);
+  doc.setFont('helvetica','bold'); doc.setTextColor(20,90,50); doc.setFontSize(6.5);
+  doc.text('MedHistoriaClinicaOnline · medhistoriaclinicaonline@gmail.com', W-margin, footerY+5, {align:'right'});
+
+  callback(doc, d);
+}
+
 function generarPDFbase64(tipo, callback){
   if((tipo==='receta'||tipo==='derivacion'||tipo==='pedido'||tipo==='ord'||tipo==='hc') && !checkAddonFirmaDocumentos()) return;
   var d = getDatosDocumento(tipo);
 
-  // ── Validación obligatoria para recetas: no se genera nada (ni descarga, ni impresión,
-  // ni envío por WhatsApp/mail) si faltan datos exigidos por el Registro de Recetarios Electrónicos ──
+  // La receta tiene su propio armado completo (modelo ReNaPDiS), separado
+  // de este para no arriesgarse a romper derivación/pedido/orden/resumen.
   if(tipo === 'receta'){
-    if(!d.domicilio || !d.domicilio.trim()){
-      alert('Falta el domicilio del consultorio (obligatorio para el Registro de Recetarios Electrónicos). Completalo en el campo "Domicilio del consultorio" antes de continuar.');
-      return;
-    }
-    if(!d.contenido || !d.contenido.trim()){
-      alert('Falta cargar la medicación. Usá el formulario "Agregar medicamento" para completarla antes de continuar.');
-      return;
-    }
-    if(!d.especialidad || !d.especialidad.trim()){
-      alert('Tu perfil no tiene cargada la Profesión/Especialidad, y es un campo obligatorio de la receta. Completala en tu perfil antes de continuar.');
-      return;
-    }
+    return _generarPDFRecetaReNaPDiS(d, callback);
   }
 
   var jsPDF = window.jspdf ? window.jspdf.jsPDF : (window.jsPDF || null);
@@ -12721,7 +12985,9 @@ function descargarPDF(tipo){
             medico_id: usuarioActual.id,
             diagnostico_cie10: (document.getElementById('rx2-diag')||{}).value||'',
             medicacion_prescripta: (document.getElementById('rx2-med')||{}).value||'',
+            medicamentos: _recetaMedicamentosData.length ? _recetaMedicamentosData : null,
             validez: (document.getElementById('rx2-validez')||{}).value||'',
+            fecha_inicio_vigencia: (document.getElementById('rx2-fecha-inicio-vigencia')||{}).value||null,
             whatsapp_envio: '',
             email_envio: ''
           };
@@ -12918,6 +13184,7 @@ function getDatosDocumento(tipo){
     datos.titulo='RECETA MÉDICA DIGITAL'; datos.icono='💊';
     datos.pac=((document.getElementById('rx2-paciente')||{}).value||(document.getElementById('rx-paciente')||{}).value||'').toUpperCase();
     datos.dni=(document.getElementById('rx2-dni')||{}).value||(document.getElementById('rx-dni')||{}).value||'';
+    datos.cuil=(document.getElementById('rx2-cuil')||{}).value||'';
     datos.fnac=(document.getElementById('rx2-fnac')||{}).value||(document.getElementById('rx-fnac')||{}).value||'';
     datos.sexo=(document.getElementById('rx2-sexo')||{}).value||(document.getElementById('rx-sexo')||{}).value||'';
     datos.os=(document.getElementById('rx2-os')||{}).value||(document.getElementById('rx-os')||{}).value||'';
@@ -12925,10 +13192,24 @@ function getDatosDocumento(tipo){
     datos.plan=(document.getElementById('rx2-plan')||{}).value||'';
     datos.diag=(document.getElementById('rx2-diag')||{}).value||(document.getElementById('rx-diag')||{}).value||'';
     datos.contenido=(document.getElementById('rx2-med')||{}).value||(document.getElementById('rx-med')||{}).value||'';
+    datos.medicamentos=(typeof _recetaMedicamentosData!=='undefined' && _recetaMedicamentosData.length) ? _recetaMedicamentosData.slice() : null;
     datos.ind=(document.getElementById('rx2-ind')||{}).value||(document.getElementById('rx-ind')||{}).value||'';
     datos.medico=(document.getElementById('rx2-medico')||{}).value||(document.getElementById('rx-medico')||{}).value||'';
-    datos.domicilio=(document.getElementById('rx2-domicilio')||{}).value||(usuarioActual?(localStorage.getItem('medhistoria_domicilio_'+(usuarioActual.email||usuarioActual.id||'default'))||''):'');
+    datos.domicilio=(document.getElementById('rx2-domicilio')||{}).value||(usuarioActual?(usuarioActual.domicilio_profesional||localStorage.getItem('medhistoria_domicilio_'+(usuarioActual.email||usuarioActual.id||'default'))||''):'');
+    datos.jurisdiccion=(document.getElementById('rx2-jurisdiccion')||{}).value||((usuarioActual&&usuarioActual.matricula_jurisdiccion)||'');
+    datos.refeps=(document.getElementById('rx2-refeps')||{}).value||((usuarioActual&&usuarioActual.refeps)||'');
     datos.especialidad=(usuarioActual && usuarioActual.especialidad) || '';
+    datos.profesion=(usuarioActual && usuarioActual.sexo==='F') ? 'Médica' : 'Médico';
+    datos.nombreProfesional=(usuarioActual && usuarioActual.nombre) || '';
+    var _matSrc=(usuarioActual && usuarioActual.matricula)||'';
+    var _mnCalc='', _mpCalc=(usuarioActual && usuarioActual.matricula_mp)||'';
+    if(_matSrc.indexOf('M.P.')!==-1){ if(!_mpCalc) _mpCalc=_matSrc.replace(/M\.P\.?/i,'').trim(); }
+    else { _mnCalc=_matSrc.replace(/^M\.N\.?\s*/i,'').trim(); }
+    datos.matriculaMN=_mnCalc;
+    datos.matriculaMP=_mpCalc;
+    datos.telefonoProfesional=(usuarioActual && usuarioActual.telefono) || '';
+    datos.emailProfesional=(usuarioActual && usuarioActual.email) || '';
+    datos.fechaInicioVigencia=(document.getElementById('rx2-fecha-inicio-vigencia')||{}).value||'';
     datos.legajoRL=localStorage.getItem('medhistoria_legajo_renapdis')||'';
     datos.labelContenido='MEDICACIÓN PRESCRIPTA';
   } else if(tipo==='derivacion'){
@@ -13455,7 +13736,7 @@ function nuevaOrden(tipo){
   if(!confirm('¿Limpiar el formulario para una nueva '+
     (tipo==='receta'?'receta':tipo==='derivacion'?'derivación':'orden de estudios')+'?')) return;
   var campos = {
-    receta: ['rx2-paciente','rx2-dni','rx2-fnac','rx2-sexo','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind','rx2-wa','rx2-email'],
+    receta: ['rx2-paciente','rx2-dni','rx2-cuil','rx2-fnac','rx2-sexo','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind','rx2-wa','rx2-email'],
 derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afiliado','der-plan','der-diag','der-motivo','der-especialidad','der-ant','der-urgencia','der-wa','der-email'],
     pedido: ['est-paciente','est-dni','est-fnac','est-sexo','est-os','est-afiliado','est-diag','est-det','est-wa','est-email']
   };
@@ -13464,6 +13745,7 @@ derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afilia
    if(!el) return;
     if(el.tagName==='SELECT'){ el.selectedIndex = 0; } else { el.value = ''; }
   });
+  if(tipo==='receta') _recetaMedicamentosData = [];
   // Scroll al inicio del formulario
   var panel = document.getElementById('panel-'+(tipo==='pedido'?'estudios':tipo==='receta'?'recetas':'derivaciones'));
   if(panel) panel.scrollTop = 0;
@@ -13797,6 +14079,7 @@ function sincronizarPacientesSupabase(){
             nombre: (remoto.apellido||'') + ', ' + (remoto.nombre||''),
             apellido: remoto.apellido||'',
             dni: remoto.dni||'',
+            cuil: remoto.cuil||'',
             fnac: remoto.fecha_nacimiento||'',
             tel: remoto.telefono||'',
             email: remoto.email||'',
@@ -15016,16 +15299,51 @@ function precargarDatosMedico(u){
     var el = document.getElementById(id);
     if(el) el.value = medicoStr;
   });
-  // Domicilio del consultorio (para la receta) — se recuerda por cuenta de médico, no por navegador
+  // Domicilio del consultorio y jurisdicción de la matrícula (para la
+  // receta) — viven en el perfil del médico (usuarios.domicilio_profesional
+  // / usuarios.matricula_jurisdiccion), no solo en este navegador, para que
+  // no haya que volver a escribirlos si entra desde otro dispositivo. Se
+  // mantiene también el localStorage viejo como respaldo/transición para
+  // médicos que ya lo tenían cargado ahí de antes.
   var domEl = document.getElementById('rx2-domicilio');
   if(domEl){
     var domKey = 'medhistoria_domicilio_' + (u.email || u.id || 'default');
     if(!domEl.value){
-      var domGuardado = localStorage.getItem(domKey);
-      if(domGuardado) domEl.value = domGuardado;
+      domEl.value = u.domicilio_profesional || localStorage.getItem(domKey) || '';
     }
     domEl.addEventListener('change', function(){
       localStorage.setItem(domKey, domEl.value||'');
+      if(u && u.id){
+        sb.from('usuarios').update({domicilio_profesional: domEl.value||''}).eq('id', u.id).then(function(){});
+        u.domicilio_profesional = domEl.value||'';
+      }
+    });
+  }
+  var jurEl = document.getElementById('rx2-jurisdiccion');
+  if(jurEl){
+    if(!jurEl.value){
+      jurEl.value = u.matricula_jurisdiccion || '';
+    }
+    jurEl.addEventListener('change', function(){
+      if(u && u.id){
+        sb.from('usuarios').update({matricula_jurisdiccion: jurEl.value||''}).eq('id', u.id).then(function(){});
+        u.matricula_jurisdiccion = jurEl.value||'';
+      }
+    });
+  }
+  // Código REFEPS (Licencia Sanitaria Federal) — Resolución 2214/2025, dato
+  // obligatorio del bloque profesional. Mismo patrón que domicilio/jurisdicción:
+  // vive en usuarios.refeps, se precarga una vez y se guarda solo al cambiar.
+  var refepsEl = document.getElementById('rx2-refeps');
+  if(refepsEl){
+    if(!refepsEl.value){
+      refepsEl.value = u.refeps || '';
+    }
+    refepsEl.addEventListener('change', function(){
+      if(u && u.id){
+        sb.from('usuarios').update({refeps: refepsEl.value||''}).eq('id', u.id).then(function(){});
+        u.refeps = refepsEl.value||'';
+      }
     });
   }
 }
@@ -15214,9 +15532,10 @@ function completarConIA(campoId, tipoCampo){
 function finalizarAtencion(){
   if(!confirm('¿Finalizar la atención? Se limpiarán los formularios de Recetas, Derivaciones y Estudios.')) return;
   // Limpiar Recetas
-  ['rx-paciente','rx-dni','rx-fnac','rx-os','rx-afiliado','rx-plan','rx-diag','rx-med','rx-ind','rx2-paciente','rx2-dni','rx2-fnac','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind'].forEach(function(id){
+  ['rx-paciente','rx-dni','rx-fnac','rx-os','rx-afiliado','rx-plan','rx-diag','rx-med','rx-ind','rx2-paciente','rx2-dni','rx2-cuil','rx2-fnac','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value='';
   });
+  _recetaMedicamentosData = [];
   var rxSexo=document.getElementById('rx-sexo'); if(rxSexo) rxSexo.selectedIndex=0;
   // Limpiar Derivaciones
   ['der-paciente','der-dni','der-fnac','der-os','der-afiliado','der-plan','der-diag','der-det','der-medico'].forEach(function(id){
@@ -15236,10 +15555,11 @@ function finalizarAtencion(){
 }
 
 function limpiarReceta(){
-  ['rx2-paciente','rx2-dni','rx2-fnac','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind','rx2-wa','rx2-email'].forEach(function(id){
+  ['rx2-paciente','rx2-dni','rx2-cuil','rx2-fnac','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind','rx2-wa','rx2-email'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value='';
   });
   var s=document.getElementById('rx2-sexo'); if(s) s.selectedIndex=0;
+  _recetaMedicamentosData = [];
   showPanel('hc');
 }
 
