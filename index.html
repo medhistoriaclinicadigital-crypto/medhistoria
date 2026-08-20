@@ -2405,10 +2405,10 @@ function mhcdRechazarCookies(){
           <div id="validez-recetas"></div>
           <div class="form-g2">
             <div class="fl"><label>Paciente<input type="text" id="rx2-paciente" placeholder="Apellido y nombre"></div>
-            <div class="fl"><label>DNI<input type="text" id="rx2-dni" placeholder="30.000.000"></div>
+            <div class="fl"><label>DNI<input type="text" id="rx2-dni" placeholder="30.000.000" onchange="_autocompletarCuilReceta()"></div>
             <div class="fl"><label>CUIL<input type="text" id="rx2-cuil" placeholder="20-30000000-1"></div>
             <div class="fl"><label>Fecha de Nacimiento<input type="date" id="rx2-fnac"></div>
-            <div class="fl"><label>Sexo<select id="rx2-sexo"><option value="">Seleccionar...</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
+            <div class="fl"><label>Sexo<select id="rx2-sexo" onchange="_autocompletarCuilReceta()"><option value="">Seleccionar...</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
             <div class="fl"><label>Obra Social / Prepaga<input type="text" id="rx2-os" placeholder="OSDE / IOMA / Swiss Medical..."></div>
             <div class="fl"><label>N° Afiliado / N° Seg. Social / N° Colegiado<input type="text" id="rx2-afiliado" placeholder="N° afiliado / N° seguro social / N° colegiado"></div>
             <div class="fl"><label>Plan<input type="text" id="rx2-plan" placeholder="Ej: Plan 210 / Plan Básico / Gold"></div>
@@ -4512,6 +4512,39 @@ var _editandoPacienteIdx = -1;
 // (además del texto libre en el textarea rx2-med) para poder darle al
 // principio activo más relevancia visual que la marca comercial en el PDF.
 var _recetaMedicamentosData = [];
+
+// Calcula el CUIL a partir del DNI y el sexo, algoritmo módulo 11 oficial
+// (mismo dígito verificador que usa AFIP/ANSES para CUIT/CUIL). Devuelve
+// null si no se puede calcular con certeza (sexo no binario/sin indicar,
+// DNI inválido, o el caso borde del dígito verificador = 10, donde el
+// prefijo real puede no ser el estándar) — en esos casos es mejor dejar
+// el campo para que el médico lo complete a mano antes que arriesgar un
+// CUIL incorrecto en un documento médico real.
+function calcularCUIL(dni, sexo){
+  var d = (dni||'').replace(/\D/g,'');
+  if(d.length < 7 || d.length > 8) return null;
+  while(d.length < 8) d = '0'+d;
+  var prefijo = sexo === 'Masculino' ? '20' : (sexo === 'Femenino' ? '27' : null);
+  if(!prefijo) return null;
+  var digitos = (prefijo+d).split('').map(Number);
+  var pesos = [5,4,3,2,7,6,5,4,3,2];
+  var suma = 0;
+  for(var i=0;i<10;i++){ suma += digitos[i]*pesos[i]; }
+  var resto = suma % 11;
+  var verificador = 11 - resto;
+  if(verificador === 11) verificador = 0;
+  if(verificador === 10) return null; // caso borde ambiguo, no arriesgar
+  return prefijo+'-'+d+'-'+verificador;
+}
+
+function _autocompletarCuilReceta(){
+  var cuilEl = document.getElementById('rx2-cuil');
+  if(!cuilEl || cuilEl.value.trim()) return; // nunca pisa un CUIL ya cargado a mano
+  var dni = (document.getElementById('rx2-dni')||{}).value||'';
+  var sexo = (document.getElementById('rx2-sexo')||{}).value||'';
+  var calculado = calcularCUIL(dni, sexo);
+  if(calculado) cuilEl.value = calculado;
+}
 
 function abrirNuevoPaciente(){
   _editandoPacienteIdx = -1;
@@ -12518,19 +12551,16 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   doc.rect(margin, pacBoxY, colIzqW, pacBoxH, 'S');
   y = Math.max(pacBoxH+pacBoxY, qrY+qrH) + 6;
 
-  // ── Fechas ──
-  doc.setTextColor(20,90,50); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
-  doc.text('FECHA DE CONFECCIÓN', x, y);
-  doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
-  doc.text(d.fecha.toUpperCase(), x, y+4.2);
+  // ── Fecha de inicio de vigencia (si corresponde) — la fecha de confección
+  // se muestra más abajo, junto al bloque de firma. ──
   if(d.fechaInicioVigencia){
     var fiv = d.fechaInicioVigencia.split('-');
     doc.setTextColor(20,90,50); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
-    doc.text('VÁLIDA DESDE', x+90, y);
+    doc.text('VÁLIDA DESDE', x, y);
     doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
-    if(fiv.length===3) doc.text(fiv[2]+'/'+fiv[1]+'/'+fiv[0], x+90, y+4.2);
+    if(fiv.length===3) doc.text(fiv[2]+'/'+fiv[1]+'/'+fiv[0], x, y+4.2);
+    y += 11;
   }
-  y += 11;
 
   // ── Diagnóstico ──
   if(d.diag){
@@ -12660,6 +12690,10 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   if(_firmaImg){ try{ doc.addImage(_firmaImg,'PNG',x,footerY-22,42,17); }catch(e){} }
   doc.setTextColor(20,20,20); doc.setFontSize(9.5); doc.setFont('helvetica','bold');
   doc.text((usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ')+d.nombreProfesional, x, footerY-4);
+  doc.setTextColor(20,90,50); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
+  doc.text('FECHA DE CONFECCIÓN', W-margin, footerY-9, {align:'right'});
+  doc.setTextColor(20,20,20); doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text(d.fecha.toUpperCase(), W-margin, footerY-4, {align:'right'});
   doc.setTextColor(20,90,50); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
   doc.text('FIRMA ELECTRÓNICA / DIGITAL DEL PROFESIONAL — '+(matTxt||'MATRÍCULA NO INDICADA'), x, footerY+5);
 
