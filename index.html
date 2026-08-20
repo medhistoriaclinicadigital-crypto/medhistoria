@@ -670,40 +670,8 @@ document.addEventListener('DOMContentLoaded', function(){
   const SUPABASE_KEY = "sb_publishable_vgopqXd1JPlJtUrI_NBklQ_5sgGlO9u";
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 	var _pendingPasswordRecovery = false;
-	// Reingreso automático: escuchamos INITIAL_SESSION acá mismo, apenas se
-	// crea el cliente, en vez de esperar a DOMContentLoaded más abajo en la
-	// página. Si el listener se registra tarde, el cliente de Supabase puede
-	// haber disparado INITIAL_SESSION antes de que alguien lo escuche — en
-	// esa carga de página el aviso se pierde para siempre, y el reingreso
-	// automático nunca se intenta.
-	//
-	// OJO: por la misma razón (esto puede dispararse muy temprano, incluso
-	// antes de que el resto del <script> de más abajo termine de cargar),
-	// acá SOLO guardamos el dato de la sesión — nunca llamamos a funciones
-	// como _deviceToken() o continuarLoginTrasDispositivo() directo desde
-	// este callback, porque todavía podrían no existir. El procesamiento
-	// real pasa en _procesarReingresoAutomatico(), llamada recién en
-	// DOMContentLoaded, cuando toda la página ya cargó.
-	var _autoLoginYaProceso = false;
-	window._sesionInicial = null;
-	window._sesionInicialLlegoAntes = false;
-	// Logging temporal de diagnóstico para el bug de "Recordarme" — filtrar
-	// la consola por "RECORDAR-DEBUG". Sacar esto una vez encontrada la
-	// causa real; no cambia ningún comportamiento, solo deja rastro.
-	window._dbgR = function(label, data){
-	  try{ console.log('[RECORDAR-DEBUG] +'+Math.round(performance.now())+'ms | '+label, data===undefined?'':data); }catch(e){}
-	};
-	_dbgR('script principal arrancó, sb creado');
 	sb.auth.onAuthStateChange(function(event, session){
-	  _dbgR('onAuthStateChange event='+event, { haySesion: !!session, userId: session&&session.user&&session.user.id, autoLoginYaProceso: _autoLoginYaProceso });
 	  if(event === 'PASSWORD_RECOVERY'){ _pendingPasswordRecovery = true; if(window._appListoParaRecuperarPass){ mostrarFormNuevaPass(); } }
-	  if(event === 'INITIAL_SESSION' && !_autoLoginYaProceso){
-	    _autoLoginYaProceso = true;
-	    window._sesionInicial = session;
-	    window._sesionInicialLlegoAntes = true;
-	    _dbgR('INITIAL_SESSION procesado', { funcionYaDefinida: !!window._procesarReingresoAutomatico });
-	    if(window._procesarReingresoAutomatico){ window._procesarReingresoAutomatico(session); }
-	  }
 	});
 
   // ── PWA: registro del service worker + captura del prompt de instalación ──
@@ -779,35 +747,7 @@ function mhcdRechazarCookies(){
 <!-- ══════════════════════════════════════
      LANDING PAGE
 ══════════════════════════════════════ -->
-<div id="landing"><div id="verificandoSesionOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.92);z-index:999998;align-items:center;justify-content:center;color:#fff;font-family:inherit;font-size:1rem;text-align:center;padding:20px;box-sizing:border-box;">Verificando sesión…</div>
-<div id="continuarComoOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.92);z-index:999998;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">
-  <div style="background:white;padding:32px 28px;border-radius:18px;width:380px;max-width:92vw;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
-    <p id="continuarComoTexto" style="font-size:1.05rem;color:#145a32;font-weight:700;margin:0 0 20px;">¿Continuar?</p>
-    <button onclick="_confirmarContinuarSi()" style="width:100%;padding:13px;background:linear-gradient(135deg,#22a050,#145a32);color:white;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">Ingresar</button>
-    <p style="margin:14px 0 0;font-size:.83rem;color:#666;cursor:pointer;" onclick="_confirmarContinuarNo()">No soy yo — usar otra cuenta</p>
-  </div>
-</div>
-<script>
-  // Si hay algo para reingresar solo, tapamos la landing (botón "Ingresar"
-  // incluido) hasta que se sepa si el reingreso automático funcionó o no.
-  // Sin esto, un clic en esa zona justo cuando la sesión se restaura sola
-  // puede terminar cayendo sobre el botón "Salir" de la app ya cargada
-  // debajo, cerrando la sesión que recién se había restaurado.
-  if(localStorage.getItem('mhcd_recordar')==='1'){
-    if(window._dbgR) _dbgR('overlay verificandoSesionOverlay mostrado (script inline temprano)');
-    var _ov = document.getElementById('verificandoSesionOverlay');
-    if(_ov) _ov.style.display = 'flex';
-    // Red de seguridad: si por lo que sea ningún camino del reingreso
-    // automático llega a ocultar esto, no se queda bloqueada para siempre.
-    setTimeout(function(){
-      if(_ov && _ov.style.display !== 'none' && window._dbgR){
-        _dbgR('¡¡SE DISPARÓ LA RED DE SEGURIDAD DE 10s — nada ocultó el overlay a tiempo!!');
-      }
-      if(_ov) _ov.style.display = 'none';
-    }, 10000);
-  }
-</script>
-<div id="miLoginModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.88);z-index:999999;backdrop-filter:blur(8px);overflow-y:auto;-webkit-overflow-scrolling:touch;">
+<div id="landing"><div id="miLoginModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.88);z-index:999999;backdrop-filter:blur(8px);overflow-y:auto;-webkit-overflow-scrolling:touch;">
   <div style="position:relative;margin:20px auto;background:white;padding:36px 32px 28px;border-radius:18px;width:400px;max-width:92vw;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
     <button onclick="document.getElementById('miLoginModal').style.display='none'" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;color:#aaa;cursor:pointer;line-height:1;">✕</button>
     <div style="margin:0 auto 12px;display:flex;justify-content:center;">
@@ -848,13 +788,13 @@ function mhcdRechazarCookies(){
       <button id="tab-ing" onclick="mlTab('ing')" style="flex:1;padding:10px;border:none;background:none;color:#22a050;font-weight:700;border-bottom:2px solid #22a050;margin-bottom:-2px;cursor:pointer;font-size:.95rem;">Ingresar</button>
     </div>
     <div id="ml-form-ing">
-      <input id="ml-user" type="email" placeholder="Usuario o correo electrónico" autocapitalize="none" autocomplete="off" style="width:100%;padding:12px 14px;margin:5px 0;border:none;border-bottom:1.5px solid #ddd;box-sizing:border-box;font-size:.95rem;display:block;outline:none;background:transparent;">
+      <input id="ml-user" type="email" placeholder="Usuario o correo electrónico" autocapitalize="none" autocomplete="username" style="width:100%;padding:12px 14px;margin:5px 0;border:none;border-bottom:1.5px solid #ddd;box-sizing:border-box;font-size:.95rem;display:block;outline:none;background:transparent;">
       <div style="position:relative;">
-        <input id="ml-pass" type="password" placeholder="Contraseña" autocomplete="off" style="width:100%;padding:12px 14px;margin:5px 0;border:none;border-bottom:1.5px solid #ddd;box-sizing:border-box;font-size:.95rem;display:block;outline:none;background:transparent;padding-right:40px;">
+        <input id="ml-pass" type="password" placeholder="Contraseña" autocomplete="current-password" style="width:100%;padding:12px 14px;margin:5px 0;border:none;border-bottom:1.5px solid #ddd;box-sizing:border-box;font-size:.95rem;display:block;outline:none;background:transparent;padding-right:40px;">
         <button type="button" onclick="togglePass('ml-pass',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;color:#aaa;padding:4px;"><span style="position:relative;display:inline-block;font-size:1.1rem;">👁<span style="position:absolute;left:0;top:50%;transform:translateY(-50%) rotate(-45deg);width:100%;height:2px;background:#888;display:block;border-radius:2px;"></span></span></button>
       </div>
       <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#666;margin:10px 0 4px;cursor:pointer;">
-       <input type="checkbox" id="ml-recordar" style="accent-color:#22a050;width:15px;height:15px;" onchange="(function(c,chk){var u=(document.getElementById('ml-user')||{}).value||'';var p=(document.getElementById('ml-pass')||{}).value||'';if(c && (!u.trim()||!p.trim())){chk.checked=false;alert('Completá usuario y contraseña antes de tildar \'Recordar usuario y contraseña\'.');return;}if(c){localStorage.setItem('mhcd_recordar','1');}else{localStorage.removeItem('mhcd_recordar');localStorage.removeItem('mhcd_user_guardado');localStorage.removeItem('mhcd_pass_guardado');}})(this.checked,this)">
+       <input type="checkbox" id="ml-recordar" style="accent-color:#22a050;width:15px;height:15px;" onchange="(function(c,chk){var u=(document.getElementById('ml-user')||{}).value||'';var p=(document.getElementById('ml-pass')||{}).value||'';if(c && (!u.trim()||!p.trim())){chk.checked=false;alert('Completá usuario y contraseña antes de tildar \'Recordar usuario y contraseña\'.');return;}if(c){localStorage.setItem('mhcd_recordar','1');}else{localStorage.removeItem('mhcd_recordar');}})(this.checked,this)">
         Recordar usuario y contraseña
       </label>
       <button onclick="mlIngresar()" style="width:100%;padding:13px;margin-top:12px;background:linear-gradient(135deg,#22a050,#145a32);color:white;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">Ingresar a mi cuenta</button>
@@ -5178,7 +5118,6 @@ function mostrarRecuperarPass(){
   });
 }
 function cerrarApp(){
-  _dbgR('cerrarApp() llamado', { mhcdRecordar: localStorage.getItem('mhcd_recordar'), stack: (new Error()).stack });
   try{ sb.auth.signOut(); }catch(e){}
   usuarioActual = null;
   document.body.classList.remove('in-app');
@@ -12400,13 +12339,14 @@ try {
   setTimeout(function(){
     renderPacientes();
   }, 300);
-  // Reingreso automático ("Recordarme"): si INITIAL_SESSION ya llegó
-  // (lo normal, ver listener arriba del todo de la página, junto a
-  // "const sb = ..."), procesarlo recién ahora que toda la página cargó.
+  // "Recordarme": si quedó tildado la última vez, abrimos directo el
+  // formulario de login — el gestor de contraseñas del navegador completa
+  // usuario y contraseña solo (ver autocomplete en ml-user/ml-pass), y el
+  // médico entra apretando "Ingresar" él mismo. Nada de sesión restaurada
+  // en segundo plano.
   try{
-    _dbgR('DOMContentLoaded llegó al punto de chequeo', { sesionInicialLlegoAntes: window._sesionInicialLlegoAntes });
-    if(window._sesionInicialLlegoAntes){ _procesarReingresoAutomatico(window._sesionInicial); }
-  }catch(e){ _dbgR('excepción en el chequeo de DOMContentLoaded', e && e.message); }
+    if(localStorage.getItem('mhcd_recordar')==='1'){ mostrarLogin(); }
+  }catch(e){}
   // Auto-fill fecha actual en campos type="date" (formato YYYY-MM-DD)
   var hoyISO = new Date().toISOString().split('T')[0];
   var eaFecha = document.getElementById('hc-ea-fecha');
@@ -15061,13 +15001,11 @@ window.addEventListener('beforeunload', guardarLocal);
 
 <script>
 function mostrarLogin(){
-    _dbgR('mostrarLogin() llamado', { mhcdRecordar: localStorage.getItem('mhcd_recordar'), stack: (new Error()).stack });
     document.getElementById('miLoginModal').style.display='block';
     mlTab('ing');
-    // Ya no se guarda ni se precarga la contraseña — "Recordarme" ahora
-    // controla si la próxima vez se reingresa solo con la sesión real de
-    // Supabase (ver el onAuthStateChange de INITIAL_SESSION, arriba del
-    // todo de la página), no con usuario/contraseña guardados.
+    // No guardamos usuario/contraseña nosotros — eso lo hace el gestor de
+    // contraseñas del navegador (ver autocomplete en ml-user/ml-pass). Acá
+    // solo re-tildamos la casilla si la última vez había quedado marcada.
     if(localStorage.getItem('mhcd_recordar')==='1'){
       var rEl = document.getElementById('ml-recordar');
       if(rEl) rEl.checked = true;
@@ -15101,10 +15039,21 @@ function mlTab(t){
   }
 }
 function mlIngresar(){
-  var u = (document.getElementById('ml-user')||{}).value||'';
-  var p = (document.getElementById('ml-pass')||{}).value||'';
+  var userEl = document.getElementById('ml-user');
+  var passEl = document.getElementById('ml-pass');
+  var u = (userEl||{}).value||'';
+  var p = (passEl||{}).value||'';
   u = u.trim();
   if(!u||!p){ alert('Completá usuario y contraseña.'); return; }
+
+  // Le avisamos al navegador, justo antes de enviar, si conviene ofrecer
+  // guardar esta contraseña o no — es la única palanca real que tenemos
+  // sobre su gestor de contraseñas (no podemos forzarlo ni impedirlo del
+  // todo, es una decisión del navegador/usuario, pero esto influye).
+  var recordarEl = document.getElementById('ml-recordar');
+  var quiereRecordar = !!(recordarEl && recordarEl.checked);
+  if(userEl) userEl.setAttribute('autocomplete', quiereRecordar ? 'username' : 'off');
+  if(passEl) passEl.setAttribute('autocomplete', quiereRecordar ? 'current-password' : 'off');
 
   var btnIng = document.querySelector('#ml-form-ing .form-submit') || document.querySelector('#ml-form-ing button[onclick="mlIngresar()"]');
   if(btnIng){ btnIng.disabled = true; }
@@ -15140,40 +15089,20 @@ function mlIngresar(){
         }
         return;
       }
-      continuarLoginTrasDispositivo(authId, u, true);
+      continuarLoginTrasDispositivo(authId, u);
     });
   });
 }
 
 // emailFallback solo se usa si todavía no hay fila en "usuarios" para
 // mostrar algo razonable mientras carga — nunca se guarda en ningún lado.
-// esLoginManual: true cuando viene de mlIngresar() (el formulario y la
-// casilla "Recordar" están realmente en pantalla, tiene sentido leerla).
-// En el reingreso automático (INITIAL_SESSION) el formulario nunca se
-// abre, así que la casilla siempre está desmarcada por defecto — leerla
-// ahí borraría "mhcd_recordar" por error incluso si el usuario sí la
-// había tildado, apagando el reingreso automático después del primer uso.
-function continuarLoginTrasDispositivo(authId, emailFallback, esLoginManual){
-  _dbgR('continuarLoginTrasDispositivo inicio', { authId: authId, esLoginManual: !!esLoginManual });
+// Se llama únicamente desde el login manual (mlIngresar) — la casilla
+// "Recordar" ya quedó guardada en localStorage por su propio onchange, acá
+// no hace falta releerla.
+function continuarLoginTrasDispositivo(authId, emailFallback){
     sb.from('usuarios').select('*').eq('auth_id', authId).then(function(rPerfil){
-    _dbgR('perfil completo de usuarios recibido', { error: rPerfil.error, hayFila: !!(rPerfil.data&&rPerfil.data[0]) });
     var perfil = (rPerfil.data && rPerfil.data[0]) || { nombre: emailFallback, email: emailFallback };
    perfil.auth_id = authId;
-
-      // "Recordarme" ya no guarda usuario/contraseña — solo indica si la
-      // próxima vez se puede reingresar solo con la sesión real de
-      // Supabase (INITIAL_SESSION, arriba del todo de la página). Se limpia cualquier contraseña
-      // vieja que haya quedado guardada de antes de esta corrección.
-      if(esLoginManual){
-        var rEl0 = document.getElementById('ml-recordar');
-        if(rEl0 && rEl0.checked){
-          localStorage.setItem('mhcd_recordar','1');
-        } else {
-          localStorage.removeItem('mhcd_recordar');
-        }
-        localStorage.removeItem('mhcd_user_guardado');
-        localStorage.removeItem('mhcd_pass_guardado');
-      }
 
       usuarioActual = perfil;
       document.getElementById('miLoginModal').style.display='none';
@@ -15194,142 +15123,19 @@ function continuarLoginTrasDispositivo(authId, emailFallback, esLoginManual){
       try{ sincronizarEvolucionesSupabase(); }catch(e){}
       try{ showPanel('dash'); }catch(e){}
       try{ precargarDatosMedico(perfil); }catch(e){}
-      _dbgR('continuarLoginTrasDispositivo completo — app mostrada');
     });
 }
 
-// Procesa el reingreso automático ("Recordarme"). El listener que detecta
-// la sesión (INITIAL_SESSION) está registrado arriba del todo de la
-// página, apenas se crea el cliente de Supabase — pero esta función recién
-// se ejecuta acá, donde _deviceToken()/continuarLoginTrasDispositivo() ya
-// están definidas. Se llama desde DOMContentLoaded más abajo, y también
-// directo desde ese listener temprano si el evento llega después de que
-// la página ya terminó de cargar.
-// intento: reintenta hasta 3 veces (con espera entre cada una) antes de
-// asumir que no hay nada que recordar — pensado para conexiones lentas o
-// inestables, donde el primer chequeo contra Supabase puede fallar o
-// tardar de más sin que eso signifique que la sesión realmente no existe.
-// Oculta el bloqueo "Verificando sesión…" de la landing (ver el <script>
-// justo después de <div id="landing">). Se llama en cada punto donde el
-// reingreso automático se da por vencido y hay que dejar la landing normal,
-// clickeable, a la vista. En el camino de éxito no hace falta llamarla:
-// continuarLoginTrasDispositivo() esconde toda la landing (el overlay es
-// hijo suyo) al pasar a mostrar la app.
-function _ocultarVerificandoSesion(){
-  var ov = document.getElementById('verificandoSesionOverlay');
-  if(ov) ov.style.display = 'none';
-}
-
-function _procesarReingresoAutomatico(session, intento){
-  intento = intento || 1;
-  _dbgR('_procesarReingresoAutomatico intento='+intento, { mhcdRecordar: localStorage.getItem('mhcd_recordar'), haySesion: !!session, hayUser: !!(session&&session.user) });
-  if(localStorage.getItem('mhcd_recordar') !== '1'){ _dbgR('sale: mhcd_recordar no es 1'); return; }
-  if(!session || !session.user){
-    if(intento < 3){
-      _dbgR('sin sesión válida, programo reintento en 1200ms');
-      setTimeout(function(){
-        sb.auth.getSession().then(function(r){
-          _dbgR('getSession() de reintento resolvió', { error: r.error, haySesion: !!(r.data&&r.data.session) });
-          _procesarReingresoAutomatico(r.data && r.data.session, intento+1);
-        });
-      }, 1200);
-      return;
-    }
-    // Se agotaron los reintentos: recién ahí asumimos que no hay una
-    // sesión real para reingresar, aunque el usuario había tildado
-    // "Recordarme". Apagamos el flag acá para que la casilla no siga
-    // mostrándose tildada la próxima vez sin nada real detrás.
-    _dbgR('se agotaron los 3 intentos sin sesión — borro mhcd_recordar');
-    localStorage.removeItem('mhcd_recordar');
-    _ocultarVerificandoSesion();
-    return;
-  }
-  _dbgR('hay sesión con usuario, paso a verificar dispositivo', { authId: session.user.id, email: session.user.email });
-  _verificarDispositivoConReintento(session, 1);
-}
-
-function _verificarDispositivoConReintento(session, intento){
-  var authId = session.user.id;
-  var _t0 = performance.now();
-  _dbgR('_verificarDispositivoConReintento intento='+intento+' — llamando RPC verificar_dispositivo');
-  sb.rpc('verificar_dispositivo', { p_device_token: _deviceToken(), p_descripcion: _descripcionDispositivo() }).then(function(rDisp){
-    _dbgR('RPC verificar_dispositivo respondió en '+Math.round(performance.now()-_t0)+'ms', { error: rDisp.error ? (rDisp.error.message||JSON.stringify(rDisp.error)) : null, data: rDisp.data });
-    if(rDisp.error){
-      if(intento < 3){
-        _dbgR('RPC con error, programo reintento en 1200ms');
-        setTimeout(function(){ _verificarDispositivoConReintento(session, intento+1); }, 1200);
-        return;
-      }
-      // Se agotaron los reintentos y el chequeo de dispositivo sigue sin
-      // responder: no podemos dejar la casilla tildada como si el
-      // reingreso automático fuera a completarse, porque en los hechos
-      // no se completó. Se puede volver a tildar "Recordar" la próxima
-      // vez que inicie sesión a mano.
-      _dbgR('se agotaron los 3 intentos del RPC con error — borro mhcd_recordar');
-      localStorage.removeItem('mhcd_recordar');
-      _ocultarVerificandoSesion();
-      return;
-    }
-    var estadoDisp = (rDisp.data && rDisp.data[0]) || { permitido:false };
-    _dbgR('estado del dispositivo', estadoDisp);
-    if(!estadoDisp.permitido){
-      // Dispositivo no aprobado o revocado desde la última vez: no
-      // reingresar solo, que inicie sesión de nuevo a mano. Tampoco hay
-      // nada real para recordar en este dispositivo.
-      _dbgR('dispositivo NO permitido — signOut + borro mhcd_recordar');
-      localStorage.removeItem('mhcd_recordar');
-      sb.auth.signOut();
-      _ocultarVerificandoSesion();
-      return;
-    }
-    _dbgR('dispositivo permitido, muestro pantalla de confirmación');
-    _mostrarConfirmarContinuar(authId, session.user.email);
-  });
-}
-window._procesarReingresoAutomatico = _procesarReingresoAutomatico;
-
-// En vez de entrar directo a la app sin avisar, mostramos un paso de
-// confirmación ("¿Continuar como...?") — pedido explícito de la usuaria:
-// no quiere reingreso 100% silencioso, quiere ver algo y apretar un botón
-// ella misma antes de entrar, aunque la sesión ya esté restaurada y lista.
-function _mostrarConfirmarContinuar(authId, email){
-  _ocultarVerificandoSesion();
-  var ov = document.getElementById('continuarComoOverlay');
-  var txt = document.getElementById('continuarComoTexto');
-  _dbgR('_mostrarConfirmarContinuar', { overlayExiste: !!ov, textoExiste: !!txt, authId: authId, email: email });
-  if(txt) txt.textContent = '¿Continuar como ' + email + '?';
-  if(ov){
-    ov.style.display = 'flex';
-    ov.setAttribute('data-auth-id', authId);
-    ov.setAttribute('data-email', email);
-    _dbgR('overlay continuarComoOverlay → display:flex, data-auth-id y data-email seteados');
-  } else {
-    _dbgR('¡¡ALERTA: continuarComoOverlay no existe en el DOM en este momento!!');
-  }
-  sb.from('usuarios').select('nombre,sexo').eq('auth_id', authId).then(function(r){
-    _dbgR('perfil nombre/sexo para el texto de confirmación', { error: r.error, hayFila: !!(r.data&&r.data[0]) });
-    var perfil = (r.data && r.data[0]) || null;
-    if(perfil && txt) txt.textContent = '¿Continuar como ' + nombreConTitulo(perfil) + '?';
-  });
-}
-
-function _confirmarContinuarSi(){
-  var ov = document.getElementById('continuarComoOverlay');
-  var authId = ov ? ov.getAttribute('data-auth-id') : null;
-  var email = ov ? ov.getAttribute('data-email') : null;
-  _dbgR('_confirmarContinuarSi clickeado', { overlayExiste: !!ov, authId: authId, email: email });
-  if(ov) ov.style.display = 'none';
-  if(authId) continuarLoginTrasDispositivo(authId, email);
-  else _dbgR('¡¡ALERTA: _confirmarContinuarSi sin authId, no se llama a continuarLoginTrasDispositivo!!');
-}
-
-function _confirmarContinuarNo(){
-  var ov = document.getElementById('continuarComoOverlay');
-  _dbgR('_confirmarContinuarNo clickeado — signOut + borro mhcd_recordar');
-  if(ov) ov.style.display = 'none';
-  localStorage.removeItem('mhcd_recordar');
-  sb.auth.signOut();
-}
+// "Recordarme" ya no restaura la sesión sola en segundo plano (ver
+// pendiente_prueba_en_vivo_netlify / recordarme_vs_salir_diseno en la
+// memoria del proyecto para el historial de por qué se sacó). Ahora es
+// mucho más simple: si mhcd_recordar==='1', al cargar la página se abre
+// directo el formulario de login (mostrarLogin(), llamada desde
+// DOMContentLoaded más abajo) — el propio navegador completa usuario y
+// contraseña con su gestor nativo (ver autocomplete en los inputs
+// ml-user/ml-pass), y el médico entra apretando "Ingresar" él mismo,
+// como un login manual común. Sin sesión restaurada sola, sin reintentos,
+// sin pantalla de confirmación.
 
 function guardarLegajoRenapdis(){
   var inp = document.getElementById('legajo-renapdis-input');
