@@ -788,7 +788,7 @@ function mhcdRechazarCookies(){
      <div style="display:flex;border-bottom:2px solid #eee;margin-bottom:20px;">
       <button id="tab-ing" onclick="mlTab('ing')" style="flex:1;padding:10px;border:none;background:none;color:#22a050;font-weight:700;border-bottom:2px solid #22a050;margin-bottom:-2px;cursor:pointer;font-size:.95rem;">Ingresar</button>
     </div>
-    <div id="ml-form-ing">
+    <form id="ml-form-ing" onsubmit="return mlIngresarSubmit(event)">
       <input id="ml-user" type="email" placeholder="Usuario o correo electrónico" autocapitalize="none" autocomplete="username" style="width:100%;padding:12px 14px;margin:5px 0;border:none;border-bottom:1.5px solid #ddd;box-sizing:border-box;font-size:.95rem;display:block;outline:none;background:transparent;">
       <div style="position:relative;">
         <input id="ml-pass" type="password" placeholder="Contraseña" autocomplete="current-password" style="width:100%;padding:12px 14px;margin:5px 0;border:none;border-bottom:1.5px solid #ddd;box-sizing:border-box;font-size:.95rem;display:block;outline:none;background:transparent;padding-right:40px;">
@@ -798,10 +798,10 @@ function mhcdRechazarCookies(){
        <input type="checkbox" id="ml-recordar" style="accent-color:#22a050;width:15px;height:15px;" onchange="(function(c,chk){var u=(document.getElementById('ml-user')||{}).value||'';var p=(document.getElementById('ml-pass')||{}).value||'';if(c && (!u.trim()||!p.trim())){chk.checked=false;alert('Completá usuario y contraseña antes de tildar \'Recordar usuario y contraseña\'.');return;}if(c){localStorage.setItem('mhcd_recordar','1');}else{localStorage.removeItem('mhcd_recordar');}})(this.checked,this)">
         Recordar usuario y contraseña
       </label>
-      <button onclick="mlIngresar()" style="width:100%;padding:13px;margin-top:12px;background:linear-gradient(135deg,#22a050,#145a32);color:white;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">Ingresar a mi cuenta</button>
+      <button type="submit" id="ml-btn-ingresar" style="width:100%;padding:13px;margin-top:12px;background:linear-gradient(135deg,#22a050,#145a32);color:white;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">Ingresar a mi cuenta</button>
       <p style="margin:14px 0 0;font-size:.83rem;color:#22a050;cursor:pointer;" onclick="mostrarRecuperarPass()">¿Olvidaste tu contraseña?</p>
       <p style="margin:8px 0 0;font-size:.83rem;color:#666;">¿No tenés cuenta? <span style="color:#22a050;font-weight:700;cursor:pointer;" onclick="document.getElementById('miLoginModal').style.display='none';document.getElementById('sec-planes').scrollIntoView({behavior:'smooth'});">Ver planes</span></p>
-    </div>
+    </form>
     <div id="ml-form-reg" style="display:none;max-height:65vh;overflow-y:auto;padding-right:4px;scroll-behavior:smooth;">
       <div style="font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:6px 0 4px;">Plan</div>
       <select id="ml-reg-plan" style="width:100%;padding:10px 14px;margin:4px 0 10px;border:1.5px solid #22a050;border-radius:8px;box-sizing:border-box;font-size:.9rem;display:block;outline:none;background:#f0fdf4;color:#145a32;font-weight:600;">
@@ -15039,6 +15039,17 @@ function mlTab(t){
     var pl=document.getElementById('ml-reg-plan'); if(pl) pl.selectedIndex=0;
   }
 }
+// ml-form-ing es un <form> real (no un simple <div>) específicamente para
+// que el navegador dispare su flujo normal de "guardar contraseña" — eso
+// requiere un submit de verdad, no alcanza con un botón suelto con
+// onclick. Acá cancelamos la navegación (no hay backend propio al que
+// postear) pero dejamos que el evento submit exista, que es la señal que
+// el gestor de contraseñas necesita para ofrecer guardar.
+function mlIngresarSubmit(event){
+  if(event) event.preventDefault();
+  mlIngresar();
+  return false;
+}
 function mlIngresar(){
   var userEl = document.getElementById('ml-user');
   var passEl = document.getElementById('ml-pass');
@@ -15056,7 +15067,7 @@ function mlIngresar(){
   if(userEl) userEl.setAttribute('autocomplete', quiereRecordar ? 'username' : 'off');
   if(passEl) passEl.setAttribute('autocomplete', quiereRecordar ? 'current-password' : 'off');
 
-  var btnIng = document.querySelector('#ml-form-ing .form-submit') || document.querySelector('#ml-form-ing button[onclick="mlIngresar()"]');
+  var btnIng = document.getElementById('ml-btn-ingresar');
   if(btnIng){ btnIng.disabled = true; }
 
   sb.auth.signInWithPassword({ email: u, password: p }).then(function(r){
