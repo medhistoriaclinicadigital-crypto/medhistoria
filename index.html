@@ -687,12 +687,21 @@ document.addEventListener('DOMContentLoaded', function(){
 	var _autoLoginYaProceso = false;
 	window._sesionInicial = null;
 	window._sesionInicialLlegoAntes = false;
+	// Logging temporal de diagnóstico para el bug de "Recordarme" — filtrar
+	// la consola por "RECORDAR-DEBUG". Sacar esto una vez encontrada la
+	// causa real; no cambia ningún comportamiento, solo deja rastro.
+	window._dbgR = function(label, data){
+	  try{ console.log('[RECORDAR-DEBUG] +'+Math.round(performance.now())+'ms | '+label, data===undefined?'':data); }catch(e){}
+	};
+	_dbgR('script principal arrancó, sb creado');
 	sb.auth.onAuthStateChange(function(event, session){
+	  _dbgR('onAuthStateChange event='+event, { haySesion: !!session, userId: session&&session.user&&session.user.id, autoLoginYaProceso: _autoLoginYaProceso });
 	  if(event === 'PASSWORD_RECOVERY'){ _pendingPasswordRecovery = true; if(window._appListoParaRecuperarPass){ mostrarFormNuevaPass(); } }
 	  if(event === 'INITIAL_SESSION' && !_autoLoginYaProceso){
 	    _autoLoginYaProceso = true;
 	    window._sesionInicial = session;
 	    window._sesionInicialLlegoAntes = true;
+	    _dbgR('INITIAL_SESSION procesado', { funcionYaDefinida: !!window._procesarReingresoAutomatico });
 	    if(window._procesarReingresoAutomatico){ window._procesarReingresoAutomatico(session); }
 	  }
 	});
@@ -785,11 +794,17 @@ function mhcdRechazarCookies(){
   // puede terminar cayendo sobre el botón "Salir" de la app ya cargada
   // debajo, cerrando la sesión que recién se había restaurado.
   if(localStorage.getItem('mhcd_recordar')==='1'){
+    if(window._dbgR) _dbgR('overlay verificandoSesionOverlay mostrado (script inline temprano)');
     var _ov = document.getElementById('verificandoSesionOverlay');
     if(_ov) _ov.style.display = 'flex';
     // Red de seguridad: si por lo que sea ningún camino del reingreso
     // automático llega a ocultar esto, no se queda bloqueada para siempre.
-    setTimeout(function(){ if(_ov) _ov.style.display = 'none'; }, 10000);
+    setTimeout(function(){
+      if(_ov && _ov.style.display !== 'none' && window._dbgR){
+        _dbgR('¡¡SE DISPARÓ LA RED DE SEGURIDAD DE 10s — nada ocultó el overlay a tiempo!!');
+      }
+      if(_ov) _ov.style.display = 'none';
+    }, 10000);
   }
 </script>
 <div id="miLoginModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.88);z-index:999999;backdrop-filter:blur(8px);overflow-y:auto;-webkit-overflow-scrolling:touch;">
@@ -5163,6 +5178,7 @@ function mostrarRecuperarPass(){
   });
 }
 function cerrarApp(){
+  _dbgR('cerrarApp() llamado', { mhcdRecordar: localStorage.getItem('mhcd_recordar'), stack: (new Error()).stack });
   try{ sb.auth.signOut(); }catch(e){}
   usuarioActual = null;
   document.body.classList.remove('in-app');
@@ -12387,7 +12403,10 @@ try {
   // Reingreso automático ("Recordarme"): si INITIAL_SESSION ya llegó
   // (lo normal, ver listener arriba del todo de la página, junto a
   // "const sb = ..."), procesarlo recién ahora que toda la página cargó.
-  try{ if(window._sesionInicialLlegoAntes){ _procesarReingresoAutomatico(window._sesionInicial); } }catch(e){}
+  try{
+    _dbgR('DOMContentLoaded llegó al punto de chequeo', { sesionInicialLlegoAntes: window._sesionInicialLlegoAntes });
+    if(window._sesionInicialLlegoAntes){ _procesarReingresoAutomatico(window._sesionInicial); }
+  }catch(e){ _dbgR('excepción en el chequeo de DOMContentLoaded', e && e.message); }
   // Auto-fill fecha actual en campos type="date" (formato YYYY-MM-DD)
   var hoyISO = new Date().toISOString().split('T')[0];
   var eaFecha = document.getElementById('hc-ea-fecha');
@@ -15042,6 +15061,7 @@ window.addEventListener('beforeunload', guardarLocal);
 
 <script>
 function mostrarLogin(){
+    _dbgR('mostrarLogin() llamado', { mhcdRecordar: localStorage.getItem('mhcd_recordar'), stack: (new Error()).stack });
     document.getElementById('miLoginModal').style.display='block';
     mlTab('ing');
     // Ya no se guarda ni se precarga la contraseña — "Recordarme" ahora
@@ -15134,7 +15154,9 @@ function mlIngresar(){
 // ahí borraría "mhcd_recordar" por error incluso si el usuario sí la
 // había tildado, apagando el reingreso automático después del primer uso.
 function continuarLoginTrasDispositivo(authId, emailFallback, esLoginManual){
+  _dbgR('continuarLoginTrasDispositivo inicio', { authId: authId, esLoginManual: !!esLoginManual });
     sb.from('usuarios').select('*').eq('auth_id', authId).then(function(rPerfil){
+    _dbgR('perfil completo de usuarios recibido', { error: rPerfil.error, hayFila: !!(rPerfil.data&&rPerfil.data[0]) });
     var perfil = (rPerfil.data && rPerfil.data[0]) || { nombre: emailFallback, email: emailFallback };
    perfil.auth_id = authId;
 
@@ -15172,6 +15194,7 @@ function continuarLoginTrasDispositivo(authId, emailFallback, esLoginManual){
       try{ sincronizarEvolucionesSupabase(); }catch(e){}
       try{ showPanel('dash'); }catch(e){}
       try{ precargarDatosMedico(perfil); }catch(e){}
+      _dbgR('continuarLoginTrasDispositivo completo — app mostrada');
     });
 }
 
@@ -15199,11 +15222,14 @@ function _ocultarVerificandoSesion(){
 
 function _procesarReingresoAutomatico(session, intento){
   intento = intento || 1;
-  if(localStorage.getItem('mhcd_recordar') !== '1') return;
+  _dbgR('_procesarReingresoAutomatico intento='+intento, { mhcdRecordar: localStorage.getItem('mhcd_recordar'), haySesion: !!session, hayUser: !!(session&&session.user) });
+  if(localStorage.getItem('mhcd_recordar') !== '1'){ _dbgR('sale: mhcd_recordar no es 1'); return; }
   if(!session || !session.user){
     if(intento < 3){
+      _dbgR('sin sesión válida, programo reintento en 1200ms');
       setTimeout(function(){
         sb.auth.getSession().then(function(r){
+          _dbgR('getSession() de reintento resolvió', { error: r.error, haySesion: !!(r.data&&r.data.session) });
           _procesarReingresoAutomatico(r.data && r.data.session, intento+1);
         });
       }, 1200);
@@ -15213,18 +15239,24 @@ function _procesarReingresoAutomatico(session, intento){
     // sesión real para reingresar, aunque el usuario había tildado
     // "Recordarme". Apagamos el flag acá para que la casilla no siga
     // mostrándose tildada la próxima vez sin nada real detrás.
+    _dbgR('se agotaron los 3 intentos sin sesión — borro mhcd_recordar');
     localStorage.removeItem('mhcd_recordar');
     _ocultarVerificandoSesion();
     return;
   }
+  _dbgR('hay sesión con usuario, paso a verificar dispositivo', { authId: session.user.id, email: session.user.email });
   _verificarDispositivoConReintento(session, 1);
 }
 
 function _verificarDispositivoConReintento(session, intento){
   var authId = session.user.id;
+  var _t0 = performance.now();
+  _dbgR('_verificarDispositivoConReintento intento='+intento+' — llamando RPC verificar_dispositivo');
   sb.rpc('verificar_dispositivo', { p_device_token: _deviceToken(), p_descripcion: _descripcionDispositivo() }).then(function(rDisp){
+    _dbgR('RPC verificar_dispositivo respondió en '+Math.round(performance.now()-_t0)+'ms', { error: rDisp.error ? (rDisp.error.message||JSON.stringify(rDisp.error)) : null, data: rDisp.data });
     if(rDisp.error){
       if(intento < 3){
+        _dbgR('RPC con error, programo reintento en 1200ms');
         setTimeout(function(){ _verificarDispositivoConReintento(session, intento+1); }, 1200);
         return;
       }
@@ -15233,20 +15265,24 @@ function _verificarDispositivoConReintento(session, intento){
       // reingreso automático fuera a completarse, porque en los hechos
       // no se completó. Se puede volver a tildar "Recordar" la próxima
       // vez que inicie sesión a mano.
+      _dbgR('se agotaron los 3 intentos del RPC con error — borro mhcd_recordar');
       localStorage.removeItem('mhcd_recordar');
       _ocultarVerificandoSesion();
       return;
     }
     var estadoDisp = (rDisp.data && rDisp.data[0]) || { permitido:false };
+    _dbgR('estado del dispositivo', estadoDisp);
     if(!estadoDisp.permitido){
       // Dispositivo no aprobado o revocado desde la última vez: no
       // reingresar solo, que inicie sesión de nuevo a mano. Tampoco hay
       // nada real para recordar en este dispositivo.
+      _dbgR('dispositivo NO permitido — signOut + borro mhcd_recordar');
       localStorage.removeItem('mhcd_recordar');
       sb.auth.signOut();
       _ocultarVerificandoSesion();
       return;
     }
+    _dbgR('dispositivo permitido, muestro pantalla de confirmación');
     _mostrarConfirmarContinuar(authId, session.user.email);
   });
 }
@@ -15260,13 +15296,18 @@ function _mostrarConfirmarContinuar(authId, email){
   _ocultarVerificandoSesion();
   var ov = document.getElementById('continuarComoOverlay');
   var txt = document.getElementById('continuarComoTexto');
+  _dbgR('_mostrarConfirmarContinuar', { overlayExiste: !!ov, textoExiste: !!txt, authId: authId, email: email });
   if(txt) txt.textContent = '¿Continuar como ' + email + '?';
   if(ov){
     ov.style.display = 'flex';
     ov.setAttribute('data-auth-id', authId);
     ov.setAttribute('data-email', email);
+    _dbgR('overlay continuarComoOverlay → display:flex, data-auth-id y data-email seteados');
+  } else {
+    _dbgR('¡¡ALERTA: continuarComoOverlay no existe en el DOM en este momento!!');
   }
   sb.from('usuarios').select('nombre,sexo').eq('auth_id', authId).then(function(r){
+    _dbgR('perfil nombre/sexo para el texto de confirmación', { error: r.error, hayFila: !!(r.data&&r.data[0]) });
     var perfil = (r.data && r.data[0]) || null;
     if(perfil && txt) txt.textContent = '¿Continuar como ' + nombreConTitulo(perfil) + '?';
   });
@@ -15276,12 +15317,15 @@ function _confirmarContinuarSi(){
   var ov = document.getElementById('continuarComoOverlay');
   var authId = ov ? ov.getAttribute('data-auth-id') : null;
   var email = ov ? ov.getAttribute('data-email') : null;
+  _dbgR('_confirmarContinuarSi clickeado', { overlayExiste: !!ov, authId: authId, email: email });
   if(ov) ov.style.display = 'none';
   if(authId) continuarLoginTrasDispositivo(authId, email);
+  else _dbgR('¡¡ALERTA: _confirmarContinuarSi sin authId, no se llama a continuarLoginTrasDispositivo!!');
 }
 
 function _confirmarContinuarNo(){
   var ov = document.getElementById('continuarComoOverlay');
+  _dbgR('_confirmarContinuarNo clickeado — signOut + borro mhcd_recordar');
   if(ov) ov.style.display = 'none';
   localStorage.removeItem('mhcd_recordar');
   sb.auth.signOut();
