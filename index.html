@@ -12675,34 +12675,52 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   var contactoOpc = [d.telefonoProfesional?('Tel: '+d.telefonoProfesional):'', d.emailProfesional?('Email: '+d.emailProfesional):''].filter(Boolean).join('   ·   ');
   if(contactoOpc) profLineas.push(['CONTACTO (OPCIONAL)', contactoOpc]);
 
+  // Dos columnas para no desperdiciar el ancho completo con una sola lista
+  // larga apilada — identidad profesional a la izquierda, jurisdicción/
+  // domicilio/contacto a la derecha.
   var profBoxW = W-margin*2;
+  var profColGap = 8;
+  var profColW = (profBoxW - profColGap) / 2;
+  var profColIzq = profLineas.slice(0, Math.ceil(profLineas.length/2));
+  var profColDer = profLineas.slice(Math.ceil(profLineas.length/2));
+
+  function _alturaColumnaProf(items){
+    var suma = 0;
+    items.forEach(function(par){
+      var vLines = doc.splitTextToSize(par[1], profColW-6);
+      suma += 8.6 + (vLines.length>1 ? (vLines.length-1)*4 : 0);
+    });
+    return 7.5 + suma;
+  }
   // Altura del recuadro calculada primero (en seco, sin dibujar todavía),
   // para poder anclarlo cerca de la firma sin que quede un espacio en
   // blanco de más cada vez que la receta tiene poco contenido arriba —
   // pero dejando los 26mm que la firma necesita arriba de su línea (ahí
   // van la imagen de la firma y el nombre del profesional).
-  var _profSumaIncrementos = 0;
-  profLineas.forEach(function(par){
-    var vLines = doc.splitTextToSize(par[1], profBoxW-6);
-    _profSumaIncrementos += 8.6 + (vLines.length>1 ? (vLines.length-1)*4 : 0);
-  });
-  var profBoxH = 7.5 + _profSumaIncrementos;
+  var profBoxH = Math.max(_alturaColumnaProf(profColIzq), _alturaColumnaProf(profColDer));
 
   var espacioParaFirma = 26; // clearance mínimo real, no tocar: es lo que necesita la firma arriba de su línea
   var footerY = Math.max(268, y + 6 + profBoxH + espacioParaFirma);
   var yProf = footerY - (espacioParaFirma + 10) - profBoxH; // +10mm: sube el recuadro 1cm, la firma queda anclada igual que antes
 
+  function _dibujarColumnaProf(items, colX){
+    var yp = yProf+5.5;
+    items.forEach(function(par){
+      doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
+      doc.text(par[0], colX+3, yp);
+      doc.setTextColor(25,25,25); doc.setFontSize(8.3); doc.setFont('helvetica','normal');
+      var vLines = doc.splitTextToSize(par[1], profColW-6);
+      doc.text(vLines, colX+3, yp+4);
+      yp += 8.6 + (vLines.length>1 ? (vLines.length-1)*4 : 0);
+    });
+  }
   doc.setDrawColor(180,210,190); doc.setLineWidth(0.3);
-  var yp = yProf+5.5;
-  profLineas.forEach(function(par){
-    doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
-    doc.text(par[0], margin+3, yp);
-    doc.setTextColor(25,25,25); doc.setFontSize(8.3); doc.setFont('helvetica','normal');
-    var vLines = doc.splitTextToSize(par[1], profBoxW-6);
-    doc.text(vLines, margin+3, yp+4);
-    yp += 8.6 + (vLines.length>1 ? (vLines.length-1)*4 : 0);
-  });
+  _dibujarColumnaProf(profColIzq, margin);
+  _dibujarColumnaProf(profColDer, margin+profColW+profColGap);
   doc.roundedRect(margin, yProf, profBoxW, profBoxH, 2.5, 2.5, 'S');
+  // Línea divisoria sutil entre las dos columnas
+  doc.setDrawColor(210,225,218); doc.setLineWidth(0.2);
+  doc.line(margin+profColW+profColGap/2, yProf+3, margin+profColW+profColGap/2, yProf+profBoxH-3);
 
   // ── FIRMA — pegada justo debajo del recuadro del médico ──
   doc.setDrawColor(20,90,50); doc.setLineWidth(0.4);
