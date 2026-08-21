@@ -12534,7 +12534,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   doc.setDrawColor(180,210,190); doc.setLineWidth(0.3);
   doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
   doc.text('PACIENTE', margin+3, y+6);
-  doc.setTextColor(10,10,10); doc.setFontSize(12); doc.setFont('helvetica','bold');
+  doc.setTextColor(10,10,10); doc.setFontSize(12); doc.setFont('helvetica','normal');
   var pacNombreLines = doc.splitTextToSize(d.pac||'(no indicado)', colIzqW-6);
   doc.text(pacNombreLines, margin+3, y+11.5);
   y += 11.5 + (pacNombreLines.length>1 ? (pacNombreLines.length-1)*5 : 0) + 4.5;
@@ -12600,10 +12600,10 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   if(medItems){
     medBoxH = 8;
     alturaEstimadaLineas.forEach(function(nLineas){ medBoxH += 7 + nLineas*4.2 + 6; });
-    medBoxH = Math.max(medBoxH, 32) + 30; // +3cm de recuadro real, pedido explícito
+    medBoxH = Math.max(medBoxH, 32) + 40; // +3cm pedido explícito, +1cm extra para que quede más estético
   } else {
     var contenidoLines = doc.splitTextToSize(d.contenido||'', medW-6);
-    medBoxH = Math.max(32, contenidoLines.length*5+12) + 30;
+    medBoxH = Math.max(32, contenidoLines.length*5+12) + 40;
   }
 
   doc.setFillColor(240,253,244); doc.setDrawColor(134,239,172); doc.setLineWidth(0.4);
@@ -12728,7 +12728,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   // Integrada activo — sin él, la receta se genera igual pero sin firma.
   var _firmaImg = (usuarioActual && tieneAddonFirma()) ? usuarioActual.firma_imagen : null;
   if(_firmaImg){ try{ doc.addImage(_firmaImg,'PNG',x,footerY-22,42,17); }catch(e){} }
-  doc.setTextColor(20,20,20); doc.setFontSize(9.5); doc.setFont('helvetica','bold');
+  doc.setTextColor(20,20,20); doc.setFontSize(13); doc.setFont('times','bold');
   doc.text((usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ')+d.nombreProfesional, x, footerY-4);
   doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
   doc.text('FECHA DE CONFECCIÓN', W-margin, footerY-9, {align:'right'});
