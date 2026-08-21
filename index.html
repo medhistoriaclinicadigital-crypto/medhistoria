@@ -2404,6 +2404,7 @@ function mhcdRechazarCookies(){
             <div class="fl"><label>Domicilio del consultorio (acto médico)<input type="text" id="rx2-domicilio" placeholder="Calle, número, ciudad"></label></div>
             <div class="fl"><label>Jurisdicción / entidad que emitió la matrícula<input type="text" id="rx2-jurisdiccion" placeholder="Ej: Colegio de Médicos de la Pcia. de Buenos Aires"></label></div>
             <div class="fl"><label>Licencia Sanitaria Federal (código REFEPS)<input type="text" id="rx2-refeps" placeholder="Código REFEPS"></label><span style="font-size:.68rem;color:#888;display:block;margin-top:3px;">Lo encontrás en la app Mi Argentina → Matrículas profesional de la salud → Licencia Sanitaria Federal.</span></div>
+            <div class="fl" style="grid-column:1/-1;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;"><input type="checkbox" id="rx2-incluir-contacto" style="accent-color:#22a050;width:15px;height:15px;">Incluir mi teléfono y email de contacto en esta receta (destildado por defecto — vos decidís cada vez)</label></div>
             <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 14px;grid-column:1/-1;margin-top:4px;">
               <div style="font-size:.72rem;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:8px;">📤 Envío automático — completá para enviar sin pasos adicionales</div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -13245,8 +13246,12 @@ function getDatosDocumento(tipo){
     else { _mnCalc=_matSrc.replace(/^M\.N\.?\s*/i,'').trim(); }
     datos.matriculaMN=_mnCalc;
     datos.matriculaMP=_mpCalc;
-    datos.telefonoProfesional=(usuarioActual && usuarioActual.telefono) || '';
-    datos.emailProfesional=(usuarioActual && usuarioActual.email) || '';
+    // El contacto del médico solo va en la receta si se tilda explícitamente
+    // — si no, el email (siempre existe, es el de la cuenta) haría que
+    // "Contacto (opcional)" nunca fuera realmente opcional.
+    var _incluirContacto = (document.getElementById('rx2-incluir-contacto')||{}).checked;
+    datos.telefonoProfesional = _incluirContacto ? ((usuarioActual && usuarioActual.telefono) || '') : '';
+    datos.emailProfesional = _incluirContacto ? ((usuarioActual && usuarioActual.email) || '') : '';
     datos.fechaInicioVigencia=(document.getElementById('rx2-fecha-inicio-vigencia')||{}).value||'';
     datos.legajoRL=localStorage.getItem('medhistoria_legajo_renapdis')||'';
     datos.labelContenido='MEDICACIÓN PRESCRIPTA';
@@ -13783,7 +13788,11 @@ derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afilia
    if(!el) return;
     if(el.tagName==='SELECT'){ el.selectedIndex = 0; } else { el.value = ''; }
   });
-  if(tipo==='receta') _recetaMedicamentosData = [];
+  if(tipo==='receta'){
+    _recetaMedicamentosData = [];
+    var chkContacto = document.getElementById('rx2-incluir-contacto');
+    if(chkContacto) chkContacto.checked = false;
+  }
   // Scroll al inicio del formulario
   var panel = document.getElementById('panel-'+(tipo==='pedido'?'estudios':tipo==='receta'?'recetas':'derivaciones'));
   if(panel) panel.scrollTop = 0;
@@ -15476,6 +15485,7 @@ function finalizarAtencion(){
     var el=document.getElementById(id); if(el) el.value='';
   });
   _recetaMedicamentosData = [];
+  var chkContactoFin = document.getElementById('rx2-incluir-contacto'); if(chkContactoFin) chkContactoFin.checked = false;
   var rxSexo=document.getElementById('rx-sexo'); if(rxSexo) rxSexo.selectedIndex=0;
   // Limpiar Derivaciones
   ['der-paciente','der-dni','der-fnac','der-os','der-afiliado','der-plan','der-diag','der-det','der-medico'].forEach(function(id){
@@ -15500,6 +15510,7 @@ function limpiarReceta(){
   });
   var s=document.getElementById('rx2-sexo'); if(s) s.selectedIndex=0;
   _recetaMedicamentosData = [];
+  var chkContactoLim = document.getElementById('rx2-incluir-contacto'); if(chkContactoLim) chkContactoLim.checked = false;
   showPanel('hc');
 }
 
