@@ -12584,7 +12584,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   // ── MEDICAMENTOS: principio activo con más peso visual que la marca ──
   doc.setTextColor(20,90,50); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
   doc.text('Rp./ MEDICACIÓN PRESCRIPTA', x, y);
-  y += 4;
+  y += 4 + 30; // 3cm más de aire entre la etiqueta y el recuadro, pedido explícito
   var medBoxY = y, medW = W-margin*2-6;
   var medItems = (d.medicamentos && d.medicamentos.length) ? d.medicamentos : null;
 
@@ -12688,9 +12688,9 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   });
   var profBoxH = 7.5 + _profSumaIncrementos;
 
-  var espacioParaFirma = 26;
+  var espacioParaFirma = 26; // clearance mínimo real, no tocar: es lo que necesita la firma arriba de su línea
   var footerY = Math.max(268, y + 6 + profBoxH + espacioParaFirma);
-  var yProf = footerY - espacioParaFirma - profBoxH;
+  var yProf = footerY - (espacioParaFirma + 10) - profBoxH; // +10mm: sube el recuadro 1cm, la firma queda anclada igual que antes
 
   doc.setDrawColor(180,210,190); doc.setLineWidth(0.3);
   var yp = yProf+5.5;
