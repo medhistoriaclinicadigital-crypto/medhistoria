@@ -12512,7 +12512,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   // ── CUIR + QR reservados (columna derecha) ──
   var cuirH=20;
   doc.setDrawColor(160,160,160); doc.setLineWidth(0.3); doc.setLineDashPattern([1.3,1],0);
-  doc.rect(colDerX, y, colDerW, cuirH, 'S');
+  doc.roundedRect(colDerX, y, colDerW, cuirH, 2.5, 2.5, 'S');
   doc.setLineDashPattern([],0);
   doc.setTextColor(130,130,130); doc.setFontSize(7); doc.setFont('helvetica','bold');
   doc.text('CUIR', colDerX+colDerW/2, y+7, {align:'center'});
@@ -12521,7 +12521,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
 
   var qrY = y+cuirH+4, qrH=20;
   doc.setDrawColor(160,160,160); doc.setLineWidth(0.3); doc.setLineDashPattern([1.3,1],0);
-  doc.rect(colDerX, qrY, colDerW, qrH, 'S');
+  doc.roundedRect(colDerX, qrY, colDerW, qrH, 2.5, 2.5, 'S');
   doc.setLineDashPattern([],0);
   doc.setTextColor(130,130,130); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
   doc.text('QR / CÓDIGO DE', colDerX+colDerW/2, qrY+7, {align:'center'});
@@ -12557,7 +12557,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
     doc.text(l2, margin+3, y); y += l2.length*4.2;
   }
   var pacBoxH = (y - pacBoxY) + 3;
-  doc.rect(margin, pacBoxY, colIzqW, pacBoxH, 'S');
+  doc.roundedRect(margin, pacBoxY, colIzqW, pacBoxH, 2.5, 2.5, 'S');
   y = Math.max(pacBoxH+pacBoxY, qrY+qrH) + 6;
 
   // ── Fecha de inicio de vigencia (si corresponde) — la fecha de confección
@@ -12607,7 +12607,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   }
 
   doc.setFillColor(240,253,244); doc.setDrawColor(134,239,172); doc.setLineWidth(0.4);
-  doc.rect(x, medBoxY, medW, medBoxH, 'FD');
+  doc.roundedRect(x, medBoxY, medW, medBoxH, 2.5, 2.5, 'FD');
 
   var yMed = medBoxY+8;
   if(medItems){
@@ -12655,7 +12655,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
     var indLines = doc.splitTextToSize(d.ind, W-margin*2-8);
     var indH = Math.max(14, indLines.length*4.6+6);
     doc.setFillColor(255,251,235); doc.setDrawColor(253,230,138);
-    doc.rect(x, y, W-margin*2, indH, 'FD');
+    doc.roundedRect(x, y, W-margin*2, indH, 2.5, 2.5, 'FD');
     doc.setTextColor(80,50,10); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
     doc.text(indLines, x+3, y+5);
     y += indH+6;
@@ -12701,7 +12701,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
     doc.text(vLines, margin+3, yp+4);
     yp += 8.6 + (vLines.length>1 ? (vLines.length-1)*4 : 0);
   });
-  doc.rect(margin, yProf, profBoxW, profBoxH, 'S');
+  doc.roundedRect(margin, yProf, profBoxW, profBoxH, 2.5, 2.5, 'S');
 
   // ── FIRMA — pegada justo debajo del recuadro del médico ──
   doc.setDrawColor(20,90,50); doc.setLineWidth(0.4);
