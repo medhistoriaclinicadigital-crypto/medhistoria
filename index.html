@@ -12598,18 +12598,18 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   }
   var medBoxH;
   if(medItems){
-    medBoxH = 4;
-    alturaEstimadaLineas.forEach(function(nLineas){ medBoxH += 5.5 + nLineas*4.2 + 3; });
-    medBoxH = Math.max(medBoxH, 24);
+    medBoxH = 8;
+    alturaEstimadaLineas.forEach(function(nLineas){ medBoxH += 7 + nLineas*4.2 + 6; });
+    medBoxH = Math.max(medBoxH, 32);
   } else {
     var contenidoLines = doc.splitTextToSize(d.contenido||'', medW-6);
-    medBoxH = Math.max(24, contenidoLines.length*5+8);
+    medBoxH = Math.max(32, contenidoLines.length*5+12);
   }
 
   doc.setFillColor(240,253,244); doc.setDrawColor(134,239,172); doc.setLineWidth(0.4);
   doc.rect(x, medBoxY, medW, medBoxH, 'FD');
 
-  var yMed = medBoxY+6;
+  var yMed = medBoxY+8;
   if(medItems){
     medItems.forEach(function(m, i){
       doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(12,60,30);
@@ -12620,7 +12620,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
         doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(95,120,95);
         doc.text('  ('+m.comercial+')', x+3+ifaW, yMed);
       }
-      yMed += 5;
+      yMed += 6;
       var det = [m.forma,m.presentacion,m.cantidad?('Cant.: '+m.cantidad):'',m.posologia].filter(Boolean).join(' — ');
       if(det){
         doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(50,70,50);
@@ -12628,7 +12628,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
         doc.text(dl, x+3, yMed);
         yMed += dl.length*4.2;
       }
-      yMed += 3;
+      yMed += 6;
     });
   } else {
     doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(15,60,30);
@@ -12674,7 +12674,23 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   var contactoOpc = [d.telefonoProfesional?('Tel: '+d.telefonoProfesional):'', d.emailProfesional?('Email: '+d.emailProfesional):''].filter(Boolean).join('   ·   ');
   if(contactoOpc) profLineas.push(['CONTACTO (OPCIONAL)', contactoOpc]);
 
-  var yProf = y, profBoxW = W-margin*2;
+  var profBoxW = W-margin*2;
+  // Altura del recuadro calculada primero (en seco, sin dibujar todavía),
+  // para poder anclarlo cerca de la firma sin que quede un espacio en
+  // blanco de más cada vez que la receta tiene poco contenido arriba —
+  // pero dejando los 26mm que la firma necesita arriba de su línea (ahí
+  // van la imagen de la firma y el nombre del profesional).
+  var _profSumaIncrementos = 0;
+  profLineas.forEach(function(par){
+    var vLines = doc.splitTextToSize(par[1], profBoxW-6);
+    _profSumaIncrementos += 8.6 + (vLines.length>1 ? (vLines.length-1)*4 : 0);
+  });
+  var profBoxH = 7.5 + _profSumaIncrementos;
+
+  var espacioParaFirma = 26;
+  var footerY = Math.max(268, y + 6 + profBoxH + espacioParaFirma);
+  var yProf = footerY - espacioParaFirma - profBoxH;
+
   doc.setDrawColor(180,210,190); doc.setLineWidth(0.3);
   var yp = yProf+5.5;
   profLineas.forEach(function(par){
@@ -12685,12 +12701,9 @@ function _generarPDFRecetaReNaPDiS(d, callback){
     doc.text(vLines, margin+3, yp+4);
     yp += 8.6 + (vLines.length>1 ? (vLines.length-1)*4 : 0);
   });
-  var profBoxH = (yp - yProf) + 2;
   doc.rect(margin, yProf, profBoxW, profBoxH, 'S');
-  y = yProf + profBoxH + 6;
 
-  // ── FIRMA — anclada cerca del pie de página, salvo que el contenido la empuje más abajo ──
-  var footerY = Math.max(268, y+30);
+  // ── FIRMA — pegada justo debajo del recuadro del médico ──
   doc.setDrawColor(20,90,50); doc.setLineWidth(0.4);
   doc.line(x, footerY, W-margin, footerY);
   // La firma manuscrita/digital solo se estampa con el add-on Firma Digital
