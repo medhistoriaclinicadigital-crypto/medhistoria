@@ -5312,6 +5312,10 @@ function showPanel(id){
         var hcPlan = (document.getElementById('hc-plan')||{}).value||'';
         if(!hcPlan && hcDni){ var pPlan = pacientes.find(function(p){ return (p.dni||'').trim()===hcDni.trim(); }); if(pPlan) hcPlan=pPlan.plan||''; }
         fillField(pre+'-plan', hcPlan);
+        // fillField asigna .value directo, sin disparar "change" — el
+        // autocompletado del CUIL de la receta depende de ese evento, así
+        // que hay que llamarlo a mano acá también.
+        if(id==='recetas'){ try{ _autocompletarCuilReceta(); }catch(e){} }
         if(hcPac && panel){ var sub=panel.querySelector('.app-page-sub'); if(sub) sub.textContent='Paciente: '+hcPac+(hcDni?' · DNI '+hcDni:''); }
       }
     }catch(e){}
@@ -13198,9 +13202,13 @@ function getDatosDocumento(tipo){
     datos.titulo='RECETA MÉDICA DIGITAL'; datos.icono='💊';
     datos.pac=((document.getElementById('rx2-paciente')||{}).value||(document.getElementById('rx-paciente')||{}).value||'').toUpperCase();
     datos.dni=(document.getElementById('rx2-dni')||{}).value||(document.getElementById('rx-dni')||{}).value||'';
-    datos.cuil=(document.getElementById('rx2-cuil')||{}).value||(document.getElementById('rx-cuil')||{}).value||'';
     datos.fnac=(document.getElementById('rx2-fnac')||{}).value||(document.getElementById('rx-fnac')||{}).value||'';
     datos.sexo=(document.getElementById('rx2-sexo')||{}).value||(document.getElementById('rx-sexo')||{}).value||'';
+    // Respaldo: si el campo CUIL quedó vacío (por ejemplo, se completó DNI
+    // y sexo por otro camino que no disparó el autocompletado en pantalla)
+    // se calcula acá igual, para que el PDF nunca salga sin CUIL teniendo
+    // los datos para calcularlo.
+    datos.cuil=(document.getElementById('rx2-cuil')||{}).value||(document.getElementById('rx-cuil')||{}).value||calcularCUIL(datos.dni, datos.sexo)||'';
     datos.os=(document.getElementById('rx2-os')||{}).value||(document.getElementById('rx-os')||{}).value||'';
     datos.afiliado=(document.getElementById('rx2-afiliado')||{}).value||(document.getElementById('rx-afiliado')||{}).value||'';
     datos.plan=(document.getElementById('rx2-plan')||{}).value||'';
