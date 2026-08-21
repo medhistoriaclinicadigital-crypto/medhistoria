@@ -5043,7 +5043,9 @@ function cambiarNombreUsuario(){
     +'<label style="font-size:.8rem;font-weight:700;color:#555;display:block;margin-bottom:4px;">M.N. (Matrícula Nacional)</label>'
     +'<input id="ep-mn" value="'+escHtml(u.mn||'')+'" placeholder="Ej: 120124" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:12px;font-size:.95rem;">'
     +'<label style="font-size:.8rem;font-weight:700;color:#555;display:block;margin-bottom:4px;">M.P. (Matrícula Provincial, opcional)</label>'
-    +'<input id="ep-mp" value="'+escHtml(u.mp||'')+'" placeholder="Ej: 45678" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:18px;font-size:.95rem;">'
+    +'<input id="ep-mp" value="'+escHtml(u.mp||'')+'" placeholder="Ej: 45678" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:12px;font-size:.95rem;">'
+    +'<label style="font-size:.8rem;font-weight:700;color:#555;display:block;margin-bottom:4px;">Teléfono de contacto (opcional, aparece en tus recetas)</label>'
+    +'<input id="ep-telefono" value="'+escHtml(u.telefono||'')+'" placeholder="11 1234-5678" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:18px;font-size:.95rem;">'
     +'<div style="display:flex;gap:10px;">'
     +'<button onclick="guardarPerfil()" style="flex:1;padding:11px;background:linear-gradient(135deg,#1a7a3a,#2ecc71);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">💾 Guardar</button>'
     +'<button onclick="document.getElementById(\'modal-perfil\').remove()" style="flex:1;padding:11px;background:#f3f4f6;border:none;border-radius:8px;font-size:.95rem;cursor:pointer;">Cancelar</button>'
@@ -5060,12 +5062,26 @@ function guardarPerfil(){
   var cuil = (document.getElementById('ep-cuil').value||'').trim();
   var mn = (document.getElementById('ep-mn').value||'').trim();
   var mp = (document.getElementById('ep-mp').value||'').trim();
+  var telefono = (document.getElementById('ep-telefono').value||'').trim();
   if(!nombre){ alert('Ingresá tu nombre.'); return; }
   usuarioActual.nombre = nombre;
   usuarioActual.sexo = sexo;
   usuarioActual.cuil = cuil;
   usuarioActual.mn = mn;
   usuarioActual.mp = mp;
+  usuarioActual.telefono = telefono;
+  // nombre, sexo, telefono y CUIL (columna real: cuil_cuit) persisten acá.
+  // La matrícula (M.N./M.P.) queda afuera a propósito: hoy se guarda como
+  // un solo texto combinado en la columna "matricula" (la columna
+  // "matricula_mp" existe pero nunca se llega a usar) — cambiar eso es un
+  // tema de diseño aparte, no algo para tocar de paso acá.
+  if(usuarioActual.id){
+    sb.from('usuarios').update({
+      nombre: nombre, sexo: sexo, cuil_cuit: cuil, telefono: telefono
+    }).eq('id', usuarioActual.id).then(function(r){
+      if(r.error) console.error('Error guardando perfil:', r.error);
+    });
+  }
   document.getElementById('app-user-name').textContent = nombreConTitulo(usuarioActual||{nombre:nombre}) + ' ✏️';
   precargarDatosMedico(usuarioActual);
   document.getElementById('modal-perfil').remove();
