@@ -12583,7 +12583,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   // ── MEDICAMENTOS: principio activo con más peso visual que la marca ──
   doc.setTextColor(20,90,50); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
   doc.text('Rp./ MEDICACIÓN PRESCRIPTA', x, y);
-  y += 4 + 30; // 3cm más de aire entre la etiqueta y el recuadro, pedido explícito
+  y += 4;
   var medBoxY = y, medW = W-margin*2-6;
   var medItems = (d.medicamentos && d.medicamentos.length) ? d.medicamentos : null;
 
@@ -12600,10 +12600,10 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   if(medItems){
     medBoxH = 8;
     alturaEstimadaLineas.forEach(function(nLineas){ medBoxH += 7 + nLineas*4.2 + 6; });
-    medBoxH = Math.max(medBoxH, 32);
+    medBoxH = Math.max(medBoxH, 32) + 30; // +3cm de recuadro real, pedido explícito
   } else {
     var contenidoLines = doc.splitTextToSize(d.contenido||'', medW-6);
-    medBoxH = Math.max(32, contenidoLines.length*5+12);
+    medBoxH = Math.max(32, contenidoLines.length*5+12) + 30;
   }
 
   doc.setFillColor(240,253,244); doc.setDrawColor(134,239,172); doc.setLineWidth(0.4);
