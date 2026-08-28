@@ -2908,7 +2908,7 @@ function mhcdRechazarCookies(){
               <label style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Email del paciente <span style="font-weight:400;text-transform:none;">(para recibir confirmaciones)</span>
               <input class="mi" id="turno-email" type="email" placeholder="paciente@email.com" style="margin-bottom:8px;">
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button onclick="enviarRecordatorioWA(1)" style="flex:1;background:linear-gradient(135deg,#128c7e,#25d366);color:#fff;border:none;border-radius:9px;padding:10px 12px;font-size:.78rem;font-weight:600;cursor:pointer;">📱 Recordatorio 1 día antes</button>
+                <button onclick="enviarRecordatorioWANuevoTurno(1)" style="flex:1;background:linear-gradient(135deg,#128c7e,#25d366);color:#fff;border:none;border-radius:9px;padding:10px 12px;font-size:.78rem;font-weight:600;cursor:pointer;">📱 Recordatorio 1 día antes</button>
               </div>
             </div>
 
@@ -4378,13 +4378,13 @@ function mhcdRechazarCookies(){
     <!-- HC -->
     <div id="pf-hc" class="mform" style="gap:10px;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Paciente<input class="mi" id="hc-paciente" type="text" placeholder="Apellido y nombre"></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">DNI<input class="mi" id="hc-dni" type="text" placeholder="30.000.000"></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Fecha de nac.<input class="mi" id="hc-fnac" type="date"></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Obra Social / Prepaga / Seg. Médico<input class="mi" id="hc-os" type="text" placeholder="OSDE / IOMA / Sanitas..."></div>
+        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Paciente<input class="mi" id="hc-print-paciente" type="text" placeholder="Apellido y nombre"></div>
+        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">DNI<input class="mi" id="hc-print-dni" type="text" placeholder="30.000.000"></div>
+        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Fecha de nac.<input class="mi" id="hc-print-fnac" type="date"></div>
+        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Obra Social / Prepaga / Seg. Médico<input class="mi" id="hc-print-os" type="text" placeholder="OSDE / IOMA / Sanitas..."></div>
         <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">N° Afiliado / N° Seg. Social / N° Colegiado<input class="mi" id="hc-print-afiliado" type="text" placeholder="N° afiliado / seguro social / colegiado"></div>
         <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Plan<input class="mi" id="hc-print-plan" type="text" placeholder="Plan 210 / Básico / Gold..."></div>
-        <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Diagnósticos<textarea class="mi" id="hc-diag" style="min-height:60px;" placeholder="HTA — I10&#10;DBT tipo 2 — E11"></textarea></div>
+        <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Diagnósticos<textarea class="mi" id="hc-print-diag" style="min-height:60px;" placeholder="HTA — I10&#10;DBT tipo 2 — E11"></textarea></div>
         <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Medicación habitual<textarea class="mi" id="hc-med" style="min-height:60px;" placeholder="Enalapril 10mg — 1 comp. cada 12 hs"></textarea></div>
         <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Antecedentes<textarea class="mi" id="hc-obs" style="min-height:50px;" placeholder="Alergias, cirugías, antecedentes familiares..."></textarea></div>
         <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Médico tratante<input class="mi" id="hc-medico" type="text" placeholder="Dr. Apellido · Mat. 00000"></div>
@@ -5515,10 +5515,11 @@ function abrirPrint(){
   // Auto-rellenar campos del Resumen HC desde la anamnesis
   var ga = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
   var fields = {
-    'hc-paciente': ga('hc-paciente'),
-    'hc-dni': ga('hc-dni'),
-    'hc-fnac': ga('hc-fnac'),
-    'hc-os': ga('hc-os'),
+    'hc-print-paciente': ga('hc-paciente'),
+    'hc-print-dni': ga('hc-dni'),
+    'hc-print-fnac': ga('hc-fnac'),
+    'hc-print-os': ga('hc-os'),
+    'hc-print-diag': [ga('hc-diag-principal'), ga('hc-diag-secundarios')].filter(Boolean).join('\n'),
     'hc-print-afiliado': ga('hc-afiliado'),
     'hc-medico': ga('evol-medico'),
   };
@@ -11466,11 +11467,6 @@ function solicitarFactura(){
     name: '🔔 NUEVA SOLICITUD DE FACTURA — ' + nombre,
     email: 'medhistoriaclinicaonline@gmail.com',
     message: 'SOLICITUD DE FACTURA DE SUSCRIPCIÓN\n\nNombre / Razón Social: '+nombre+'\nCUIT: '+cuit+'\nEmail de facturación: '+email+'\nCondición IVA: '+iva+'\nPlan contratado: '+plan+'\nPeríodo: '+periodo+'\nDomicilio Comercial: '+domicilio+(obs?'\nObservaciones: '+obs:'')
-  });
-  emailjs.send('service_3cprmeh', 'template_fdrpmfe', {
-    name: nombre + ' — Solicitud de Factura',
-    email: email,
-    message: 'SOLICITUD DE FACTURA DE SUSCRIPCIÓN\n\nNombre / Razón Social: '+nombre+'\nCUIT: '+cuit+'\nEmail de facturación: '+email+'\nCondición IVA: '+iva+'\nPlan contratado: '+plan+'\nPeríodo: '+periodo+'\nDomicilio Comercial: '+domicilio+(obs?'\nObservaciones: '+obs:'')
   }).then(function(){
     if(msg){
       msg.style.display='block';
@@ -12244,7 +12240,7 @@ function abrirNuevoTurno(){
 function cerrarNuevoTurno(){
   document.getElementById('turnoOverlay').style.display='none';
 }
-function enviarRecordatorioWA(diasAntes){
+function enviarRecordatorioWANuevoTurno(diasAntes){
   diasAntes = diasAntes || 1;
   var pac = (document.getElementById('turno-pac')||{}).value||'';
   var fecha = (document.getElementById('turno-fecha')||{}).value||'';
@@ -12325,7 +12321,7 @@ function guardarTurno(){
   // Ofrecer enviar recordatorio por WA
   if(wa){
     var enviar = confirm('✅ Turno guardado.\n\n¿Querés enviarle un recordatorio por WhatsApp a '+pac+'?');
-    if(enviar) enviarRecordatorioWA();
+    if(enviar) enviarRecordatorioWANuevoTurno();
   }
   
   cerrarNuevoTurno();
@@ -13316,13 +13312,13 @@ function getDatosDocumento(tipo){
     datos.labelContenido='DETALLE';
   } else if(tipo==='hc'){
     datos.titulo='RESUMEN DE HISTORIA CLÍNICA'; datos.icono='📋';
-    datos.pac=((document.getElementById('hc-paciente')||{}).value||'').toUpperCase();
-    datos.dni=(document.getElementById('hc-dni')||{}).value||'';
-    datos.fnac=(document.getElementById('hc-fnac')||{}).value||'';
-    datos.os=(document.getElementById('hc-os')||{}).value||'';
+    datos.pac=((document.getElementById('hc-print-paciente')||{}).value||'').toUpperCase();
+    datos.dni=(document.getElementById('hc-print-dni')||{}).value||'';
+    datos.fnac=(document.getElementById('hc-print-fnac')||{}).value||'';
+    datos.os=(document.getElementById('hc-print-os')||{}).value||'';
     datos.afiliado=(document.getElementById('hc-print-afiliado')||{}).value||'';
     datos.plan=(document.getElementById('hc-print-plan')||{}).value||'';
-    datos.diag=(document.getElementById('hc-diag')||{}).value||'';
+    datos.diag=(document.getElementById('hc-print-diag')||{}).value||'';
     datos.contenido=(document.getElementById('hc-med')||{}).value||'';
     datos.ind=(document.getElementById('hc-obs')||{}).value||'';
     datos.medico=(document.getElementById('hc-medico')||{}).value||'';
