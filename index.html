@@ -7052,7 +7052,7 @@ function enviarCodigoWhatsApp(){
   var tel = telInp ? (telInp.value||'').replace(/\D/g,'') : '';
   if(!tel){ alert('Ingresá el WhatsApp del médico.'); return; }
   var nombreCentro = miCentro ? miCentro.nombre : 'nuestro centro';
-  var linkDirecto = 'https://medhistoriaclinicadigital-crypto.github.io/medhistoria/?codigo='+encodeURIComponent(_ultimoCodigoInvitacion);
+  var linkDirecto = 'https://medhistoriaclinicaonline.com/?codigo='+encodeURIComponent(_ultimoCodigoInvitacion);
   var msg = '👋 ¡Hola! Te invitamos a sumarte a *'+nombreCentro+'* en MedHistoriaClinicaOnline.\n\n'
     + 'Tocá este link para crear tu cuenta gratis — te va a aparecer el formulario de registro con tu código de invitación ya cargado:\n\n'
     + linkDirecto + '\n\n'
