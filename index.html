@@ -12362,24 +12362,17 @@ try {
   // usuario y contraseña solo (ver autocomplete en ml-user/ml-pass), y el
   // médico entra apretando "Ingresar" él mismo. Nada de sesión restaurada
   // en segundo plano.
+  //
+  // NO intentamos "verificar" acá si el navegador tiene algo guardado: el
+  // autocompletado casi nunca llega a escribir el .value antes de que el
+  // usuario toque la página (Chrome no lo expone a JS sin interacción), así
+  // que cualquier chequeo con timer da falso negativo y termina apagando
+  // "Recordar" solo en cada refresh (era el bug P2). Si el gestor no tiene
+  // nada guardado, peor caso: la casilla queda tildada y el médico escribe
+  // usuario/contraseña a mano una vez — sin daño.
   try{
     if(localStorage.getItem('mhcd_recordar')==='1'){
       mostrarLogin();
-      // No hay forma de preguntarle al navegador si tiene algo guardado
-      // (por privacidad, ninguna página puede consultar eso directo) —
-      // pero si el autocompletado no llegó a completar los campos en un
-      // margen razonable, es porque en los hechos no hay nada guardado.
-      // Destildamos solos para que la casilla no mienta.
-      setTimeout(function(){
-        var uEl = document.getElementById('ml-user');
-        var pEl = document.getElementById('ml-pass');
-        var hayAlgoGuardado = uEl && pEl && uEl.value.trim() && pEl.value.trim();
-        if(!hayAlgoGuardado){
-          localStorage.removeItem('mhcd_recordar');
-          var rEl = document.getElementById('ml-recordar');
-          if(rEl) rEl.checked = false;
-        }
-      }, 600);
     }
   }catch(e){}
   // Auto-fill fecha actual en campos type="date" (formato YYYY-MM-DD)
