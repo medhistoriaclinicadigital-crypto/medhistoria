@@ -6062,7 +6062,10 @@ function procesarPago(){
     })
   }).catch(function(){});
 
-  // Guardar la solicitud real en Supabase para el reporte del panel admin
+  // Guardar la solicitud real en Supabase para el reporte del panel admin.
+  // El aviso al usuario espera la respuesta: si el trigger anti-spam la
+  // rechaza (RAISE EXCEPTION, código P0001), mostramos su mensaje real en
+  // vez de un "✅ enviada" que no fue verdad.
   sb.from('solicitudes_suscripcion').insert({
     medico_nombre: nombre+' '+apellido,
     medico_email: email,
@@ -6072,10 +6075,20 @@ function procesarPago(){
     forma_pago: pago,
     cuit: dni,
     direccion: direccion
-  }).then(function(r){ if(r.error) console.error('Error guardando solicitud de suscripción:', r.error); });
-
-  cerrarPago();
-  alert('✅ ¡Solicitud enviada!\n\nTe contactaremos en menos de 24hs al email:\n'+email);
+  }).then(function(r){
+    cerrarPago();
+    if(r.error && r.error.code === 'P0001'){
+      console.error('Solicitud de suscripción rechazada por el anti-spam:', r.error);
+      alert('⚠️ '+r.error.message);
+      return;
+    }
+    if(r.error){
+      // Otro error (red, etc.): la solicitud igual salió por email, así que
+      // no alarmamos al usuario — queda en consola para diagnóstico.
+      console.error('Error guardando solicitud de suscripción:', r.error);
+    }
+    alert('✅ ¡Solicitud enviada!\n\nTe contactaremos en menos de 24hs al email:\n'+email);
+  });
 }
 
 // ── FIRMA DIGITAL ──
