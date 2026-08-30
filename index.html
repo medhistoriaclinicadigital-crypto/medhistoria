@@ -10483,6 +10483,69 @@ function buscarPacienteIdCompartido(dni, callback){
   });
 }
 
+// Garantiza un paciente_id válido para adjuntar a turnos, videoconsultas y
+// facturas. Esas políticas RLS ahora exigen que el paciente sea del médico o
+// accesible por su centro (antes se colaba paciente_id NULL). Busca un
+// paciente existente por DNI (si se conoce) y si no por nombre+apellido
+// normalizados, entre los del médico y los de su centro; si no encuentra
+// ninguno, crea una ficha mínima (walk-in / paciente no registrado) y
+// devuelve su id. callback(null) solo si no vino ni nombre.
+function asegurarPacienteId(datos, callback){
+  if(!usuarioActual || !usuarioActual.id){ callback(null); return; }
+  var esCentro = (typeof miCentro !== 'undefined' && miCentro && miCentro.id);
+  var dni = (datos.dni||'').toString().trim();
+  var nombre = (datos.nombre||'').toString().trim();
+  var apellido = (datos.apellido||'').toString().trim();
+  // "Apellido, Nombre" en un solo campo (formato que usan los forms de turno) -> separar
+  if(!apellido && nombre.indexOf(',') > -1){
+    var pp = nombre.split(',');
+    apellido = (pp[0]||'').trim();
+    nombre   = (pp.slice(1).join(',')||'').trim();
+  }
+  if(!nombre && !apellido){ callback(null); return; }
+  var norm = function(s){ return (s||'').toString().toLowerCase().replace(/\s+/g,' ').trim(); };
+  var nN = norm(nombre), aN = norm(apellido);
+
+  var crear = function(){
+    var campos = { nombre: nombre, apellido: apellido };
+    if(dni) campos.dni = dni;
+    if(datos.telefono) campos.telefono = datos.telefono.toString().trim();
+    if(datos.email) campos.email = datos.email.toString().trim();
+    if(esCentro){
+      sb.rpc('guardar_paciente_centro', { p_device_token: _deviceToken(), p_paciente_id: null, p_campos: campos }).then(function(r){
+        if(r.error) console.error('asegurarPacienteId: no se pudo crear paciente de centro:', r.error);
+        callback(r.error ? null : r.data);
+      });
+    } else {
+      campos.medico_id = usuarioActual.id;
+      sb.from('pacientes').insert(campos).select('id').then(function(r){
+        if(r.error) console.error('asegurarPacienteId: no se pudo crear paciente:', r.error);
+        callback((r.data && r.data[0]) ? r.data[0].id : null);
+      });
+    }
+  };
+
+  var buscarPorNombre = function(nextIfNone){
+    var q = esCentro
+      ? sb.rpc('obtener_pacientes_centro', { p_device_token: _deviceToken() })
+      : sb.from('pacientes').select('id,nombre,apellido').eq('medico_id', usuarioActual.id);
+    q.then(function(r){
+      var hit = (r.data||[]).filter(function(p){ return norm(p.nombre)===nN && norm(p.apellido)===aN; })[0];
+      if(hit){ callback(hit.id); return; }
+      nextIfNone();
+    });
+  };
+
+  if(dni){
+    buscarPacienteIdCompartido(dni, function(idDni){
+      if(idDni){ callback(idDni); return; }
+      buscarPorNombre(crear);
+    });
+  } else {
+    buscarPorNombre(crear);
+  }
+}
+
 function guardarExamenFisico(){
   var ga = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
   var examen = {
@@ -11172,7 +11235,7 @@ function generarVideollamada(){
 
   var nuevaVC = {
     pac:pac, fecha:fecha, fechaDisplay:fechaDisplay,
-    hora:hora, duracion:duracion, motivo:motivo, link:linkVideollamada, plataforma:'Meet'
+    hora:hora, duracion:duracion, motivo:motivo, link:linkVideollamada, plataforma:'Meet', telefono:tel
   };
   videoconsultas.unshift(nuevaVC);
   guardarVideoconsultaSupabase(nuevaVC);
@@ -11329,19 +11392,22 @@ function enviarLinkExterno(nombre){
 
 function guardarVideoconsultaSupabase(v){
   if(!usuarioActual || !usuarioActual.id) return;
-  sb.from('videoconsultas').insert({
-    medico_id: usuarioActual.id,
-    paciente_nombre: v.pac,
-    fecha: v.fecha,
-    hora: v.hora,
-    duracion: v.duracion,
-    motivo: v.motivo,
-    plataforma: v.plataforma||'',
-    link: v.link||'',
-    telefono: v.telefono||'',
-    estado: 'programada'
-  }).select().then(function(r){
-    if(r.data && r.data[0]) v._sbId = r.data[0].id;
+  asegurarPacienteId({ nombre: v.pac, telefono: v.telefono||'' }, function(pacienteId){
+    sb.from('videoconsultas').insert({
+      medico_id: usuarioActual.id,
+      paciente_id: pacienteId,
+      paciente_nombre: v.pac,
+      fecha: v.fecha,
+      hora: v.hora,
+      duracion: v.duracion,
+      motivo: v.motivo,
+      plataforma: v.plataforma||'',
+      link: v.link||'',
+      telefono: v.telefono||'',
+      estado: 'programada'
+    }).select().then(function(r){
+      if(r.data && r.data[0]) v._sbId = r.data[0].id;
+    });
   });
 }
 
@@ -11577,7 +11643,7 @@ function accionFacturaParticular(accion){
     var val = inputs[2] ? inputs[2].value : '0';
     if(desc) prestacionesFp.push({descripcion: desc, cantidad: parseFloat(cant)||1, valor: parseFloat(val)||0});
   });
-  buscarPacienteIdCompartido(dniFp, function(pacienteIdFp){
+  asegurarPacienteId({ dni: dniFp, nombre: pacienteNombre }, function(pacienteIdFp){
     var factSB = {
       paciente_id: pacienteIdFp,
       medico_id: usuarioActual.id,
@@ -11639,7 +11705,7 @@ if(tipo==='part' && usuarioActual && usuarioActual.id){
 		      var val = inputs[2] ? inputs[2].value : '0';
 		      if(desc) prestacionesFp.push({descripcion: desc, cantidad: parseFloat(cant)||1, valor: parseFloat(val)||0});
 		    });
-		    buscarPacienteIdCompartido(dniFp, function(pacienteIdFp){
+		    asegurarPacienteId({ dni: dniFp, nombre: pacienteNombre }, function(pacienteIdFp){
 		      var factSB = {
 		        paciente_id: pacienteIdFp,
 		        medico_id: usuarioActual.id,
@@ -12300,8 +12366,7 @@ function guardarTurno(){
   turnos.push({pac:pac, fecha:fecha, fechaDisplay:fechaDisplay, hora:hora, motivo:motivo||'Consulta', os:os, estado:prio, wa:wa});
   // Guardar también en Supabase
   if(usuarioActual && usuarioActual.id){
-    sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('nombre', pac.split(',')[1]?pac.split(',')[1].trim():pac).eq('apellido', pac.split(',')[0].trim()).then(function(rPac){
-      var pacienteId = (rPac.data && rPac.data.length>0) ? rPac.data[0].id : null;
+    asegurarPacienteId({ nombre: pac, telefono: wa }, function(pacienteId){
       var turnoSB = {
         medico_id: usuarioActual.id,
         paciente_id: pacienteId,
