@@ -4599,7 +4599,7 @@ function cerrarNuevoPaciente(){
 function borrarPaciente(nombre, cardEl){
   if(!confirm('¿Borrar a '+nombre+'?')) return;
   var reales = [];
-  try { reales = JSON.parse(localStorage.getItem(_userKey('mhcd_pacientes'))||'[]'); } catch(e){}
+  try { reales = JSON.parse(localStorage.getItem(_userKey('mhcd_pacientes'))||'[]'); } catch(e){ console.warn('[catch]', e); }
   reales = reales.filter(function(p){ return p.nombre !== nombre; });
   localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(reales));
   pacientes = reales;
@@ -4663,7 +4663,7 @@ function guardarPaciente(){
 
   // Guardar o actualizar en localStorage
   var reales = [];
-  try { reales = JSON.parse(localStorage.getItem(_userKey('mhcd_pacientes'))||'[]'); } catch(e){}
+  try { reales = JSON.parse(localStorage.getItem(_userKey('mhcd_pacientes'))||'[]'); } catch(e){ console.warn('[catch]', e); }
   if(_editandoPacienteIdx >= 0 && pacientes[_editandoPacienteIdx]){
     // Buscar el paciente en reales por DNI primero, luego por nombre
     var pOrig = pacientes[_editandoPacienteIdx];
@@ -5018,10 +5018,10 @@ function entrarDirecto(){
   if(df) df.textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); })();
   var aun = document.getElementById('app-user-name');
   if(aun) aun.textContent = 'Dr. Usuario ✏️';
-  try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
-  try{ actualizarFechaHC(); }catch(e){}
-  try{ fixScroll(); }catch(e){}
-  try{ showPanel('dash'); }catch(e){}
+  try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){ console.warn('[catch]', e); }
+  try{ actualizarFechaHC(); }catch(e){ console.warn('[catch]', e); }
+  try{ fixScroll(); }catch(e){ console.warn('[catch]', e); }
+  try{ showPanel('dash'); }catch(e){ console.warn('[catch]', e); }
 }
 
 
@@ -5136,7 +5136,7 @@ function mostrarRecuperarPass(){
   });
 }
 function cerrarApp(){
-  try{ sb.auth.signOut(); }catch(e){}
+  try{ sb.auth.signOut(); }catch(e){ console.warn('[catch]', e); }
   usuarioActual = null;
   document.body.classList.remove('in-app');
   document.getElementById('app').style.display='none';
@@ -5284,18 +5284,18 @@ function showPanel(id){
   document.body.scrollTop=0;
   window.scrollTo(0,0);
 
-  if(id==='agenda') { try{ renderTurnos(); }catch(e){} }
-  if(id==='analitica') { try{ checkAddonAnalitica(); if(tieneAddonAnalitica()) setTimeout(renderAnalitica,80); }catch(e){} }
-  if(id==='firma-medico') { try{ initPanelFirma(); }catch(e){} }
-  if(id==='telemed') { try{ var tf=document.getElementById('tele-fecha'); if(tf&&!tf.value){ tf.value=new Date().toISOString().split('T')[0]; } }catch(e){} }
-  if(id==='resumen-hc') { try{ cargarPacientesEnSelect(); }catch(e){} }
+  if(id==='agenda') { try{ renderTurnos(); }catch(e){ console.warn('[catch]', e); } }
+  if(id==='analitica') { try{ checkAddonAnalitica(); if(tieneAddonAnalitica()) setTimeout(renderAnalitica,80); }catch(e){ console.warn('[catch]', e); } }
+  if(id==='firma-medico') { try{ initPanelFirma(); }catch(e){ console.warn('[catch]', e); } }
+  if(id==='telemed') { try{ var tf=document.getElementById('tele-fecha'); if(tf&&!tf.value){ tf.value=new Date().toISOString().split('T')[0]; } }catch(e){ console.warn('[catch]', e); } }
+  if(id==='resumen-hc') { try{ cargarPacientesEnSelect(); }catch(e){ console.warn('[catch]', e); } }
   if(id==='pacientes'){ 
     try{ 
       cargarLocal();
       renderPacientes();
       var b=document.getElementById('pac-buscar'); 
       if(b){b.value='';filtrarPacientes('');} 
-    }catch(e){} 
+    }catch(e){ console.warn('[catch]', e); } 
   }
  if(id==='recetas' || id==='derivaciones' || id==='estudios' || id==='facturacion'){
     try{
@@ -5332,12 +5332,12 @@ function showPanel(id){
         // fillField asigna .value directo, sin disparar "change" — el
         // autocompletado del CUIL de la receta depende de ese evento, así
         // que hay que llamarlo a mano acá también.
-        if(id==='recetas'){ try{ _autocompletarCuilReceta(); }catch(e){} }
+        if(id==='recetas'){ try{ _autocompletarCuilReceta(); }catch(e){ console.warn('[catch]', e); } }
         if(hcPac && panel){ var sub=panel.querySelector('.app-page-sub'); if(sub) sub.textContent='Paciente: '+hcPac+(hcDni?' · DNI '+hcDni:''); }
       }
-    }catch(e){}
+    }catch(e){ console.warn('[catch]', e); }
   }
-if(id==='recetas' || id==='derivaciones' || id==='estudios'){ try{ mostrarValidezPais(id); }catch(e){} }
+if(id==='recetas' || id==='derivaciones' || id==='estudios'){ try{ mostrarValidezPais(id); }catch(e){ console.warn('[catch]', e); } }
 }
 
 function mostrarValidezPais(tipoId){
@@ -5351,7 +5351,7 @@ function mostrarValidezPais(tipoId){
     } else {
       cont.innerHTML = '';
     }
-  }catch(e){}
+  }catch(e){ console.warn('[catch]', e); }
 }
 // ══ LIMPIAR FORMULARIO HC ══
 function limpiarFormularioHC(){
@@ -5383,7 +5383,7 @@ function limpiarFormularioHC(){
 var pacienteHCActualIdx = -1;
 
 function abrirHC(nombre, dni, edad, os){
-  try{ var evMed = document.getElementById('evol-medico'); if(evMed) evMed.value = nombreConTitulo(usuarioActual); }catch(e){}
+  try{ var evMed = document.getElementById('evol-medico'); if(evMed) evMed.value = nombreConTitulo(usuarioActual); }catch(e){ console.warn('[catch]', e); }
   // Buscar el paciente completo en el array
   var idx = -1;
   for(var i=0;i<pacientes.length;i++){
@@ -5916,8 +5916,8 @@ function activarConCodigoPago(){
     cerrarPago();
     var nombres = {whatsapp:'Comunicación Directa', firma:'Firma Digital Integrada', analitica:'Analítica Avanzada'};
     alert('✅ ¡Add-on "'+nombres[addon]+'" activado correctamente!\n\nYa podés usar todas las funciones.');
-    if(addon==='firma'){ try{ checkAddonFirma(); }catch(e){} }
-    if(addon==='analitica'){ try{ checkAddonAnalitica(); setTimeout(renderAnalitica,100); }catch(e){} }
+    if(addon==='firma'){ try{ checkAddonFirma(); }catch(e){ console.warn('[catch]', e); } }
+    if(addon==='analitica'){ try{ checkAddonAnalitica(); setTimeout(renderAnalitica,100); }catch(e){ console.warn('[catch]', e); } }
   });
 }
 
@@ -6044,7 +6044,7 @@ function procesarPago(){
 
   // Guardar solicitud en localStorage
   var solicitudes = [];
-  try { solicitudes = JSON.parse(localStorage.getItem('med_solicitudes')||'[]'); } catch(e){}
+  try { solicitudes = JSON.parse(localStorage.getItem('med_solicitudes')||'[]'); } catch(e){ console.warn('[catch]', e); }
   solicitudes.push({nombre:nombre+' '+apellido, email:email, plan:plan, pago:pago, fecha:new Date().toLocaleString('es-AR')});
   localStorage.setItem('med_solicitudes', JSON.stringify(solicitudes));
 
@@ -10625,7 +10625,7 @@ function registrarAuditoria(idxPaciente, campo, valorAnterior, valorNuevo){
   var fechaLarga = dias[now.getDay()]+', '+now.getDate()+' de '+meses[now.getMonth()]+' de '+now.getFullYear();
   var hora = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
   var medicoNombre = '';
-  try{ if(usuarioActual) medicoNombre = nombreConTitulo(usuarioActual); }catch(e){}
+  try{ if(usuarioActual) medicoNombre = nombreConTitulo(usuarioActual); }catch(e){ console.warn('[catch]', e); }
   p.auditoria.unshift({
     campo: campo,
     anterior: valorAnterior,
@@ -12310,8 +12310,8 @@ function abrirNuevoTurno(){
   ['turno-pac','turno-motivo','turno-wa','turno-email','turno-os'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value='';
   });
-  try{ document.getElementById('turno-hora').value='09:00'; }catch(e){}
-  try{ var pr=document.getElementById('turno-prioridad'); if(pr) pr.value='Normal'; }catch(e){}
+  try{ document.getElementById('turno-hora').value='09:00'; }catch(e){ console.warn('[catch]', e); }
+  try{ var pr=document.getElementById('turno-prioridad'); if(pr) pr.value='Normal'; }catch(e){ console.warn('[catch]', e); }
   // Poner fecha de hoy por defecto
   var hoyISO = new Date().toISOString().split('T')[0];
   document.getElementById('turno-fecha').value = hoyISO;
@@ -12429,7 +12429,7 @@ try {
         lista.insertBefore(card, lista.firstChild);
       });
     }
-  } catch(e){}
+  } catch(e){ console.warn('[catch]', e); }
   cargarLocal();
   renderTurnos();
   setTimeout(function(){
@@ -12452,7 +12452,7 @@ try {
     if(localStorage.getItem('mhcd_recordar')==='1'){
       mostrarLogin();
     }
-  }catch(e){}
+  }catch(e){ console.warn('[catch]', e); }
   // Auto-fill fecha actual en campos type="date" (formato YYYY-MM-DD)
   var hoyISO = new Date().toISOString().split('T')[0];
   var eaFecha = document.getElementById('hc-ea-fecha');
@@ -12521,7 +12521,7 @@ var _logoPNG = null;
       _logoPNG = canvas.toDataURL('image/png');
     };
     img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-  } catch(e){}
+  } catch(e){ console.warn('[catch]', e); }
 })();
 
 // Receta electrónica — modelo preparado para la Inscripción al Registro de
@@ -12562,7 +12562,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   doc.setFontSize(16); doc.setFont('times','bold');
   var txtW = doc.getTextWidth('MedHistoriaClinicaOnline');
   var startX2 = (W-(logoW+gap+txtW))/2;
-  if(_logoPNG){ try{ doc.addImage(_logoPNG,'PNG',startX2,8,logoW,8.5); }catch(e){} }
+  if(_logoPNG){ try{ doc.addImage(_logoPNG,'PNG',startX2,8,logoW,8.5); }catch(e){ console.warn('[catch]', e); } }
   doc.setTextColor(20,90,50);
   doc.text('MedHistoriaClinicaOnline', startX2+logoW+gap, 15, {align:'left'});
   doc.setDrawColor(20,90,50); doc.setLineWidth(0.5);
@@ -12795,7 +12795,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   // La firma manuscrita/digital solo se estampa con el add-on Firma Digital
   // Integrada activo — sin él, la receta se genera igual pero sin firma.
   var _firmaImg = (usuarioActual && tieneAddonFirma()) ? usuarioActual.firma_imagen : null;
-  if(_firmaImg){ try{ doc.addImage(_firmaImg,'PNG',x,footerY-22,42,17); }catch(e){} }
+  if(_firmaImg){ try{ doc.addImage(_firmaImg,'PNG',x,footerY-22,42,17); }catch(e){ console.warn('[catch]', e); } }
   doc.setTextColor(20,20,20); doc.setFontSize(13); doc.setFont('times','bold');
   doc.text((usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ')+d.nombreProfesional, x, footerY-4);
   doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
@@ -12853,7 +12853,7 @@ function generarPDFbase64(tipo, callback){
   var txtW = doc.getTextWidth('MedHistoriaClinicaOnline');
   var totalW2 = logoW + gap + txtW;
   var startX2 = (W - totalW2) / 2;
-  if(_logoPNG){ try { doc.addImage(_logoPNG, 'PNG', startX2, 8, logoW, 8.5); } catch(e){} }
+  if(_logoPNG){ try { doc.addImage(_logoPNG, 'PNG', startX2, 8, logoW, 8.5); } catch(e){ console.warn('[catch]', e); } }
   doc.setTextColor(20,90,50);
   doc.text('MedHistoriaClinicaOnline', startX2 + logoW + gap, 15, {align:'left'});
 
@@ -13062,7 +13062,7 @@ function generarPDFbase64(tipo, callback){
   // Firma manuscrita guardada — solo se estampa con el add-on Firma Digital
   // Integrada activo; sin él, el documento se genera igual pero sin firma.
   var _firmaImg = tieneAddonFirma() ? (usuarioActual ? usuarioActual.firma_imagen : localStorage.getItem('medhistoria_firma')) : null;
-  if(_firmaImg){ try{ doc.addImage(_firmaImg,'PNG',x,footerY-24,44,18); }catch(e){} }
+  if(_firmaImg){ try{ doc.addImage(_firmaImg,'PNG',x,footerY-24,44,18); }catch(e){ console.warn('[catch]', e); } }
 
   doc.text(medicoNombre, x, footerY - 4);
 
@@ -14196,7 +14196,7 @@ function guardarLocal(){
     localStorage.setItem(_userKey('mhcd_turnos'), JSON.stringify(turnos||[]));
     localStorage.setItem(_userKey('mhcd_videoconsultas'), JSON.stringify(videoconsultas||[]));
 
-  } catch(e){}
+  } catch(e){ console.warn('[catch]', e); }
 }
 function cargarLocal(){
   try {
@@ -14541,7 +14541,7 @@ function iniciarMic(){
 
 function detenerMic(){
   dictadoActivo = false;
-  if(recognition){ try{ recognition.stop(); }catch(e){} recognition = null; }
+  if(recognition){ try{ recognition.stop(); }catch(e){ console.warn('[catch]', e); } recognition = null; }
   clearInterval(timerInterval);
   var btn = document.getElementById('mic-btn');
   var status = document.getElementById('mic-status');
@@ -15272,17 +15272,17 @@ function continuarLoginTrasDispositivo(authId, emailFallback){
       document.body.classList.add('in-app');
       if(app){ app.style.display='block'; }
       setTimeout(function(){ window.scrollTo(0,0); },30);
-      try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){}
-      try{ document.getElementById('app-user-name').textContent = nombreConTitulo(perfil) + ' 👨‍⚕️'; }catch(e){}
-      try{ var evMed = document.getElementById('evol-medico'); if(evMed) evMed.value = nombreConTitulo(perfil); }catch(e){}
-      try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
-      try{ cargarMiCentro(function(){ sincronizarPacientesSupabase(); }); }catch(e){ try{ sincronizarPacientesSupabase(); }catch(e2){} }
-      try{ sincronizarTurnosSupabase(); }catch(e){}
-		 try{ sincronizarVideoconsultasSupabase(); }catch(e){}
-      try{ sincronizarHistoriasClinicasSupabase(); }catch(e){}
-      try{ sincronizarEvolucionesSupabase(); }catch(e){}
-      try{ showPanel('dash'); }catch(e){}
-      try{ precargarDatosMedico(perfil); }catch(e){}
+      try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){ console.warn('[catch]', e); }
+      try{ document.getElementById('app-user-name').textContent = nombreConTitulo(perfil) + ' 👨‍⚕️'; }catch(e){ console.warn('[catch]', e); }
+      try{ var evMed = document.getElementById('evol-medico'); if(evMed) evMed.value = nombreConTitulo(perfil); }catch(e){ console.warn('[catch]', e); }
+      try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){ console.warn('[catch]', e); }
+      try{ cargarMiCentro(function(){ sincronizarPacientesSupabase(); }); }catch(e){ try{ sincronizarPacientesSupabase(); }catch(e2){ console.warn('[catch]', e2); } }
+      try{ sincronizarTurnosSupabase(); }catch(e){ console.warn('[catch]', e); }
+		 try{ sincronizarVideoconsultasSupabase(); }catch(e){ console.warn('[catch]', e); }
+      try{ sincronizarHistoriasClinicasSupabase(); }catch(e){ console.warn('[catch]', e); }
+      try{ sincronizarEvolucionesSupabase(); }catch(e){ console.warn('[catch]', e); }
+      try{ showPanel('dash'); }catch(e){ console.warn('[catch]', e); }
+      try{ precargarDatosMedico(perfil); }catch(e){ console.warn('[catch]', e); }
     });
 }
 
@@ -15505,23 +15505,23 @@ function mlRegistrar(){
           if(r3.error){ console.error('Error canjeando código de centro:', r3.error); return; }
           if(r3.data && r3.data.length > 0 && r3.data[0].centro_id){
             setTimeout(function(){ alert('✅ Además, quedaste sumado al Centro Médico "'+r3.data[0].centro_nombre+'".'); }, 800);
-            try{ cargarMiCentro(function(){ sincronizarPacientesSupabase(); renderCentroMedico(); }); }catch(e){}
+            try{ cargarMiCentro(function(){ sincronizarPacientesSupabase(); renderCentroMedico(); }); }catch(e){ console.warn('[catch]', e); }
           } else {
             setTimeout(function(){ alert('⚠️ El código de invitación ingresado no es válido o ya fue usado. Podés pedirle uno nuevo a tu centro, o agregarte más tarde.'); }, 800);
           }
         });
       } else {
-        try{ cargarMiCentro(function(){ sincronizarPacientesSupabase(); }); }catch(e){}
+        try{ cargarMiCentro(function(){ sincronizarPacientesSupabase(); }); }catch(e){ console.warn('[catch]', e); }
       }
     });
 
     ['ml-reg-nombre','ml-reg-dni','ml-reg-cuil','ml-reg-tel','ml-reg-mn','ml-reg-mp','ml-reg-esp','ml-reg-subesp','ml-reg-inst','ml-reg-provincia','ml-reg-ciudad','ml-reg-email','ml-reg-pass','ml-reg-pass2','ml-reg-codigo-centro'].forEach(function(id){
       var el=document.getElementById(id); if(el) el.value='';
     });
-    try{ var sx=document.getElementById('ml-reg-sexo'); if(sx) sx.selectedIndex=0; }catch(e){}
-    try{ var px=document.getElementById('ml-reg-pais'); if(px) px.selectedIndex=0; }catch(e){}
-    try{ var pl=document.getElementById('ml-reg-plan'); if(pl) pl.selectedIndex=0; }catch(e){}
-    try{ var tc=document.getElementById('ml-reg-terminos'); if(tc) tc.checked=false; }catch(e){}
+    try{ var sx=document.getElementById('ml-reg-sexo'); if(sx) sx.selectedIndex=0; }catch(e){ console.warn('[catch]', e); }
+    try{ var px=document.getElementById('ml-reg-pais'); if(px) px.selectedIndex=0; }catch(e){ console.warn('[catch]', e); }
+    try{ var pl=document.getElementById('ml-reg-plan'); if(pl) pl.selectedIndex=0; }catch(e){ console.warn('[catch]', e); }
+    try{ var tc=document.getElementById('ml-reg-terminos'); if(tc) tc.checked=false; }catch(e){ console.warn('[catch]', e); }
 
     document.getElementById('miLoginModal').style.display='none';
     var landing = document.getElementById('landing');
@@ -15530,11 +15530,11 @@ function mlRegistrar(){
     document.body.classList.add('in-app');
     if(app){ app.style.display='block'; }
     setTimeout(function(){ window.scrollTo(0,0); },30);
-    try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){}
-    try{ document.getElementById('app-user-name').textContent = nombreConTitulo(usuarioActual||{nombre:nombre}) + ' ✏️'; }catch(e){}
-    try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){}
-    try{ showPanel('dash'); }catch(e){}
-    try{ precargarDatosMedico(nuevoUser); }catch(e){}
+    try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){ console.warn('[catch]', e); }
+    try{ document.getElementById('app-user-name').textContent = nombreConTitulo(usuarioActual||{nombre:nombre}) + ' ✏️'; }catch(e){ console.warn('[catch]', e); }
+    try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){ console.warn('[catch]', e); }
+    try{ showPanel('dash'); }catch(e){ console.warn('[catch]', e); }
+    try{ precargarDatosMedico(nuevoUser); }catch(e){ console.warn('[catch]', e); }
     try {
       emailjs.send('service_3cprmeh', 'template_qv3i2jf', {
         name: nombre,
@@ -15598,7 +15598,7 @@ function finalizarAtencion(){
   // Limpiar Facturación
   ['fp-paciente','fp-dni'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
   ['fo-paciente','fo-dni','fo-os','fo-afiliado'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
-  try{ limpiarFacturaForm('fp'); limpiarFacturaForm('fo'); }catch(e){}
+  try{ limpiarFacturaForm('fp'); limpiarFacturaForm('fo'); }catch(e){ console.warn('[catch]', e); }
   showPanel('pacientes');
 }
 
