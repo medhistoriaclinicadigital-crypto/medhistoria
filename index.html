@@ -12129,6 +12129,21 @@ var turnos = (function(){
   ];
 })();
 
+function tagInfo(t){ 
+  if(t.estado==='ok') return 'tag-ok';
+  if(t.estado==='confirmado') return 'tag-confirmado';
+  if(t.estado==='cancelado') return 'tag-cancelado';
+  if(t.estado==='urgent') return 'tag-urgent';
+  return 'tag-pend'; 
+}
+function tagTxt(t){ 
+  if(t.estado==='ok') return '✅ Atendido';
+  if(t.estado==='confirmado') return '🟢 Confirmado';
+  if(t.estado==='cancelado') return '🔴 Cancelado';
+  if(t.estado==='urgent') return '🚨 Urgente';
+  return '🟡 Pendiente'; 
+}
+
 function renderTurnos(lista){
   if(!lista) lista = turnos;
 
@@ -12142,20 +12157,6 @@ function renderTurnos(lista){
   deHoy.sort(function(a,b){ return a.hora.localeCompare(b.hora); });
   proximos.sort(function(a,b){ return (a.fecha+a.hora).localeCompare(b.fecha+b.hora); });
 
-  function tagInfo(t){ 
-    if(t.estado==='ok') return 'tag-ok';
-    if(t.estado==='confirmado') return 'tag-confirmado';
-    if(t.estado==='cancelado') return 'tag-cancelado';
-    if(t.estado==='urgent') return 'tag-urgent';
-    return 'tag-pend'; 
-  }
-  function tagTxt(t){ 
-    if(t.estado==='ok') return '✅ Atendido';
-    if(t.estado==='confirmado') return '🟢 Confirmado';
-    if(t.estado==='cancelado') return '🔴 Cancelado';
-    if(t.estado==='urgent') return '🚨 Urgente';
-    return '🟡 Pendiente'; 
-  }
 
   function renderFila(t, mostrarFecha){
     var idx = turnos.indexOf(t);
@@ -12256,7 +12257,7 @@ function filtrarPorFecha(){
   var partes = fecha.split('-');
   var fechaStr = partes[2]+'/'+partes[1]+'/'+partes[0]; // DD/MM/YYYY
 
-  var filtrados = turnos.filter(function(t){ return t.fecha === fechaStr; });
+  var filtrados = turnos.filter(function(t){ return t.fecha === fecha || t.fechaDisplay === fechaStr; });
 
   // Mostrar vista filtrada
   document.getElementById('agenda-fecha-vista').style.display = 'block';
@@ -12279,7 +12280,7 @@ function filtrarPorFecha(){
       var tagText = tagTxt(t);
       return '<div class="agenda-item" style="">'
         +'<div class="agenda-hora">'+escHtml(t.hora)+'</div>'
-        +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(t.paciente)+'</div>'
+        +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(t.pac)+'</div>'
         +'<div class="agenda-mot">'+escHtml(t.motivo)+(t.os?' · '+escHtml(t.os):'')+'</div></div>'
         +'<span class="pac-tag '+tagClass+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;">'+tagText+'</span>'
         +'<button onclick="eliminarTurno('+idx+')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:0 4px;">✕</button>'
