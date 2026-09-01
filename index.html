@@ -5287,8 +5287,7 @@ function showPanel(id){
   if(id==='analitica') { try{ checkAddonAnalitica(); if(tieneAddonAnalitica()) setTimeout(renderAnalitica,80); }catch(e){ console.warn('[catch]', e); } }
   if(id==='firma-medico') { try{ initPanelFirma(); }catch(e){ console.warn('[catch]', e); } }
   if(id==='telemed') { try{ var tf=document.getElementById('tele-fecha'); if(tf&&!tf.value){ tf.value=new Date().toISOString().split('T')[0]; } }catch(e){ console.warn('[catch]', e); } }
-  if(id==='resumen-hc') { try{ cargarPacientesEnSelect(); }catch(e){ console.warn('[catch]', e); } }
-  if(id==='pacientes'){ 
+  if(id==='pacientes'){
     try{ 
       cargarLocal();
       renderPacientes();
