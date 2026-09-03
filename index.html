@@ -161,6 +161,10 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;
 .sec-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.9rem,4vw,2.8rem);color:var(--g2);margin-bottom:12px;font-weight:700;line-height:1.2;}
 .sec-sub{font-size:.98rem;color:var(--muted);max-width:560px;margin:0 auto;line-height:1.7;}
 
+/* ══ ENFOQUE (Hecho por médicos, para médicos) ══ */
+.enfoque-item{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--g8);border-radius:12px;padding:14px 16px;font-size:.9rem;font-weight:600;color:var(--g2);line-height:1.35;}
+.enfoque-ico{width:36px;height:36px;flex-shrink:0;background:var(--g9);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;}
+
 /* ══ PLANES ══ */
 .planes-sec{background:#fff;}
 .laws-strip{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:20px;margin-bottom:4px;}
@@ -960,6 +964,31 @@ function mhcdRechazarCookies(){
       <div><div class="hero-stat-n">7</div><div class="hero-stat-l">Países disponibles</div></div>
       <div><div class="hero-stat-n">IA</div><div class="hero-stat-l">En cada consulta</div></div>
       <div><div class="hero-stat-n">24/7</div><div class="hero-stat-l">Disponible siempre</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- HECHO POR MÉDICOS, PARA MÉDICOS -->
+<section class="sec" id="sec-enfoque" style="background:var(--g9);scroll-margin-top:80px;">
+  <div class="container">
+    <div class="sec-head">
+      <div class="sec-tag" style="background:#fff;">Nuestro enfoque</div>
+      <h2 class="sec-title">Hecho por médicos, para médicos</h2>
+      <p class="sec-sub" style="max-width:660px;">Otras plataformas te cargan con funciones de gestión de negocio que nunca vas a usar en la consulta: convenios, remuneraciones, inventario, marketing, chat interno. Nosotros nos enfocamos en lo que de verdad importa en tu día a día:</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;max-width:940px;margin:0 auto;">
+      <div class="enfoque-item"><span class="enfoque-ico">📋</span>Historia clínica digital</div>
+      <div class="enfoque-item"><span class="enfoque-ico">💊</span>Recetas electrónicas con firma digital</div>
+      <div class="enfoque-item"><span class="enfoque-ico">🔗</span>Derivaciones a especialistas</div>
+      <div class="enfoque-item"><span class="enfoque-ico">🔬</span>Pedidos de estudios y órdenes médicas</div>
+      <div class="enfoque-item"><span class="enfoque-ico">📅</span>Agenda de turnos</div>
+      <div class="enfoque-item"><span class="enfoque-ico">📹</span>Videoconsultas integradas</div>
+      <div class="enfoque-item"><span class="enfoque-ico">🧮</span>Calculadora clínica</div>
+      <div class="enfoque-item"><span class="enfoque-ico">📖</span>Vademécum</div>
+      <div class="enfoque-item"><span class="enfoque-ico">🤖</span>IA médica de apoyo clínico</div>
+      <div class="enfoque-item"><span class="enfoque-ico">🧾</span>Facturación</div>
+      <div class="enfoque-item"><span class="enfoque-ico">💾</span>Backup automático diario</div>
+      <div class="enfoque-item"><span class="enfoque-ico">🏥</span>Gestión de Centro Médico (multi-médico)</div>
     </div>
   </div>
 </section>
