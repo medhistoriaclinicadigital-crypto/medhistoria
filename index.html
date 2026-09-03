@@ -10647,8 +10647,13 @@ function asegurarPacienteId(datos, callback){
     nombre   = (pp.slice(1).join(',')||'').trim();
   }
   if(!nombre && !apellido){ callback(null); return; }
-  var norm = function(s){ return (s||'').toString().toLowerCase().replace(/\s+/g,' ').trim(); };
-  var nN = norm(nombre), aN = norm(apellido);
+  // Normalizar: sacar acentos y puntuación, minúsculas, colapsar espacios.
+  var norm = function(s){ return (s||'').toString().normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase().replace(/[.,]/g,' ').replace(/\s+/g,' ').trim(); };
+  // Clave del nombre = todas las palabras (nombre + apellido juntos) ordenadas
+  // alfabéticamente. Así "Juan García", "García, Juan" y "García Juan" dan la
+  // misma clave y no se duplica la ficha aunque no haya DNI.
+  var claveNombre = function(nom, ape){ return norm((nom||'')+' '+(ape||'')).split(' ').filter(Boolean).sort().join(' '); };
+  var claveBuscada = claveNombre(nombre, apellido);
 
   var crear = function(){
     var campos = { nombre: nombre, apellido: apellido };
@@ -10674,7 +10679,7 @@ function asegurarPacienteId(datos, callback){
       ? sb.rpc('obtener_pacientes_centro', { p_device_token: _deviceToken() })
       : sb.from('pacientes').select('id,nombre,apellido').eq('medico_id', usuarioActual.id);
     q.then(function(r){
-      var hit = (r.data||[]).filter(function(p){ return norm(p.nombre)===nN && norm(p.apellido)===aN; })[0];
+      var hit = (r.data||[]).filter(function(p){ return claveBuscada && claveNombre(p.nombre, p.apellido)===claveBuscada; })[0];
       if(hit){ callback(hit.id); return; }
       nextIfNone();
     });
