@@ -543,6 +543,11 @@ function toggleCentroTambienMedico(){
 // plan acá mismo y al enviar se crea la cuenta + el centro al instante
 // (procesarRegistroCentro), sin aprobación manual. Ver ese comentario.
 function abrirRegistroCentro(){
+  // FRENO: sin datos bancarios reales no se abre la inscripción (ver _centroRegistroBloqueado).
+  if(typeof _centroRegistroBloqueado === 'function' && _centroRegistroBloqueado()){
+    _avisoCentroEnPreparacion();
+    return;
+  }
   var overlay = document.getElementById('pagoOverlay');
   if(!overlay) return;
   _pagoPrecioActual = 0;
@@ -6014,6 +6019,29 @@ var datosBancarios = {
   titular: 'MedHistoriaClinicaOnline S.A.'
 };
 
+// ── FRENO del registro de Centro Médico ──────────────────────────────────────
+// Mientras datosBancarios (arriba) tenga los valores placeholder, la creación
+// de centros queda BLOQUEADA — nadie puede completar la inscripción, para que
+// nadie transfiera plata a un CBU falso.
+//
+// PARA ACTIVAR EL REGISTRO DE CENTROS:
+//   1. Cargá los valores reales en `datosBancarios` (arriba, index.html).
+//   2. Poné esta constante en true.
+//   (El chequeo del CBU es un segundo cerrojo: si el CBU sigue en ceros o no
+//    tiene 22 dígitos, queda bloqueado igual aunque la constante esté en true.)
+var CENTRO_REGISTRO_HABILITADO = false;
+
+function _centroRegistroBloqueado(){
+  if(!CENTRO_REGISTRO_HABILITADO) return true;
+  var cbu = ((datosBancarios && datosBancarios.cbu) || '').replace(/\D/g,'');
+  if(!cbu || /^0+$/.test(cbu) || cbu.length !== 22) return true;
+  return false;
+}
+
+function _avisoCentroEnPreparacion(){
+  alert('🏥 Estamos terminando de habilitar la inscripción de Centros Médicos — va a estar disponible en muy poco.\n\nEscribinos a medhistoriaclinicaonline@gmail.com y te avisamos apenas esté.');
+}
+
 // El formulario de pago quedó como transferencia únicamente (input hidden
 // name="forma-pago"). selFormaPago()/selTarjeta() manejaban el toggle
 // tarjeta/transferencia y los recuadros de cuotas y datos bancarios, que ya
@@ -6166,6 +6194,9 @@ function procesarPago(){
 //     del Panel Admin. El estado de pago vive siempre en centros_medicos.plan_estado.
 // ─────────────────────────────────────────────────────────────────────────────
 function procesarRegistroCentro(){
+  // FRENO: sin datos bancarios reales no se completa la inscripción (defensa
+  // en profundidad — abrirRegistroCentro ya bloquea la apertura del form).
+  if(_centroRegistroBloqueado()){ _avisoCentroEnPreparacion(); return; }
   var g = function(id){ var el = document.getElementById(id); return el ? (el.value||'').trim() : ''; };
   var nombre = g('pago-nombre'), apellido = g('pago-apellido');
   var nombreCompleto = (nombre + ' ' + apellido).trim();
@@ -7118,6 +7149,8 @@ function _precioPlanCentro(plan){
 }
 
 function crearCentroMedico(){
+  // FRENO: sin datos bancarios reales tampoco se crea centro desde adentro de la app.
+  if(_centroRegistroBloqueado()){ _avisoCentroEnPreparacion(); return; }
   var inp = document.getElementById('centro-nombre-nuevo');
   var nombre = inp ? (inp.value||'').trim() : '';
   var planSel = document.getElementById('centro-plan-nuevo');
