@@ -490,13 +490,16 @@ input[type="email"] { text-transform: lowercase; }
 function _limpiarFormPago(){
   var campos = ['pago-nombre','pago-apellido','pago-email','pago-dni','pago-tel',
     'pago-matricula','pago-especialidad','pago-institucion','pago-provincia','pago-ciudad',
-    'pago-codigo-activacion'];
+    'pago-codigo-activacion','pago-centro-nombre','pago-centro-plan','pago-sexo',
+    'pago-centro-pass','pago-centro-pass2'];
   campos.forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.value = '';
   });
   var tipomat = document.getElementById('pago-tipomat');
   if(tipomat) tipomat.value = 'M.N.';
+  var term = document.getElementById('pago-acepto-terminos');
+  if(term) term.checked = false;
 }
 
 function abrirPago(plan, precio){
@@ -516,6 +519,8 @@ function abrirPago(plan, precio){
   if(inp) inp.value='';
   document.querySelectorAll('.centro-medico-only').forEach(function(el){ el.style.display = 'none'; });
   overlay.setAttribute('data-registro-centro', 'false');
+  var btn=document.getElementById('pago-submit-btn'); if(btn) btn.textContent='✦ Solicitar suscripción';
+  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='Te contactaremos en menos de 24hs para confirmar el pago y activar tu cuenta.';
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
@@ -534,7 +539,9 @@ function toggleCentroTambienMedico(){
   datos.style.display = mostrar ? 'block' : 'none';
 }
 
-// Abre el mismo formulario, pero para inscribir un Centro Médico — el plan se elige después, adentro de la app
+// Mismo formulario, en modo "registro de Centro Médico": el médico elige el
+// plan acá mismo y al enviar se crea la cuenta + el centro al instante
+// (procesarRegistroCentro), sin aprobación manual. Ver ese comentario.
 function abrirRegistroCentro(){
   var overlay = document.getElementById('pagoOverlay');
   if(!overlay) return;
@@ -547,11 +554,13 @@ function abrirRegistroCentro(){
   var pre=document.getElementById('pago-plan-precio');
   if(lbl) lbl.textContent = 'Registro de Centro Médico';
   if(nom) nom.textContent = 'Tu Centro Médico';
-  if(pre) pre.textContent = 'Elegís el plan después';
+  if(pre) pre.textContent = 'Elegís el plan abajo';
   var inp=document.getElementById('pago-codigo-activacion');
   if(inp) inp.value='';
   document.querySelectorAll('.centro-medico-only').forEach(function(el){ el.style.display = 'block'; });
   overlay.setAttribute('data-registro-centro', 'true');
+  var btn=document.getElementById('pago-submit-btn'); if(btn) btn.textContent='✦ Crear mi Centro Médico';
+  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='El centro se crea al instante. Te mostramos los datos para transferir; hasta confirmar el pago funciona con el límite gratuito de 35 pacientes.';
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
@@ -565,15 +574,7 @@ function cerrarPago(){
   if(o) o.style.display='none';
   document.body.style.overflow='';
   // Limpiar todos los campos del formulario
-  var campos = ['pago-nombre','pago-apellido','pago-email','pago-dni','pago-tel',
-    'pago-matricula','pago-especialidad','pago-institucion','pago-provincia','pago-ciudad',
-    'pago-codigo-activacion'];
-  campos.forEach(function(id){
-    var el = document.getElementById(id);
-    if(el) el.value = '';
-  });
-  var tipomat = document.getElementById('pago-tipomat');
-  if(tipomat) tipomat.value = 'M.N.';
+  _limpiarFormPago();
 }
 
 function solicitarAddon(nombre, precio){
@@ -590,9 +591,14 @@ function solicitarAddon(nombre, precio){
   window._addonSolicitado=nombre;
   var inp=document.getElementById('pago-codigo-activacion');
   if(inp) inp.value='';
+  document.querySelectorAll('.centro-medico-only').forEach(function(el){ el.style.display = 'none'; });
+  overlay.setAttribute('data-registro-centro', 'false');
+  var btn=document.getElementById('pago-submit-btn'); if(btn) btn.textContent='✦ Solicitar suscripción';
+  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='Te contactaremos en menos de 24hs para confirmar el pago y activar tu cuenta.';
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
+  toggleCentroTambienMedico();
 }
 
 // Auto-capitalizar primera letra en inputs y textareas
@@ -4234,7 +4240,17 @@ function mhcdRechazarCookies(){
     <div id="pago-centro-medico-nombre" class="centro-medico-only" style="display:none;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:14px 16px;margin-bottom:20px;">
       <div style="font-size:.72rem;font-weight:700;color:#22a050;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🏥 Tu Centro Médico</div>
       <label style="font-size:.72rem;color:#888;display:block;margin-bottom:3px;">Nombre del Centro Médico *<input class="mi" id="pago-centro-nombre" type="text" placeholder="Ej: Centro Médico San Martín" style="margin:0;width:100%;box-sizing:border-box;"></label>
-      <div style="font-size:.75rem;color:#666;margin-top:6px;line-height:1.5;">Vas a poder agregar a los demás médicos de tu equipo apenas termines este paso.</div>
+      <label style="font-size:.72rem;color:#888;display:block;margin:10px 0 3px;">Plan del centro *
+        <select class="mi" id="pago-centro-plan" style="margin:0;width:100%;box-sizing:border-box;">
+          <option value="">Elegí un plan…</option>
+          <option value="starter">Starter — 50 pacientes · u$s 34/mes</option>
+          <option value="pro">Pro — 200 pacientes · u$s 49/mes</option>
+          <option value="premium">Premium — 500 pacientes · u$s 89/mes</option>
+          <option value="ilimitado">Ilimitado — u$s 199/mes</option>
+        </select>
+      </label>
+      <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 10px;margin-top:8px;line-height:1.5;">El centro se crea al instante y ya podés usarlo, pero <strong>arranca limitado a 35 pacientes</strong> hasta que confirmemos tu pago. Al terminar te mostramos los datos para transferir; cuando recibamos la transferencia activamos tu plan completo.</div>
+      <div style="font-size:.75rem;color:#666;margin-top:8px;line-height:1.5;">Vas a poder agregar a los demás médicos de tu equipo apenas termines este paso.</div>
       <label style="display:flex;align-items:flex-start;gap:8px;font-size:.8rem;color:#145a32;font-weight:600;margin-top:12px;padding-top:12px;border-top:1px solid #bbf7d0;cursor:pointer;">
         <input type="checkbox" id="pago-centro-tambien-medico" checked onchange="toggleCentroTambienMedico()" style="margin-top:2px;flex-shrink:0;accent-color:#22a050;width:16px;height:16px;">
         <span>¿Sos médico y también vas a atender pacientes en este centro? Si tildás esto, además de administrador quedás como su primer médico — completá tu matrícula y especialidad abajo. Si el centro lo administra alguien que no es médico, destildá esto.</span>
@@ -4272,11 +4288,22 @@ function mhcdRechazarCookies(){
 
     <!-- Contraseña del Centro Médico (solo registro de centro; el nombre del centro ya se pidió arriba de todo) -->
     <div id="pago-centro-medico-campos" class="centro-medico-only" style="display:none;">
-      <div style="font-size:.72rem;font-weight:700;color:#22a050;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔐 Creá tu contraseña</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <div style="font-size:.72rem;font-weight:700;color:#22a050;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔐 Tu cuenta</div>
+      <label style="font-size:.72rem;color:#888;display:block;margin-bottom:3px;">Tratamiento *
+        <select class="mi" id="pago-sexo" style="margin:0;width:100%;box-sizing:border-box;">
+          <option value="">Elegí…</option>
+          <option value="M">Doctor (Dr.)</option>
+          <option value="F">Doctora (Dra.)</option>
+        </select>
+      </label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 14px;">
         <div><label style="font-size:.72rem;color:#888;display:block;margin-bottom:3px;">Contraseña *<input class="mi" id="pago-centro-pass" type="password" placeholder="Mín. 8 caracteres" style="margin:0;"></label></div>
         <div><label style="font-size:.72rem;color:#888;display:block;margin-bottom:3px;">Confirmar *<input class="mi" id="pago-centro-pass2" type="password" placeholder="Repetí la contraseña" style="margin:0;"></label></div>
       </div>
+      <label style="display:flex;align-items:flex-start;gap:8px;font-size:.78rem;color:#666;margin:4px 0 0;cursor:pointer;">
+        <input type="checkbox" id="pago-acepto-terminos" style="margin-top:2px;flex-shrink:0;accent-color:#22a050;width:16px;height:16px;">
+        <span>Acepto los <a href="#" onclick="document.getElementById('terminosOverlay').style.display='block';document.getElementById('seccion-tyc').style.display='block';document.getElementById('seccion-privacidad').style.display='none';document.getElementById('seccion-cookies').style.display='none';return false;" style="color:#22a050;font-weight:700;">Términos y Condiciones</a>, la <a href="#" onclick="document.getElementById('terminosOverlay').style.display='block';document.getElementById('seccion-tyc').style.display='none';document.getElementById('seccion-privacidad').style.display='block';document.getElementById('seccion-cookies').style.display='none';return false;" style="color:#22a050;font-weight:700;">Política de Privacidad</a> y la <a href="#" onclick="document.getElementById('terminosOverlay').style.display='block';document.getElementById('seccion-tyc').style.display='none';document.getElementById('seccion-privacidad').style.display='none';document.getElementById('seccion-cookies').style.display='block';return false;" style="color:#22a050;font-weight:700;">Política de Cookies</a> (Ley 25.326)</span>
+      </label>
     </div>
 
     <!-- Forma de pago -->
@@ -4297,10 +4324,10 @@ function mhcdRechazarCookies(){
     </div>
 
     <!-- Botón -->
-    <button onclick="procesarPago()" style="width:100%;padding:16px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:.5px;">
+    <button id="pago-submit-btn" onclick="procesarPago()" style="width:100%;padding:16px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:.5px;">
       ✦ Solicitar suscripción
     </button>
-    <p style="text-align:center;font-size:.75rem;color:#888;margin-top:10px;">Te contactaremos en menos de 24hs para confirmar el pago y activar tu cuenta.</p>
+    <p id="pago-submit-sub" style="text-align:center;font-size:.75rem;color:#888;margin-top:10px;">Te contactaremos en menos de 24hs para confirmar el pago y activar tu cuenta.</p>
 
     <!-- Separador código de activación -->
     <div style="display:flex;align-items:center;gap:10px;margin:20px 0 14px;">
@@ -6007,6 +6034,12 @@ function formatVenc(input){
 }
 
 function procesarPago(){
+  // El mismo formulario se usa para suscripción individual y para registro de
+  // Centro Médico. En modo centro, el alta es automática (crea cuenta + centro).
+  var ovModo = document.getElementById('pagoOverlay');
+  if(ovModo && ovModo.getAttribute('data-registro-centro') === 'true'){
+    return procesarRegistroCentro();
+  }
   var nombre = ((document.getElementById('pago-nombre')||{}).value||'').trim();
   var apellido = ((document.getElementById('pago-apellido')||{}).value||'').trim();
   var email = ((document.getElementById('pago-email')||{}).value||'').trim();
@@ -6114,6 +6147,157 @@ function procesarPago(){
     }
     alert('✅ ¡Solicitud enviada!\n\nTe contactaremos en menos de 24hs al email:\n'+email);
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REGISTRO DE CENTRO MÉDICO DESDE LA LANDING — automático, sin aprobación manual.
+// Crea la cuenta (auth + fila en usuarios) y el centro al instante vía la RPC
+// crear_centro_medico. El centro arranca en plan_estado 'pendiente_pago' →
+// getLimiteCentroPacientes() lo capa a 35 pacientes hasta que la operadora toca
+// "Confirmar pago" en el Panel Admin (RPC activar_plan_centro).
+//
+// GANCHO COBRO AUTOMÁTICO (débito de caja de ahorro / tarjeta, a futuro):
+//   - 'formaPago' hoy es fijo 'transferencia'. Cuando exista cobro automático
+//     pasa a 'debito_ca' | 'tarjeta' (idealmente elegido en el form).
+//   - El paso 5 (post-creación) ya está ramificado por formaPago: hoy abre el
+//     modal de transferencia; para tarjeta/débito abriría el modal de captura
+//     del medio de pago en vez de ese.
+//   - La confirmación del cobro (webhook del proveedor) tiene que llamar a
+//     activar_plan_centro(centro_id) — el MISMO endpoint que usa hoy el botón
+//     del Panel Admin. El estado de pago vive siempre en centros_medicos.plan_estado.
+// ─────────────────────────────────────────────────────────────────────────────
+function procesarRegistroCentro(){
+  var g = function(id){ var el = document.getElementById(id); return el ? (el.value||'').trim() : ''; };
+  var nombre = g('pago-nombre'), apellido = g('pago-apellido');
+  var nombreCompleto = (nombre + ' ' + apellido).trim();
+  var email = g('pago-email').toLowerCase();
+  var dni = g('pago-dni'), tel = g('pago-tel'), direccion = g('pago-direccion');
+  var sexo = g('pago-sexo');
+  var pass = (document.getElementById('pago-centro-pass')||{}).value || '';
+  var pass2 = (document.getElementById('pago-centro-pass2')||{}).value || '';
+  var centroNombre = g('pago-centro-nombre');
+  var plan = g('pago-centro-plan');
+  var chkMed = document.getElementById('pago-centro-tambien-medico');
+  var esTambienMedico = !chkMed || chkMed.checked;
+  var matricula = g('pago-matricula'), tipomat = g('pago-tipomat') || 'M.N.';
+  var especialidad = g('pago-especialidad');
+  var provincia = g('pago-provincia'), ciudad = g('pago-ciudad');
+  var chkTerm = document.getElementById('pago-acepto-terminos');
+
+  // ── Validación ──
+  if(!nombreCompleto){ alert('Ingresá tu nombre y apellido.'); return; }
+  if(!sexo){ alert('Elegí el tratamiento (Dr. o Dra.).'); return; }
+  if(!email){ alert('Ingresá tu email.'); return; }
+  if(['starter','pro','premium','ilimitado'].indexOf(plan) === -1){ alert('Elegí un plan para el centro.'); return; }
+  if(!centroNombre){ alert('Ingresá el nombre de tu Centro Médico.'); return; }
+  if(esTambienMedico){
+    if(!matricula){ alert('Ingresá tu matrícula.'); return; }
+    if(!especialidad){ alert('Ingresá tu especialidad.'); return; }
+  }
+  if(!pass || pass.length < 8){ alert('La contraseña debe tener al menos 8 caracteres.'); return; }
+  if(pass !== pass2){ alert('Las contraseñas no coinciden.'); return; }
+  if(!chkTerm || !chkTerm.checked){ alert('Tenés que aceptar los Términos y Condiciones, la Política de Privacidad y la Política de Cookies.'); return; }
+
+  var btn = document.getElementById('pago-submit-btn');
+  var rehabilitar = function(){ if(btn){ btn.disabled = false; btn.textContent = '✦ Crear mi Centro Médico'; } };
+  if(btn){ btn.disabled = true; btn.textContent = 'Creando tu centro…'; }
+
+  var formaPago = 'transferencia'; // GANCHO cobro automático: 'debito_ca' | 'tarjeta'
+  var precio = _precioPlanCentro(plan);
+  var matriculaTxt = (esTambienMedico && matricula) ? (tipomat + ' ' + matricula) : '';
+
+  // ── 0. Cerrar cualquier sesión previa (visitante con sesión vieja en el
+  //       navegador): signUp/RPC tienen que correr como la cuenta nueva. ──
+  Promise.resolve(sb.auth.signOut()).catch(function(){}).then(function(){
+
+  // ── 1. Cuenta de auth ──
+  sb.auth.signUp({ email: email, password: pass }).then(function(r){
+    if(r.error){
+      rehabilitar();
+      alert(/already/i.test(r.error.message||'')
+        ? 'Ya existe una cuenta con ese email. Iniciá sesión y creá el centro desde "Mi Centro Médico".'
+        : ('No se pudo crear la cuenta: ' + r.error.message));
+      return;
+    }
+    var authId = r.data && r.data.user ? r.data.user.id : null;
+
+    // ── 2. Fila en usuarios (crear_centro_medico la busca por auth_id) ──
+    usuarioActual = { id: authId, auth_id: authId, usuario: email, email: email, nombre: nombreCompleto,
+      sexo: sexo, dni: dni, telefono: tel, especialidad: especialidad, matricula: matriculaTxt,
+      plan: plan, region: provincia, ciudad: ciudad, pais: 'ar' };
+    sb.from('usuarios').insert([{
+      auth_id: authId, nombre: nombreCompleto, email: email,
+      especialidad: especialidad, matricula: matriculaTxt,
+      telefono: tel, dni: dni, rol: 'medico', pais: 'ar', sexo: sexo
+    }]).select('id').then(function(r2){
+      if(r2.error) console.error('Registro de centro: error guardando usuario:', r2.error);
+      if(r2.data && r2.data[0] && r2.data[0].id) usuarioActual.id = r2.data[0].id;
+
+      // ── 3. Crear el centro (RPC, plan_estado 'pendiente_pago') ──
+      sb.rpc('crear_centro_medico', { p_nombre: centroNombre, p_plan: plan, p_cuit: dni || null, p_direccion: direccion || null }).then(function(r3){
+        rehabilitar();
+        if(r3.error){
+          console.error('Registro de centro: error creando centro:', r3.error);
+          alert(r3.error.code === 'P0001'
+            ? ('⚠️ '+r3.error.message+'\n\nTu cuenta quedó creada — entrá y creá el centro desde "Mi Centro Médico".')
+            : '⚠️ Tu cuenta se creó, pero hubo un problema al crear el centro. Entrá y probá desde "Mi Centro Médico".');
+          _entrarAppPostRegistroCentro();
+          return;
+        }
+        var creado = r3.data && r3.data[0];
+
+        // ── 4. Registrar para el Panel Admin + avisar a la operadora ──
+        sb.from('solicitudes_suscripcion').insert({
+          medico_nombre: nombreCompleto, medico_email: email,
+          plan: plan, precio: precio, tipo: 'nuevo_centro_medico',
+          forma_pago: formaPago, cuit: dni, direccion: direccion,
+          centro_id: creado ? creado.centro_id : null
+        }).then(function(rs){ if(rs.error) console.error('Registro de centro: error guardando solicitud:', rs.error); });
+        fetch('https://formspree.io/f/meenywzq', {
+          method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'},
+          body: JSON.stringify({
+            asunto: '🏥 NUEVO CENTRO MÉDICO (registro landing) — esperar transferencia',
+            name: nombreCompleto, email: email,
+            message: 'Médico: '+nombreCompleto+' ('+email+')\n'
+              + 'Centro: '+centroNombre+(creado ? (' (id '+creado.centro_id+')') : '')+'\n'
+              + 'Plan: '+plan+' — u$s '+precio+'/mes · Forma de pago: '+formaPago+'\n'
+              + 'CUIT: '+(dni||'(no informado)')+' · Dirección: '+(direccion||'(no informada)')+'\n'
+              + 'Rol: '+(esTambienMedico ? 'dueño + primer médico' : 'solo administrador')+'\n\n'
+              + 'El centro está creado y capado a 35 pacientes. Cuando llegue la transferencia: Panel Admin → Reportes reales → Centros pendientes de pago → Confirmar pago.'
+          })
+        }).catch(function(){});
+
+        // ── 5. Entrar a la app + mostrar datos para transferir ──
+        _entrarAppPostRegistroCentro(function(){
+          if(formaPago === 'transferencia'){
+            abrirPanelTransferenciaCentro(plan);
+          }
+          // GANCHO cobro automático: else → modal de captura de tarjeta / débito.
+        });
+      });
+    });
+  });
+
+  }); // fin del wrapper signOut()
+}
+
+// Cierra el overlay de pago, sale de la landing y entra a la app ya logueado,
+// después de un registro de centro. 'cb' corre cuando la app y el centro están montados.
+function _entrarAppPostRegistroCentro(cb){
+  try{ cerrarPago(); }catch(e){ console.warn('[catch]', e); }
+  var landing = document.getElementById('landing');
+  var app = document.getElementById('app');
+  if(landing) landing.style.display = 'none';
+  document.body.classList.add('in-app');
+  if(app) app.style.display = 'block';
+  setTimeout(function(){ window.scrollTo(0,0); }, 30);
+  try{ document.getElementById('dash-fecha').textContent = (function(){ var s=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){ console.warn('[catch]', e); }
+  try{ document.getElementById('app-user-name').textContent = nombreConTitulo(usuarioActual) + ' ✏️'; }catch(e){ console.warn('[catch]', e); }
+  try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){ console.warn('[catch]', e); }
+  try{ showPanel('dash'); }catch(e){ console.warn('[catch]', e); }
+  try{ precargarDatosMedico(usuarioActual); }catch(e){ console.warn('[catch]', e); }
+  try{ cargarMiCentro(function(){ try{ sincronizarPacientesSupabase(); }catch(e){ console.warn('[catch]', e); } try{ renderCentroMedico(); }catch(e){ console.warn('[catch]', e); } if(cb) cb(); }); }
+  catch(e){ console.warn('[catch]', e); if(cb) cb(); }
 }
 
 // ── FIRMA DIGITAL ──
