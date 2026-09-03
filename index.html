@@ -515,8 +515,6 @@ function abrirPago(plan, precio){
   if(inp) inp.value='';
   document.querySelectorAll('.centro-medico-only').forEach(function(el){ el.style.display = 'none'; });
   overlay.setAttribute('data-registro-centro', 'false');
-  if(typeof selFormaPago==='function') selFormaPago('tarjeta');
-  if(typeof selTarjeta==='function') selTarjeta('credito');
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
@@ -553,8 +551,6 @@ function abrirRegistroCentro(){
   if(inp) inp.value='';
   document.querySelectorAll('.centro-medico-only').forEach(function(el){ el.style.display = 'block'; });
   overlay.setAttribute('data-registro-centro', 'true');
-  if(typeof selFormaPago==='function') selFormaPago('tarjeta');
-  if(typeof selTarjeta==='function') selTarjeta('credito');
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
@@ -593,8 +589,6 @@ function solicitarAddon(nombre, precio){
   window._addonSolicitado=nombre;
   var inp=document.getElementById('pago-codigo-activacion');
   if(inp) inp.value='';
-  if(typeof selFormaPago==='function') selFormaPago('tarjeta');
-  if(typeof selTarjeta==='function') selTarjeta('credito');
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
@@ -5940,44 +5934,12 @@ var datosBancarios = {
   titular: 'MedHistoriaClinicaOnline S.A.'
 };
 
-function selFormaPago(tipo){
-  var bt = document.getElementById('btn-tarjeta-op');
-  var btr = document.getElementById('btn-transfer-op');
-  var st = document.getElementById('pago-sec-tarjeta');
-  var str = document.getElementById('pago-sec-transfer');
-  if(tipo==='tarjeta'){
-    bt.style.borderColor='var(--g4)'; bt.style.background='var(--g9)'; bt.style.color='var(--g3)';
-    btr.style.borderColor='var(--g9)'; btr.style.background='#fff'; btr.style.color='var(--muted)';
-    if(st) st.style.display='block';
-    if(str) str.style.display='none';
-  } else {
-    btr.style.borderColor='var(--g4)'; btr.style.background='var(--g9)'; btr.style.color='var(--g3)';
-    bt.style.borderColor='var(--g9)'; bt.style.background='#fff'; bt.style.color='var(--muted)';
-    if(st) st.style.display='none';
-    if(str) str.style.display='block';
-    // Cargar datos bancarios
-    document.getElementById('bank-nombre').textContent = datosBancarios.banco;
-    document.getElementById('bank-tipo').textContent = datosBancarios.tipo;
-    document.getElementById('bank-cuenta').textContent = datosBancarios.cuenta;
-    document.getElementById('bank-cbu').textContent = datosBancarios.cbu;
-    document.getElementById('bank-alias').textContent = datosBancarios.alias;
-    document.getElementById('bank-titular').textContent = datosBancarios.titular;
-  }
-}
-
-function selTarjeta(tipo){
-  var bc = document.getElementById('btn-credito');
-  var bd = document.getElementById('btn-debito');
-  if(tipo==='credito'){
-    bc.style.borderColor='var(--g4)'; bc.style.background='var(--g9)'; bc.style.color='var(--g3)';
-    bd.style.borderColor='var(--g9)'; bd.style.background='#fff'; bd.style.color='var(--muted)';
-    document.getElementById('pago-cuotas').style.display='block';
-  } else {
-    bd.style.borderColor='var(--g4)'; bd.style.background='var(--g9)'; bd.style.color='var(--g3)';
-    bc.style.borderColor='var(--g9)'; bc.style.background='#fff'; bc.style.color='var(--muted)';
-    document.getElementById('pago-cuotas').style.display='none';
-  }
-}
+// El formulario de pago quedó como transferencia únicamente (input hidden
+// name="forma-pago"). selFormaPago()/selTarjeta() manejaban el toggle
+// tarjeta/transferencia y los recuadros de cuotas y datos bancarios, que ya
+// no existen en el DOM — se borraron acá y en sus 3 llamadores (abrirPago,
+// abrirRegistroCentro, solicitarAddon), donde tiraban TypeError al abrir.
+// Los datos bancarios del centro se muestran ahora en abrirPanelTransferenciaCentro().
 
 function formatTarjeta(input){
   var v = input.value.replace(/\D/g,'').substring(0,16);
