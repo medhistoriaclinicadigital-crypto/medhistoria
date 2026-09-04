@@ -5077,9 +5077,10 @@ function entrarDirecto(){
   if(landing) landing.style.display='none';
   if(app){ app.style.display='block'; }
   document.body.classList.add('in-app');
-  setTimeout(function(){ 
-    window.scrollTo({top:0,behavior:'instant'}); 
-    document.documentElement.scrollTop=0; 
+  try{ iniciarControlInactividad(); }catch(e){ console.warn('[catch]', e); }
+  setTimeout(function(){
+    window.scrollTo({top:0,behavior:'instant'});
+    document.documentElement.scrollTop=0;
     document.body.scrollTop=0;
     var app=document.getElementById('app');
     if(app) app.scrollTop=0;
@@ -5206,6 +5207,7 @@ function mostrarRecuperarPass(){
   });
 }
 function cerrarApp(){
+  try{ detenerControlInactividad(); }catch(e){ console.warn('[catch]', e); }
   try{ sb.auth.signOut(); }catch(e){ console.warn('[catch]', e); }
   usuarioActual = null;
   document.body.classList.remove('in-app');
@@ -5220,6 +5222,74 @@ function cerrarApp(){
     if(pEl) pEl.value='';
     if(rEl) rEl.checked=false;
   }
+}
+
+// ── CIERRE DE SESIÓN POR INACTIVIDAD ──
+// Protege datos de pacientes en dispositivos compartidos (consultorio,
+// secretaría): si el médico deja la sesión abierta y se aleja, se cierra
+// sola. Aviso a los 25 min sin actividad, cierre real a los 30.
+var INACTIVIDAD_AVISO_MIN = 25;
+var INACTIVIDAD_CIERRE_MIN = 30;
+var _inactTimerAviso = null, _inactTimerCierre = null, _inactActiva = false, _inactUltimoReset = 0;
+
+function _inactResetear(){
+  if(!_inactActiva) return;
+  var ahora = Date.now();
+  if(ahora - _inactUltimoReset < 1000) return; // throttle: mousemove/scroll no reinician más de 1 vez por segundo
+  _inactUltimoReset = ahora;
+  clearTimeout(_inactTimerAviso);
+  clearTimeout(_inactTimerCierre);
+  _inactOcultarAviso();
+  _inactTimerAviso = setTimeout(_inactMostrarAviso, INACTIVIDAD_AVISO_MIN*60*1000);
+  _inactTimerCierre = setTimeout(_inactCerrarSesion, INACTIVIDAD_CIERRE_MIN*60*1000);
+}
+
+// Se llama al entrar a la app (login, registro nuevo, registro de centro).
+function iniciarControlInactividad(){
+  if(_inactActiva) return; // ya armado — evita duplicar los listeners si se llama 2 veces
+  _inactActiva = true;
+  ['click','keydown','mousemove','scroll','touchstart'].forEach(function(ev){
+    document.addEventListener(ev, _inactResetear, {passive:true});
+  });
+  _inactUltimoReset = 0;
+  _inactResetear();
+}
+
+// Se llama al salir de la app (cerrarApp) para no dejar timers ni listeners corriendo en la landing.
+function detenerControlInactividad(){
+  _inactActiva = false;
+  clearTimeout(_inactTimerAviso);
+  clearTimeout(_inactTimerCierre);
+  ['click','keydown','mousemove','scroll','touchstart'].forEach(function(ev){
+    document.removeEventListener(ev, _inactResetear);
+  });
+  _inactOcultarAviso();
+}
+
+function _inactMostrarAviso(){
+  _inactOcultarAviso();
+  var restantes = INACTIVIDAD_CIERRE_MIN - INACTIVIDAD_AVISO_MIN;
+  var ov = document.createElement('div');
+  ov.id = 'aviso-inactividad-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(4,20,10,.6);z-index:100001;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:380px;width:100%;padding:26px;font-family:\'Outfit\',sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.3);text-align:center;">'
+    + '<div style="font-size:2rem;margin-bottom:8px;">⏳</div>'
+    + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;font-weight:700;color:#042b10;margin-bottom:8px;">¿Seguís ahí?</div>'
+    + '<p style="font-size:.88rem;color:#5a7362;line-height:1.6;margin:0 0 18px;">Por seguridad, tu sesión se va a cerrar en <strong>'+restantes+' minutos</strong> por inactividad.</p>'
+    + '<button onclick="_inactResetear()" style="width:100%;padding:12px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;">Seguir conectado</button>'
+    + '</div>';
+  document.body.appendChild(ov);
+}
+
+function _inactOcultarAviso(){
+  var el = document.getElementById('aviso-inactividad-overlay');
+  if(el) el.remove();
+}
+
+function _inactCerrarSesion(){
+  detenerControlInactividad();
+  try{ cerrarApp(); }catch(e){ console.warn('[catch]', e); }
+  alert('🔒 Tu sesión se cerró automáticamente por '+INACTIVIDAD_CIERRE_MIN+' minutos de inactividad, para proteger los datos de tus pacientes.');
 }
 
 // ── LANDING TABS ──
@@ -6350,6 +6420,7 @@ function _entrarAppPostRegistroCentro(cb){
   if(landing) landing.style.display = 'none';
   document.body.classList.add('in-app');
   if(app) app.style.display = 'block';
+  try{ iniciarControlInactividad(); }catch(e){ console.warn('[catch]', e); }
   setTimeout(function(){ window.scrollTo(0,0); }, 30);
   try{ document.getElementById('dash-fecha').textContent = (function(){ var s=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){ console.warn('[catch]', e); }
   try{ document.getElementById('app-user-name').textContent = nombreConTitulo(usuarioActual) + ' ✏️'; }catch(e){ console.warn('[catch]', e); }
@@ -15623,6 +15694,7 @@ function continuarLoginTrasDispositivo(authId, emailFallback){
       if(landing) landing.style.display='none';
       document.body.classList.add('in-app');
       if(app){ app.style.display='block'; }
+      try{ iniciarControlInactividad(); }catch(e){ console.warn('[catch]', e); }
       setTimeout(function(){ window.scrollTo(0,0); },30);
       try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){ console.warn('[catch]', e); }
       try{ document.getElementById('app-user-name').textContent = nombreConTitulo(perfil) + ' 👨‍⚕️'; }catch(e){ console.warn('[catch]', e); }
@@ -15881,6 +15953,7 @@ function mlRegistrar(){
     if(landing) landing.style.display='none';
     document.body.classList.add('in-app');
     if(app){ app.style.display='block'; }
+    try{ iniciarControlInactividad(); }catch(e){ console.warn('[catch]', e); }
     setTimeout(function(){ window.scrollTo(0,0); },30);
     try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){ console.warn('[catch]', e); }
     try{ document.getElementById('app-user-name').textContent = nombreConTitulo(usuarioActual||{nombre:nombre}) + ' ✏️'; }catch(e){ console.warn('[catch]', e); }
