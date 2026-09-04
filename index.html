@@ -10684,6 +10684,28 @@ function _subirArchivoAEstudios(file, meta){
     var ext = punto>-1 ? file.name.slice(punto).toLowerCase() : '';
     var extsPermitidas = ['.pdf','.jpg','.jpeg','.png','.gif','.webp'];
     if(extsPermitidas.indexOf(ext)===-1){ alert('Tipo de archivo no permitido: "'+file.name+'". Solo se aceptan PDF, JPG, PNG, GIF o WEBP.'); return; }
+    // Pacientes de un Centro Médico: la subida pasa por la Edge Function
+    // estudio-gestion-centro, que valida el dispositivo del lado del servidor.
+    // La política de Storage ya no deja tocar archivos de centro directo
+    // (exige paciente.centro_id IS NULL) — ver hallazgo C del repaso de seguridad.
+    if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
+      var form = new FormData();
+      form.append('device_token', _deviceToken());
+      form.append('paciente_id', pacienteId);
+      if(meta.categoria) form.append('categoria', meta.categoria);
+      if(meta.descripcion) form.append('descripcion', meta.descripcion);
+      form.append('file', file, file.name);
+      sb.functions.invoke('estudio-gestion-centro', { body: form }).then(function(r){
+        if(r.error || !r.data || !r.data.ok){
+          var msg = (r.data && r.data.error) || (r.error && r.error.message) || 'Error desconocido';
+          alert('Error al subir "'+file.name+'": '+msg);
+          return;
+        }
+        cargarEstudiosPaciente();
+      });
+      return;
+    }
+
     var path = pacienteId+'/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+ext;
     sb.storage.from(ESTUDIOS_BUCKET).upload(path, file, {contentType: file.type||'application/octet-stream'}).then(function(rUp){
       if(rUp.error){ alert('Error al subir "'+file.name+'": '+rUp.error.message); return; }
@@ -10843,6 +10865,24 @@ function eliminarEstudio(id){
   var estudio = estudiosAdjuntos.find(function(e){ return e.id === id; });
   if(!estudio) return;
   if(!confirm('¿Eliminar "'+estudio.nombre+'"? Esta acción no se puede deshacer.')) return;
+
+  // Pacientes de un Centro Médico: el borrado pasa por la Edge Function
+  // estudio-gestion-centro (mismo motivo que la subida — ver hallazgo C).
+  if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
+    sb.functions.invoke('estudio-gestion-centro', {
+      body: { accion:'borrar', device_token: _deviceToken(), estudio_id: id }
+    }).then(function(r){
+      if(r.error || !r.data || !r.data.ok){
+        var msg = (r.data && r.data.error) || (r.error && r.error.message) || 'Error desconocido';
+        alert('No se pudo eliminar: '+msg);
+        return;
+      }
+      estudiosAdjuntos = estudiosAdjuntos.filter(function(e){ return e.id !== id; });
+      renderEstudios();
+    });
+    return;
+  }
+
   sb.storage.from(ESTUDIOS_BUCKET).remove([estudio.path]).then(function(){
     sb.from('estudios').delete().eq('id', id).then(function(r){
       if(r.error){ alert('No se pudo eliminar el registro: '+r.error.message); return; }
