@@ -6892,7 +6892,7 @@ function renderCentroMedico(){
   var listaEl = document.getElementById('centro-lista-miembros');
   if(!listaEl) return;
   listaEl.innerHTML = '<div style="font-size:.82rem;color:var(--muted);">Cargando...</div>';
-  sb.rpc('listar_medicos_centro').then(function(r){
+  sb.rpc('listar_medicos_centro', { p_device_token: _deviceToken() }).then(function(r){
     if(!r.data){ listaEl.innerHTML=''; return; }
     var html = '';
     r.data.forEach(function(u){
@@ -12427,7 +12427,7 @@ function cambiarTabPacientes(tab){
     if(tab === 'centro' && typeof miCentro !== 'undefined' && miCentro && miCentro.id){
       medicosEl.style.display = 'block';
       medicosEl.innerHTML = 'Cargando médicos del centro...';
-      sb.rpc('listar_medicos_centro').then(function(r){
+      sb.rpc('listar_medicos_centro', { p_device_token: _deviceToken() }).then(function(r){
         if(!r.data || !r.data.length){ medicosEl.innerHTML = 'Sin médicos cargados todavía.'; return; }
         var nombres = r.data.map(function(u){ return u ? '👨‍⚕️ '+escHtml(u.nombre||'(sin nombre)') : null; }).filter(Boolean);
         medicosEl.innerHTML = '<strong>Médicos del centro:</strong> ' + nombres.join(' &nbsp;·&nbsp; ');
