@@ -13132,24 +13132,13 @@ try {
   setTimeout(function(){
     renderPacientes();
   }, 300);
-  // "Recordarme": si quedó tildado la última vez, abrimos directo el
-  // formulario de login — el gestor de contraseñas del navegador completa
-  // usuario y contraseña solo (ver autocomplete en ml-user/ml-pass), y el
-  // médico entra apretando "Ingresar" él mismo. Nada de sesión restaurada
-  // en segundo plano.
-  //
-  // NO intentamos "verificar" acá si el navegador tiene algo guardado: el
-  // autocompletado casi nunca llega a escribir el .value antes de que el
-  // usuario toque la página (Chrome no lo expone a JS sin interacción), así
-  // que cualquier chequeo con timer da falso negativo y termina apagando
-  // "Recordar" solo en cada refresh (era el bug P2). Si el gestor no tiene
-  // nada guardado, peor caso: la casilla queda tildada y el médico escribe
-  // usuario/contraseña a mano una vez — sin daño.
-  try{
-    if(localStorage.getItem('mhcd_recordar')==='1'){
-      mostrarLogin();
-    }
-  }catch(e){ console.warn('[catch]', e); }
+  // "Recordarme" NO abre nada al cargar la página. Al entrar al sitio, tocar
+  // "Salir" o cerrarse por inactividad, siempre se ve la landing pública —
+  // nunca el modal de login tapando todo. El modal solo aparece cuando el
+  // médico toca "Ingresar" a mano; ahí mostrarLogin() re-tilda la casilla
+  // "Recordar" si quedó marcada, y el gestor de contraseñas del navegador
+  // precarga usuario/contraseña (ver autocomplete en ml-user/ml-pass).
+  // Sin reingreso automático, sin restaurar sesión en segundo plano.
   // Auto-fill fecha actual en campos type="date" (formato YYYY-MM-DD)
   var hoyISO = new Date().toISOString().split('T')[0];
   var eaFecha = document.getElementById('hc-ea-fecha');
