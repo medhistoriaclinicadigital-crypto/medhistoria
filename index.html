@@ -5803,6 +5803,9 @@ function switchHcTab(btn,id){
       cuadro.setSelectionRange(cuadro.value.length, cuadro.value.length);
     }
     renderEvolucionesHistorial();
+    // Traer del servidor las evoluciones de este paciente (incluidas las que
+    // escribieron otros médicos del centro) y re-renderizar cuando lleguen.
+    try{ sincronizarEvolucionesSupabase(function(){ try{ renderEvolucionesHistorial(); }catch(e){ console.warn('[catch]', e); } }); }catch(e){ console.warn('[catch]', e); }
     // Autocompletar médico que atiende con datos del usuario logueado
     var evolMedico = document.getElementById('evol-medico');
     if(evolMedico && !evolMedico.value && usuarioActual){
@@ -11543,7 +11546,6 @@ function renderEvolucionesHistorial(){
       +'<span style="font-family:\'Cormorant Garamond\',serif;font-weight:700;color:var(--g2);font-size:1rem;">'+escHtml(e.fecha)+'</span>'
       +(e.hora?'<span style="font-size:.8rem;color:var(--muted);"> · 🕐 '+escHtml(e.hora)+' hs</span>':'')
       +(e.medico?'<span style="font-size:.78rem;color:var(--g4);font-weight:700;margin-left:auto;">👨‍⚕️ '+escHtml(e.medico)+'</span>':'')
-      +'<button onclick="editarEvolucion('+i+')" style="margin-left:8px;padding:3px 10px;background:#f0fdf4;border:1px solid var(--g8);border-radius:6px;font-size:.75rem;color:var(--g3);cursor:pointer;font-family:\'Outfit\',sans-serif;">✏️ Editar</button>'
       +'</div>'
       +(sv?rb('Signos vitales',sv):'')
       +rb('Evolución',e.cuadro)
@@ -11553,81 +11555,9 @@ function renderEvolucionesHistorial(){
   }).join('');
 }
 
-function editarEvolucion(idx){
-  var evols = [];
-  if(pacienteHCActualIdx >= 0 && pacientes[pacienteHCActualIdx] && pacientes[pacienteHCActualIdx].evoluciones){
-    evols = pacientes[pacienteHCActualIdx].evoluciones;
-  } else {
-    evols = evoluciones;
-  }
-
-  // Ordenar igual que en el historial (ascendente)
-  var evolsOrdenadas = evols.slice().sort(function(a,b){
-    return (a.fechaISO||a.fecha||'').localeCompare(b.fechaISO||b.fecha||'');
-  });
-
-  var e = evolsOrdenadas[idx];
-  if(!e) return;
-
-  // Crear modal de edición
-  var existente = document.getElementById('modal-editar-evol');
-  if(existente) existente.remove();
-
-  var html = '<div id="modal-editar-evol" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)this.remove()">'
-    +'<div style="background:#fff;border-radius:16px;padding:28px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;">'
-    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">'
-    +'<h3 style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;color:var(--g2);margin:0;">✏️ Editar evolución — '+escHtml(e.fecha)+'</h3>'
-    +'<button onclick="document.getElementById(\'modal-editar-evol\').remove()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted);">✕</button>'
-    +'</div>'
-    +'<label style="display:block;font-size:.8rem;font-weight:700;color:var(--g3);margin-bottom:4px;">Evolución clínica</label>'
-    +'<textarea id="edit-evol-cuadro" style="width:100%;min-height:100px;padding:10px;border:1.5px solid var(--g8);border-radius:8px;font-family:\'Outfit\',sans-serif;font-size:.88rem;margin-bottom:14px;box-sizing:border-box;">'+escHtml(e.cuadro||'')+'</textarea>'
-    +'<label style="display:block;font-size:.8rem;font-weight:700;color:var(--g3);margin-bottom:4px;">Indicaciones y plan</label>'
-    +'<textarea id="edit-evol-plan" style="width:100%;min-height:70px;padding:10px;border:1.5px solid var(--g8);border-radius:8px;font-family:\'Outfit\',sans-serif;font-size:.88rem;margin-bottom:14px;box-sizing:border-box;">'+escHtml(e.plan||'')+'</textarea>'
-    +'<label style="display:block;font-size:.8rem;font-weight:700;color:var(--g3);margin-bottom:4px;">Próxima consulta</label>'
-    +'<input id="edit-evol-proxima" type="text" value="'+escHtml(e.proxima||'')+'" style="width:100%;padding:10px;border:1.5px solid var(--g8);border-radius:8px;font-family:\'Outfit\',sans-serif;font-size:.88rem;margin-bottom:20px;box-sizing:border-box;">'
-    +'<div style="display:flex;gap:10px;justify-content:flex-end;">'
-    +'<button onclick="document.getElementById(\'modal-editar-evol\').remove()" style="padding:10px 20px;background:#f5f5f5;border:1px solid #ddd;border-radius:8px;font-size:.88rem;cursor:pointer;font-family:\'Outfit\',sans-serif;">Cancelar</button>'
-    +'<button onclick="guardarEdicionEvolucion('+idx+')" style="padding:10px 24px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">💾 Guardar cambios</button>'
-    +'</div>'
-    +'</div></div>';
-  document.body.insertAdjacentHTML('beforeend', html);
-}
-
-function guardarEdicionEvolucion(idx){
-  var evols;
-  var enPaciente = pacienteHCActualIdx >= 0 && pacientes[pacienteHCActualIdx] && pacientes[pacienteHCActualIdx].evoluciones;
-  if(enPaciente){
-    evols = pacientes[pacienteHCActualIdx].evoluciones;
-  } else {
-    evols = evoluciones;
-  }
-
-  var evolsOrdenadas = evols.slice().sort(function(a,b){
-    return (a.fechaISO||a.fecha||'').localeCompare(b.fechaISO||b.fecha||'');
-  });
-
-  var e = evolsOrdenadas[idx];
-  if(!e) return;
-
-  // Encontrar el índice real en el array original
-  var idxReal = evols.findIndex(function(ev){ return (ev.fechaISO||ev.fecha) === (e.fechaISO||e.fecha); });
-  if(idxReal === -1) return;
-
-  evols[idxReal].cuadro = document.getElementById('edit-evol-cuadro').value.trim();
-  evols[idxReal].plan = document.getElementById('edit-evol-plan').value.trim();
-  evols[idxReal].proxima = document.getElementById('edit-evol-proxima').value.trim();
-
-  // Guardar
-  if(enPaciente){
-    guardarPacientes();
-  } else {
-    localStorage.setItem('medhistoria_evoluciones', JSON.stringify(evoluciones));
-  }
-
-  document.getElementById('modal-editar-evol').remove();
-  renderEvolucionesHistorial();
-  alert('✅ Evolución actualizada correctamente.');
-}
+// Las evoluciones ya guardadas no se editan ni se borran — el registro
+// clínico es permanente (append-only). Se sacó el botón "Editar" y sus
+// funciones; la base tampoco permite UPDATE/DELETE sobre la tabla evoluciones.
 
 function guardarEvolucion(){
   var ga = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
@@ -14882,14 +14812,34 @@ function sincronizarPacientesSupabase(){
     }
   });
 }
-    function sincronizarEvolucionesSupabase(){
-      if(!usuarioActual || !usuarioActual.id) return;
-      sb.from('pacientes').select('id,dni').eq('medico_id', usuarioActual.id).then(function(rPac){
-        if(!rPac.data) return;
+    function sincronizarEvolucionesSupabase(cb){
+      if(!usuarioActual || !usuarioActual.id){ if(cb) cb(); return; }
+      var esCentro = (typeof miCentro !== 'undefined' && miCentro && miCentro.id);
+
+      // Mapa paciente_id -> dni: los propios, o (si es centro) los del centro.
+      var pacQuery = esCentro
+        ? sb.rpc('obtener_pacientes_centro', { p_device_token: _deviceToken() })
+        : sb.from('pacientes').select('id,dni').eq('medico_id', usuarioActual.id);
+      // Mapa medico_id -> nombre, para mostrar quién escribió cada evolución.
+      var medQuery = esCentro
+        ? sb.rpc('listar_medicos_centro', { p_device_token: _deviceToken() })
+        : Promise.resolve({ data: [] });
+
+      Promise.all([pacQuery, medQuery]).then(function(res){
+        var rPac = res[0], rMed = res[1];
+        if(!rPac || !rPac.data){ if(cb) cb(); return; }
         var mapaIdDni = {};
-        rPac.data.forEach(function(p){ mapaIdDni[p.id] = p.dni; });
-        sb.from('evoluciones').select('*').eq('medico_id', usuarioActual.id).then(function(r){
-          if(!r.data) return;
+        rPac.data.forEach(function(p){ if(p && p.id) mapaIdDni[p.id] = p.dni; });
+        var mapaMedico = {};
+        if(rMed && rMed.data) rMed.data.forEach(function(m){ if(m && m.id) mapaMedico[m.id] = m.nombre || ''; });
+
+        // Si es centro, se traen sin filtro: la RLS ya devuelve las propias
+        // + las de pacientes de centro accesibles. Si no, solo las propias.
+        var evolQuery = esCentro
+          ? sb.from('evoluciones').select('*')
+          : sb.from('evoluciones').select('*').eq('medico_id', usuarioActual.id);
+        evolQuery.then(function(r){
+          if(!r.data){ if(cb) cb(); return; }
           r.data.forEach(function(remoto){
             var dniLocal = mapaIdDni[remoto.paciente_id];
             if(!dniLocal) return;
@@ -14915,13 +14865,14 @@ function sincronizarPacientesSupabase(){
                 diag: '',
                 plan: remoto.indicaciones_plan||'',
                 proxima: remoto.proxima_consulta||'',
-                medico: ''
+                medico: mapaMedico[remoto.medico_id] || ''
               });
             }
           });
           guardarLocal();
-        });
-      });
+          if(cb) cb();
+        }, function(){ if(cb) cb(); });
+      }, function(){ if(cb) cb(); });
     }
   
   function sincronizarHistoriasClinicasSupabase(){
