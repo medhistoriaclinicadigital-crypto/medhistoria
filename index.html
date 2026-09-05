@@ -607,7 +607,7 @@ function abrirRegistroCentro(){
   document.querySelectorAll('.centro-medico-only').forEach(function(el){ el.style.display = 'block'; });
   overlay.setAttribute('data-registro-centro', 'true');
   var btn=document.getElementById('pago-submit-btn'); if(btn) btn.textContent='✦ Crear mi Centro Médico';
-  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='El centro se crea al instante. Te mostramos los datos para transferir; hasta confirmar el pago funciona con el límite gratuito de 35 pacientes.';
+  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='El centro se crea al instante. Te mostramos los datos para transferir; hasta confirmar el pago funciona con un límite de pacientes reducido, que después pasa al de tu plan elegido.';
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
@@ -1138,8 +1138,9 @@ function mhcdRechazarCookies(){
     <!-- TU CENTRO MÉDICO -->
     <details id="sec-centro-medico" style="max-width:760px;margin:40px auto 0;background:#f0fdf4;border:1.5px solid rgba(20,90,50,.2);border-radius:16px;padding:28px 32px;scroll-margin-top:90px;">
       <summary style="cursor:pointer;list-style:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-          <div style="font-weight:800;color:#145a32;font-size:1.35rem;font-family:'Cormorant Garamond',Georgia,serif;">🏥 ¿Tenés una clínica o consultorio médico?</div>
+        <span class="sec-tag">🏥 Centro Médico</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <div style="font-weight:800;color:#145a32;font-size:clamp(1.7rem,3.4vw,2.2rem);line-height:1.2;font-family:'Cormorant Garamond',Georgia,serif;">¿Tenés una clínica o consultorio médico?</div>
           <span style="font-size:.78rem;color:#22a050;font-weight:700;white-space:nowrap;">Ver cómo funciona ▾</span>
         </div>
       </summary>
@@ -1159,14 +1160,14 @@ function mhcdRechazarCookies(){
               <li>Aceptá los Términos y Condiciones y tocá <span class="ctr-ui">✦ Crear mi Centro Médico</span>.</li>
             </ol>
             <p>Tu cuenta y tu centro quedan creados al instante — sin trámites por mail — y entrás directo a tu panel, ya como dueño/a del centro.</p>
-            <div class="ctr-tip">💡 <span>Arranca limitado a <strong>35 pacientes</strong> hasta confirmar el pago — una vez confirmado, pasa al límite de tu plan elegido (por ejemplo 200 con Pro, o sin límite con Ilimitado), no se queda en 35. Apenas termina el registro se abre solo el panel con los datos para transferir.</span></div>
+            <div class="ctr-tip">💡 <span>Arranca con un <strong>límite de pacientes reducido</strong> hasta confirmar el pago — una vez confirmado, pasa al límite de tu plan elegido (por ejemplo 200 con Pro, o sin límite con Ilimitado). Apenas termina el registro se abre solo el panel con los datos para transferir.</span></div>
             <ol>
               <li>Hacé la transferencia con los datos que te muestra ese panel.</li>
               <li>Volvé y tocá <span class="ctr-ui">Ya hice la transferencia</span>.</li>
             </ol>
             <div class="ctr-callout">
               <div class="ctr-callout-label">Confirmación en pantalla</div>
-              <span class="ctr-mono" style="font-size:.85rem;">"✅ ¡Gracias! Anotamos que hiciste la transferencia. En cuanto la veamos en la cuenta activamos tu plan completo. Mientras tanto el centro sigue disponible con 35 pacientes."</span>
+              <span class="ctr-mono" style="font-size:.85rem;">"✅ ¡Gracias! Anotamos que hiciste la transferencia. En cuanto la veamos en la cuenta activamos tu plan completo. Mientras tanto el centro sigue disponible con un límite de pacientes reducido."</span>
             </div>
             <p>Nuestro equipo confirma el ingreso y activa tu plan completo — no tenés que hacer nada más de tu lado. Si más adelante necesitás volver a ver esos datos, o cambiar de plan, los botones <span class="ctr-ui">💳 Ver datos para transferir</span> y <span class="ctr-ui">⬆️ Cambiar plan</span> están siempre en <span class="ctr-ui">Mi Centro Médico</span>.</p>
             <div class="ctr-aside">
@@ -4325,7 +4326,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           </select>
           <input type="text" id="centro-cuit-nuevo" placeholder="CUIT (para la factura)" style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--g8);border-radius:8px;font-size:.9rem;font-family:'Outfit',sans-serif;margin-bottom:12px;">
           <input type="text" id="centro-direccion-nueva" placeholder="Dirección (para la factura)" style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--g8);border-radius:8px;font-size:.9rem;font-family:'Outfit',sans-serif;margin-bottom:12px;">
-          <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 10px;margin-bottom:12px;line-height:1.5;">El centro se crea al instante y ya podés usarlo, pero <strong>arranca limitado a 35 pacientes</strong> hasta que confirmemos tu pago. Al crearlo te mostramos los datos para transferir; cuando recibamos la transferencia activamos tu plan completo.</div>
+          <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 10px;margin-bottom:12px;line-height:1.5;">El centro se crea al instante y ya podés usarlo, pero <strong>arranca con un límite de pacientes reducido</strong> hasta que confirmemos tu pago. Al crearlo te mostramos los datos para transferir; cuando recibamos la transferencia activamos el límite completo de tu plan.</div>
           <button onclick="crearCentroMedico()" style="padding:10px 24px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Crear Centro Médico</button>
           <div style="border-top:1px solid var(--g9);margin-top:20px;padding-top:16px;">
             <div style="font-weight:700;color:var(--g2);font-size:.9rem;margin-bottom:4px;">¿Te invitaron a un centro?</div>
@@ -4451,7 +4452,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <option value="ilimitado">Ilimitado — u$s 199/mes</option>
         </select>
       </label>
-      <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 10px;margin-top:8px;line-height:1.5;">El centro se crea al instante y ya podés usarlo, pero <strong>arranca limitado a 35 pacientes</strong> hasta que confirmemos tu pago. Al terminar te mostramos los datos para transferir; cuando recibamos la transferencia activamos tu plan completo.</div>
+      <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 10px;margin-top:8px;line-height:1.5;">El centro se crea al instante y ya podés usarlo, pero <strong>arranca con un límite de pacientes reducido</strong> hasta que confirmemos tu pago. Al terminar te mostramos los datos para transferir; cuando recibamos la transferencia activamos el límite completo de tu plan.</div>
       <div style="font-size:.75rem;color:#666;margin-top:8px;line-height:1.5;">Vas a poder agregar a los demás médicos de tu equipo apenas termines este paso.</div>
       <label style="display:flex;align-items:flex-start;gap:8px;font-size:.8rem;color:#145a32;font-weight:600;margin-top:12px;padding-top:12px;border-top:1px solid #bbf7d0;cursor:pointer;">
         <input type="checkbox" id="pago-centro-tambien-medico" checked onchange="toggleCentroTambienMedico()" style="margin-top:2px;flex-shrink:0;accent-color:#22a050;width:16px;height:16px;">
@@ -7120,10 +7121,10 @@ function renderCentroMedico(){
     var nombrePlanTxt = nombresPlan[planCentro] || planCentro;
     if((miCentro.plan_estado||'activo') !== 'activo'){
       // Centro creado, transferencia todavía sin confirmar por la operadora → capado a 35
-      planBadgeEl.innerHTML = '<span style="background:#fffbeb;color:#92400e;border-radius:20px;padding:3px 12px;font-size:.75rem;font-weight:700;">⏳ Plan '+nombrePlanTxt+' — pago pendiente de confirmación (35 pacientes hasta confirmar)</span>'
+      planBadgeEl.innerHTML = '<span style="background:#fffbeb;color:#92400e;border-radius:20px;padding:3px 12px;font-size:.75rem;font-weight:700;">⏳ Plan '+nombrePlanTxt+' — pago pendiente de confirmación (límite reducido hasta confirmar)</span>'
         + (esDuenioDeCentro() ? ' <button onclick="verDatosTransferenciaCentro()" style="margin-left:8px;padding:5px 14px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:20px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">💳 Ver datos para transferir</button>' : '');
     } else if(planCentro === 'trial'){
-      planBadgeEl.innerHTML = '<span style="background:#fffbeb;color:#92400e;border-radius:20px;padding:3px 12px;font-size:.75rem;font-weight:700;">⏳ '+nombrePlanTxt+' — 35 pacientes máx.</span> <button onclick="abrirMejorarPlan()" style="margin-left:8px;padding:5px 14px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:20px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">⬆️ Mejorar plan</button>';
+      planBadgeEl.innerHTML = '<span style="background:#fffbeb;color:#92400e;border-radius:20px;padding:3px 12px;font-size:.75rem;font-weight:700;">⏳ '+nombrePlanTxt+' — límite reducido</span> <button onclick="abrirMejorarPlan()" style="margin-left:8px;padding:5px 14px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:20px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">⬆️ Mejorar plan</button>';
     } else {
       planBadgeEl.innerHTML = '<span style="background:#dcfce7;color:#15803d;border-radius:20px;padding:3px 12px;font-size:.75rem;font-weight:700;">✓ Plan '+nombrePlanTxt+'</span> <button onclick="abrirMejorarPlan()" style="margin-left:8px;padding:5px 14px;background:#fff;color:#15803d;border:1.5px solid #bbf7d0;border-radius:20px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">⬆️ Cambiar plan</button>';
     }
@@ -7490,7 +7491,7 @@ function abrirPanelTransferenciaCentro(plan){
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(4,20,10,.55);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;';
   ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:440px;width:100%;padding:24px;font-family:\'Outfit\',sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;">'
     + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.4rem;color:var(--g2);font-weight:700;margin-bottom:4px;">🏥 Centro creado — falta el pago</div>'
-    + '<p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin:0 0 16px;">Tu centro ya funciona, pero <strong>limitado a 35 pacientes</strong> hasta que confirmemos tu pago. Transferí <strong>u$s '+precio+'</strong> (Plan '+(nombresPlan[plan]||plan)+') a esta cuenta:</p>'
+    + '<p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin:0 0 16px;">Tu centro ya funciona, pero <strong>con un límite de pacientes reducido</strong> hasta que confirmemos tu pago. Transferí <strong>u$s '+precio+'</strong> (Plan '+(nombresPlan[plan]||plan)+') a esta cuenta:</p>'
     + '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-bottom:16px;">'+filas+'</div>'
     + '<p style="font-size:.78rem;color:var(--muted);line-height:1.55;margin:0 0 16px;">Cuando tengamos la transferencia activamos tu plan completo (puede tardar hasta 24hs hábiles). Mientras tanto seguí usando el centro.</p>'
     + '<div style="display:flex;gap:10px;flex-wrap:wrap;">'
@@ -7515,7 +7516,7 @@ function confirmarTransferenciaCentro(){
   sb.rpc('informar_transferencia_centro', { p_centro_id: miCentro.id }).then(function(r){
     if(r.error) console.error('Error informando transferencia:', r.error);
     cerrarPanelTransferenciaCentro();
-    alert('✅ ¡Gracias! Anotamos que hiciste la transferencia.\n\nEn cuanto la veamos en la cuenta activamos tu plan completo. Mientras tanto el centro sigue disponible con 35 pacientes.');
+    alert('✅ ¡Gracias! Anotamos que hiciste la transferencia.\n\nEn cuanto la veamos en la cuenta activamos tu plan completo. Mientras tanto el centro sigue disponible con un límite de pacientes reducido.');
   });
 }
 
