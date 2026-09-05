@@ -7650,22 +7650,19 @@ function agregarMedicoACentro(){
   var email = inp ? (inp.value||'').trim().toLowerCase() : '';
   if(!email){ alert('Ingresá el mail del médico.'); return; }
   if(!miCentro){ alert('Primero tenés que crear o pertenecer a un centro.'); return; }
-  sb.rpc('buscar_medico_por_email', {p_email: email}).then(function(r){
-    if(!r.data || r.data.length===0){
-      alert('❌ No encontramos ningún médico registrado con ese mail. Tiene que crear su cuenta en la app primero.');
+  // Todo el alta pasa por la RPC agregar_medico_a_centro, que valida
+  // server-side que quien llama sea el dueño del centro y que el médico
+  // no pertenezca ya a otro centro (antes esto era un insert directo a
+  // centro_medicos_usuarios y esas dos cosas no se chequeaban).
+  sb.rpc('agregar_medico_a_centro', { p_email: email }).then(function(r){
+    if(r.error){
+      alert(r.error.code === 'P0001' ? ('⚠️ '+r.error.message) : '❌ Hubo un problema al agregarlo. Probá de nuevo.');
+      if(r.error.code !== 'P0001') console.error('Error agregando medico:', r.error);
       return;
     }
-    var medico = r.data[0];
-    sb.from('centro_medicos_usuarios').insert({centro_id: miCentro.id, medico_id: medico.id}).then(function(r2){
-      if(r2.error){
-        if(r2.error.code === '23505'){ alert('Ese médico ya pertenece a este centro.'); }
-        else { alert('❌ Hubo un problema al agregarlo. Probá de nuevo.'); console.error('Error agregando medico:', r2.error); }
-        return;
-      }
-      if(inp) inp.value = '';
-      alert('✅ '+(medico.nombre||email)+' agregado al centro.');
-      renderCentroMedico();
-    });
+    if(inp) inp.value = '';
+    alert('✅ '+(r.data || email)+' agregado al centro.');
+    renderCentroMedico();
   });
 }
 
