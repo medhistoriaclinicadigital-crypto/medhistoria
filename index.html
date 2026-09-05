@@ -5600,8 +5600,21 @@ function showPanel(id){
   window.scrollTo(0,0);
 
   if(id==='agenda') { try{ renderTurnos(); }catch(e){ console.warn('[catch]', e); } }
-  if(id==='analitica') { try{ checkAddonAnalitica(); if(tieneAddonAnalitica()) setTimeout(renderAnalitica,80); }catch(e){ console.warn('[catch]', e); } }
-  if(id==='firma-medico') { try{ initPanelFirma(); }catch(e){ console.warn('[catch]', e); } }
+  if(id==='analitica') {
+    _sincronizarAddonsServidor(function(){
+      try{ checkAddonAnalitica(); if(tieneAddonAnalitica()) setTimeout(renderAnalitica,80); }catch(e){ console.warn('[catch]', e); }
+    });
+  } else if(id==='firma-medico') {
+    _sincronizarAddonsServidor(function(){
+      try{ initPanelFirma(); }catch(e){ console.warn('[catch]', e); }
+    });
+  } else {
+    // Fire-and-forget: cualquier otro panel (recetas, HC, agenda, etc.) igual
+    // refresca en segundo plano el estado real de los add-ons, para que la
+    // firma en un PDF o el botón de WhatsApp usen el dato fresco del servidor
+    // apenas esté disponible, sin bloquear la navegación mientras tanto.
+    try{ _sincronizarAddonsServidor(); }catch(e){ console.warn('[catch]', e); }
+  }
   if(id==='telemed') { try{ var tf=document.getElementById('tele-fecha'); if(tf&&!tf.value){ tf.value=new Date().toISOString().split('T')[0]; } }catch(e){ console.warn('[catch]', e); } }
   if(id==='pacientes'){
     try{ 
@@ -7792,6 +7805,25 @@ function activarConCodigo(addon){
 // Nota: la generación de códigos nuevos ahora se hace con una consulta SQL
 // directa en Supabase (tabla codigos_activacion), no desde el navegador.
 // ══════════════════════════════════════════
+
+// Re-chequea contra la base (no solo la variable en memoria) si el médico
+// tiene cada add-on activo. usuarios.addon_firma/addon_analitica/addon_whatsapp
+// son los campos reales que actualiza activar_codigo_addon() — esto los vuelve
+// a traer cada vez que el médico entra a usar una función paga, en vez de
+// confiar para siempre en lo que se cargó una sola vez al loguearse (eso es lo
+// que permitía, antes de este fix, "regalarse" un add-on escribiendo
+// usuarioActual.addon_x = true por consola y que quedara así toda la sesión).
+function _sincronizarAddonsServidor(cb){
+  if(!usuarioActual || !usuarioActual.id){ if(cb) cb(); return; }
+  sb.from('usuarios').select('addon_firma,addon_analitica,addon_whatsapp').eq('id', usuarioActual.id).then(function(r){
+    if(r.data && r.data[0]){
+      usuarioActual.addon_firma = r.data[0].addon_firma === true;
+      usuarioActual.addon_analitica = r.data[0].addon_analitica === true;
+      usuarioActual.addon_whatsapp = r.data[0].addon_whatsapp === true;
+    }
+    if(cb) cb();
+  }, function(err){ console.warn('[catch]', err); if(cb) cb(); });
+}
 
 function tieneAddonAnalitica(){
   if(usuarioActual){ return usuarioActual.addon_analitica === true; }
