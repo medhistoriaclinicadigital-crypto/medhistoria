@@ -165,6 +165,44 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;
 .enfoque-item{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--g8);border-radius:12px;padding:14px 16px;font-size:.9rem;font-weight:600;color:var(--g2);line-height:1.35;}
 .enfoque-ico{width:36px;height:36px;flex-shrink:0;background:var(--g9);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;}
 
+/* ══ CENTRO MÉDICO — instructivo con pasos numerados (landing) ══ */
+.ctr-notice{display:flex;gap:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;font-size:.85rem;color:#7a5b12;line-height:1.6;margin-bottom:22px;}
+.ctr-mono{display:block;margin-top:4px;font-family:'JetBrains Mono','SFMono-Regular',Consolas,monospace;font-weight:600;font-size:.82em;}
+.ctr-step{display:grid;grid-template-columns:44px 1fr;gap:16px;position:relative;padding-bottom:32px;}
+.ctr-step:last-child{padding-bottom:0;}
+.ctr-rail{display:flex;flex-direction:column;align-items:center;}
+.ctr-num{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.25rem;width:38px;height:38px;border-radius:50%;background:var(--g9);color:var(--g4);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1.5px solid var(--g5);}
+.ctr-line{width:2px;flex:1;background:var(--g8);margin-top:6px;}
+.ctr-step:last-child .ctr-line{display:none;}
+.ctr-head{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;}
+.ctr-head h4{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:700;color:var(--g2);margin:0;}
+.ctr-tag{display:inline-flex;align-items:center;gap:5px;font-size:.65rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+.ctr-tag.owner{background:var(--g2);color:#eafff2;}
+.ctr-tag.guest{background:var(--g9);color:var(--g3);border:1px solid var(--g8);}
+.ctr-tag.all{background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;}
+.ctr-tag.soon{background:#fffbeb;color:#92400e;border:1px solid #fde68a;}
+.ctr-step p{color:#3d4f43;font-size:.87rem;margin:0 0 10px;line-height:1.65;}
+.ctr-step ol,.ctr-step ul{margin:0 0 10px;padding-left:1.2em;font-size:.87rem;color:var(--text);line-height:1.6;}
+.ctr-step li{margin-bottom:6px;}
+.ctr-step li::marker{color:var(--g5);font-weight:700;}
+.ctr-ui{display:inline-block;background:#fff;border:1.5px solid var(--g8);border-radius:6px;padding:1px 8px;font-weight:600;font-size:.9em;color:var(--g2);white-space:nowrap;}
+.ctr-code{display:inline-block;font-family:'JetBrains Mono','SFMono-Regular',Consolas,monospace;font-weight:600;font-size:.85em;background:var(--g9);color:var(--g2);border-radius:5px;padding:2px 7px;}
+.ctr-tip{display:flex;gap:8px;background:var(--g9);border:1px solid var(--g8);border-radius:9px;padding:10px 12px;font-size:.83rem;color:var(--text);margin:0 0 12px;}
+.ctr-warn{display:flex;gap:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:10px 12px;font-size:.83rem;color:#7a5b12;margin:0 0 12px;}
+.ctr-callout{background:#fff;border:1px solid var(--g8);border-radius:9px;padding:12px 14px;margin:0 0 12px;}
+.ctr-callout-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px;}
+.ctr-wa{background:#fff;border:1px solid var(--g8);border-radius:9px;padding:12px 14px 14px;margin:0 0 12px;}
+.ctr-wa-cap{display:flex;align-items:center;gap:6px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;}
+.ctr-wa-bubble{background:#dcf8c6;border:1px solid #b7e8a0;border-radius:8px;padding:10px 12px;font-size:.85rem;color:#1a2e1e;white-space:pre-wrap;line-height:1.5;}
+.ctr-wa-bubble .ctr-link{display:inline-block;margin-top:2px;font-family:'JetBrains Mono','SFMono-Regular',Consolas,monospace;font-size:.82em;color:var(--g3);word-break:break-all;}
+.ctr-aside{border-top:1px dashed var(--g8);margin-top:12px;padding-top:12px;}
+.ctr-aside-title{font-weight:700;font-size:.83rem;color:var(--g3);margin-bottom:6px;}
+.ctr-trouble{width:100%;border-collapse:collapse;font-size:.83rem;margin-top:6px;}
+.ctr-trouble th{text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:0 10px 8px 0;border-bottom:1.5px solid var(--g8);}
+.ctr-trouble td{padding:10px 10px 10px 0;border-bottom:1px solid var(--g9);vertical-align:top;color:var(--text);}
+.ctr-trouble tr:last-child td{border-bottom:none;}
+.ctr-trouble-wrap{overflow-x:auto;margin-top:8px;}
+
 /* ══ PLANES ══ */
 .planes-sec{background:#fff;}
 .laws-strip{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:20px;margin-bottom:4px;}
@@ -1106,16 +1144,139 @@ function mhcdRechazarCookies(){
           <span style="font-size:.78rem;color:#22a050;font-weight:700;white-space:nowrap;">Ver cómo funciona ▾</span>
         </div>
       </summary>
-      <div style="font-size:.88rem;color:#1a3a2a;line-height:1.8;margin-top:18px;">
-        <p style="margin:0 0 10px;"><strong>1.</strong> Inscribí tu centro médico o policonsultorio con el botón de abajo — completás tus datos, le ponés nombre a tu centro y creás tu contraseña. Tu cuenta y tu centro quedan creados al instante, sin trámites por mail.</p>
-        <p style="margin:0 0 10px;"><strong>2.</strong> Elegís, desde "Mi Centro Médico" dentro de la app, el plan que más se adapte a tu equipo — no todos los centros necesitan Ilimitado, hay opciones para consultorios chicos también.</p>
-        <p style="margin:0 0 4px;"><strong>3. Sumás a cada médico de tu equipo.</strong> Un código por médico, dos pasos:</p>
-        <p style="margin:0 0 4px;padding-left:1.1em;"><strong>Vos</strong>, desde <strong>"Mi Centro Médico"</strong> en la app: tocás "Generar código de invitación", ponés el WhatsApp del médico y "Enviar por WhatsApp". Le llega un mensaje con un link. Generá un código nuevo por cada médico.</p>
-        <p style="margin:0 0 10px;padding-left:1.1em;"><strong>El médico</strong>, al tocar ese link (desde el celular o la compu): se le abre <strong>en ese momento</strong> el formulario de registro con el código ya cargado. Completa su nombre, matrícula, especialidad y email, y <strong>elige su propia contraseña</strong> — no elige plan ni carga ningún dato de pago. Al confirmar, su cuenta queda creada y <strong>sumada a tu centro automáticamente</strong>. De ahí en más entra con su email y su contraseña. Para él es gratis: el plan del centro cubre a todo el equipo.</p>
-        <p style="margin:-2px 0 12px;padding-left:1.1em;font-size:.8rem;color:#4a6a54;font-style:italic;">¿El médico ya tiene cuenta en MedHistoriaClinicaOnline? No usa el link: entra a su cuenta → "Mi Centro Médico" → pega el código en "¿Te invitaron a un centro?". O lo agregás vos por su email desde ese mismo panel (tiene que haber completado su perfil antes).</p>
-        <p style="margin:0 0 14px;"><strong>3.5.</strong> Después de que se registre, todavía no puede entrar: primero tenés que aprobar su dispositivo. Andá a "Mi Centro Médico" → "Dispositivos autorizados" y aceptalo ahí. Recién ahí puede loguearse.</p>
-        <p style="margin:0 0 14px;"><strong>4.</strong> Desde ese momento, todos los médicos del centro ven y editan la misma ficha de cada paciente compartido — cada uno con su propio usuario, y quedando registrado quién hizo cada cambio y cada nota.</p>
-        <button onclick="abrirRegistroCentro()" style="padding:12px 28px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.92rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Inscribir mi Centro Médico →</button>
+      <div style="margin-top:18px;">
+        <div class="ctr-notice">⏳ <span><strong>El Paso 1 todavía no está activo.</strong> Podés leer toda la guía para saber qué esperar, pero si hoy tocás <span class="ctr-ui">Inscribir mi Centro Médico</span> te va a aparecer este aviso: <span class="ctr-mono">"🏥 Estamos terminando de habilitar la inscripción de Centros Médicos — va a estar disponible en muy poco."</span> Te avisamos apenas se habilite.</span></div>
+
+        <!-- PASO 1 -->
+        <div class="ctr-step">
+          <div class="ctr-rail"><div class="ctr-num">1</div><div class="ctr-line"></div></div>
+          <div>
+            <div class="ctr-head"><h4>Crear tu Centro Médico</h4><span class="ctr-tag owner">Vos</span><span class="ctr-tag soon">⏳ Próximamente</span></div>
+            <p>Se hace una sola vez, con el botón <span class="ctr-ui">Inscribir mi Centro Médico</span> de abajo — un mismo formulario cubre el registro, el centro y el plan.</p>
+            <ol>
+              <li>Completá el <span class="ctr-ui">Nombre del Centro Médico</span> y elegí el <span class="ctr-ui">Plan del centro</span> (Starter, Pro, Premium o Ilimitado) — el que cubre a todo el equipo.</li>
+              <li>¿Vos también vas a atender pacientes ahí? Dejá tildado <span class="ctr-ui">¿Sos médico y también vas a atender pacientes en este centro?</span> y completá tu matrícula y especialidad. Si el centro lo administra alguien que no es médico, destildalo.</li>
+              <li>Completá tus datos personales (nombre, apellido, email, DNI/CUIT, WhatsApp, dirección) y elegí tu contraseña.</li>
+              <li>Aceptá los Términos y Condiciones y tocá <span class="ctr-ui">✦ Crear mi Centro Médico</span>.</li>
+            </ol>
+            <p>Tu cuenta y tu centro quedan creados al instante — sin trámites por mail — y entrás directo a tu panel, ya como dueño/a del centro.</p>
+            <div class="ctr-tip">💡 <span>Arranca limitado a <strong>35 pacientes</strong> hasta confirmar el pago. Apenas termina el registro se abre solo el panel con los datos para transferir.</span></div>
+            <ol>
+              <li>Hacé la transferencia con los datos que te muestra ese panel.</li>
+              <li>Volvé y tocá <span class="ctr-ui">Ya hice la transferencia</span>.</li>
+            </ol>
+            <div class="ctr-callout">
+              <div class="ctr-callout-label">Confirmación en pantalla</div>
+              <span class="ctr-mono" style="font-size:.85rem;">"✅ ¡Gracias! Anotamos que hiciste la transferencia. En cuanto la veamos en la cuenta activamos tu plan completo. Mientras tanto el centro sigue disponible con 35 pacientes."</span>
+            </div>
+            <p>Nuestro equipo confirma el ingreso y activa tu plan completo — no tenés que hacer nada más de tu lado. Si más adelante necesitás volver a ver esos datos, o cambiar de plan, los botones <span class="ctr-ui">💳 Ver datos para transferir</span> y <span class="ctr-ui">⬆️ Cambiar plan</span> están siempre en <span class="ctr-ui">Mi Centro Médico</span>.</p>
+            <div class="ctr-aside">
+              <div class="ctr-aside-title">¿Ya tenés una cuenta individual en MedHistoriaClinicaOnline?</div>
+              <p style="margin:0;">No hace falta que te registres de nuevo. Entrá con tu cuenta → <span class="ctr-ui">Mi Centro Médico</span> → completá el mismo formulario (nombre, plan, CUIT, dirección) → <span class="ctr-ui">Crear Centro Médico</span>. La transferencia y la confirmación funcionan exactamente igual.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 2 -->
+        <div class="ctr-step">
+          <div class="ctr-rail"><div class="ctr-num">2</div><div class="ctr-line"></div></div>
+          <div>
+            <div class="ctr-head"><h4>Invitar a un médico</h4><span class="ctr-tag owner">Vos</span></div>
+            <p>Desde el menú entrás a <span class="ctr-ui">Mi Centro Médico</span>. Cada persona que sumás recibe su propio código de invitación — nunca se reutiliza uno para dos médicos distintos.</p>
+            <ol>
+              <li>Tocá <span class="ctr-ui">Generar código de invitación</span>.</li>
+              <li>Te aparece un código con este formato: <span class="ctr-code">CENTRO-7K2PQD</span> (el tuyo va a ser distinto, se genera al azar).</li>
+              <li>Escribí el WhatsApp del médico en el campo que aparece debajo del código, y tocá <span class="ctr-ui">📲 Enviar por WhatsApp</span>.</li>
+              <li>Se abre WhatsApp con el mensaje ya redactado — solo falta tocar enviar.</li>
+            </ol>
+            <div class="ctr-wa">
+              <div class="ctr-wa-cap">💬 Mensaje que le llega, tal cual</div>
+              <div class="ctr-wa-bubble">👋 ¡Hola! Te invitamos a sumarte a *Tu Centro Médico* en MedHistoriaClinicaOnline.
+
+Tocá este link para crear tu cuenta gratis — te va a aparecer el formulario de registro con tu código de invitación ya cargado:
+
+<span class="ctr-link">https://medhistoriaclinicaonline.com/?codigo=CENTRO-7K2PQD</span>
+
+Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automáticamente al centro, con tu propio usuario y contraseña.</div>
+            </div>
+            <div class="ctr-tip">💡 <span><strong>Un código, un médico.</strong> Si sumás a tres personas, generás tres códigos — no hace falta que sea el mismo día ni el mismo turno.</span></div>
+            <div class="ctr-aside">
+              <div class="ctr-aside-title">¿El médico ya tiene cuenta creada?</div>
+              <p style="margin-bottom:8px;">No necesita el link. Dos formas de sumarlo igual, sin volver a registrarse:</p>
+              <ul>
+                <li>Él mismo entra a su cuenta → <span class="ctr-ui">Mi Centro Médico</span> → pega el código en <span class="ctr-ui">¿Te invitaron a un centro?</span> → <span class="ctr-ui">Sumarme al centro</span>.</li>
+                <li>Vos lo agregás directo por su email, en la sección <span class="ctr-ui">O agregar por mail</span> de tu propio panel, con <span class="ctr-ui">+ Agregar</span> — sin código de por medio.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 3 -->
+        <div class="ctr-step">
+          <div class="ctr-rail"><div class="ctr-num">3</div><div class="ctr-line"></div></div>
+          <div>
+            <div class="ctr-head"><h4>Lo que ve el médico invitado</h4><span class="ctr-tag guest">El invitado</span></div>
+            <p>Esto pasa del otro lado, en su celular o computadora — no requiere nada tuyo, pero conviene saber qué está viviendo.</p>
+            <ul>
+              <li>Al tocar el link se le abre directo el formulario de registro, con el código ya cargado.</li>
+              <li>Completa nombre, sexo, matrícula (M.N. y/o M.P.), especialidad y email, y elige su propia contraseña.</li>
+              <li><strong>No elige plan ni carga ningún dato de pago</strong> — el plan del centro ya cubre a todo el equipo, para él es gratis.</li>
+              <li>Al confirmar, su cuenta queda creada y sumada al centro en el mismo momento, y entra directo a su propio panel.</li>
+            </ul>
+            <div class="ctr-tip">💡 <span>Ese primer ingreso funciona en el dispositivo desde el que se registró. La <strong>próxima vez</strong> que necesite entrar (otro día, u otro dispositivo) va a depender del Paso 4.</span></div>
+          </div>
+        </div>
+
+        <!-- PASO 4 -->
+        <div class="ctr-step">
+          <div class="ctr-rail"><div class="ctr-num">4</div><div class="ctr-line"></div></div>
+          <div>
+            <div class="ctr-head"><h4>Aprobar su dispositivo</h4><span class="ctr-tag owner">Vos</span></div>
+            <p>Por seguridad de los datos de tus pacientes, cada dispositivo nuevo (compu, tablet, celular) necesita tu aprobación antes de poder entrar al centro. Vos, como dueño/a, siempre tenés acceso desde cualquier dispositivo sin este paso.</p>
+            <ol>
+              <li>Andá a <span class="ctr-ui">Mi Centro Médico</span> → <span class="ctr-ui">🔒 Dispositivos autorizados</span>.</li>
+              <li>Vas a ver al médico en la lista, con su nombre, email y el estado <strong>⏳ Pendiente</strong>.</li>
+              <li>Tocá <span class="ctr-ui">Aprobar</span>. El estado pasa a <strong>✓ Aprobado</strong> y ya puede volver a entrar.</li>
+            </ol>
+            <div class="ctr-tip">💡 <span>Convine hacerlo <strong>apenas te avisen que se registraron</strong>, para que no queden afuera la próxima vez que abran la app.</span></div>
+            <div class="ctr-warn">⚠️ <span>Si el médico ve este mensaje al intentar entrar, es exactamente esto lo que falta:<span class="ctr-mono">"🔒 Este dispositivo todavía no fue aprobado."</span></span></div>
+            <div class="ctr-aside">
+              <div class="ctr-aside-title">Revocar acceso</div>
+              <p style="margin:0;">Desde el mismo lugar podés tocar <span class="ctr-ui">Revocar</span> en cualquier momento — el estado pasa a <strong>✕ Rechazado</strong> y no puede volver a entrar hasta que lo apruebes de nuevo.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 5 -->
+        <div class="ctr-step">
+          <div class="ctr-rail"><div class="ctr-num">5</div></div>
+          <div>
+            <div class="ctr-head"><h4>Pacientes compartidos</h4><span class="ctr-tag all">Todo el equipo</span></div>
+            <p>Una vez aprobado, el panel de <span class="ctr-ui">Pacientes</span> tiene dos pestañas: <span class="ctr-ui">Mis pacientes</span> y <span class="ctr-ui">🏥 Pacientes del centro</span>. No hay que "compartir" nada a mano.</p>
+            <ul>
+              <li>Todo paciente nuevo que cargue cualquier médico del equipo desde <span class="ctr-ui">Historia Clínica</span> queda automáticamente en <span class="ctr-ui">🏥 Pacientes del centro</span>, visible para todos.</li>
+              <li>Cualquier médico del equipo puede abrir, editar o continuar la atención de esa misma ficha.</li>
+              <li>Cada cambio en Antecedentes, Examen físico o Diagnóstico queda anotado — quién lo hizo y cuándo — en <span class="ctr-ui">🕓 Historial de cambios</span>, dentro de la Historia Clínica de ese paciente.</li>
+              <li>Arriba de la lista del centro aparecen los médicos del equipo, para saber con quién estás compartiendo cada ficha.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- TROUBLESHOOTING -->
+        <div style="margin-top:8px;padding-top:20px;border-top:1px solid var(--g8);">
+          <div style="font-weight:700;font-size:.92rem;color:var(--g2);margin-bottom:10px;">📋 Guía rápida si algo no sale como se espera</div>
+          <div class="ctr-trouble-wrap">
+            <table class="ctr-trouble">
+              <tr><th style="width:34%;">Situación</th><th>Qué significa y qué hacer</th></tr>
+              <tr><td>El médico invitado no puede entrar, y ve <span class="ctr-mono" style="font-size:.8em;">"dispositivo todavía no fue aprobado"</span></td><td>Le falta el Paso 4. Andá a <span class="ctr-ui">Dispositivos autorizados</span> y aprobalo.</td></tr>
+              <tr><td>El código de invitación "no es válido o ya fue usado"</td><td>Cada código sirve una sola vez y vence a las 48&nbsp;hs. Generá uno nuevo desde <span class="ctr-ui">Mi Centro Médico</span>.</td></tr>
+              <tr><td>Un médico no ve el botón para invitar ni "Dispositivos autorizados"</td><td>Esas acciones son solo para quien creó el centro. El resto del equipo solo ve y carga pacientes.</td></tr>
+              <tr><td>No encuentra al paciente que cargó un colega</td><td>Revisá que esté parado en la pestaña <span class="ctr-ui">🏥 Pacientes del centro</span>, no en <span class="ctr-ui">Mis pacientes</span>.</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <button onclick="abrirRegistroCentro()" style="margin-top:24px;padding:12px 28px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.92rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Inscribir mi Centro Médico →</button>
       </div>
     </details>
 
