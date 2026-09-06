@@ -848,7 +848,7 @@ function mhcdRechazarCookies(){
         <button type="button" onclick="togglePass('ml-pass',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;color:#aaa;padding:4px;"><span style="position:relative;display:inline-block;font-size:1.1rem;">👁<span style="position:absolute;left:0;top:50%;transform:translateY(-50%) rotate(-45deg);width:100%;height:2px;background:#888;display:block;border-radius:2px;"></span></span></button>
       </div>
       <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#666;margin:10px 0 4px;cursor:pointer;">
-       <input type="checkbox" id="ml-recordar" style="accent-color:#22a050;width:15px;height:15px;" onchange="(function(c,chk){var u=(document.getElementById('ml-user')||{}).value||'';var p=(document.getElementById('ml-pass')||{}).value||'';if(c && (!u.trim()||!p.trim())){chk.checked=false;alert('Completá usuario y contraseña antes de tildar \'Recordar usuario y contraseña\'.');return;}if(c){localStorage.setItem('mhcd_recordar','1');}else{localStorage.removeItem('mhcd_recordar');}})(this.checked,this)">
+       <input type="checkbox" id="ml-recordar" style="accent-color:#22a050;width:15px;height:15px;" onchange="(function(c,chk){var u=(document.getElementById('ml-user')||{}).value||'';var p=(document.getElementById('ml-pass')||{}).value||'';if(c && (!u.trim()||!p.trim())){chk.checked=false;alert('Completá usuario y contraseña antes de tildar \'Recordar usuario y contraseña\'.');return;}if(c){localStorage.setItem('mhcd_recordar','1');}else{localStorage.removeItem('mhcd_recordar');localStorage.removeItem('mhcd_recordar_user');}})(this.checked,this)">
         Recordar usuario y contraseña
       </label>
       <button type="submit" id="ml-btn-ingresar" style="width:100%;padding:13px;margin-top:12px;background:linear-gradient(135deg,#22a050,#145a32);color:white;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">Ingresar a mi cuenta</button>
@@ -5385,7 +5385,7 @@ function cerrarApp(){
   document.body.classList.remove('in-app');
   document.getElementById('app').style.display='none';
   document.getElementById('landing').style.display='block';
-  // Limpiar campos de login si no tiene "Recordar"
+  // Limpiar campos de login y el usuario recordado si no tiene "Recordar"
   if(localStorage.getItem('mhcd_recordar')!=='1'){
     var uEl = document.getElementById('ml-user');
     var pEl = document.getElementById('ml-pass');
@@ -5393,6 +5393,7 @@ function cerrarApp(){
     if(uEl) uEl.value='';
     if(pEl) pEl.value='';
     if(rEl) rEl.checked=false;
+    localStorage.removeItem('mhcd_recordar_user');
   }
 }
 
@@ -15957,12 +15958,22 @@ window.addEventListener('beforeunload', guardarLocal);
 function mostrarLogin(){
     document.getElementById('miLoginModal').style.display='block';
     mlTab('ing');
-    // No guardamos usuario/contraseña nosotros — eso lo hace el gestor de
-    // contraseñas del navegador (ver autocomplete en ml-user/ml-pass). Acá
-    // solo re-tildamos la casilla si la última vez había quedado marcada.
+    // La CONTRASEÑA no la guardamos nosotros — eso lo hace el gestor del
+    // navegador (ver autocomplete en ml-user/ml-pass). Pero el USUARIO sí lo
+    // recordamos en localStorage (mhcd_recordar_user): el autofill de Chrome
+    // no es confiable con un form que estaba en display:none al cargar, así
+    // que al menos el email queda siempre puesto — y con el usuario cargado
+    // Chrome autocompleta la contraseña mucho más seguido.
     if(localStorage.getItem('mhcd_recordar')==='1'){
       var rEl = document.getElementById('ml-recordar');
       if(rEl) rEl.checked = true;
+      var uGuardado = localStorage.getItem('mhcd_recordar_user') || '';
+      var uEl = document.getElementById('ml-user');
+      if(uEl && uGuardado && !uEl.value){
+        uEl.value = uGuardado;
+        // Nudge para que Chrome enganche el usuario y ofrezca la contraseña.
+        try{ uEl.dispatchEvent(new Event('input', { bubbles: true })); }catch(e){}
+      }
     }
 }
 function togglePass(id, btn){
@@ -16011,14 +16022,13 @@ function mlIngresar(){
   u = u.trim();
   if(!u||!p){ alert('Completá usuario y contraseña.'); return; }
 
-  // Le avisamos al navegador, justo antes de enviar, si conviene ofrecer
-  // guardar esta contraseña o no — es la única palanca real que tenemos
-  // sobre su gestor de contraseñas (no podemos forzarlo ni impedirlo del
-  // todo, es una decisión del navegador/usuario, pero esto influye).
-  var recordarEl = document.getElementById('ml-recordar');
-  var quiereRecordar = !!(recordarEl && recordarEl.checked);
-  if(userEl) userEl.setAttribute('autocomplete', quiereRecordar ? 'username' : 'off');
-  if(passEl) passEl.setAttribute('autocomplete', quiereRecordar ? 'current-password' : 'off');
+  // Los inputs quedan siempre con su autocomplete del HTML (username /
+  // current-password). Antes se forzaba 'off' cuando "Recordar" estaba
+  // destildado para desalentar el "¿guardar contraseña?" del navegador,
+  // pero no lo lograba de forma confiable y encima rompía el autofill al
+  // restaurar desde bfcache. El flag mhcd_recordar ya lo maneja el
+  // onchange de la casilla; el usuario recordado se guarda al entrar OK
+  // (continuarLoginTrasDispositivo).
 
   var btnIng = document.getElementById('ml-btn-ingresar');
   if(btnIng){ btnIng.disabled = true; }
@@ -16065,6 +16075,12 @@ function mlIngresar(){
 // "Recordar" ya quedó guardada en localStorage por su propio onchange, acá
 // no hace falta releerla.
 function continuarLoginTrasDispositivo(authId, emailFallback){
+    // Si "Recordar" quedó tildado, guardamos el usuario para precargarlo
+    // la próxima vez que se abra el login (la contraseña la maneja el
+    // gestor del navegador). Ver mostrarLogin().
+    if(localStorage.getItem('mhcd_recordar') === '1' && emailFallback){
+      localStorage.setItem('mhcd_recordar_user', emailFallback);
+    }
     sb.from('usuarios').select('*').eq('auth_id', authId).then(function(rPerfil){
     var perfil = (rPerfil.data && rPerfil.data[0]) || { nombre: emailFallback, email: emailFallback };
    perfil.auth_id = authId;
@@ -16092,16 +16108,14 @@ function continuarLoginTrasDispositivo(authId, emailFallback){
     });
 }
 
-// "Recordarme" ya no restaura la sesión sola en segundo plano (ver
-// pendiente_prueba_en_vivo_netlify / recordarme_vs_salir_diseno en la
-// memoria del proyecto para el historial de por qué se sacó). Ahora es
-// mucho más simple: si mhcd_recordar==='1', al cargar la página se abre
-// directo el formulario de login (mostrarLogin(), llamada desde
-// DOMContentLoaded más abajo) — el propio navegador completa usuario y
-// contraseña con su gestor nativo (ver autocomplete en los inputs
-// ml-user/ml-pass), y el médico entra apretando "Ingresar" él mismo,
-// como un login manual común. Sin sesión restaurada sola, sin reintentos,
-// sin pantalla de confirmación.
+// "Recordarme" ya no restaura la sesión sola en segundo plano ni abre
+// nada al cargar la página (ver la memoria del proyecto para el historial
+// de por qué se sacó). Al entrar al sitio siempre se ve la landing; el
+// modal de login solo aparece cuando el médico toca "Ingresar".
+// Ahí mostrarLogin() re-tilda la casilla si mhcd_recordar==='1' y
+// precarga el usuario desde mhcd_recordar_user (guardado al último login
+// OK con "Recordar" tildado). La contraseña la completa el gestor del
+// navegador (autocomplete en ml-user/ml-pass) — no la guardamos nosotros.
 
 function guardarLegajoRenapdis(){
   var inp = document.getElementById('legajo-renapdis-input');
