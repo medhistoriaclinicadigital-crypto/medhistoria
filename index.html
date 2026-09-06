@@ -5902,6 +5902,7 @@ var suscriptores = [
 function abrirAdmin(){
   document.getElementById('adminOverlay').style.display='block';
   document.getElementById('admin-login').style.display='flex';
+  var mfa = document.getElementById('admin-mfa'); if(mfa) mfa.style.display='none';
   document.getElementById('admin-panel').style.display='none';
 }
 
@@ -5910,12 +5911,19 @@ function cerrarAdmin(){
   document.getElementById('adminOverlay').style.display='none';
   document.getElementById('admin-user').value='';
   document.getElementById('admin-pass').value='';
+  var mfa = document.getElementById('admin-mfa'); if(mfa) mfa.style.display='none';
+  var cod = document.getElementById('admin-mfa-code'); if(cod) cod.value='';
+  document.getElementById('admin-login').style.display='flex';
+  _mfaAdmin = { factorId:null, challengeId:null, modo:null };
 }
 
  function loginAdmin(){
   var u = document.getElementById('admin-user').value.trim().toLowerCase();
   var p = document.getElementById('admin-pass').value;
+  var btn = document.querySelector('#admin-login button');
+  if(btn) btn.disabled = true;
   sb.auth.signInWithPassword({email:u, password:p}).then(function(r){
+    if(btn) btn.disabled = false;
     if(r.error || !r.data || !r.data.user){
       alert('Usuario o contraseña incorrectos.');
       return;
@@ -5929,12 +5937,131 @@ function cerrarAdmin(){
         alert('Esta cuenta no tiene permisos de administrador.');
         return;
       }
-      document.getElementById('admin-login').style.display='none';
-      document.getElementById('admin-panel').style.display='block';
-      renderAdmin();
+      // Segundo factor obligatorio para entrar al panel admin (TOTP nativo de Supabase).
+      _continuarLoginAdminCon2FA();
+    });
+  }, function(){
+    if(btn) btn.disabled = false;
+    alert('No se pudo conectar. Probá de nuevo.');
+  });
+}
+
+// ══ 2FA del Panel Admin (TOTP / Google Authenticator) ═══════════════════════
+// La contraseña deja la sesión en AAL1; el panel solo se abre en AAL2. Si la
+// cuenta admin todavía no tiene un factor TOTP, la primera vez se enrola acá
+// mismo (QR). El chequeo de AAL solo afecta a cuentas que se hayan enrolado
+// (o sea, la de admin) — ningún médico se ve afectado.
+var _mfaAdmin = { factorId:null, challengeId:null, modo:null };
+
+function _abrirPanelAdmin(){
+  document.getElementById('admin-login').style.display='none';
+  var mfa = document.getElementById('admin-mfa'); if(mfa) mfa.style.display='none';
+  document.getElementById('admin-panel').style.display='block';
+  renderAdmin();
+}
+
+function _continuarLoginAdminCon2FA(){
+  Promise.resolve(sb.auth.mfa.getAuthenticatorAssuranceLevel()).then(function(aal){
+    var cur = aal && aal.data ? aal.data.currentLevel : null;
+    var nxt = aal && aal.data ? aal.data.nextLevel : null;
+    if(cur === 'aal2'){ _abrirPanelAdmin(); return; }
+    if(nxt === 'aal2'){ _prepararDesafioMfa(); }
+    else { _prepararEnrolamientoMfa(); }
+  }, function(){
+    sb.auth.signOut();
+    alert('No se pudo verificar el segundo factor. Probá de nuevo.');
+  });
+}
+
+function _factoresTotp(lf){
+  if(!lf || !lf.data) return [];
+  if(Array.isArray(lf.data.totp)) return lf.data.totp;
+  if(Array.isArray(lf.data.all)) return lf.data.all.filter(function(f){ return f.factor_type === 'totp'; });
+  return [];
+}
+
+function _mostrarPantallaMfa(modo){
+  _mfaAdmin.modo = modo;
+  document.getElementById('admin-login').style.display='none';
+  document.getElementById('admin-mfa').style.display='flex';
+  document.getElementById('admin-mfa-enroll').style.display = (modo === 'enroll') ? 'block' : 'none';
+  document.getElementById('admin-mfa-challenge').style.display = (modo === 'challenge') ? 'block' : 'none';
+  var err = document.getElementById('admin-mfa-error'); if(err){ err.style.display='none'; err.textContent=''; }
+  var cod = document.getElementById('admin-mfa-code');
+  if(cod){ cod.value=''; setTimeout(function(){ try{ cod.focus(); }catch(e){} }, 100); }
+}
+
+function _prepararEnrolamientoMfa(){
+  sb.auth.mfa.listFactors().then(function(lf){
+    var noVerificados = _factoresTotp(lf).filter(function(f){ return f.status !== 'verified'; });
+    Promise.all(noVerificados.map(function(f){ return sb.auth.mfa.unenroll({ factorId: f.id }); })).then(function(){
+      sb.auth.mfa.enroll({ factorType:'totp', friendlyName:'panel-admin' }).then(function(en){
+        if(en.error || !en.data || !en.data.totp){
+          sb.auth.signOut();
+          alert('No se pudo iniciar la configuración del segundo factor.\n\nDetalle: ' + (en.error ? en.error.message : 'desconocido') + '\n\n(Verificá que TOTP / "Authenticator app" esté activado en el proyecto de Supabase.)');
+          return;
+        }
+        _mfaAdmin.factorId = en.data.id;
+        document.getElementById('admin-mfa-qr').src = en.data.totp.qr_code;
+        document.getElementById('admin-mfa-secret').textContent = en.data.totp.secret;
+        _mostrarPantallaMfa('enroll');
+      });
+    });
+  }, function(){
+    sb.auth.signOut();
+    alert('No se pudo configurar el segundo factor. Probá de nuevo.');
+  });
+}
+
+function _prepararDesafioMfa(){
+  sb.auth.mfa.listFactors().then(function(lf){
+    var verificados = _factoresTotp(lf).filter(function(f){ return f.status === 'verified'; });
+    if(!verificados.length){ _prepararEnrolamientoMfa(); return; }
+    _mfaAdmin.factorId = verificados[0].id;
+    sb.auth.mfa.challenge({ factorId: _mfaAdmin.factorId }).then(function(ch){
+      if(ch.error || !ch.data){
+        sb.auth.signOut();
+        alert('No se pudo pedir el código de verificación. Probá de nuevo.');
+        return;
+      }
+      _mfaAdmin.challengeId = ch.data.id;
+      _mostrarPantallaMfa('challenge');
     });
   });
-} 
+}
+
+function verificarMfaAdmin(){
+  var cod = document.getElementById('admin-mfa-code');
+  var code = (cod ? cod.value : '').replace(/\D/g,'');
+  var errEl = document.getElementById('admin-mfa-error');
+  var btn = document.getElementById('admin-mfa-btn');
+  var mostrarErr = function(msg){ if(errEl){ errEl.textContent = msg; errEl.style.display='block'; } };
+  var terminar = function(){ if(btn){ btn.disabled = false; btn.textContent = 'Verificar'; } };
+  if(code.length !== 6){ mostrarErr('El código tiene 6 dígitos.'); return; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Verificando…'; }
+
+  if(_mfaAdmin.modo === 'enroll'){
+    sb.auth.mfa.challenge({ factorId: _mfaAdmin.factorId }).then(function(ch){
+      if(ch.error || !ch.data){ terminar(); mostrarErr('No se pudo verificar. Probá de nuevo.'); return; }
+      sb.auth.mfa.verify({ factorId:_mfaAdmin.factorId, challengeId:ch.data.id, code:code }).then(function(v){
+        terminar();
+        if(v.error){ mostrarErr('Código incorrecto. Revisá que la hora del teléfono esté en automático y probá con el código nuevo.'); return; }
+        alert('✅ Segundo factor configurado. Desde ahora te pide el código en cada ingreso al panel.');
+        _abrirPanelAdmin();
+      });
+    });
+  } else {
+    sb.auth.mfa.verify({ factorId:_mfaAdmin.factorId, challengeId:_mfaAdmin.challengeId, code:code }).then(function(v){
+      terminar();
+      if(v.error){
+        mostrarErr('Código incorrecto o vencido. Probá con el código actual de tu app.');
+        sb.auth.mfa.challenge({ factorId: _mfaAdmin.factorId }).then(function(ch){ if(ch && ch.data) _mfaAdmin.challengeId = ch.data.id; });
+        return;
+      }
+      _abrirPanelAdmin();
+    });
+  }
+}
 
 
 function cargarReportesReales(){
@@ -15463,6 +15590,30 @@ window.addEventListener('beforeunload', guardarLocal);
       <input class="mi" id="admin-user" type="text" placeholder="Usuario administrador" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" style="margin-bottom:12px;background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;">
       <input class="mi" id="admin-pass" type="password" placeholder="Contraseña" style="margin-bottom:16px;background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;">
       <button onclick="loginAdmin()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Ingresar al panel</button>
+      <button onclick="cerrarAdmin()" style="width:100%;padding:10px;background:none;border:none;color:rgba(109,222,150,.4);font-size:.82rem;cursor:pointer;margin-top:10px;font-family:'Outfit',sans-serif;">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- 2FA ADMIN (TOTP) -->
+  <div id="admin-mfa" style="display:none;align-items:center;justify-content:center;min-height:100vh;padding:20px;">
+    <div style="background:#0a1a0f;border:1px solid rgba(52,196,100,.3);border-radius:20px;padding:36px 28px;max-width:400px;width:100%;text-align:center;">
+      <div style="font-size:2rem;margin-bottom:8px;">🔑</div>
+      <h2 style="font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.5rem;margin-bottom:4px;">Verificación en dos pasos</h2>
+
+      <div id="admin-mfa-enroll" style="display:none;">
+        <p style="color:rgba(109,222,150,.6);font-size:.82rem;line-height:1.6;margin:12px 0 16px;">Escaneá este código con Google Authenticator (o una app similar) y después ingresá el código de 6 dígitos que te muestra.</p>
+        <div style="background:#fff;border-radius:12px;padding:12px;display:inline-block;margin-bottom:12px;"><img id="admin-mfa-qr" alt="Código QR para configurar el segundo factor" style="width:180px;height:180px;display:block;"></div>
+        <div style="font-size:.72rem;color:rgba(109,222,150,.45);margin-bottom:4px;">¿No podés escanear? Cargá esta clave a mano en la app:</div>
+        <div id="admin-mfa-secret" style="font-family:monospace;font-size:.8rem;color:#6dde96;word-break:break-all;background:#0f2318;border-radius:8px;padding:8px 10px;margin-bottom:16px;"></div>
+      </div>
+
+      <div id="admin-mfa-challenge" style="display:none;">
+        <p style="color:rgba(109,222,150,.6);font-size:.82rem;line-height:1.6;margin:12px 0 16px;">Ingresá el código de 6 dígitos de tu app de autenticación.</p>
+      </div>
+
+      <input class="mi" id="admin-mfa-code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000" oninput="this.value=this.value.replace(/\D/g,'').slice(0,6)" onkeydown="if(event.key==='Enter')verificarMfaAdmin()" style="text-align:center;letter-spacing:6px;font-size:1.2rem;margin-bottom:14px;background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;">
+      <div id="admin-mfa-error" style="display:none;color:#f87171;font-size:.8rem;margin-bottom:12px;"></div>
+      <button onclick="verificarMfaAdmin()" id="admin-mfa-btn" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Verificar</button>
       <button onclick="cerrarAdmin()" style="width:100%;padding:10px;background:none;border:none;color:rgba(109,222,150,.4);font-size:.82rem;cursor:pointer;margin-top:10px;font-family:'Outfit',sans-serif;">Cancelar</button>
     </div>
   </div>
