@@ -653,6 +653,11 @@ document.addEventListener('DOMContentLoaded', function(){
   window._appListoParaRecuperarPass = true;
   if(typeof _pendingPasswordRecovery !== 'undefined' && _pendingPasswordRecovery){ mostrarFormNuevaPass(); }
 
+  // Datos bancarios reales para el panel de transferencia de Centro Médico
+  // (config_publica, lectura pública). Si todavía no están cargados, queda el
+  // placeholder y _centroRegistroBloqueado() mantiene el registro frenado.
+  try{ cargarDatosBancarios(); }catch(e){ console.warn('[catch]', e); }
+
   // Si el link trae un código de invitación de Centro Médico, abrir el registro directo con el código ya cargado
   try{
     var paramsUrl = new URLSearchParams(window.location.search);
@@ -6032,6 +6037,7 @@ function switchAdminTab(btn, id){
     var el = document.getElementById(t);
     if(el) el.style.display = t===id?'block':'none';
   });
+  if(id === 'at-mp') cargarDatosBancarios(renderDatosBancariosAdmin);
   if(id === 'at-reportes'){ cargarReportesReales(); cargarCentrosPendientesPago(); }
   if(id === 'at-facturacion') cargarFacturacionEditable();
 }
@@ -6131,6 +6137,7 @@ function cargarAlertaBackups(){
 
 function renderAdmin(){
   cargarAlertaBackups();
+  cargarDatosBancarios(renderDatosBancariosAdmin); // pestaña "Pagos" (visible por defecto)
   // Stats
   var activos = suscriptores.filter(function(s){ return s.estado==='activo'; }).length;
   var prueba = suscriptores.filter(function(s){ return s.estado==='prueba'; }).length;
@@ -6210,16 +6217,132 @@ function filtrarAdmin(q){
   renderTabla(filtrados);
 }
 
-function guardarDatosMP(){
-  var starter = document.getElementById('mp-link-starter').value.trim();
-  var pro = document.getElementById('mp-link-pro').value.trim();
-  var premium = document.getElementById('mp-link-premium').value.trim();
-  if(starter || pro || premium){
-    alert('✓ Links guardados.\n\nCuando los cargues, los botones de los planes van a redirigir directo al pago real.');
-    // Aquí se actualizarían los botones de los planes con los links reales de MP
+// ══ DATOS BANCARIOS (Panel Admin → Pagos) ═══════════════════════════════════
+// Se guardan en Supabase (config_publica, fila 1) vía la RPC solo-admin
+// guardar_datos_bancarios. Cualquiera puede LEERLOS — es el CBU que ve un
+// médico cuando crea un Centro Médico y tiene que transferir el pago del plan.
+// Reemplazan el objeto placeholder `datosBancarios` de arriba en cuanto haya
+// datos reales cargados. NO destraban el registro por sí solos: eso lo sigue
+// controlando la constante CENTRO_REGISTRO_HABILITADO.
+var _datosBancariosGuardados = null; // lo que hay en el server (o {} si nada)
+var _datosBancariosCargados = false;
+
+function _datosBancariosCompletos(d){
+  d = d || datosBancarios;
+  var cbu = String(d.cbu || '').replace(/\D/g,'');
+  return !!(d.banco && d.tipo && d.cuenta && d.alias && d.titular
+    && cbu.length === 22 && !/^0+$/.test(cbu));
+}
+
+function cargarDatosBancarios(cb){
+  if(typeof sb === 'undefined'){ if(cb) cb(); return; }
+  sb.from('config_publica').select('datos_bancarios').eq('id', 1).maybeSingle().then(function(r){
+    if(!r.error && r.data && r.data.datos_bancarios && typeof r.data.datos_bancarios === 'object'){
+      var d = r.data.datos_bancarios;
+      _datosBancariosGuardados = d;
+      // Si hay algo cargado en el server, es lo que se muestra en el panel de transferencia.
+      ['banco','tipo','cuenta','cbu','alias','titular'].forEach(function(k){
+        if(d[k] != null && d[k] !== '') datosBancarios[k] = String(d[k]);
+      });
+    } else if(!r.error){
+      _datosBancariosGuardados = {};
+    }
+    _datosBancariosCargados = true;
+    if(cb) cb();
+  }, function(){ if(cb) cb(); });
+}
+
+function _actualizarHintCbu(){
+  var el = document.getElementById('db-cbu');
+  var hint = document.getElementById('db-cbu-hint');
+  if(!el || !hint) return;
+  var n = (el.value || '').replace(/\D/g,'').length;
+  if(n === 0){ hint.textContent = '22 dígitos'; hint.style.color = 'rgba(109,222,150,.4)'; }
+  else if(n < 22){ hint.textContent = 'faltan ' + (22 - n) + ' dígitos'; hint.style.color = '#ffd54a'; }
+  else if(n === 22){ hint.textContent = '✓ 22 dígitos'; hint.style.color = '#6dde96'; }
+  else { hint.textContent = 'sobran dígitos'; hint.style.color = '#f87171'; }
+}
+
+function _validarCbuInput(el){
+  el.value = (el.value || '').replace(/\D/g,'').slice(0, 22);
+  _actualizarHintCbu();
+}
+
+function renderDatosBancariosAdmin(){
+  var d = _datosBancariosGuardados || {};
+  var set = function(id, v){
+    var el = document.getElementById(id);
+    if(el && document.activeElement !== el) el.value = v || '';
+  };
+  set('db-banco', d.banco); set('db-tipo', d.tipo); set('db-cuenta', d.cuenta);
+  set('db-cbu', d.cbu); set('db-alias', d.alias); set('db-titular', d.titular);
+  _actualizarHintCbu();
+
+  var est = document.getElementById('db-estado');
+  if(!est) return;
+  var amarillo = function(txt){
+    est.style.background = 'rgba(255,196,80,.1)';
+    est.style.borderColor = 'rgba(255,196,80,.35)';
+    est.style.color = '#ffd54a';
+    est.innerHTML = txt;
+  };
+  if(!_datosBancariosCargados){
+    est.style.background = 'rgba(255,255,255,.04)';
+    est.style.borderColor = 'rgba(109,222,150,.15)';
+    est.style.color = 'rgba(109,222,150,.5)';
+    est.innerHTML = 'Cargando…';
+  } else if(_datosBancariosCompletos(d)){
+    est.style.background = 'rgba(52,196,100,.12)';
+    est.style.borderColor = 'rgba(52,196,100,.4)';
+    est.style.color = '#6dde96';
+    est.innerHTML = '✓ Datos bancarios completos y guardados en el servidor. Es lo que ve un médico al crear un Centro Médico.';
+  } else if(!Object.keys(d).length){
+    amarillo('⚠ Todavía no hay datos bancarios cargados. Completá los 6 campos y tocá "Guardar".');
   } else {
-    alert('Ingresá al menos un link de pago (Stripe o PayPal).');
+    amarillo('⚠ Datos incompletos o CBU inválido — revisá los campos y volvé a guardar.');
   }
+}
+
+function guardarDatosBancariosAdmin(){
+  var val = function(id){ var el = document.getElementById(id); return el ? (el.value || '').trim() : ''; };
+  var d = {
+    banco: val('db-banco'),
+    tipo: val('db-tipo'),
+    cuenta: val('db-cuenta'),
+    cbu: val('db-cbu').replace(/\D/g,''),
+    alias: val('db-alias'),
+    titular: val('db-titular')
+  };
+  var faltan = [];
+  if(!d.banco) faltan.push('Banco');
+  if(!d.tipo) faltan.push('Tipo de cuenta');
+  if(!d.cuenta) faltan.push('Número de cuenta');
+  if(!d.alias) faltan.push('Alias');
+  if(!d.titular) faltan.push('Titular de la cuenta');
+  if(d.cbu.length !== 22) faltan.push('CBU — tiene que tener 22 dígitos (hay ' + d.cbu.length + ')');
+  else if(/^0+$/.test(d.cbu)) faltan.push('CBU — no puede ser todo ceros');
+  if(faltan.length){
+    alert('No se guardó. Falta o está mal:\n\n• ' + faltan.join('\n• '));
+    return;
+  }
+  var btn = document.getElementById('db-btn-guardar');
+  if(btn){ btn.disabled = true; btn.textContent = 'Guardando…'; }
+  sb.rpc('guardar_datos_bancarios', { p_datos: d }).then(function(r){
+    if(btn){ btn.disabled = false; btn.textContent = '💾 Guardar datos bancarios'; }
+    if(r.error){
+      alert(r.error.code === 'P0001'
+        ? '⚠️ ' + r.error.message
+        : '❌ No se pudieron guardar los datos.\n\nDetalle: ' + r.error.message);
+      return;
+    }
+    _datosBancariosGuardados = d;
+    ['banco','tipo','cuenta','cbu','alias','titular'].forEach(function(k){ datosBancarios[k] = d[k]; });
+    renderDatosBancariosAdmin();
+    alert('✅ Datos bancarios guardados en el servidor.\n\nYa es lo que ve un médico cuando crea un Centro Médico.');
+  }, function(){
+    if(btn){ btn.disabled = false; btn.textContent = '💾 Guardar datos bancarios'; }
+    alert('❌ Error de conexión al guardar. Probá de nuevo.');
+  });
 }
 
 function abrirCancelacion(){
@@ -15370,50 +15493,26 @@ window.addEventListener('beforeunload', guardarLocal);
       <button class="admin-tab" onclick="switchAdminTab(this,'at-facturacion')">🧾 Facturación ARCA</button>
     </div>
 
-    <!-- TAB: PAGOS INTERNACIONALES -->
+    <!-- TAB: PAGOS — DATOS BANCARIOS PARA TRANSFERENCIAS -->
     <div id="at-mp" style="display:block;">
       <div style="background:#0a1a0f;border:1px solid rgba(52,196,100,.2);border-radius:14px;padding:28px;">
-        <h3 style="color:#fff;font-family:'Cormorant Garamond',serif;font-size:1.4rem;margin-bottom:6px;">💳 Integración con pagos internacionales</h3>
-        <p style="color:rgba(109,222,150,.6);font-size:.85rem;margin-bottom:24px;">Configurá tu pasarela de pago internacional para cobrar suscripciones en USD desde cualquier país.</p>
+        <h3 style="color:#fff;font-family:'Cormorant Garamond',serif;font-size:1.4rem;margin-bottom:6px;">🏦 Datos bancarios para transferencias</h3>
+        <p style="color:rgba(109,222,150,.6);font-size:.85rem;margin-bottom:18px;">Son los datos que ve un médico cuando crea un Centro Médico y tiene que transferir el pago del plan. Se guardan en el servidor y los ve cualquier médico que registre un centro.</p>
 
-        <div style="display:grid;gap:16px;">
+        <div id="db-estado" style="border:1px solid rgba(109,222,150,.15);border-radius:10px;padding:12px 14px;font-size:.85rem;font-weight:600;margin-bottom:18px;color:rgba(109,222,150,.5);background:rgba(255,255,255,.04);">Cargando…</div>
 
-          <!-- Opciones de pasarela -->
-          <div style="background:rgba(52,196,100,.05);border:1px solid rgba(52,196,100,.15);border-radius:12px;padding:20px;">
-            <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:14px;">🌎 Opciones recomendadas de cobro internacional</div>
-            <div style="display:grid;gap:10px;">
-              <div style="background:rgba(99,133,255,.1);border:1px solid rgba(99,133,255,.3);border-radius:10px;padding:14px;">
-                <div style="color:#a5b4fc;font-weight:700;margin-bottom:4px;">💙 Stripe (recomendado)</div>
-                <div style="color:rgba(255,255,255,.7);font-size:.82rem;line-height:1.6;">Crea links de pago y suscripciones recurrentes en USD. Opera en +40 países. Requiere cuenta bancaria en el exterior (USA, España, etc.). Comisión: 2.9% + u$s 0.30 por transacción.</div>
-              </div>
-              <div style="background:rgba(0,112,243,.1);border:1px solid rgba(0,112,243,.3);border-radius:10px;padding:14px;">
-                <div style="color:#93c5fd;font-weight:700;margin-bottom:4px;">💙 PayPal</div>
-                <div style="color:rgba(255,255,255,.7);font-size:.82rem;line-height:1.6;">Ampliamente conocido en Latinoamérica y España. Suscripciones automáticas en USD. Comisión: 3.49% + tarifa fija. Más fácil de configurar que Stripe.</div>
-              </div>
-              <div style="background:rgba(255,160,0,.1);border:1px solid rgba(255,160,0,.3);border-radius:10px;padding:14px;">
-                <div style="color:#fcd34d;font-weight:700;margin-bottom:4px;">🟡 Lemon Cash / Binance Pay (para Argentina)</div>
-                <div style="color:rgba(255,255,255,.7);font-size:.82rem;line-height:1.6;">Si cobrás en Argentina y querés mantener los USD en crypto o stablecoins. Útil para evitar restricciones cambiarias.</div>
-              </div>
-            </div>
-          </div>
+        <div style="display:grid;gap:12px;">
+          <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Banco<input class="mi" id="db-banco" type="text" placeholder="Ej: Banco Galicia" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
+          <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Tipo de cuenta<input class="mi" id="db-tipo" type="text" placeholder="Ej: Caja de ahorro en pesos" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
+          <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Número de cuenta<input class="mi" id="db-cuenta" type="text" placeholder="Ej: 4001234-5 001-9" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
+          <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">CBU <span id="db-cbu-hint" style="font-weight:600;text-transform:none;color:rgba(109,222,150,.4);margin-left:6px;">22 dígitos</span><input class="mi" id="db-cbu" type="text" inputmode="numeric" maxlength="22" oninput="_validarCbuInput(this)" placeholder="0000000000000000000000" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;letter-spacing:1px;"></label></div>
+          <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Alias<input class="mi" id="db-alias" type="text" placeholder="Ej: MEDHISTORIA.PAGOS" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
+          <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Titular de la cuenta<input class="mi" id="db-titular" type="text" placeholder="Nombre y apellido o razón social" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
+          <button onclick="guardarDatosBancariosAdmin()" id="db-btn-guardar" style="padding:12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:6px;">💾 Guardar datos bancarios</button>
+        </div>
 
-          <!-- Links de pago -->
-          <div style="background:rgba(52,196,100,.05);border:1px solid rgba(52,196,100,.15);border-radius:12px;padding:20px;">
-            <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:14px;">🔗 Links de pago por plan</div>
-            <div style="color:rgba(255,255,255,.6);font-size:.82rem;margin-bottom:12px;">Una vez que creés tu cuenta en Stripe o PayPal, pegá los links de pago de cada plan acá. Los botones de los planes van a redirigir directo al pago.</div>
-            <div style="display:grid;gap:10px;">
-              <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Link de pago Plan Starter (u$s34/mes)<input class="mi" id="mp-link-starter" type="text" placeholder="https://buy.stripe.com/... o https://paypal.com/..." style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></div>
-              <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Link de pago Plan Pro (u$s49/mes)<input class="mi" id="mp-link-pro" type="text" placeholder="https://buy.stripe.com/... o https://paypal.com/..." style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></div>
-              <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Link de pago Plan Premium (u$s89/mes)<input class="mi" id="mp-link-premium" type="text" placeholder="https://buy.stripe.com/... o https://paypal.com/..." style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></div>
-              <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Link de pago Plan Ilimitado (u$s199/mes)<input class="mi" id="mp-link-ilimitado" type="text" placeholder="https://buy.stripe.com/... o https://paypal.com/..." style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></div>
-              <button onclick="guardarDatosMP()" style="padding:12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:6px;">✓ Guardar links de pago</button>
-            </div>
-          </div>
-
-          <div style="background:rgba(255,200,0,.05);border:1px solid rgba(255,200,0,.2);border-radius:12px;padding:16px;">
-            <p style="color:rgba(255,220,80,.8);font-size:.85rem;margin:0;">💡 <strong>Tip:</strong> Con Stripe podés crear suscripciones recurrentes que cobran automáticamente cada mes. Con PayPal también. Una vez que tengas los links, pegálos acá y los botones de cada plan redirigen al pago real.</p>
-          </div>
-
+        <div style="background:rgba(255,200,0,.05);border:1px solid rgba(255,200,0,.2);border-radius:12px;padding:16px;margin-top:18px;">
+          <p style="color:rgba(255,220,80,.8);font-size:.82rem;margin:0;line-height:1.6;">💡 Cargar estos datos <strong>no</strong> destraba el registro de Centros Médicos por sí solo — eso lo sigue controlando la constante <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:4px;">CENTRO_REGISTRO_HABILITADO</code> en el código. Avisá cuando quieras habilitarlo.</p>
         </div>
       </div>
     </div>
