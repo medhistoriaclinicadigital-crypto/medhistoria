@@ -15074,6 +15074,13 @@ function sincronizarPacientesSupabase(){
         rPac.data.forEach(function(p){ if(p && p.id) mapaIdDni[p.id] = p.dni; });
         var mapaMedico = {};
         if(rMed && rMed.data) rMed.data.forEach(function(m){ if(m && m.id) mapaMedico[m.id] = m.nombre || ''; });
+        // El nombre propio: listar_medicos_centro no siempre lo trae útil para
+        // el que llama, así que lo ponemos nosotros (mismo valor que usa
+        // guardarEvolucion() al crear una nueva).
+        if(usuarioActual && usuarioActual.id){
+          var _nombrePropio = nombreConTitulo(usuarioActual);
+          if(_nombrePropio) mapaMedico[usuarioActual.id] = _nombrePropio;
+        }
 
         // Si es centro, se traen sin filtro: la RLS ya devuelve las propias
         // + las de pacientes de centro accesibles. Si no, solo las propias.
