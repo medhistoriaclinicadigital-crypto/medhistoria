@@ -6221,9 +6221,9 @@ function filtrarAdmin(q){
 // Se guardan en Supabase (config_publica, fila 1) vía la RPC solo-admin
 // guardar_datos_bancarios. Cualquiera puede LEERLOS — es el CBU que ve un
 // médico cuando crea un Centro Médico y tiene que transferir el pago del plan.
-// Reemplazan el objeto placeholder `datosBancarios` de arriba en cuanto haya
-// datos reales cargados. NO destraban el registro por sí solos: eso lo sigue
-// controlando la constante CENTRO_REGISTRO_HABILITADO.
+// Reemplazan el objeto placeholder `datosBancarios` de abajo en cuanto haya
+// datos reales cargados. Guardar datos completos y con CBU válido DESTRABA
+// automáticamente el registro de Centros Médicos (ver _centroRegistroBloqueado).
 var _datosBancariosGuardados = null; // lo que hay en el server (o {} si nada)
 var _datosBancariosCargados = false;
 
@@ -6295,7 +6295,7 @@ function renderDatosBancariosAdmin(){
     est.style.background = 'rgba(52,196,100,.12)';
     est.style.borderColor = 'rgba(52,196,100,.4)';
     est.style.color = '#6dde96';
-    est.innerHTML = '✓ Datos bancarios completos y guardados en el servidor. Es lo que ve un médico al crear un Centro Médico.';
+    est.innerHTML = '✓ Datos bancarios completos y guardados. Es lo que ve un médico al crear un Centro Médico — y con esto el registro de Centros Médicos queda habilitado.';
   } else if(!Object.keys(d).length){
     amarillo('⚠ Todavía no hay datos bancarios cargados. Completá los 6 campos y tocá "Guardar".');
   } else {
@@ -6338,7 +6338,7 @@ function guardarDatosBancariosAdmin(){
     _datosBancariosGuardados = d;
     ['banco','tipo','cuenta','cbu','alias','titular'].forEach(function(k){ datosBancarios[k] = d[k]; });
     renderDatosBancariosAdmin();
-    alert('✅ Datos bancarios guardados en el servidor.\n\nYa es lo que ve un médico cuando crea un Centro Médico.');
+    alert('✅ Datos bancarios guardados.\n\nYa es lo que ve un médico al crear un Centro Médico, y el registro de Centros Médicos quedó habilitado automáticamente.');
   }, function(){
     if(btn){ btn.disabled = false; btn.textContent = '💾 Guardar datos bancarios'; }
     alert('❌ Error de conexión al guardar. Probá de nuevo.');
@@ -6425,22 +6425,20 @@ var datosBancarios = {
 };
 
 // ── FRENO del registro de Centro Médico ──────────────────────────────────────
-// Mientras datosBancarios (arriba) tenga los valores placeholder, la creación
-// de centros queda BLOQUEADA — nadie puede completar la inscripción, para que
-// nadie transfiera plata a un CBU falso.
+// El registro de Centros Médicos se destraba SOLO cuando hay datos bancarios
+// completos y válidos cargados desde Panel Admin → Pagos (config_publica +
+// _datosBancariosCompletos). No hay que activar nada aparte: cargar los datos
+// reales y guardarlos ya habilita la inscripción.
 //
-// PARA ACTIVAR EL REGISTRO DE CENTROS:
-//   1. Cargá los valores reales en `datosBancarios` (arriba, index.html).
-//   2. Poné esta constante en true.
-//   (El chequeo del CBU es un segundo cerrojo: si el CBU sigue en ceros o no
-//    tiene 22 dígitos, queda bloqueado igual aunque la constante esté en true.)
-var CENTRO_REGISTRO_HABILITADO = false;
+// Este flag es un freno de emergencia: ponelo en false para bloquear el
+// registro aunque los datos bancarios estén cargados.
+var CENTRO_REGISTRO_HABILITADO = true;
 
 function _centroRegistroBloqueado(){
-  if(!CENTRO_REGISTRO_HABILITADO) return true;
-  var cbu = ((datosBancarios && datosBancarios.cbu) || '').replace(/\D/g,'');
-  if(!cbu || /^0+$/.test(cbu) || cbu.length !== 22) return true;
-  return false;
+  if(CENTRO_REGISTRO_HABILITADO === false) return true;
+  // El cerrojo real: sin datos bancarios completos y CBU válido de 22 dígitos,
+  // el registro queda bloqueado (nadie transfiere a un CBU que no está).
+  return !_datosBancariosCompletos(datosBancarios);
 }
 
 function _avisoCentroEnPreparacion(){
@@ -15511,8 +15509,8 @@ window.addEventListener('beforeunload', guardarLocal);
           <button onclick="guardarDatosBancariosAdmin()" id="db-btn-guardar" style="padding:12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:6px;">💾 Guardar datos bancarios</button>
         </div>
 
-        <div style="background:rgba(255,200,0,.05);border:1px solid rgba(255,200,0,.2);border-radius:12px;padding:16px;margin-top:18px;">
-          <p style="color:rgba(255,220,80,.8);font-size:.82rem;margin:0;line-height:1.6;">💡 Cargar estos datos <strong>no</strong> destraba el registro de Centros Médicos por sí solo — eso lo sigue controlando la constante <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:4px;">CENTRO_REGISTRO_HABILITADO</code> en el código. Avisá cuando quieras habilitarlo.</p>
+        <div style="background:rgba(52,196,100,.06);border:1px solid rgba(52,196,100,.2);border-radius:12px;padding:16px;margin-top:18px;">
+          <p style="color:rgba(109,222,150,.8);font-size:.82rem;margin:0;line-height:1.6;">💡 Guardar estos datos completos y con un CBU válido <strong>destraba automáticamente</strong> el registro de Centros Médicos. No hay que activar nada aparte. Si algún dato queda vacío o el CBU no es válido, el registro sigue frenado.</p>
         </div>
       </div>
     </div>
