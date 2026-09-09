@@ -1517,7 +1517,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
         <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">
           <div style="display:flex;align-items:flex-start;gap:12px;">
             <div style="width:32px;height:32px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">🔗</div>
-            <div><div style="font-weight:600;color:var(--g2);font-size:.9rem;">Generá el link en segundos</div><div style="font-size:.8rem;color:var(--muted);">Un clic y tenés el link de Jitsi Meet listo para compartir.</div></div>
+            <div><div style="font-weight:600;color:var(--g2);font-size:.9rem;">Generá el link en segundos</div><div style="font-size:.8rem;color:var(--muted);">Un clic y tenés el link de la videollamada listo para compartir.</div></div>
           </div>
           <div style="display:flex;align-items:flex-start;gap:12px;">
             <div style="width:32px;height:32px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">📲</div>
@@ -3170,7 +3170,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
 		  <div style="font-size:.85rem;color:var(--muted);margin-bottom:10px;">👇 Elegí cómo vas a hacer la videoconsulta con este paciente — cada botón genera y guarda una videoconsulta distinta:</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
           <button onclick="seleccionarPlataforma('whatsapp')" id="btn-plat-whatsapp" style="border:2px solid #25D366;background:#f0fff4;border-radius:10px;padding:10px 18px;cursor:pointer;font-weight:700;color:#075e54;font-size:.88rem;">📱 WhatsApp</button>
-          <button onclick="seleccionarPlataforma('meet')" id="btn-plat-meet" style="border:2px solid #e0e0e0;background:#f8f8f8;border-radius:10px;padding:10px 18px;cursor:pointer;font-weight:700;color:#1a73e8;font-size:.88rem;">🎥 Videollamada (Jitsi Meet)</button>
+          <button onclick="seleccionarPlataforma('meet')" id="btn-plat-meet" style="border:2px solid #e0e0e0;background:#f8f8f8;border-radius:10px;padding:10px 18px;cursor:pointer;font-weight:700;color:#1a73e8;font-size:.88rem;">🎥 Videollamada con link</button>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
@@ -3189,7 +3189,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               <strong style="color:#128c7e;">No necesita instalar nada — usa el WhatsApp que ya tiene.</strong>
             </div>
             <div id="instruccion-meet" style="display:none;background:#e8f0fe;border:1.5px solid #1a73e8;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.82rem;color:#1a1a2e;">
-              <strong>🎥 Videollamada instantánea con Jitsi Meet</strong><br>
+              <strong>🎥 Videollamada instantánea</strong><br>
               1. Completá los datos del paciente<br>
               2. Se genera una sala privada y única — sin cuenta, sin instalar nada<br>
               3. Enviás el link al paciente por WhatsApp o email<br>
@@ -3224,7 +3224,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               <button class="form-submit" style="background:linear-gradient(135deg,#1a5eb8,#1a73e8);" onclick="generarVideollamada()">
                 🎥 Crear sala y enviar link al paciente
               </button>
-              <div style="text-align:center;font-size:.75rem;color:var(--muted);">✅ Se crea una sala Jitsi Meet — el paciente entra con un clic, sin cuenta ni app</div>
+              <div style="text-align:center;font-size:.75rem;color:var(--muted);">✅ Se crea una sala de videollamada — el paciente entra con un clic, sin cuenta ni app</div>
             </div>
           </div>
 
@@ -3238,7 +3238,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
                   <span style="color:#5a7362;">La más simple. El paciente te llama directamente por WhatsApp video a la hora acordada. No necesita instalar nada.</span>
                 </div>
                 <div style="background:#e8f0fe;border-radius:8px;padding:10px 12px;border-left:3px solid #1a73e8;">
-                  <strong style="color:#1a73e8;">🎥 Videollamada (Jitsi Meet)</strong><br>
+                  <strong style="color:#1a73e8;">🎥 Videollamada con link</strong><br>
                   <span style="color:#5a7362;">Se genera una sala privada automáticamente. El paciente entra con un clic desde el celular o PC — sin cuenta, sin instalar nada.</span>
                 </div>
               </div>
@@ -6179,8 +6179,37 @@ function switchAdminTab(btn, id){
     if(el) el.style.display = t===id?'block':'none';
   });
   if(id === 'at-mp') cargarDatosBancarios(renderDatosBancariosAdmin);
-  if(id === 'at-reportes'){ cargarReportesReales(); cargarCentrosPendientesPago(); }
+  if(id === 'at-reportes'){ cargarReportesReales(); cargarCentrosPendientesPago(); cargarUsoDaily(); }
   if(id === 'at-facturacion') cargarFacturacionEditable();
+}
+
+// ── Uso de videollamadas Daily.co del mes (RPC solo-admin) ──
+// Cortes de color: verde <8.000 min (<80%) · amarillo 8.000–9.500 (80–95%) ·
+// rojo ≥9.500 (≥95%). Límite del plan gratis: 10.000 participant-minutes/mes.
+function cargarUsoDaily(){
+  var cont = document.getElementById('admin-uso-daily');
+  if(!cont) return;
+  cont.innerHTML = 'Cargando...';
+  sb.rpc('daily_uso_mes').then(function(r){
+    if(r.error){
+      cont.innerHTML = '<span style="color:#f87171;">No se pudo cargar (¿corriste el SQL de daily_uso?): '+escHtml(r.error.message)+'</span>';
+      return;
+    }
+    var d = (r.data && r.data[0]) || { minutos:0, limite:10000, porcentaje:0 };
+    var min = Number(d.minutos)||0, lim = Number(d.limite)||10000, pct = Number(d.porcentaje)||0;
+    var color, etiqueta;
+    if(min >= 9500){ color = '#f87171'; etiqueta = '🔴 CRÍTICO — pasá al plan pago de Daily YA (o cargá tarjeta para overage)'; }
+    else if(min >= 8000){ color = '#fbbf24'; etiqueta = '🟡 Cerca del límite — planificá el upgrade este mes'; }
+    else { color = '#6dde96'; etiqueta = '🟢 OK'; }
+    cont.innerHTML =
+      '<div style="font-size:1.6rem;font-weight:700;color:'+color+';">'+min.toLocaleString('es-AR')
+        +' <span style="font-size:.9rem;color:rgba(255,255,255,.4);">/ '+lim.toLocaleString('es-AR')+' min · '+pct+'%</span></div>'
+      +'<div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;margin:8px 0;overflow:hidden;">'
+        +'<div style="height:100%;width:'+Math.min(100,Math.max(0,pct))+'%;background:'+color+';border-radius:4px;"></div></div>'
+      +'<div style="font-size:.82rem;color:'+color+';font-weight:600;">'+etiqueta+'</div>';
+  }, function(err){
+    cont.innerHTML = '<span style="color:#f87171;">Error de conexión al cargar el uso.</span>';
+  });
 }
 
 // ── Centros médicos creados que todavía no pagaron (RPC solo-admin) ──
@@ -12095,16 +12124,7 @@ function imprimirResumenTab(){
 
 var videoconsultas = [];
 
-// Nombre de sala Jitsi imposible de adivinar: 16 bytes al azar generados con
-// crypto.getRandomValues (no Math.random, que no es criptográficamente seguro).
-function _generarSalaJitsiSegura(){
-  var bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  var hex = Array.prototype.map.call(bytes, function(b){ return b.toString(16).padStart(2,'0'); }).join('');
-  return 'consulta-' + hex;
-}
-
-function generarVideollamada(){
+async function generarVideollamada(){
   var pac = (document.getElementById('tele-paciente')||{}).value||'';
   var fecha = (document.getElementById('tele-fecha')||{}).value||'';
   var hora = (document.getElementById('tele-hora')||{}).value||'';
@@ -12117,19 +12137,29 @@ function generarVideollamada(){
   if(!hora){ alert('Ingresá la hora.'); return; }
   if(!tel && !email){ alert('Ingresá teléfono o email del paciente.'); return; }
 
-  // Generar sala Jitsi única (funciona sin cuenta, sin instalar nada).
-  // Nombre totalmente al azar (sin el nombre del paciente ni nada adivinable):
-  // meet.jit.si es público y no pide contraseña, así que quien tenga el link
-  // entra — la única protección real es que sea imposible de adivinar.
-  var sala = _generarSalaJitsiSegura();
-  var linkVideollamada = 'https://meet.jit.si/' + sala;
+  // Sala de videollamada en Daily.co (Edge Function daily-room). Sala pública
+  // con nombre imposible de adivinar; se autodestruye 24 h después del turno.
+  // El paciente entra con el link, sin cuenta ni app, sin "moderador".
+  var btnSala = document.querySelector('#btns-meet button.form-submit');
+  var _txtBtn = btnSala ? btnSala.innerHTML : '';
+  if(btnSala){ btnSala.disabled = true; btnSala.textContent = 'Creando sala…'; }
+  var rSala;
+  try{ rSala = await sb.functions.invoke('daily-room', { body: { fecha: fecha } }); }
+  catch(e){ rSala = { error: e }; }
+  if(btnSala){ btnSala.disabled = false; btnSala.innerHTML = _txtBtn; }
+  if(!rSala || rSala.error || !rSala.data || !rSala.data.url){
+    console.error('daily-room:', rSala && rSala.error);
+    alert('No se pudo crear la sala de videollamada. Probá de nuevo en unos segundos.\n\nSi el problema persiste, escribinos a medhistoriaclinicaonline@gmail.com.');
+    return;
+  }
+  var linkVideollamada = rSala.data.url;
 
   var partes = fecha.split('-');
   var fechaDisplay = partes[2]+'/'+partes[1]+'/'+partes[0];
 
   var nuevaVC = {
     pac:pac, fecha:fecha, fechaDisplay:fechaDisplay,
-    hora:hora, duracion:duracion, motivo:motivo, link:linkVideollamada, plataforma:'Meet', telefono:tel
+    hora:hora, duracion:duracion, motivo:motivo, link:linkVideollamada, plataforma:'Daily', telefono:tel
   };
   videoconsultas.unshift(nuevaVC);
   guardarVideoconsultaSupabase(nuevaVC);
@@ -12188,7 +12218,7 @@ function seleccionarPlataforma(plat){
     if(btns) btns.style.display = p===plat ? 'flex' : 'none';
   });
   // Título
-  var titulos = {whatsapp:'📱 Nueva Videoconsulta por WhatsApp', meet:'🎥 Nueva Videollamada (Jitsi Meet)'};
+  var titulos = {whatsapp:'📱 Nueva Videoconsulta por WhatsApp', meet:'🎥 Nueva Videollamada con link'};
   var tituloEl = document.getElementById('tele-titulo');
   if(tituloEl) tituloEl.textContent = titulos[plat];
 }
@@ -12369,7 +12399,7 @@ function sincronizarVideoconsultasSupabase(){
   if(!c) return;
   if(!videoconsultas.length){ c.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;">No hay videoconsultas programadas aún.</div>'; return; }
   c.innerHTML = videoconsultas.map(function(v,i){
-    var plat = v.plataforma || 'Meet';
+    var plat = v.plataforma || 'Daily';
     return '<div class="agenda-item">'
       +'<div class="agenda-hora">'+escHtml(v.hora)+'</div>'
       +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(v.pac)+' <span style="font-size:.75rem;color:var(--g4);">· '+escHtml(v.fechaDisplay)+' · '+escHtml(plat)+'</span></div><div class="agenda-mot">'+escHtml(v.motivo)+' · '+escHtml(v.duracion)+'</div></div>'
@@ -15702,6 +15732,16 @@ window.addEventListener('beforeunload', guardarLocal);
         </div>
         <div style="color:rgba(255,220,140,.55);font-size:.78rem;margin-bottom:14px;">El centro ya está creado y capado a 35 pacientes. Verificá la transferencia en la cuenta y tocá "Confirmar pago" para activarle el plan completo.</div>
         <div id="admin-centros-pendientes" style="color:rgba(255,220,140,.5);font-size:.85rem;">Cargando...</div>
+      </div>
+
+      <!-- Uso de videollamadas (Daily.co) -->
+      <div style="background:#0a1a0f;border:1px solid rgba(52,196,100,.2);border-radius:14px;padding:20px;margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+          <div style="color:#fff;font-weight:700;">🎥 Videollamadas — uso del mes</div>
+          <button onclick="cargarUsoDaily()" style="background:rgba(255,255,255,.08);border:1px solid rgba(109,222,150,.2);color:rgba(109,222,150,.8);padding:6px 14px;border-radius:8px;font-size:.78rem;cursor:pointer;font-family:'Outfit',sans-serif;">🔄 Actualizar</button>
+        </div>
+        <div style="color:rgba(109,222,150,.5);font-size:.78rem;margin-bottom:12px;">Minutos de participante consumidos en Daily.co este mes. Límite del plan gratis: 10.000/mes. Pasá al plan pago antes de llegar.</div>
+        <div id="admin-uso-daily" style="color:rgba(109,222,150,.5);font-size:.85rem;">Cargando...</div>
       </div>
 
       <!-- Suscripciones de hoy -->
