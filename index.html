@@ -1332,28 +1332,9 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           </div>
         </div>
 
-        <!-- Firma Digital Integrada -->
-        <div style="background:linear-gradient(145deg,#0d4a25,#082e17);border:2px solid rgba(52,196,100,.5);border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:0;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.3);">
-          <div style="position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle at top right,rgba(52,196,100,.08),transparent 70%);pointer-events:none;"></div>
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
-            <div style="width:52px;height:52px;background:rgba(52,196,100,.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:1px solid rgba(52,196,100,.25);">✍️</div>
-            <div style="background:rgba(52,196,100,.2);color:#6dde96;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid rgba(52,196,100,.3);letter-spacing:.05em;">ADD-ON</div>
-          </div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:700;color:#fff;margin-bottom:8px;line-height:1.2;">Firma Digital Integrada</div>
-         <div style="font-size:.875rem;color:#b8dfc8;line-height:1.65;margin-bottom:20px;flex:1;">Te acompañamos en los 2 pasos para firmar tus documentos: te guiamos para tramitar gratis tu Firma Digital oficial ante el Estado (Ley 25.506), y agregamos tu firma manuscrita automáticamente en recetas, derivaciones e historia clínica.</div>
-          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px;">
-            <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#a8d5b5;"><span style="color:#34c464;font-size:.9rem;">✓</span> Guía paso a paso para tu Firma Digital oficial (gratis)</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#a8d5b5;"><span style="color:#34c464;font-size:.9rem;">✓</span> Tu firma manuscrita en cada documento</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#a8d5b5;"><span style="color:#34c464;font-size:.9rem;">✓</span> Recetas, derivaciones e historia clínica</div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding-top:16px;border-top:1px solid rgba(52,196,100,.2);">
-            <div>
-              <div style="font-size:.7rem;color:#6dde96;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Por mes</div>
-              <div style="font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:700;color:#34c464;line-height:1;">U$S 9<span style="font-size:.9rem;font-weight:400;color:#6dde96;">/mes</span></div>
-            </div>
-            <button style="padding:11px 22px;border-radius:10px;background:#22a050;color:#fff;border:none;font-weight:700;font-size:.88rem;cursor:pointer;font-family:'Outfit',sans-serif;transition:background .2s;box-shadow:0 4px 12px rgba(34,160,80,.3);" onmouseover="this.style.background='#1a8040'" onmouseout="this.style.background='#22a050'" onclick="solicitarAddon('Firma Digital Integrada','9')">Agregar →</button>
-          </div>
-        </div>
+        <!-- Firma Digital Integrada: sacada de Servicios Adicionales el 2026-09-11 —
+             decisión de negocio, pasó a ser gratuita para todos los médicos, ya
+             no es un add-on pago. Ver tieneAddonFirma(). -->
 
         <!-- Analítica Avanzada -->
         <div style="background:linear-gradient(145deg,#0d4a25,#082e17);border:2px solid rgba(52,196,100,.5);border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:0;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.3);">
@@ -4190,31 +4171,11 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       <!-- ══ PANEL MI FIRMA DIGITAL ══ -->
       <div class="app-panel" id="panel-firma-medico">
 
-        <!-- BLOQUEO SI NO TIENE ADDON -->
-        <div id="firma-bloqueada" style="display:none;text-align:center;padding:48px 20px;max-width:480px;margin:0 auto;">
-          <div style="font-size:3rem;margin-bottom:16px;">🔒</div>
-          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--g2);margin-bottom:8px;">Firma Digital Integrada</h3>
-          <p style="color:var(--muted);font-size:.88rem;line-height:1.7;margin-bottom:24px;">
-            Este módulo requiere el add-on <strong>Firma Digital Integrada</strong> por <strong>U$S 9/mes</strong>.<br>
-            Firmá recetas, derivaciones e historia clínica con validez legal plena (Ley 25.506).
-          </p>
-          <ul style="text-align:left;list-style:none;padding:0;margin:0 0 24px;display:inline-block;">
-            <li style="font-size:.83rem;color:var(--g3);margin-bottom:6px;">✅ Firma con certificado digital propio</li>
-            <li style="font-size:.83rem;color:var(--g3);margin-bottom:6px;">✅ Validez legal — Ley 25.506</li>
-            <li style="font-size:.83rem;color:var(--g3);">✅ Recetas, derivaciones e historia clínica</li>
-          </ul>
-          <br>
-          <button onclick="solicitarAddon('Firma Digital Integrada','9')" style="padding:12px 28px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(34,160,80,.3);">
-            Contratar por U$S 9/mes →
-          </button>
-          <br><br>
-          <button onclick="mostrarIngresarCodigo('firma')" style="padding:10px 24px;background:#f0fdf4;border:1.5px solid var(--g8);color:var(--g3);border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;">
-            🔑 Ya tengo un código de activación
-          </button>
+        <!-- Pantalla de bloqueo por addon pago: sacada el 2026-09-11 — la Firma
+             Digital Integrada pasó a ser gratuita para todos los médicos.
+             Ver tieneAddonFirma() / checkAddonFirma(). -->
 
-        </div>
-
-        <!-- CONTENIDO REAL (solo si tiene addon) -->
+        <!-- CONTENIDO REAL (ahora siempre visible, es gratis para todos) -->
         <div id="firma-contenido-real">
         <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--g2);margin-bottom:4px;">✍️ Mi Firma Digital</h2>
         <p style="color:var(--muted);font-size:.85rem;margin-bottom:24px;line-height:1.6;">Completá los dos pasos para que tu firma aparezca con validez legal en todos tus documentos.</p>
@@ -8095,9 +8056,11 @@ function checkAddonAnalitica(){
   }
 }
 
+// Decisión de negocio (2026-09-11): la Firma Digital Integrada pasa a ser
+// gratuita para todos los médicos — deja de ser un add-on pago. Antes
+// devolvía usuarioActual.addon_firma === true; ahora es incondicional.
 function tieneAddonFirma(){
-  if(usuarioActual){ return usuarioActual.addon_firma === true; }
-  return localStorage.getItem('medhistoria_addon_firma')==='1';
+  return true;
 }
 
 // Función para activar/desactivar addons (uso interno del admin)
@@ -8142,16 +8105,14 @@ var _wappBypassAddon = false;
 })();
 
 function checkAddonFirma(){
+  // Firma Digital ya no tiene pantalla de bloqueo (ver tieneAddonFirma) —
+  // "bloq" puede no existir en el DOM; se contempla por si queda algún
+  // rastro en caché, pero el panel real se muestra siempre.
   var bloq = document.getElementById('firma-bloqueada');
+  if(bloq) bloq.style.display='none';
   var real = document.getElementById('firma-contenido-real');
-  if(!bloq||!real) return;
-  if(tieneAddonFirma()){
-    bloq.style.display='none';
-    real.style.display='block';
-  } else {
-    bloq.style.display='block';
-    real.style.display='none';
-  }
+  if(!real) return;
+  real.style.display='block';
 }
 
 function initPanelFirma(){
@@ -12073,8 +12034,8 @@ function generarResumen(){
   if(medPie) medPie.textContent = ga('evol-medico') || (usuarioActual?usuarioActual.nombre:'Médico tratante');
 	var firmaImgEl = document.getElementById('res-firma-img');
   var firmaGuardadaRes = usuarioActual ? usuarioActual.firma_imagen : localStorage.getItem('medhistoria_firma');
-  // La firma manuscrita/digital solo se estampa con el add-on Firma Digital
-  // Integrada activo — sin él, el resumen se genera igual pero sin firma.
+  // La firma manuscrita/digital se estampa si el médico dibujó una — ya no
+  // depende de ningún add-on pago (tieneAddonFirma() es gratis para todos).
   if(firmaImgEl){ if(firmaGuardadaRes && tieneAddonFirma()){ firmaImgEl.src = firmaGuardadaRes; firmaImgEl.style.display='block'; } else { firmaImgEl.style.display='none'; } }
 }
 
@@ -13661,8 +13622,8 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   // ── FIRMA — pegada justo debajo del recuadro del médico ──
   doc.setDrawColor(20,90,50); doc.setLineWidth(0.4);
   doc.line(x, footerY, W-margin, footerY);
-  // La firma manuscrita/digital solo se estampa con el add-on Firma Digital
-  // Integrada activo — sin él, la receta se genera igual pero sin firma.
+  // La firma manuscrita/digital se estampa si el médico dibujó una — ya no
+  // depende de ningún add-on pago (tieneAddonFirma() es gratis para todos).
   var _firmaImg = (usuarioActual && tieneAddonFirma()) ? usuarioActual.firma_imagen : null;
   if(_firmaImg){ try{ doc.addImage(_firmaImg,'PNG',x,footerY-22,42,17); }catch(e){ console.warn('[catch]', e); } }
   doc.setTextColor(20,20,20); doc.setFontSize(13); doc.setFont('times','bold');
@@ -13928,8 +13889,8 @@ function generarPDFbase64(tipo, callback){
 
   // Nombre + matrícula ENCIMA de la línea
   doc.setTextColor(20,20,20); doc.setFontSize(10); doc.setFont('helvetica','bold');
-  // Firma manuscrita guardada — solo se estampa con el add-on Firma Digital
-  // Integrada activo; sin él, el documento se genera igual pero sin firma.
+  // Firma manuscrita guardada — se estampa si el médico dibujó una, ya no
+  // depende de ningún add-on pago (tieneAddonFirma() es gratis para todos).
   var _firmaImg = tieneAddonFirma() ? (usuarioActual ? usuarioActual.firma_imagen : localStorage.getItem('medhistoria_firma')) : null;
   if(_firmaImg){ try{ doc.addImage(_firmaImg,'PNG',x,footerY-24,44,18); }catch(e){ console.warn('[catch]', e); } }
 
@@ -15587,11 +15548,10 @@ window.addEventListener('beforeunload', guardarLocal);
     </div>
     <div id="firma-contenido"></div>
     <div style="margin-top:16px;background:var(--g9);border-radius:10px;padding:12px 14px;font-size:.8rem;color:var(--muted);">
-      💡 Una vez que tengas tu firma digital, usala para validar todos los documentos que generás en MedHistoriaClínicaOnline.
+      💡 Una vez que tengas tu firma digital, usala para validar todos los documentos que generás en MedHistoriaClínicaOnline. La integración de tu firma dentro de la plataforma (para firmar recetas y documentos sin salir de la app) es <strong>gratis para todos los médicos</strong>.
     </div>
     <div style="margin-top:10px;background:#fff8e1;border:1.5px solid #f59e0b;border-radius:10px;padding:12px 14px;font-size:.8rem;color:#78350f;line-height:1.6;">
-      <strong>⚠️ Importante:</strong> Obtener la firma digital ante el Estado es gratuito.<br>
-      La <strong>integración de tu firma dentro de esta plataforma</strong> (para firmar recetas y documentos sin salir de la app) es el add-on <em>Firma Digital Integrada</em> — <strong>U$S 9/mes</strong>. Podés solicitarlo desde la sección <strong>Planes → Servicios Adicionales</strong>.
+      <strong>⚠️ Importante:</strong> Obtener la firma digital ante el Estado es gratuito. La integración de tu firma dentro de la plataforma también es gratuita — no hace falta contratar ni activar nada.
     </div>
     <button onclick="document.getElementById('firmaOverlay').style.display='none'" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:14px;">Entendido ✓</button>
   </div>
