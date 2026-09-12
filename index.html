@@ -722,6 +722,16 @@ document.addEventListener('DOMContentLoaded', function(){
   const SUPABASE_URL = "https://rgwqiguojmwmkifrxfra.supabase.co";
   const SUPABASE_KEY = "sb_publishable_vgopqXd1JPlJtUrI_NBklQ_5sgGlO9u";
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  // Subir a mano cada vez que cambie el texto de Términos/Privacidad/Cookies
+  // (ver registrarAceptacionLegal) — queda guardado junto a cada consentimiento.
+  const TERMINOS_VERSION = "2026-09-12";
+  function registrarAceptacionLegal(){
+    try{
+      sb.functions.invoke('registrar-consentimiento', { body: { version: TERMINOS_VERSION } })
+        .then(function(r){ if(r.error) console.error('Error registrando consentimiento legal:', r.error); })
+        .catch(function(e){ console.error('Error registrando consentimiento legal:', e); });
+    }catch(e){ console.error('Error registrando consentimiento legal:', e); }
+  }
 	var _pendingPasswordRecovery = false;
 	sb.auth.onAuthStateChange(function(event, session){
 	  if(event === 'PASSWORD_RECOVERY'){ _pendingPasswordRecovery = true; if(window._appListoParaRecuperarPass){ mostrarFormNuevaPass(); } }
@@ -6766,6 +6776,7 @@ function procesarRegistroCentro(){
     }]).select('id').then(function(r2){
       if(r2.error) console.error('Registro de centro: error guardando usuario:', r2.error);
       if(r2.data && r2.data[0] && r2.data[0].id) usuarioActual.id = r2.data[0].id;
+      registrarAceptacionLegal();
 
       // ── 3. Crear el centro (RPC, plan_estado 'pendiente_pago') ──
       sb.rpc('crear_centro_medico', { p_nombre: centroNombre, p_plan: plan, p_cuit: dni || null, p_direccion: direccion || null }).then(function(r3){
@@ -16280,6 +16291,7 @@ function mlRegistrar(){
      telefono: tel, dni: dni, rol: 'medico', pais: pais, sexo: sexo
     }]).select().then(function(r2){
       if(r2.error) console.error('Error guardando en Supabase:', r2.error);
+      registrarAceptacionLegal();
 
       // Guardar la solicitud real en el reporte del panel admin (incluida Prueba Gratuita)
       var preciosPlan = {'Prueba Gratuita':0, 'Starter':34, 'Pro':49, 'Premium':89, 'Ilimitado':199};
