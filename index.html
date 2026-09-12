@@ -6145,7 +6145,7 @@ function cargarReportesReales(){
 function switchAdminTab(btn, id){
   document.querySelectorAll('.admin-tab').forEach(function(b){ b.classList.remove('on'); });
   btn.classList.add('on');
-  ['at-mp','at-reportes','at-facturacion'].forEach(function(t){
+  ['at-mp','at-reportes','at-facturacion','at-consentimientos'].forEach(function(t){
     var el = document.getElementById(t);
     if(el) el.style.display = t===id?'block':'none';
   });
@@ -6259,6 +6259,37 @@ function cargarFacturacionEditable(){
         +'</tr>';
     }).join('');
   });
+}
+
+function buscarConsentimientosLegales(){
+  var input = document.getElementById('admin-consent-email');
+  var email = (input ? input.value : '').trim();
+  var tbody = document.getElementById('admin-consent-tbody');
+  if(!tbody) return;
+  if(!email){ tbody.innerHTML = '<tr><td colspan="4" style="padding:14px;color:rgba(109,222,150,.4);">Ingresá un email y tocá Buscar.</td></tr>'; return; }
+  tbody.innerHTML = '<tr><td colspan="4" style="padding:14px;color:rgba(109,222,150,.4);">Buscando...</td></tr>';
+
+  sb.from('consentimientos_legales').select('nombre,email,version,ip,aceptado_en')
+    .ilike('email', '%'+email+'%').order('aceptado_en',{ascending:false}).then(function(r){
+      if(r.error){
+        tbody.innerHTML = '<tr><td colspan="4" style="padding:14px;color:#ff8080;">⚠️ No se pudo buscar: '+escHtml(r.error.message)+'</td></tr>';
+        return;
+      }
+      var filas = r.data || [];
+      if(!filas.length){
+        tbody.innerHTML = '<tr><td colspan="4" style="padding:14px;color:rgba(109,222,150,.4);">Sin resultados para ese email.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filas.map(function(f){
+        var fechaTxt = f.aceptado_en ? new Date(f.aceptado_en).toLocaleString('es-AR') : '-';
+        return '<tr style="border-bottom:1px solid rgba(52,196,100,.08);">'
+          +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);white-space:nowrap;">'+escHtml(fechaTxt)+'</td>'
+          +'<td style="padding:10px 12px;color:#fff;">'+escHtml(f.nombre||'-')+'<br><span style="color:rgba(255,255,255,.4);font-size:.75rem;">'+escHtml(f.email||'')+'</span></td>'
+          +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+escHtml(f.version||'-')+'</td>'
+          +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+escHtml(f.ip||'—')+'</td>'
+          +'</tr>';
+      }).join('');
+    });
 }
 
 function cargarAlertaBackups(){
@@ -15662,6 +15693,7 @@ window.addEventListener('beforeunload', guardarLocal);
       <button class="admin-tab on" onclick="switchAdminTab(this,'at-mp')">💳 Pagos</button>
       <button class="admin-tab" onclick="switchAdminTab(this,'at-reportes')">📅 Reportes reales</button>
       <button class="admin-tab" onclick="switchAdminTab(this,'at-facturacion')">🧾 Facturación ARCA</button>
+      <button class="admin-tab" onclick="switchAdminTab(this,'at-consentimientos')">🔏 Consentimientos</button>
     </div>
 
     <!-- TAB: PAGOS — DATOS BANCARIOS PARA TRANSFERENCIAS -->
@@ -15775,6 +15807,31 @@ window.addEventListener('beforeunload', guardarLocal);
               </tr>
             </thead>
             <tbody id="fe-tbody"><tr><td colspan="5" style="padding:14px;color:rgba(109,222,150,.4);">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CONSENTIMIENTOS LEGALES -->
+    <div id="at-consentimientos" style="display:none;">
+      <div style="background:#0a1a0f;border:1px solid rgba(52,196,100,.2);border-radius:14px;padding:20px;">
+        <div style="color:#fff;font-weight:700;margin-bottom:6px;">🔏 Consentimiento de Términos, Privacidad y Cookies</div>
+        <div style="color:rgba(109,222,150,.6);font-size:.82rem;margin-bottom:16px;max-width:640px;">Buscá por email para ver cuándo un médico aceptó, con qué versión del documento y desde qué IP — sirve como constancia si hiciera falta demostrarlo.</div>
+        <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
+          <input id="admin-consent-email" type="email" placeholder="email@delmedico.com" style="flex:1;min-width:220px;background:#0f2318;border:1px solid rgba(52,196,100,.3);color:#fff;border-radius:8px;padding:10px 14px;font-size:.85rem;" onkeydown="if(event.key==='Enter')buscarConsentimientosLegales()">
+          <button onclick="buscarConsentimientosLegales()" style="padding:10px 22px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;">🔎 Buscar</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+            <thead>
+              <tr style="background:rgba(52,196,100,.08);">
+                <th style="padding:10px 12px;text-align:left;color:rgba(109,222,150,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;">Fecha y hora</th>
+                <th style="padding:10px 12px;text-align:left;color:rgba(109,222,150,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;">Médico</th>
+                <th style="padding:10px 12px;text-align:left;color:rgba(109,222,150,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;">Versión</th>
+                <th style="padding:10px 12px;text-align:left;color:rgba(109,222,150,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;">IP</th>
+              </tr>
+            </thead>
+            <tbody id="admin-consent-tbody"><tr><td colspan="4" style="padding:14px;color:rgba(109,222,150,.4);">Ingresá un email y tocá Buscar.</td></tr></tbody>
           </table>
         </div>
       </div>
