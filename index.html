@@ -1683,7 +1683,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
     <div style="background:linear-gradient(135deg,#042b10,#145a32);padding:32px 28px 24px;text-align:center;position:relative;">
       <button onclick="document.getElementById('terminosOverlay').style.display='none'" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1rem;cursor:pointer;padding:7px 11px;border-radius:8px;font-weight:700;">✕</button>
       <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:#fff;font-weight:700;margin-bottom:4px;white-space:nowrap;">Med<span style="color:#34c464;">Historia</span>Clinica<span style="color:#34c464;">Online</span></div>
-      <div style="color:#6dde96;font-size:.78rem;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">medhistoriasclinicasdigitales.com.ar</div>
+      <div style="color:#6dde96;font-size:.78rem;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">medhistoriaclinicaonline.com</div>
       <!-- Nav interno -->
       <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
         <button onclick="
@@ -2499,7 +2499,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--g4);padding-bottom:16px;margin-bottom:20px;">
               <div>
                 <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:700;color:var(--g2);white-space:nowrap;">Med<span style="color:var(--g4);">Historia</span>Clinica<span style="color:var(--g4);">Online</span></div>
-                <div style="font-size:.75rem;color:var(--muted);">Historia Clínica Online · medhistoriasclinicasdigitales.com.ar</div>
+                <div style="font-size:.75rem;color:var(--muted);">Historia Clínica Online · medhistoriaclinicaonline.com</div>
               </div>
               <div style="text-align:right;">
                 <div style="font-size:.8rem;font-weight:700;color:var(--g2);text-transform:uppercase;letter-spacing:.5px;">Historia Clínica</div>
@@ -6514,7 +6514,7 @@ function enviarLandingWA(tipo){
   var tel = prompt('N° de WhatsApp del paciente (con código de área):');
   if(!tel) return;
   var labels = {receta:'Receta Médica Online', derivacion:'Derivación Médica', estudios:'Pedido de Estudios'};
-  var txt = '🏥 *MedHistoriaClinicaOnline · '+labels[tipo]+'*\n\nFirmado electrónicamente · Ley 27.553\n\n_medhistoriasclinicasdigitales.com.ar_';
+  var txt = '🏥 *MedHistoriaClinicaOnline · '+labels[tipo]+'*\n\nFirmado electrónicamente · Ley 27.553\n\n_medhistoriaclinicaonline.com_';
   window.open('https://wa.me/54'+tel+'?text='+encodeURIComponent(txt),'_blank');
 }
 
@@ -6523,7 +6523,7 @@ function enviarLandingEmail(tipo){
   if(!email) return;
   var labels = {receta:'Receta Médica Online', derivacion:'Derivación Médica', estudios:'Pedido de Estudios'};
   var asunto = labels[tipo]+' - MedHistoriaClinicaOnline';
-  var cuerpo = labels[tipo]+'\n\nFirmado electrónicamente · Ley 27.553\n\nMedHistoriaClinicaOnline · medhistoriasclinicasdigitales.com.ar';
+  var cuerpo = labels[tipo]+'\n\nFirmado electrónicamente · Ley 27.553\n\nMedHistoriaClinicaOnline · medhistoriaclinicaonline.com';
   window.location.href = 'mailto:'+email+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
 }
 
@@ -12737,7 +12737,7 @@ function imprimirFacturaHistorial(idx){
   var totalTxt = '$ '+(parseFloat(f.total)||0).toFixed(2);
   var tel = prompt('N° de WhatsApp (con código de área):');
   if(!tel) return;
-  var txt = '🏥 *MedHistoriaClinicaOnline - '+(f.tipo==='particular'?'Recibo Particular':'Factura Obra Social')+'*\n\nPaciente: '+f.nombrePac+'\nTotal: '+totalTxt+'\n\n_MedHistoriaClinicaOnline · medhistoriasclinicasdigitales.com.ar_';
+  var txt = '🏥 *MedHistoriaClinicaOnline - '+(f.tipo==='particular'?'Recibo Particular':'Factura Obra Social')+'*\n\nPaciente: '+f.nombrePac+'\nTotal: '+totalTxt+'\n\n_MedHistoriaClinicaOnline · medhistoriaclinicaonline.com_';
   window.open('https://wa.me/54'+tel+'?text='+encodeURIComponent(txt),'_blank');
 }
 
@@ -12748,7 +12748,7 @@ function enviarFacturaHistorialEmail(idx){
   var email = prompt('Email del destinatario:');
   if(!email) return;
   var asunto = f.tipo==='particular' ? 'Recibo - MedHistoriaClinicaOnline' : 'Factura Obra Social - MedHistoriaClinicaOnline';
-  var cuerpo = 'Paciente: '+f.nombrePac+'\nTotal: '+totalTxt+'\n\nMedHistoriaClinicaOnline · medhistoriasclinicasdigitales.com.ar';
+  var cuerpo = 'Paciente: '+f.nombrePac+'\nTotal: '+totalTxt+'\n\nMedHistoriaClinicaOnline · medhistoriaclinicaonline.com';
   window.location.href = 'mailto:'+email+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
 }
 
@@ -12842,7 +12842,7 @@ function enviarFacturaWA(tipo){
   var total = (document.getElementById(prefix+'-total')||{}).value||'$ 0.00';
   var tel = prompt('N° de WhatsApp (con código de área):');
   if(!tel) return;
-  var txt = '🏥 *MedHistoriaClinicaOnline - '+(tipo==='os'?'Factura Obra Social':'Recibo Particular')+'*\n\nPaciente: '+pac+'\nTotal: '+total+'\n\n_MedHistoriaClinicaOnline · medhistoriasclinicasdigitales.com.ar_';
+  var txt = '🏥 *MedHistoriaClinicaOnline - '+(tipo==='os'?'Factura Obra Social':'Recibo Particular')+'*\n\nPaciente: '+pac+'\nTotal: '+total+'\n\n_MedHistoriaClinicaOnline · medhistoriaclinicaonline.com_';
   window.open('https://wa.me/54'+tel+'?text='+encodeURIComponent(txt),'_blank');
 }
 
@@ -12853,7 +12853,7 @@ function enviarFacturaEmail(tipo){
   var email = prompt('Email del destinatario:');
   if(!email) return;
   var asunto = tipo==='os'?'Factura Obra Social - MedHistoriaClinicaOnline':'Recibo - MedHistoriaClinicaOnline';
-  var cuerpo = 'Paciente: '+pac+'\nTotal: '+total+'\n\nMedHistoriaClinicaOnline · medhistoriasclinicasdigitales.com.ar';
+  var cuerpo = 'Paciente: '+pac+'\nTotal: '+total+'\n\nMedHistoriaClinicaOnline · medhistoriaclinicaonline.com';
   window.location.href = 'mailto:'+email+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
 }
 
@@ -14308,7 +14308,7 @@ function enviarWhatsApp(tipo){
       + '\n💊 *Medicación prescripta:*\n'+(med||'(no indicada)')
       + (ind ? '\n\n📋 *Indicaciones:*\n'+ind : '')
       + '\n\n👨‍⚕️ '+medico
-      + '\n\n_Emitida con firma electrónica · Ley 27.553 · medhistoriasclinicasdigitales.netlify.app_';
+      + '\n\n_Emitida con firma electrónica · Ley 27.553 · medhistoriaclinicaonline.com_';
   } else if(tipo === 'derivacion'){
     var pac = (document.getElementById('der-paciente')||{}).value || '';
     var mot = (document.getElementById('der-motivo')||{}).value || '';
@@ -14322,7 +14322,7 @@ function enviarWhatsApp(tipo){
       +'🏥 Especialidad: '+(esp||'(no indicada)')+'\n'
       +'\n📋 *Motivo de derivación:*\n'+(mot||'(no indicado)')
       +'\n\n👨‍⚕️ '+medico
-    +'\n\n_Emitida con firma electrónica · Ley 27.553 · medhistoriasclinicasdigitales.netlify.app_';
+    +'\n\n_Emitida con firma electrónica · Ley 27.553 · medhistoriaclinicaonline.com_';
   } else {
     var pac = (document.getElementById('est-paciente')||{}).value || '';
     var det = (document.getElementById('est-det')||{}).value || '';
@@ -14334,7 +14334,7 @@ function enviarWhatsApp(tipo){
       +'👤 Paciente: '+(pac||'(no indicado)')+'\n'
       +'\n🔬 *Estudios solicitados:*\n'+(det||'(no indicado)')
       +'\n\n👨‍⚕️ '+medico
-      +'\n\n_Emitido con firma electrónica · Ley 27.553 · medhistoriasclinicasdigitales.netlify.app_';
+      +'\n\n_Emitido con firma electrónica · Ley 27.553 · medhistoriaclinicaonline.com_';
   }
   var url = 'https://wa.me/54'+tel+'?text='+encodeURIComponent(texto);
   window.open(url, '_blank');
@@ -14391,7 +14391,7 @@ function enviarEmail(tipo){
       +'\nMEDICACIÓN PRESCRIPTA:\n'+(med||'(no indicada)')
       +(ind?'\n\nINDICACIONES:\n'+ind:'')
       +'\n\n'+medico
-     +'\n\nEmitida con firma electrónica · Ley 27.553\nMedHistoriaClinicaOnline · medhistoriasclinicasdigitales.netlify.app';
+     +'\n\nEmitida con firma electrónica · Ley 27.553\nMedHistoriaClinicaOnline · medhistoriaclinicaonline.com';
   } else if(tipo === 'derivacion'){
     var pac = (document.getElementById('der-paciente')||{}).value || '';
     var mot = (document.getElementById('der-motivo')||{}).value || '';
