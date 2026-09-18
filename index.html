@@ -4194,6 +4194,14 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
         <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--g2);margin-bottom:4px;">✍️ Mi Firma Digital</h2>
         <p style="color:var(--muted);font-size:.85rem;margin-bottom:24px;line-height:1.6;">Completá los dos pasos para que tu firma aparezca con validez legal en todos tus documentos.</p>
 
+        <!-- FIRMA ELECTRÓNICA DE RECETAS (clave personal + registro de evidencia) -->
+        <div id="fe-card" style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:12px;padding:16px 18px;margin-bottom:20px;">
+          <div style="font-weight:700;color:#0c4a6e;font-size:.88rem;margin-bottom:4px;">🔐 Firma electrónica de tus recetas</div>
+          <p style="font-size:.78rem;color:#075985;line-height:1.6;margin-bottom:10px;">Cada receta que emitas se firma automáticamente con una clave personal generada para tu cuenta y queda registrada con fecha, hora, IP y sesión. El PDF lleva un QR con el que cualquiera puede verificar que la firmaste vos y que el archivo no se alteró. Tu clave privada se guarda cifrada en el servidor y no se puede descargar.</p>
+          <div id="fe-estado" style="font-size:.8rem;color:#075985;margin-bottom:10px;">Consultando estado…</div>
+          <button id="fe-btn" onclick="activarFirmaElectronica()" style="display:none;padding:8px 16px;background:linear-gradient(135deg,#0284c7,#0c4a6e);color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Activar firma electrónica</button>
+        </div>
+
         <!-- LEGAJO RENAPDIS -->
         <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:16px 18px;margin-bottom:20px;">
           <div style="font-weight:700;color:#145a32;font-size:.88rem;margin-bottom:4px;">📋 N° de Legajo — Registro de Recetarios Electrónicos (ReNaPDiS)</div>
@@ -5496,16 +5504,41 @@ function generarDocumento(tipo){
   var ley = leyes[tipo] || 'Ley 27.553';
 
   // Registrar en el historial de cambios del paciente
-  try{
-    var datosDoc = getDatosDocumento(tipo);
-    if(datosDoc.dni){
-      var idxPacDoc = -1;
-      for(var iD=0; iD<pacientes.length; iD++){ if(pacientes[iD].dni && pacientes[iD].dni===datosDoc.dni){ idxPacDoc=iD; break; } }
-      if(idxPacDoc >= 0 && datosDoc.contenido){
-        registrarAuditoria(idxPacDoc, (datosDoc.titulo||nombres[tipo]||'Documento')+' generado/a', '', datosDoc.contenido);
+  var registrarAudDoc = function(){
+    try{
+      var datosDoc = getDatosDocumento(tipo);
+      if(datosDoc.dni){
+        var idxPacDoc = -1;
+        for(var iD=0; iD<pacientes.length; iD++){ if(pacientes[iD].dni && pacientes[iD].dni===datosDoc.dni){ idxPacDoc=iD; break; } }
+        if(idxPacDoc >= 0 && datosDoc.contenido){
+          registrarAuditoria(idxPacDoc, (datosDoc.titulo||nombres[tipo]||'Documento')+' generado/a', '', datosDoc.contenido);
+        }
       }
-    }
-  }catch(eAud){ console.error('Error registrando auditoría de documento:', eAud); }
+    }catch(eAud){ console.error('Error registrando auditoría de documento:', eAud); }
+  };
+
+  // Receta: se emite y se firma en el servidor ANTES de darla por generada (si la firma falla, no se registra ni se confirma).
+  if(tipo === 'receta'){
+    var btnRx = event.currentTarget;
+    var originalRx = btnRx.innerHTML;
+    btnRx.disabled = true;
+    btnRx.innerHTML = '⏳ Firmando receta…';
+    emitirRecetaFirmada(function(em){
+      registrarAudDoc();
+      btnRx.innerHTML = '✅ Receta Médica generada y firmada';
+      btnRx.style.background = 'linear-gradient(135deg,#145a32,#0a3d1f)';
+      setTimeout(function(){ btnRx.innerHTML = originalRx; btnRx.style.background = ''; btnRx.disabled = false; }, 3000);
+      setTimeout(function(){
+        if(confirm('✅ Receta Médica generada y firmada electrónicamente.\n\n' + ley + '\n\nCódigo de verificación: ' + _firmaRxTokenFmt(em.token) + '\n\n¿Querés imprimirla ahora?')){
+          imprimirDoc('receta');
+        }
+      }, 400);
+    }, function(){
+      btnRx.innerHTML = originalRx; btnRx.style.background = ''; btnRx.disabled = false;
+    });
+    return;
+  }
+  registrarAudDoc();
 
   // Mostrar confirmación visual
   var btn = event.currentTarget;
@@ -8388,8 +8421,42 @@ function checkAddonFirma(){
   real.style.display='block';
 }
 
+// ── Firma electrónica de recetas: estado y activación de la clave personal del médico ──
+function _feHuellaCorta(h){ return String(h||'').slice(0,16).replace(/(.{4})(?=.)/g,'$1 ').toUpperCase(); }
+function actualizarEstadoFirmaElectronica(){
+  var est = document.getElementById('fe-estado'), btn = document.getElementById('fe-btn');
+  if(!est || typeof sb === 'undefined') return;
+  sb.functions.invoke('firma-receta', { body:{ accion:'estado' } }).then(function(r){
+    if(r.error || !r.data || !r.data.ok){ est.textContent = 'No se pudo consultar el estado ahora. Probá de nuevo en unos minutos.'; return; }
+    if(r.data.activa){
+      var f = r.data.creada_en ? new Date(r.data.creada_en).toLocaleDateString('es-AR') : '';
+      est.innerHTML = '✅ <strong>Activa</strong>'+(f ? ' · clave creada el '+f : '')+' · huella: <code>'+_feHuellaCorta(r.data.huella)+'</code>';
+      if(btn) btn.style.display = 'none';
+    } else {
+      est.textContent = 'Todavía no está activada. Se activa sola con tu primera receta, o podés activarla ahora.';
+      if(btn) btn.style.display = 'inline-block';
+    }
+  }, function(){ est.textContent = 'No se pudo consultar el estado ahora. Probá de nuevo en unos minutos.'; });
+}
+function activarFirmaElectronica(){
+  var btn = document.getElementById('fe-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Activando…'; }
+  sb.functions.invoke('firma-receta', { body:{ accion:'activar' } }).then(function(r){
+    if(btn){ btn.disabled = false; btn.textContent = 'Activar firma electrónica'; }
+    if(r.error || !r.data || !r.data.ok){
+      _msgErrorFuncion(r.error, 'Error desconocido.').then(function(m){ alert('No se pudo activar la firma electrónica.\n\n'+m); });
+      return;
+    }
+    actualizarEstadoFirmaElectronica();
+  }, function(){
+    if(btn){ btn.disabled = false; btn.textContent = 'Activar firma electrónica'; }
+    alert('No se pudo conectar para activar la firma electrónica. Revisá tu conexión.');
+  });
+}
+
 function initPanelFirma(){
   checkAddonFirma();
+  try{ actualizarEstadoFirmaElectronica(); }catch(eFe){ console.warn('[catch]', eFe); }
   if(tieneAddonFirma()){
     setTimeout(function(){
       initCanvasFirma();
@@ -13633,9 +13700,8 @@ var _logoPNG = null;
 // identificación reales: deja los espacios reservados, listos para
 // completarse el día que la plataforma tenga esos identificadores
 // asignados por el Ministerio de Salud.
-function _generarPDFRecetaReNaPDiS(d, callback){
-  // ── Validación de campos obligatorios — no se genera nada (ni descarga,
-  // ni impresión, ni envío) si falta algo exigido ──
+// Campos obligatorios de la receta (modelo ReNaPDiS). Devuelve la lista de faltantes (vacía = todo ok).
+function _faltantesRecetaReNaPDiS(d){
   var faltantes = [];
   if(!d.nombreProfesional || !d.nombreProfesional.trim()) faltantes.push('nombre del profesional (revisá tu perfil)');
   if(!d.profesion) faltantes.push('profesión (revisá tu perfil)');
@@ -13645,15 +13711,23 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   if(!d.domicilio || !d.domicilio.trim()) faltantes.push('domicilio del consultorio');
   if(!d.pac || !d.pac.trim()) faltantes.push('nombre del paciente');
   if((!d.medicamentos || !d.medicamentos.length) && (!d.contenido || !d.contenido.trim())) faltantes.push('medicación prescripta');
-  if(faltantes.length){
-    alert('Faltan estos datos obligatorios para emitir la receta:\n\n— '+faltantes.join('\n— ')+'\n\nEl domicilio, la jurisdicción de la matrícula y el código REFEPS se completan una vez y quedan guardados en tu perfil para las próximas recetas.');
-    return;
-  }
+  return faltantes;
+}
+function _alertarFaltantesReceta(faltantes){
+  alert('Faltan estos datos obligatorios para emitir la receta:\n\n— '+faltantes.join('\n— ')+'\n\nEl domicilio, la jurisdicción de la matrícula y el código REFEPS se completan una vez y quedan guardados en tu perfil para las próximas recetas.');
+}
+
+function _generarPDFRecetaReNaPDiS(d, callback){
+  // ── Validación de campos obligatorios — no se genera nada (ni descarga,
+  // ni impresión, ni envío) si falta algo exigido ──
+  var faltantes = _faltantesRecetaReNaPDiS(d);
+  if(faltantes.length){ _alertarFaltantesReceta(faltantes); return; }
 
   var jsPDF = window.jspdf ? window.jspdf.jsPDF : (window.jsPDF || null);
   if(!jsPDF){ alert('Librería PDF no cargada. Verificá tu conexión a internet.'); return; }
 
-  var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  // compress:true — sin esto el PDF pesa ~470 KB (13 veces más): se sube a firmar y se manda al paciente.
+  var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4', compress:true });
   var W = 210, margin = 14, x = margin;
   var _paisMedico = (usuarioActual && usuarioActual.pais) ? usuarioActual.pais : (typeof paisActual !== 'undefined' ? paisActual : 'ar');
   var _leyFirmaPais = (firmaInfo[_paisMedico] && firmaInfo[_paisMedico].ley) ? firmaInfo[_paisMedico].ley : firmaInfo.ar.ley;
@@ -13919,6 +13993,23 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   doc.text(_li, x, footerY+11+(_lf.length*3.1)+2);
   doc.setFont('helvetica','bold'); doc.setTextColor(20,90,50); doc.setFontSize(6.5);
   doc.text('MedHistoriaClinicaOnline · medhistoriaclinicaonline@gmail.com', W-margin, footerY+5, {align:'right'});
+
+  // ── QR de verificación de la firma electrónica (se dibuja solo cuando la
+  // receta se emite firmada: ver emitirRecetaFirmada). NO usa la caja
+  // reservada del CUIR/QR oficial del ReNaPDiS de arriba. Va a la derecha del
+  // bloque de firma, arriba de la fecha de confección. ──
+  if(d.firmaToken && d.firmaUrl){
+    var _qrImg = _qrDataUrl(d.firmaUrl);
+    if(!_qrImg) throw new Error('No se pudo generar el QR de verificación');
+    var _qrSize = 20, _qrX = W-margin-_qrSize, _qrY = footerY-33;
+    doc.addImage(_qrImg, 'PNG', _qrX, _qrY, _qrSize, _qrSize);
+    doc.setTextColor(20,90,50); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+    doc.text('VERIFICACIÓN DE FIRMA ELECTRÓNICA', _qrX-3, _qrY+4, {align:'right'});
+    doc.setTextColor(70,70,70); doc.setFontSize(6.3); doc.setFont('helvetica','normal');
+    doc.text('Escaneá el QR o ingresá en '+location.host+'/verificar', _qrX-3, _qrY+8, {align:'right'});
+    doc.text('Código: '+_firmaRxTokenFmt(d.firmaToken), _qrX-3, _qrY+11.5, {align:'right'});
+    doc.setProperties({ title:'Receta médica electrónica', subject:'Receta firmada electrónicamente', keywords:d.firmaToken, creator:'MedHistoriaClinicaOnline' });
+  }
 
   callback(doc, d);
 }
@@ -14192,9 +14283,198 @@ function generarPDFbase64(tipo, callback){
   callback(doc, d);
 }
 
+// ══ FIRMA ELECTRÓNICA DE RECETAS ═══════════════════════════════════════════
+// Cada receta que se entrega (descargar / imprimir / enviar) se firma en el
+// servidor con la clave personal del médico (Edge Function firma-receta) y
+// queda registrada en firmas_recetas (append-only). El PDF lleva un QR que
+// apunta a la página pública /verificar/.
+// Regla clave: el PDF que se firma es EXACTAMENTE el que se entrega. Se genera
+// una sola vez, se firman esos bytes y esos mismos bytes se descargan, imprimen
+// o envían (regenerar el PDF cambiaría su hash). Mientras el contenido de la
+// receta no cambie, todas las copias reutilizan la misma emisión firmada.
+// Si la firma falla, la receta NO se entrega (se puede reintentar).
+var _recetaFirmadaCache = null;    // { key, d, bytes, token, url, idReceta, hash, firmadoEn }
+var _recetaFirmaPendiente = null;  // { key, idReceta, token, url, bytes, d } — reintento sin duplicar la receta
+var _recetaEmisionEnCurso = null;  // { key, esperando:[{ok,fail}] } — evita emisiones dobles por clicks seguidos
+
+function _firmaRxToken(){
+  var b = new Uint8Array(16); crypto.getRandomValues(b);
+  var alf = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567', bits = '', out = '', i;
+  for(i=0;i<b.length;i++) bits += ('00000000'+b[i].toString(2)).slice(-8);
+  for(i=0; i+5<=bits.length && out.length<25; i+=5) out += alf.charAt(parseInt(bits.substr(i,5),2));
+  return out; // 25 caracteres base32 (~125 bits de azar)
+}
+function _firmaRxTokenFmt(t){ return String(t||'').replace(/(.{5})(?=.)/g,'$1-'); }
+function _firmaRxUrl(t){ return location.origin + '/verificar/?c=' + _firmaRxTokenFmt(t); }
+// Huella del contenido de la receta: si cambia cualquier dato, es otra emisión.
+function _firmaRxClave(d){
+  return JSON.stringify([d.pac,d.dni,d.cuil,d.fnac,d.sexo,d.os,d.plan,d.afiliado,d.diag,d.contenido,d.medicamentos,d.ind,
+    d.domicilio,d.jurisdiccion,d.refeps,d.fechaInicioVigencia,d.telefonoProfesional,d.emailProfesional,d.legajoRL,d.fecha,
+    d.nombreProfesional,d.matriculaMN,d.matriculaMP]);
+}
+function _bytesToB64(u8){
+  var s = '', ch = 0x4000;
+  for(var i=0;i<u8.length;i+=ch) s += String.fromCharCode.apply(null, u8.subarray(i,i+ch));
+  return btoa(s);
+}
+function _qrDataUrl(texto){
+  var cont = document.createElement('div');
+  cont.style.cssText = 'position:fixed;left:-9999px;top:0;';
+  document.body.appendChild(cont);
+  try{
+    new QRCode(cont, { text:texto, width:256, height:256, correctLevel:QRCode.CorrectLevel.M });
+    var cv = cont.querySelector('canvas');
+    return cv ? cv.toDataURL('image/png') : null;
+  } finally { document.body.removeChild(cont); }
+}
+function _descargarBytesPDF(bytes, nombre){
+  var url = URL.createObjectURL(new Blob([bytes], {type:'application/pdf'}));
+  var a = document.createElement('a');
+  a.href = url; a.download = nombre;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 10000);
+}
+// supabase-js deja la respuesta HTTP en err.context: se lee el mensaje que mandó el servidor.
+function _msgErrorFuncion(err, porDefecto){
+  if(err && err.context && typeof err.context.json === 'function'){
+    return err.context.json().then(function(j){ return (j && j.error) ? j.error : porDefecto; }).catch(function(){ return porDefecto; });
+  }
+  return Promise.resolve(porDefecto);
+}
+function _firmarRecetaServidor(p, ok, fail){
+  sb.functions.invoke('firma-receta', {
+    body: { accion:'firmar', id_receta:p.idReceta, token:p.token, pdf_base64:_bytesToB64(p.bytes) }
+  }).then(function(r){
+    if(r.error || !r.data || !r.data.ok){
+      _msgErrorFuncion(r.error, 'Error desconocido.').then(function(m){
+        fail('No se pudo firmar la receta.\n\n'+m+'\n\nLa receta NO se entregó. Revisá tu conexión y volvé a intentar.');
+      });
+      return;
+    }
+    ok(r.data);
+  }, function(){
+    fail('No se pudo conectar para firmar la receta.\n\nLa receta NO se entregó. Revisá tu conexión y volvé a intentar.');
+  });
+}
+
+// Aviso discreto mientras se firma (tarda 2-5 s): sin esto, "Descargar" / "Imprimir" / "Enviar" parecerían no hacer nada.
+function _toastFirma(msg){
+  var el = document.getElementById('toast-firma-rx');
+  if(!msg){ if(el) el.style.display = 'none'; return; }
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'toast-firma-rx';
+    el.setAttribute('role', 'status');
+    el.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#0a3d1f;color:#fff;padding:10px 20px;border-radius:24px;font-size:.85rem;font-weight:600;font-family:Outfit,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:99999;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// Emite la receta actual: la registra, genera el PDF con su QR, lo firma en el servidor y entrega los bytes firmados.
+// onOk(em) recibe { bytes, d, token, hash, firmadoEn, ... }. onFail() se llama si se abortó o falló (ya se avisó al médico).
+function emitirRecetaFirmada(onOk, onFail){
+  onFail = onFail || function(){};
+  var d = getDatosDocumento('receta');
+  var faltantes = _faltantesRecetaReNaPDiS(d);
+  if(faltantes.length){ _alertarFaltantesReceta(faltantes); onFail(); return; }
+  if(typeof sb === 'undefined' || !usuarioActual || !usuarioActual.id){ alert('Iniciá sesión para emitir la receta.'); onFail(); return; }
+
+  var key = _firmaRxClave(d);
+  if(_recetaFirmadaCache && _recetaFirmadaCache.key === key){ onOk(_recetaFirmadaCache); return; }
+  if(_recetaEmisionEnCurso && _recetaEmisionEnCurso.key === key){ _recetaEmisionEnCurso.esperando.push({ ok:onOk, fail:onFail }); return; }
+
+  var en = { key:key, esperando:[{ ok:onOk, fail:onFail }] };
+  _recetaEmisionEnCurso = en;
+  _toastFirma('⏳ Firmando la receta…');
+  var terminar = function(em, msgError){
+    if(_recetaEmisionEnCurso === en) _recetaEmisionEnCurso = null;
+    _toastFirma('');
+    if(em){ en.esperando.forEach(function(c){ try{ c.ok(em); }catch(e){ console.error(e); } }); return; }
+    if(msgError) alert(msgError);
+    en.esperando.forEach(function(c){ try{ c.fail(); }catch(e){ console.error(e); } });
+  };
+  var firmar = function(p){
+    _firmarRecetaServidor(p, function(res){
+      var em = { key:p.key, d:p.d, bytes:p.bytes, token:p.token, url:p.url, idReceta:p.idReceta, hash:res.hash_pdf, firmadoEn:res.firmado_en };
+      _recetaFirmadaCache = em; _recetaFirmaPendiente = null;
+      terminar(em);
+    }, function(msg){ terminar(null, msg); });
+  };
+
+  // Reintento de una emisión que falló al firmar: se reenvían los MISMOS bytes y el MISMO código, sin duplicar la receta.
+  if(_recetaFirmaPendiente && _recetaFirmaPendiente.key === key){ firmar(_recetaFirmaPendiente); return; }
+  // Emisión anterior que nunca se firmó y ahora es otro contenido: se descarta su fila huérfana.
+  if(_recetaFirmaPendiente){
+    var huerfana = _recetaFirmaPendiente.idReceta; _recetaFirmaPendiente = null;
+    sb.from('recetas').delete().eq('id', huerfana).then(function(){});
+  }
+
+  asegurarPacienteId({ dni:d.dni, nombre:d.pac }, function(pacienteId){
+    if(!pacienteId){
+      terminar(null, 'No se pudo registrar al paciente para emitir la receta. Revisá el nombre del paciente (y el límite de pacientes de tu plan) e intentá de nuevo.');
+      return;
+    }
+    var recSB = {
+      paciente_id: pacienteId,
+      medico_id: usuarioActual.id,
+      diagnostico_cie10: d.diag || '',
+      medicacion_prescripta: d.contenido || '',
+      medicamentos: (d.medicamentos && d.medicamentos.length) ? d.medicamentos : null,
+      validez: (document.getElementById('rx2-validez')||{}).value || (document.getElementById('rx-validez')||{}).value || '',
+      fecha_inicio_vigencia: d.fechaInicioVigencia || null,
+      whatsapp_envio: '',
+      email_envio: ''
+    };
+    sb.from('recetas').insert(recSB).select('id').then(function(r){
+      if(r.error || !r.data || !r.data[0]){ terminar(null, 'No se pudo registrar la receta. Revisá tu conexión e intentá de nuevo.'); return; }
+      var idReceta = r.data[0].id;
+      var token = _firmaRxToken(), url = _firmaRxUrl(token);
+      var d2 = Object.assign({}, d, { firmaToken:token, firmaUrl:url });
+      var bytes = null;
+      try{
+        _generarPDFRecetaReNaPDiS(d2, function(doc){ bytes = new Uint8Array(doc.output('arraybuffer')); });
+      }catch(eGen){ console.error('Error generando el PDF de la receta:', eGen); }
+      if(!bytes){
+        sb.from('recetas').delete().eq('id', idReceta).then(function(){});
+        terminar(null, 'No se pudo generar el PDF de la receta. Probá de nuevo.');
+        return;
+      }
+      var p = { key:key, idReceta:idReceta, token:token, url:url, bytes:bytes, d:d2 };
+      _recetaFirmaPendiente = p;
+      firmar(p);
+    }, function(){ terminar(null, 'No se pudo registrar la receta. Revisá tu conexión e intentá de nuevo.'); });
+  });
+}
+
+// Devuelve un objeto "tipo jsPDF" (save / output) para que los flujos de entrega existentes sigan igual: para la receta
+// entrega los bytes ya firmados; para el resto de los documentos, el PDF de siempre.
+function _generarParaEntregar(tipo, onOk, onFail){
+  if(tipo === 'receta'){
+    emitirRecetaFirmada(function(em){
+      onOk({
+        save: function(nombre){ _descargarBytesPDF(em.bytes, nombre); },
+        output: function(kind){ return kind === 'blob' ? new Blob([em.bytes], {type:'application/pdf'}) : em.bytes; }
+      }, em.d);
+    }, onFail);
+    return;
+  }
+  generarPDFbase64(tipo, function(doc, d){ onOk(doc, d); });
+}
+
+function _descargarRecetaFirmada(){
+  emitirRecetaFirmada(function(em){
+    var d = em.d;
+    var nombre = d.titulo.replace(/ /g,'_')+'_'+d.pac.replace(/ /g,'_')+'_'+new Date().toLocaleDateString('es-AR').replace(/\//g,'-')+'.pdf';
+    _descargarBytesPDF(em.bytes, nombre);
+  });
+}
+
 function descargarPDF(tipo){
   var d = getDatosDocumento(tipo);
   if(!d.pac){ alert('Completá el nombre del paciente primero.'); return; }
+  if(tipo === 'receta'){ _descargarRecetaFirmada(); return; }
    if(tipo==='derivacion' && usuarioActual && usuarioActual.id){
       var dniDer = (document.getElementById('der-dni')||{}).value||'';
       if(dniDer){
@@ -14213,25 +14493,7 @@ function descargarPDF(tipo){
         });
       }
     }
-  if(tipo==='receta' && usuarioActual && usuarioActual.id){
-      var dniRec = (document.getElementById('rx2-dni')||{}).value||'';
-      if(dniRec){
-        buscarPacienteIdCompartido(dniRec, function(pacienteIdRec){
-          var recSB = {
-            paciente_id: pacienteIdRec,
-            medico_id: usuarioActual.id,
-            diagnostico_cie10: (document.getElementById('rx2-diag')||{}).value||'',
-            medicacion_prescripta: (document.getElementById('rx2-med')||{}).value||'',
-            medicamentos: _recetaMedicamentosData.length ? _recetaMedicamentosData : null,
-            validez: (document.getElementById('rx2-validez')||{}).value||'',
-            fecha_inicio_vigencia: (document.getElementById('rx2-fecha-inicio-vigencia')||{}).value||null,
-            whatsapp_envio: '',
-            email_envio: ''
-          };
-          sb.from('recetas').insert(recSB).then(function(){});
-        });
-      }
-    }
+  // (La receta ya no se registra acá: la registra emitirRecetaFirmada, una sola vez por emisión, con su firma.)
   if(tipo==='pedido' && usuarioActual && usuarioActual.id){
 		  var dniEst = (document.getElementById('est-dni')||{}).value||'';
 		  if(dniEst){
@@ -14264,7 +14526,7 @@ function enviarAutoWA(tipo){
   if(!tel){ alert('Completá el número de WhatsApp del paciente.'); return; }
 
   // Descargar PDF automáticamente
-  generarPDFbase64(tipo, function(doc, d){
+  _generarParaEntregar(tipo, function(doc, d){
     var nombre = d.titulo.replace(/ /g,'_')+'_'+d.pac+'.pdf';
     doc.save(nombre);
 
@@ -14301,7 +14563,7 @@ function enviarAutoEmail(tipo){
   }
 
   // Descargar PDF automáticamente
-  generarPDFbase64(tipo, function(doc, d){
+  _generarParaEntregar(tipo, function(doc, d){
     var nombre = d.titulo.replace(/ /g,'_')+'_'+d.pac+'.pdf';
     doc.save(nombre);
 
@@ -14872,10 +15134,15 @@ function exportarCSV(){
 
 // ── GUARDAR DATOS EN LOCALSTORAGE (persistencia básica) ──
 function imprimirDoc(tipo){
-  generarPDFbase64(tipo, function(doc){
+  // La receta se firma en el servidor antes de imprimirse (es asíncrono): la ventana se abre YA, dentro del click del
+  // médico, para que el navegador no la bloquee, y después se le carga el PDF firmado.
+  var previa = null;
+  if(tipo === 'receta'){ try{ previa = window.open('', '_blank'); }catch(ePop){ previa = null; } }
+  _generarParaEntregar(tipo, function(doc){
     var blob = doc.output('blob');
     var url = URL.createObjectURL(blob);
-    var ventana = window.open(url, '_blank');
+    var ventana = previa || window.open(url, '_blank');
+    if(previa){ previa.location.href = url; }
     if(ventana){
       ventana.onload = function(){
         setTimeout(function(){
@@ -14889,7 +15156,9 @@ function imprimirDoc(tipo){
       a.download = 'documento.pdf';
       a.click();
     }
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 10000);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+  }, function(){
+    if(previa){ try{ previa.close(); }catch(eCierre){ console.warn('[catch]', eCierre); } }
   });
 }
 
@@ -14908,6 +15177,7 @@ derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afilia
   });
   if(tipo==='receta'){
     _recetaMedicamentosData = [];
+    _recetaFirmadaCache = null; // receta nueva = emisión nueva (otro PDF, otro código, otra firma)
     var chkContacto = document.getElementById('rx2-incluir-contacto');
     if(chkContacto) chkContacto.checked = false;
   }

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verificar receta firmada | MedHistoriaClínicaOnline</title>
+<meta name="description" content="Verificá que una receta fue firmada electrónicamente por el profesional y que el archivo no fue alterado.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g1:#042b10;--g2:#0a3d1f;--g3:#145a32;--g4:#1a7a42;--g5:#22a050;--g6:#34c464;--g8:#b2f0cb;--g9:#e3fbed;
+  --cream:#f6fcf8;--text:#1a2e1e;--muted:#5a7362;--bad:#b42318;--badbg:#fef3f2;--badbd:#fecdca;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--text);line-height:1.6;}
+.env{background:#fff7d6;color:#7a5b00;text-align:center;font-size:.8rem;font-weight:600;padding:8px 12px;border-bottom:1px solid #f1d98a;}
+.hd{background:linear-gradient(135deg,var(--g1),var(--g2));padding:18px 24px;}
+.hd-in{max-width:760px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:#fff;text-decoration:none;white-space:nowrap;}
+.logo em{color:var(--g6);font-style:normal;}
+.back{color:var(--g8);font-size:.85rem;text-decoration:none;font-weight:600;white-space:nowrap;}
+.wrap{max-width:760px;margin:0 auto;padding:36px 20px 56px;}
+.kicker{color:var(--g4);font-size:.78rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.7rem,4vw,2.3rem);color:var(--g2);line-height:1.2;margin-bottom:10px;}
+.lead{color:var(--muted);font-size:.95rem;margin-bottom:22px;}
+.card{background:#fff;border:1px solid var(--g9);border-radius:16px;padding:20px 22px;margin-bottom:16px;box-shadow:0 8px 24px rgba(4,43,16,.06);}
+.card h2{font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:var(--g2);margin-bottom:6px;}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:12px;}
+label.l{display:block;font-size:.75rem;font-weight:700;color:var(--g3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.row{display:flex;gap:10px;flex-wrap:wrap;}
+input.t{flex:1;min-width:220px;padding:12px 14px;border:1.5px solid var(--g8);border-radius:10px;font-family:'Outfit',monospace;font-size:1rem;letter-spacing:1px;text-transform:uppercase;background:#fff;color:var(--text);}
+input.t:focus{outline:2px solid var(--g5);outline-offset:1px;}
+button.b{padding:12px 24px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;}
+button.b:disabled{opacity:.6;cursor:default;}
+.banner{border-radius:14px;padding:16px 18px;margin-bottom:16px;font-weight:700;font-size:1.05rem;border:1.5px solid;}
+.banner small{display:block;font-weight:400;font-size:.85rem;margin-top:4px;line-height:1.5;}
+.banner.ok{background:var(--g9);border-color:var(--g8);color:var(--g3);}
+.banner.bad{background:var(--badbg);border-color:var(--badbd);color:var(--bad);}
+.banner.neutral{background:#f4f4f4;border-color:#ddd;color:#444;}
+dl{display:grid;grid-template-columns:minmax(120px,190px) 1fr;gap:8px 14px;font-size:.9rem;}
+dt{color:var(--muted);font-weight:600;}
+dd{color:var(--text);word-break:break-word;}
+dd.mono{font-family:ui-monospace,Consolas,monospace;font-size:.78rem;}
+.drop{border:2px dashed var(--g8);border-radius:14px;padding:26px 16px;text-align:center;color:var(--muted);font-size:.9rem;cursor:pointer;background:var(--cream);}
+.drop.over{border-color:var(--g5);background:var(--g9);}
+.drop u{color:var(--g5);font-weight:600;}
+details.card summary{cursor:pointer;font-weight:700;color:var(--g3);font-size:.92rem;}
+details.card[open] summary{margin-bottom:12px;}
+.limits{font-size:.8rem;color:var(--muted);margin-top:8px;line-height:1.6;}
+[hidden]{display:none !important;}
+@media (max-width:560px){dl{grid-template-columns:1fr;gap:2px 0;}dt{margin-top:8px;}input.t{flex:1 1 100%;font-size:.82rem;letter-spacing:0;min-width:0;padding:12px 10px;}}
+</style>
+</head>
+<body>
+
+<div class="env" id="env" hidden>ENTORNO DE PRUEBAS (staging) — los datos de esta página no son reales.</div>
+
+<header class="hd">
+  <div class="hd-in">
+    <a href="../" class="logo" rel="noopener">Med<em>Historia</em>Clinica<em>Online</em></a>
+    <a href="../" class="back" rel="noopener">← Ir al sitio</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="kicker">Verificación pública</p>
+  <h1>Verificar una receta firmada electrónicamente</h1>
+  <p class="lead">Ingresá el código que figura debajo del QR de la receta (o escaneá el QR). No hace falta iniciar sesión.</p>
+
+  <form class="card" id="f" autocomplete="off">
+    <label class="l" for="cod">Código de verificación</label>
+    <div class="row">
+      <input class="t" id="cod" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="ABCDE-FGHIJ-KLMNO-PQRST-UVWXY">
+      <button class="b" id="btn" type="submit">Verificar</button>
+    </div>
+  </form>
+
+  <div id="msg" class="banner neutral" hidden role="alert"></div>
+
+  <section id="res" hidden aria-live="polite">
+    <div id="banner" class="banner"></div>
+
+    <div class="card">
+      <h2>Datos de la firma</h2>
+      <dl id="datos"></dl>
+    </div>
+
+    <div class="card">
+      <h2>¿Tenés el archivo PDF de la receta?</h2>
+      <p>Soltalo acá o elegilo: se calcula su huella (SHA-256) <strong>en tu navegador</strong> y se compara con la registrada al firmar. El archivo no se sube a ningún servidor.</p>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Elegir o soltar el PDF de la receta">Soltá el PDF acá o <u>elegí un archivo</u></div>
+      <input type="file" id="file" accept="application/pdf,.pdf" hidden>
+      <div id="archivo" class="banner" hidden style="margin:14px 0 0;"></div>
+    </div>
+
+    <details class="card">
+      <summary>Detalle técnico</summary>
+      <dl id="tecnico"></dl>
+      <p style="margin-top:12px;">La firma se calcula sobre un texto canónico que incluye la huella (SHA-256) del PDF, los identificadores de la receta, el código, la fecha y hora con microsegundos y la huella de la clave del profesional. Algoritmo: ECDSA P-256 con SHA-256 (formato r‖s, base64). Esta página vuelve a verificar la firma en tu navegador con la clave pública registrada.</p>
+    </details>
+  </section>
+
+  <p class="limits">Esta página confirma quién firmó el registro de la receta y cuándo y, si cargás el archivo, que no fue alterado después de firmarse. Una receta impresa en papel no se puede comparar por huella: usá el archivo PDF original. La fecha y la hora son las del servidor de MedHistoriaClinicaOnline. No se evalúa el contenido clínico ni la vigencia legal de la prescripción.</p>
+</main>
+
+<script>
+(function(){
+  'use strict';
+  var PROD_FN = 'https://rgwqiguojmwmkifrxfra.supabase.co/functions/v1/verificar-receta';
+  var STG_FN  = 'https://zkppmeayukqxavknhsoe.supabase.co/functions/v1/verificar-receta';
+  var host = location.hostname;
+  var esProd = /(^|\.)medhistoriaclinicaonline\.com$/.test(host) || host === 'medhistoriaclinicadigital-crypto.github.io';
+  var FN = esProd ? PROD_FN : STG_FN;
+  if(!esProd) document.getElementById('env').hidden = false;
+
+  var $ = function(id){ return document.getElementById(id); };
+  var ultimo = null; // último resultado verificado
+
+  function normalizar(s){ return (s||'').toUpperCase().replace(/[^A-Z2-7]/g,''); }
+  function formatear(c){ return c.replace(/(.{5})(?=.)/g,'$1-'); }
+  function b64ToBytes(b){ var s = atob(b), u = new Uint8Array(s.length); for(var i=0;i<s.length;i++) u[i]=s.charCodeAt(i); return u; }
+  function hex(buf){ return Array.from(new Uint8Array(buf)).map(function(x){ return ('0'+x.toString(16)).slice(-2); }).join(''); }
+  function leerPayload(p){ var o = {}; (p||'').split('\n').forEach(function(l){ var i = l.indexOf('='); if(i>0) o[l.slice(0,i)] = l.slice(i+1); }); return o; }
+  function fila(dl, k, v, mono){
+    var dt = document.createElement('dt'); dt.textContent = k;
+    var dd = document.createElement('dd'); dd.textContent = v; if(mono) dd.className = 'mono';
+    dl.appendChild(dt); dl.appendChild(dd);
+  }
+  function banner(el, clase, titulo, detalle){
+    el.className = 'banner ' + clase; el.textContent = titulo;
+    if(detalle){ var s = document.createElement('small'); s.textContent = detalle; el.appendChild(s); }
+    el.hidden = false;
+  }
+  function fechaLocal(iso){
+    try{ return new Date(iso.replace(/(\.\d{3})\d*Z$/,'$1Z')).toLocaleString('es-AR', {dateStyle:'full', timeStyle:'medium'}); }catch(e){ return iso; }
+  }
+
+  async function verificarEnNavegador(j){
+    try{
+      var key = await crypto.subtle.importKey('spki', b64ToBytes(j.clave_publica_spki), {name:'ECDSA', namedCurve:'P-256'}, false, ['verify']);
+      var ok = await crypto.subtle.verify({name:'ECDSA', hash:'SHA-256'}, key, b64ToBytes(j.firma), new TextEncoder().encode(j.payload_firmado));
+      var p = leerPayload(j.payload_firmado);
+      var huellaReal = hex(await crypto.subtle.digest('SHA-256', b64ToBytes(j.clave_publica_spki)));
+      var coherente = p.hash_sha256 === j.hash_pdf && p.token === j.codigo && p.huella_clave === j.huella_clave &&
+                      p.firmado_en === j.firmado_en && huellaReal === j.huella_clave;
+      return ok && coherente;
+    }catch(e){ return null; }
+  }
+
+  function mostrar(j, enNavegador){
+    ultimo = j;
+    $('archivo').hidden = true;
+    var valida = j.firma_valida === true && enNavegador !== false;
+    if(valida){
+      banner($('banner'), 'ok', '✔ Firma verificada',
+        'El registro de esta receta fue firmado con la clave del profesional indicado, en la fecha y hora indicadas.');
+    } else {
+      banner($('banner'), 'bad', '✖ La firma NO se pudo verificar',
+        'Los datos registrados no coinciden con su firma. No confíes en este documento.');
+    }
+    var d = $('datos'); d.textContent = '';
+    fila(d, 'Profesional', j.medico && j.medico.nombre ? j.medico.nombre : '(sin dato)');
+    fila(d, 'Matrícula', j.medico && j.medico.matricula ? j.medico.matricula : '(sin dato)');
+    fila(d, 'Firmada el', fechaLocal(j.firmado_en));
+    fila(d, 'Código', formatear(j.codigo), true);
+    var t = $('tecnico'); t.textContent = '';
+    fila(t, 'Hora UTC (µs)', j.firmado_en, true);
+    fila(t, 'Huella SHA-256 del PDF', j.hash_pdf, true);
+    fila(t, 'Tamaño del PDF', j.bytes_pdf + ' bytes');
+    fila(t, 'Algoritmo', j.algoritmo);
+    fila(t, 'Huella de la clave', j.huella_clave, true);
+    fila(t, 'Verificación en el servidor', j.firma_valida ? 'correcta' : 'FALLÓ');
+    fila(t, 'Verificación en tu navegador', enNavegador === null ? 'no disponible en este navegador' : (enNavegador ? 'correcta' : 'FALLÓ'));
+    $('res').hidden = false;
+  }
+
+  function verificar(crudo){
+    var cod = normalizar(crudo);
+    $('res').hidden = true; $('msg').hidden = true;
+    if(cod.length !== 25){
+      banner($('msg'), 'neutral', 'Revisá el código', 'Tiene 25 caracteres (letras y números del 2 al 7), por ejemplo ABCDE-FGHIJ-KLMNO-PQRST-UVWXY.');
+      return;
+    }
+    $('cod').value = formatear(cod);
+    $('btn').disabled = true; $('btn').textContent = 'Verificando…';
+    fetch(FN + '?c=' + encodeURIComponent(cod), { cache: 'no-store' })
+      .then(function(r){ return r.json().catch(function(){ return { ok:false, error:'Respuesta inesperada del servidor.' }; }); })
+      .then(async function(j){
+        if(!j || !j.ok){
+          banner($('msg'), 'bad', 'No se encontró la receta', (j && j.error) || 'No se pudo verificar.');
+          return;
+        }
+        mostrar(j, await verificarEnNavegador(j));
+      })
+      .catch(function(){ banner($('msg'), 'bad', 'No se pudo conectar', 'Revisá tu conexión e intentá de nuevo.'); })
+      .then(function(){ $('btn').disabled = false; $('btn').textContent = 'Verificar'; });
+  }
+
+  async function revisarArchivo(file){
+    if(!ultimo || !file) return;
+    var el = $('archivo');
+    try{
+      var buf = await file.arrayBuffer();
+      var h = hex(await crypto.subtle.digest('SHA-256', buf));
+      if(h === ultimo.hash_pdf && buf.byteLength === ultimo.bytes_pdf){
+        banner(el, 'ok', '✔ El archivo coincide con el registrado',
+          'No fue modificado desde que se firmó. Huella: ' + h);
+      } else {
+        banner(el, 'bad', '✖ El archivo NO coincide con el registrado',
+          'Fue modificado después de firmarse, o no es el archivo original de esta receta. Huella del archivo: ' + h + ' — huella registrada: ' + ultimo.hash_pdf);
+      }
+    }catch(e){
+      banner(el, 'neutral', 'No se pudo leer el archivo', 'Probá de nuevo con el PDF original.');
+    }
+  }
+
+  $('f').addEventListener('submit', function(e){ e.preventDefault(); verificar($('cod').value); });
+  var drop = $('drop'), file = $('file');
+  drop.addEventListener('click', function(){ file.click(); });
+  drop.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); file.click(); } });
+  file.addEventListener('change', function(){ if(file.files[0]) revisarArchivo(file.files[0]); });
+  ['dragenter','dragover'].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave','drop'].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop', function(e){ var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if(f) revisarArchivo(f); });
+
+  var inicial = new URLSearchParams(location.search).get('c');
+  if(inicial){ $('cod').value = inicial; verificar(inicial); }
+})();
+</script>
+</body>
+</html>
