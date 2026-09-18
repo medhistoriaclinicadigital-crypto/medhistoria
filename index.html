@@ -654,8 +654,9 @@ document.addEventListener('DOMContentLoaded', function(){
   if(typeof _pendingPasswordRecovery !== 'undefined' && _pendingPasswordRecovery){ mostrarFormNuevaPass(); }
 
   // Datos bancarios reales para el panel de transferencia de Centro Médico
-  // (config_publica, lectura pública). Si todavía no están cargados, queda el
-  // placeholder y _centroRegistroBloqueado() mantiene el registro frenado.
+  // (función pública angosta obtener_datos_transferencia). Si todavía no están
+  // cargados, queda el placeholder y _centroRegistroBloqueado() mantiene el
+  // registro frenado.
   try{ cargarDatosBancarios(); }catch(e){ console.warn('[catch]', e); }
 
   // Si el link trae un código de invitación de Centro Médico, abrir el registro directo con el código ya cargado
@@ -715,6 +716,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"></script>
 <script>emailjs.init("QozXFRWJ4ZY55kKxT");</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js"></script>
@@ -5899,6 +5901,7 @@ function cerrarAdmin(){
   var cod = document.getElementById('admin-mfa-code'); if(cod) cod.value='';
   document.getElementById('admin-login').style.display='flex';
   _mfaAdmin = { factorId:null, challengeId:null, modo:null };
+  _pagosSesionToken = null; // cerrar sesión también bloquea Pagos
 }
 
  function loginAdmin(){
@@ -6149,7 +6152,7 @@ function switchAdminTab(btn, id){
     var el = document.getElementById(t);
     if(el) el.style.display = t===id?'block':'none';
   });
-  if(id === 'at-mp') cargarDatosBancarios(renderDatosBancariosAdmin);
+  if(id === 'at-mp') iniciarPagos2FA();
   if(id === 'at-reportes'){ cargarReportesReales(); cargarCentrosPendientesPago(); }
   if(id === 'at-facturacion') cargarFacturacionEditable();
   if(id === 'at-mensajes') cargarMensajesZoho();
@@ -6356,7 +6359,7 @@ function cargarAlertaBackups(){
 
 function renderAdmin(){
   cargarAlertaBackups();
-  cargarDatosBancarios(renderDatosBancariosAdmin); // pestaña "Pagos" (visible por defecto)
+  iniciarPagos2FA(); // pestaña "Pagos" (visible por defecto)
   // Stats
   var activos = suscriptores.filter(function(s){ return s.estado==='activo'; }).length;
   var prueba = suscriptores.filter(function(s){ return s.estado==='prueba'; }).length;
@@ -6437,9 +6440,11 @@ function filtrarAdmin(q){
 }
 
 // ══ DATOS BANCARIOS (Panel Admin → Pagos) ═══════════════════════════════════
-// Se guardan en Supabase (config_publica, fila 1) vía la RPC solo-admin
-// guardar_datos_bancarios. Cualquiera puede LEERLOS — es el CBU que ve un
-// médico cuando crea un Centro Médico y tiene que transferir el pago del plan.
+// Se guardan en Supabase (datos_bancarios_admin, fila 1), tabla sin acceso
+// directo: editarlos exige admin + el 2FA propio de la pestaña Pagos (ver
+// iniciarPagos2FA / guardar_datos_bancarios_admin). Cualquiera puede LEERLOS
+// vía la función pública angosta obtener_datos_transferencia — es el CBU que ve
+// un médico cuando crea un Centro Médico y tiene que transferir el pago del plan.
 // Reemplazan el objeto placeholder `datosBancarios` de abajo en cuanto haya
 // datos reales cargados. Guardar datos completos y con CBU válido DESTRABA
 // automáticamente el registro de Centros Médicos (ver _centroRegistroBloqueado).
@@ -6455,11 +6460,12 @@ function _datosBancariosCompletos(d){
 
 function cargarDatosBancarios(cb){
   if(typeof sb === 'undefined'){ if(cb) cb(); return; }
-  sb.from('config_publica').select('datos_bancarios').eq('id', 1).maybeSingle().then(function(r){
-    if(!r.error && r.data && r.data.datos_bancarios && typeof r.data.datos_bancarios === 'object'){
-      var d = r.data.datos_bancarios;
+  // Función pública angosta (no expone config_publica ni ninguna tabla directo) —
+  // es la misma fuente que ve un visitante sin cuenta en el overlay de pago.
+  sb.rpc('obtener_datos_transferencia').then(function(r){
+    if(!r.error && r.data && typeof r.data === 'object'){
+      var d = r.data;
       _datosBancariosGuardados = d;
-      // Si hay algo cargado en el server, es lo que se muestra en el panel de transferencia.
       ['banco','tipo','cuenta','cbu','alias','titular'].forEach(function(k){
         if(d[k] != null && d[k] !== '') datosBancarios[k] = String(d[k]);
       });
@@ -6546,7 +6552,7 @@ function guardarDatosBancariosAdmin(){
   }
   var btn = document.getElementById('db-btn-guardar');
   if(btn){ btn.disabled = true; btn.textContent = 'Guardando…'; }
-  sb.rpc('guardar_datos_bancarios', { p_datos: d }).then(function(r){
+  sb.rpc('guardar_datos_bancarios_admin', { p_sesion_token: _pagosSesionToken, p_datos: d }).then(function(r){
     if(btn){ btn.disabled = false; btn.textContent = '💾 Guardar datos bancarios'; }
     if(r.error){
       alert(r.error.code === 'P0001'
@@ -6561,6 +6567,124 @@ function guardarDatosBancariosAdmin(){
   }, function(){
     if(btn){ btn.disabled = false; btn.textContent = '💾 Guardar datos bancarios'; }
     alert('❌ Error de conexión al guardar. Probá de nuevo.');
+  });
+}
+
+// ══ 2FA EXCLUSIVO DE LA PESTAÑA PAGOS ═══════════════════════════════════════
+// Independiente del 2FA general del login admin. Sin expiración por tiempo —
+// se cierra solo con "Bloquear ahora", al recargar la página, o al cerrar
+// sesión. El token vive en memoria (variable JS), nunca en localStorage a
+// propósito: así una recarga lo borra sola, sin que el servidor tenga que
+// manejar ningún vencimiento por tiempo.
+var _pagosSesionToken = null;
+
+function _pagos2FAInvoke(accion, extra){
+  var body = Object.assign({ accion: accion }, extra || {});
+  return sb.functions.invoke('panel-pagos-2fa', { body: body });
+}
+
+function iniciarPagos2FA(){
+  if(_pagosSesionToken){ mostrarPagosDesbloqueado(); return; }
+  document.getElementById('pagos-bloqueado').style.display = 'block';
+  document.getElementById('pagos-contenido-real').style.display = 'none';
+  document.getElementById('pagos-2fa-alta').style.display = 'none';
+  document.getElementById('pagos-2fa-ingreso').style.display = 'none';
+  document.getElementById('pagos-2fa-cargando').style.display = 'block';
+
+  _pagos2FAInvoke('estado').then(function(r){
+    document.getElementById('pagos-2fa-cargando').style.display = 'none';
+    if(r.error || !r.data){
+      alert('No se pudo verificar el 2FA de Pagos. Probá de nuevo.');
+      return;
+    }
+    if(r.data.enrolado){
+      document.getElementById('pagos-2fa-ingreso').style.display = 'block';
+      var cod = document.getElementById('pagos-2fa-codigo');
+      if(cod){ cod.value=''; setTimeout(function(){ try{ cod.focus(); }catch(e){} }, 100); }
+    } else {
+      _pagos2FAInvoke('enrolar').then(function(r2){
+        if(r2.error || !r2.data){ alert('No se pudo iniciar el alta del 2FA de Pagos.'); return; }
+        document.getElementById('pagos-2fa-secret').textContent = r2.data.secret;
+        var qrEl = document.getElementById('pagos-2fa-qr');
+        qrEl.innerHTML = '';
+        new QRCode(qrEl, { text: r2.data.otpauth_uri, width:170, height:170 });
+        document.getElementById('pagos-2fa-alta').style.display = 'block';
+      });
+    }
+  });
+}
+
+function confirmarAltaPagos2FA(){
+  var cod = ((document.getElementById('pagos-2fa-codigo-alta')||{}).value || '').replace(/\D/g,'');
+  if(cod.length !== 6){ alert('El código tiene 6 dígitos.'); return; }
+  var btn = document.getElementById('pagos-2fa-btn-alta');
+  if(btn){ btn.disabled = true; btn.textContent = 'Verificando…'; }
+  _pagos2FAInvoke('confirmar_enrolamiento', { codigo: cod }).then(function(r){
+    if(btn){ btn.disabled = false; btn.textContent = 'Confirmar y activar'; }
+    if(r.error || !r.data || !r.data.ok){
+      alert('Código incorrecto. Revisá que la hora del teléfono esté en automático y probá con el código nuevo.');
+      return;
+    }
+    _pagosSesionToken = r.data.sesion_token;
+    mostrarPagosDesbloqueado();
+  });
+}
+
+function verificarPagos2FA(){
+  var cod = ((document.getElementById('pagos-2fa-codigo')||{}).value || '').replace(/\D/g,'');
+  var errEl = document.getElementById('pagos-2fa-error');
+  if(errEl) errEl.style.display = 'none';
+  if(cod.length !== 6){ if(errEl){ errEl.textContent='El código tiene 6 dígitos.'; errEl.style.display='block'; } return; }
+  var btn = document.getElementById('pagos-2fa-btn-verificar');
+  if(btn){ btn.disabled = true; btn.textContent = 'Verificando…'; }
+  _pagos2FAInvoke('verificar', { codigo: cod }).then(function(r){
+    if(btn){ btn.disabled = false; btn.textContent = 'Desbloquear'; }
+    if(r.error || !r.data || !r.data.ok){
+      if(errEl){ errEl.textContent = 'Código incorrecto o vencido.'; errEl.style.display = 'block'; }
+      return;
+    }
+    _pagosSesionToken = r.data.sesion_token;
+    mostrarPagosDesbloqueado();
+  });
+}
+
+function mostrarPagosDesbloqueado(){
+  document.getElementById('pagos-bloqueado').style.display = 'none';
+  document.getElementById('pagos-contenido-real').style.display = 'block';
+  cargarDatosBancariosAdminGated();
+}
+
+function bloquearPagos(){
+  var token = _pagosSesionToken;
+  _pagosSesionToken = null;
+  document.getElementById('pagos-contenido-real').style.display = 'none';
+  document.getElementById('pagos-bloqueado').style.display = 'block';
+  document.getElementById('pagos-2fa-alta').style.display = 'none';
+  document.getElementById('pagos-2fa-ingreso').style.display = 'block';
+  var cod = document.getElementById('pagos-2fa-codigo');
+  if(cod) cod.value = '';
+  ['db-banco','db-tipo','db-cuenta','db-cbu','db-alias','db-titular'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = '';
+  });
+  if(token) _pagos2FAInvoke('bloquear', { sesion_token: token }).catch(function(){});
+}
+
+function cargarDatosBancariosAdminGated(){
+  var est = document.getElementById('db-estado');
+  if(est){ est.style.background='rgba(255,255,255,.04)'; est.style.borderColor='rgba(109,222,150,.15)'; est.style.color='rgba(109,222,150,.5)'; est.innerHTML='Cargando…'; }
+  _datosBancariosCargados = false;
+  sb.rpc('obtener_datos_bancarios_admin', { p_sesion_token: _pagosSesionToken }).then(function(r){
+    if(r.error){
+      // La sesión pudo haber quedado inválida del lado del servidor (por ej.
+      // se bloqueó desde otra pestaña) — volver a pedir el código.
+      bloquearPagos();
+      return;
+    }
+    _datosBancariosGuardados = r.data || {};
+    _datosBancariosCargados = true;
+    renderDatosBancariosAdmin();
+  }, function(){
+    if(est) est.innerHTML = '⚠️ Error de conexión.';
   });
 }
 
@@ -6645,7 +6769,7 @@ var datosBancarios = {
 
 // ── FRENO del registro de Centro Médico ──────────────────────────────────────
 // El registro de Centros Médicos se destraba SOLO cuando hay datos bancarios
-// completos y válidos cargados desde Panel Admin → Pagos (config_publica +
+// completos y válidos cargados desde Panel Admin → Pagos (datos_bancarios_admin +
 // _datosBancariosCompletos). No hay que activar nada aparte: cargar los datos
 // reales y guardarlos ya habilita la inscripción.
 //
@@ -15745,24 +15869,57 @@ window.addEventListener('beforeunload', guardarLocal);
 
     <!-- TAB: PAGOS — DATOS BANCARIOS PARA TRANSFERENCIAS -->
     <div id="at-mp" style="display:block;">
-      <div style="background:#0a1a0f;border:1px solid rgba(52,196,100,.2);border-radius:14px;padding:28px;">
-        <h3 style="color:#fff;font-family:'Cormorant Garamond',serif;font-size:1.4rem;margin-bottom:6px;">🏦 Datos bancarios para transferencias</h3>
-        <p style="color:rgba(109,222,150,.6);font-size:.85rem;margin-bottom:18px;">Son los datos que ve un médico cuando crea un Centro Médico y tiene que transferir el pago del plan. Se guardan en el servidor y los ve cualquier médico que registre un centro.</p>
 
-        <div id="db-estado" style="border:1px solid rgba(109,222,150,.15);border-radius:10px;padding:12px 14px;font-size:.85rem;font-weight:600;margin-bottom:18px;color:rgba(109,222,150,.5);background:rgba(255,255,255,.04);">Cargando…</div>
+      <!-- BLOQUEADO: pide el 2FA exclusivo de Pagos -->
+      <div id="pagos-bloqueado" style="background:#0a1a0f;border:1px solid rgba(52,196,100,.2);border-radius:14px;padding:28px;max-width:420px;margin:0 auto;text-align:center;">
+        <div style="font-size:2rem;margin-bottom:8px;">🔒</div>
+        <h3 style="color:#fff;font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin-bottom:6px;">Datos bancarios protegidos</h3>
+        <p style="color:rgba(109,222,150,.6);font-size:.82rem;margin-bottom:20px;">Esta pestaña tiene una verificación en dos pasos propia, separada de la del login.</p>
 
-        <div style="display:grid;gap:12px;">
-          <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Banco<input class="mi" id="db-banco" type="text" placeholder="Ej: Banco Galicia" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
-          <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Tipo de cuenta<input class="mi" id="db-tipo" type="text" placeholder="Ej: Caja de ahorro en pesos" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
-          <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Número de cuenta<input class="mi" id="db-cuenta" type="text" placeholder="Ej: 4001234-5 001-9" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
-          <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">CBU <span id="db-cbu-hint" style="font-weight:600;text-transform:none;color:rgba(109,222,150,.4);margin-left:6px;">22 dígitos</span><input class="mi" id="db-cbu" type="text" inputmode="numeric" maxlength="22" oninput="_validarCbuInput(this)" placeholder="0000000000000000000000" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;letter-spacing:1px;"></label></div>
-          <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Alias<input class="mi" id="db-alias" type="text" placeholder="Ej: MEDHISTORIA.PAGOS" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
-          <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Titular de la cuenta<input class="mi" id="db-titular" type="text" placeholder="Nombre y apellido o razón social" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
-          <button onclick="guardarDatosBancariosAdmin()" id="db-btn-guardar" style="padding:12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:6px;">💾 Guardar datos bancarios</button>
+        <!-- Alta del 2FA de Pagos (primera vez) -->
+        <div id="pagos-2fa-alta" style="display:none;">
+          <p style="color:rgba(109,222,150,.7);font-size:.82rem;margin-bottom:14px;">Todavía no configuraste el 2FA de Pagos. Escaneá este código con tu app autenticadora:</p>
+          <div id="pagos-2fa-qr" style="background:#fff;border-radius:12px;padding:14px;display:inline-block;margin-bottom:12px;"></div>
+          <p style="color:rgba(109,222,150,.4);font-size:.72rem;margin-bottom:4px;">¿No podés escanear? Cargá esta clave a mano:</p>
+          <div id="pagos-2fa-secret" style="color:#6dde96;font-size:.85rem;font-family:monospace;letter-spacing:1px;margin-bottom:16px;word-break:break-all;"></div>
+          <input class="mi" id="pagos-2fa-codigo-alta" type="text" inputmode="numeric" maxlength="6" placeholder="000000" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;text-align:center;letter-spacing:4px;font-size:1.1rem;margin-bottom:12px;">
+          <button onclick="confirmarAltaPagos2FA()" id="pagos-2fa-btn-alta" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Confirmar y activar</button>
         </div>
 
-        <div style="background:rgba(52,196,100,.06);border:1px solid rgba(52,196,100,.2);border-radius:12px;padding:16px;margin-top:18px;">
-          <p style="color:rgba(109,222,150,.8);font-size:.82rem;margin:0;line-height:1.6;">💡 Guardar estos datos completos y con un CBU válido <strong>destraba automáticamente</strong> el registro de Centros Médicos. No hay que activar nada aparte. Si algún dato queda vacío o el CBU no es válido, el registro sigue frenado.</p>
+        <!-- Ingreso del código (ya enrolado) -->
+        <div id="pagos-2fa-ingreso" style="display:none;">
+          <input class="mi" id="pagos-2fa-codigo" type="text" inputmode="numeric" maxlength="6" placeholder="000000" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;text-align:center;letter-spacing:4px;font-size:1.1rem;margin-bottom:10px;" onkeydown="if(event.key==='Enter')verificarPagos2FA()">
+          <div id="pagos-2fa-error" style="display:none;color:#ff8080;font-size:.8rem;margin-bottom:10px;"></div>
+          <button onclick="verificarPagos2FA()" id="pagos-2fa-btn-verificar" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Desbloquear</button>
+        </div>
+
+        <div id="pagos-2fa-cargando" style="color:rgba(109,222,150,.4);font-size:.82rem;">Cargando…</div>
+      </div>
+
+      <!-- DESBLOQUEADO: el formulario real -->
+      <div id="pagos-contenido-real" style="display:none;">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+          <button onclick="bloquearPagos()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);padding:7px 16px;border-radius:8px;font-size:.8rem;cursor:pointer;font-family:'Outfit',sans-serif;">🔒 Bloquear ahora</button>
+        </div>
+        <div style="background:#0a1a0f;border:1px solid rgba(52,196,100,.2);border-radius:14px;padding:28px;">
+          <h3 style="color:#fff;font-family:'Cormorant Garamond',serif;font-size:1.4rem;margin-bottom:6px;">🏦 Datos bancarios para transferencias</h3>
+          <p style="color:rgba(109,222,150,.6);font-size:.85rem;margin-bottom:18px;">Son los datos que ve un médico cuando crea un Centro Médico y tiene que transferir el pago del plan. Se guardan en el servidor y los ve cualquier médico que registre un centro.</p>
+
+          <div id="db-estado" style="border:1px solid rgba(109,222,150,.15);border-radius:10px;padding:12px 14px;font-size:.85rem;font-weight:600;margin-bottom:18px;color:rgba(109,222,150,.5);background:rgba(255,255,255,.04);">Cargando…</div>
+
+          <div style="display:grid;gap:12px;">
+            <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Banco<input class="mi" id="db-banco" type="text" placeholder="Ej: Banco Galicia" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
+            <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Tipo de cuenta<input class="mi" id="db-tipo" type="text" placeholder="Ej: Caja de ahorro en pesos" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
+            <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Número de cuenta<input class="mi" id="db-cuenta" type="text" placeholder="Ej: 4001234-5 001-9" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
+            <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">CBU <span id="db-cbu-hint" style="font-weight:600;text-transform:none;color:rgba(109,222,150,.4);margin-left:6px;">22 dígitos</span><input class="mi" id="db-cbu" type="text" inputmode="numeric" maxlength="22" oninput="_validarCbuInput(this)" placeholder="0000000000000000000000" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;letter-spacing:1px;"></label></div>
+            <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Alias<input class="mi" id="db-alias" type="text" placeholder="Ej: MEDHISTORIA.PAGOS" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
+            <div><label style="font-size:.72rem;font-weight:700;color:rgba(109,222,150,.6);text-transform:uppercase;display:block;margin-bottom:4px;">Titular de la cuenta<input class="mi" id="db-titular" type="text" placeholder="Nombre y apellido o razón social" style="background:#0f2318;border-color:rgba(52,196,100,.3);color:#fff;"></label></div>
+            <button onclick="guardarDatosBancariosAdmin()" id="db-btn-guardar" style="padding:12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:6px;">💾 Guardar datos bancarios</button>
+          </div>
+
+          <div style="background:rgba(52,196,100,.06);border:1px solid rgba(52,196,100,.2);border-radius:12px;padding:16px;margin-top:18px;">
+            <p style="color:rgba(109,222,150,.8);font-size:.82rem;margin:0;line-height:1.6;">💡 Guardar estos datos completos y con un CBU válido <strong>destraba automáticamente</strong> el registro de Centros Médicos. No hay que activar nada aparte. Si algún dato queda vacío o el CBU no es válido, el registro sigue frenado.</p>
+          </div>
         </div>
       </div>
     </div>
