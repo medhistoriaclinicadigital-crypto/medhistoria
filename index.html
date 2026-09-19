@@ -8558,6 +8558,9 @@ function aplicarTextosFirmaPorPais(){
     el.setAttribute('placeholder', ar ? el.getAttribute('data-ph-ar') : '');
   });
 }
+// Leyenda de firma de los mensajes al paciente ("Firma Electrónica · Ley 27.553"): es del texto de Argentina; fuera de Argentina
+// no se agrega (queda solo el resto del mensaje).
+function _firmaLeyMsg(txt){ return medicoEsArgentina() ? txt : ''; }
 
 function initPanelFirma(){
   checkAddonFirma();
@@ -14677,7 +14680,7 @@ function enviarAutoWA(tipo){
         +'\n\n👨‍⚕️ *'+d.medico+'*\n\n'
         +'📎 *El PDF se descargó automáticamente en tu dispositivo.*\n'
         +'_Adjuntá el archivo PDF a este mensaje para enviarlo al paciente._\n\n'
-      +'_Firma Electrónica · Ley 27.553 · MedHistoriaClinicaOnline_'; 
+      +'_'+_firmaLeyMsg('Firma Electrónica · Ley 27.553 · ')+'MedHistoriaClinicaOnline_'; 
       var numLimpio = tel.replace(/\D/g,'');
       window.open('https://wa.me/54'+numLimpio+'?text='+encodeURIComponent(msg),'_blank');
     }, 800);
@@ -14716,7 +14719,7 @@ function enviarAutoEmail(tipo){
         +'ADJUNTO PDF: El archivo PDF "'+ nombre +'" se descargó automáticamente\n'
         +'en tu carpeta de Descargas. Adjuntalo a este email antes de enviarlo.\n'
         +'====================================\n'
-       +'Firma Electrónica - Ley 27.553\n'
+       +_firmaLeyMsg('Firma Electrónica - Ley 27.553\n')
         +'MedHistoriaClinicaOnline\nmedhistoriaclinicaonline@gmail.com';
       window.location.href='mailto:'+email+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
     }, 800);
@@ -14804,7 +14807,7 @@ function _enviarWhatsAppDoc(d, tel){
     +'\n\n👨‍⚕️ *'+d.medico+'*\n\n'
     +'📎 *El PDF ya se descargó en tu dispositivo.*\n'
     +'Adjuntalo a este mensaje desde el clip 📎\n\n'
-    +'_Firma Electrónica · Ley 27.553 · MedHistoriaClinicaOnline_';
+    +'_'+_firmaLeyMsg('Firma Electrónica · Ley 27.553 · ')+'MedHistoriaClinicaOnline_';
 
   window.open('https://wa.me/54'+tel.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
 }
@@ -14935,7 +14938,7 @@ function enviarWhatsApp(tipo){
       + '\n💊 *Medicación prescripta:*\n'+(med||'(no indicada)')
       + (ind ? '\n\n📋 *Indicaciones:*\n'+ind : '')
       + '\n\n👨‍⚕️ '+medico
-      + '\n\n_Emitida con firma electrónica · Ley 27.553 · medhistoriaclinicaonline.com_';
+      + '\n\n_'+_firmaLeyMsg('Emitida con firma electrónica · Ley 27.553 · ')+'medhistoriaclinicaonline.com_';
   } else if(tipo === 'derivacion'){
     var pac = (document.getElementById('der-paciente')||{}).value || '';
     var mot = (document.getElementById('der-motivo')||{}).value || '';
@@ -14949,7 +14952,7 @@ function enviarWhatsApp(tipo){
       +'🏥 Especialidad: '+(esp||'(no indicada)')+'\n'
       +'\n📋 *Motivo de derivación:*\n'+(mot||'(no indicado)')
       +'\n\n👨‍⚕️ '+medico
-    +'\n\n_Emitida con firma electrónica · Ley 27.553 · medhistoriaclinicaonline.com_';
+    +'\n\n_'+_firmaLeyMsg('Emitida con firma electrónica · Ley 27.553 · ')+'medhistoriaclinicaonline.com_';
   } else {
     var pac = (document.getElementById('est-paciente')||{}).value || '';
     var det = (document.getElementById('est-det')||{}).value || '';
@@ -14961,7 +14964,7 @@ function enviarWhatsApp(tipo){
       +'👤 Paciente: '+(pac||'(no indicado)')+'\n'
       +'\n🔬 *Estudios solicitados:*\n'+(det||'(no indicado)')
       +'\n\n👨‍⚕️ '+medico
-      +'\n\n_Emitido con firma electrónica · Ley 27.553 · medhistoriaclinicaonline.com_';
+      +'\n\n_'+_firmaLeyMsg('Emitido con firma electrónica · Ley 27.553 · ')+'medhistoriaclinicaonline.com_';
   }
   var url = 'https://wa.me/54'+tel+'?text='+encodeURIComponent(texto);
   window.open(url, '_blank');
@@ -15018,20 +15021,20 @@ function enviarEmail(tipo){
       +'\nMEDICACIÓN PRESCRIPTA:\n'+(med||'(no indicada)')
       +(ind?'\n\nINDICACIONES:\n'+ind:'')
       +'\n\n'+medico
-     +'\n\nEmitida con firma electrónica · Ley 27.553\nMedHistoriaClinicaOnline · medhistoriaclinicaonline.com';
+     +'\n\n'+_firmaLeyMsg('Emitida con firma electrónica · Ley 27.553\n')+'MedHistoriaClinicaOnline · medhistoriaclinicaonline.com';
   } else if(tipo === 'derivacion'){
     var pac = (document.getElementById('der-paciente')||{}).value || '';
     var mot = (document.getElementById('der-motivo')||{}).value || '';
     var esp = (document.getElementById('der-especialidad')||{}).value || '';
     var medico = (document.getElementById('der-medico')||{}).value || '';
     asunto = 'Derivación Médica - MedHistoriaClinicaOnline';
-   cuerpo = 'Derivación Médica\n\nPaciente: '+pac+'\nEspecialidad: '+esp+'\n\nMotivo:\n'+mot+'\n\n'+medico+'\n\nEmitida con firma electrónica · Ley 27.553 · MedHistoriaClinicaOnline';
+   cuerpo = 'Derivación Médica\n\nPaciente: '+pac+'\nEspecialidad: '+esp+'\n\nMotivo:\n'+mot+'\n\n'+medico+'\n\n'+_firmaLeyMsg('Emitida con firma electrónica · Ley 27.553 · ')+'MedHistoriaClinicaOnline';
   } else {
     var pac = (document.getElementById('est-paciente')||{}).value || '';
     var det = (document.getElementById('est-det')||{}).value || '';
     var medico = (document.getElementById('est-medico')||{}).value || '';
     asunto = 'Pedido de Estudios - MedHistoriaClinicaOnline';
-    cuerpo = 'Pedido de Estudios\n\nPaciente: '+pac+'\n\nEstudios:\n'+det+'\n\n'+medico+'\n\nEmitido con firma electrónica · Ley 27.553 · MedHistoriaClinicaOnline';
+    cuerpo = 'Pedido de Estudios\n\nPaciente: '+pac+'\n\nEstudios:\n'+det+'\n\n'+medico+'\n\n'+_firmaLeyMsg('Emitido con firma electrónica · Ley 27.553 · ')+'MedHistoriaClinicaOnline';
   }
   window.location.href = 'mailto:'+email+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
 }
