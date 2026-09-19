@@ -529,6 +529,18 @@ input[type="email"] { text-transform: lowercase; }
    (body.firma-ar, ver aplicarTextosFirmaPorPais) se ve el de Firma Electrónica (.firma-solo-ar). */
 body:not(.firma-ar) .firma-solo-ar { display: none !important; }
 body.firma-ar .firma-solo-otros { display: none !important; }
+/* Ayuda de la Licencia Sanitaria Federal (REFEPS) en el formulario de receta. Solo Argentina: el bloque va dentro de .firma-solo-ar. */
+.ayuda-lsf { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 9px; }
+.ayuda-lsf > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: .78rem; font-weight: 600; color: #0369a1; font-family: 'Outfit', sans-serif; }
+.ayuda-lsf > summary::-webkit-details-marker { display: none; }
+.ayuda-lsf > summary::after { content: '▸'; margin-left: auto; font-size: .7rem; }
+.ayuda-lsf[open] > summary::after { content: '▾'; }
+.ayuda-lsf > summary:focus-visible { outline: 2px solid #0369a1; outline-offset: 2px; border-radius: 9px; }
+.ayuda-lsf-ico { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; min-width: 18px; border-radius: 50%; background: #0369a1; color: #fff; font-size: .72rem; font-weight: 800; }
+.ayuda-lsf-cuerpo { padding: 10px 12px 12px; border-top: 1px solid #bae6fd; font-size: .76rem; line-height: 1.6; color: #0c4a6e; font-family: 'Outfit', sans-serif; }
+.ayuda-lsf-cuerpo p { margin: 0 0 8px; }
+.ayuda-lsf-cuerpo p:last-child { margin-bottom: 0; }
+.ayuda-lsf-cuerpo a { color: #0369a1; text-decoration: underline; }
 
 </style>
 <script>
@@ -2629,7 +2641,18 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div class="fl"><label>Médico prescriptor<input type="text" id="rx2-medico" placeholder="Dr. Apellido · Especialidad · Matrícula 00000"></div>
             <div class="fl"><label>Domicilio del consultorio (acto médico)<input type="text" id="rx2-domicilio" placeholder="Calle, número, ciudad"></label></div>
             <div class="fl"><label>Jurisdicción / entidad que emitió la matrícula<input type="text" id="rx2-jurisdiccion" placeholder="Ej: Colegio de Médicos de la Pcia. de Buenos Aires"></label></div>
-            <div class="fl"><label>Licencia Sanitaria Federal (código REFEPS)<input type="text" id="rx2-refeps" placeholder="Código REFEPS"></label><span style="font-size:.68rem;color:#888;display:block;margin-top:3px;">Lo encontrás en la app Mi Argentina → Matrículas profesional de la salud → Licencia Sanitaria Federal.</span></div>
+            <div class="fl"><label>Licencia Sanitaria Federal (código REFEPS)<input type="text" id="rx2-refeps" placeholder="Código REFEPS"></label><span class="firma-solo-otros" style="font-size:.68rem;color:#888;display:block;margin-top:3px;">Lo encontrás en la app Mi Argentina → Matrículas profesional de la salud → Licencia Sanitaria Federal.</span><span class="firma-solo-ar" style="font-size:.68rem;color:#888;display:block;margin-top:3px;">No es tu número de matrícula. Lo encontrás en la app Mi Argentina → Matrículas profesional de la salud → Licencia Sanitaria Federal.</span></div>
+            <div class="firma-solo-ar" style="grid-column:1/-1;">
+              <details class="ayuda-lsf">
+                <summary><span class="ayuda-lsf-ico" aria-hidden="true">?</span>¿Qué es la Licencia Sanitaria Federal y cómo la obtengo?</summary>
+                <div class="ayuda-lsf-cuerpo">
+                  <p><strong>Qué es.</strong> Es un identificador único creado por el Decreto 98/2023, que reúne todas tus matrículas habilitantes bajo una "Clave Única de Identificación de Profesional Sanitario". <strong>No es lo mismo que tu número de matrícula.</strong></p>
+                  <p><strong>Cómo se obtiene.</strong> No se tramita aparte: se genera automáticamente si tu matrícula ya está cargada en la REFEPS (Red Federal de Registros de Profesionales de la Salud) por tu jurisdicción o colegio profesional.</p>
+                  <p><strong>Cómo verificarla.</strong> Podés consultar tu propia inscripción en <a href="https://sisa.msal.gov.ar" target="_blank" rel="noopener noreferrer">sisa.msal.gov.ar</a> → "Buscador de Establecimientos y profesionales" → solapa REFEPS → buscá por tu DNI o tu matrícula.</p>
+                  <p><strong>Si no aparece.</strong> Consultá con el colegio o la jurisdicción que te otorgó la matrícula: son quienes la informan a la REFEPS. La plataforma no puede cargarla ni corregirla.</p>
+                </div>
+              </details>
+            </div>
             <div class="fl" style="grid-column:1/-1;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;"><input type="checkbox" id="rx2-incluir-contacto" style="accent-color:#22a050;width:15px;height:15px;">Incluir mi teléfono y email de contacto en esta receta (destildado por defecto — vos decidís cada vez)</label></div>
             <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 14px;grid-column:1/-1;margin-top:4px;">
               <div style="font-size:.72rem;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:8px;">📤 Envío automático — completá para enviar sin pasos adicionales</div>
