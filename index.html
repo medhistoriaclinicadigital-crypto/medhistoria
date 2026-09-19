@@ -2641,7 +2641,8 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div class="fl"><label>Médico prescriptor<input type="text" id="rx2-medico" placeholder="Dr. Apellido · Especialidad · Matrícula 00000"></div>
             <div class="fl"><label>Domicilio del consultorio (acto médico)<input type="text" id="rx2-domicilio" placeholder="Calle, número, ciudad"></label></div>
             <div class="fl"><label>Jurisdicción / entidad que emitió la matrícula<input type="text" id="rx2-jurisdiccion" placeholder="Ej: Colegio de Médicos de la Pcia. de Buenos Aires"></label></div>
-            <div class="fl"><label>Licencia Sanitaria Federal (código REFEPS)<input type="text" id="rx2-refeps" placeholder="Código REFEPS"></label><span class="firma-solo-otros" style="font-size:.68rem;color:#888;display:block;margin-top:3px;">Lo encontrás en la app Mi Argentina → Matrículas profesional de la salud → Licencia Sanitaria Federal.</span><span class="firma-solo-ar" style="font-size:.68rem;color:#888;display:block;margin-top:3px;">No es tu número de matrícula. Lo encontrás en la app Mi Argentina → Matrículas profesional de la salud → Licencia Sanitaria Federal.</span></div>
+            <!-- Licencia Sanitaria Federal (REFEPS): dato exclusivo de Argentina (Decreto 98/2023). El resto de los países no ve el campo ni se le exige. -->
+            <div class="fl firma-solo-ar"><label>Licencia Sanitaria Federal (código REFEPS)<input type="text" id="rx2-refeps" placeholder="Código REFEPS"></label><span style="font-size:.68rem;color:#888;display:block;margin-top:3px;">No es tu número de matrícula. Lo encontrás en la app Mi Argentina → Matrículas profesional de la salud → Licencia Sanitaria Federal.</span></div>
             <div class="firma-solo-ar" style="grid-column:1/-1;">
               <details class="ayuda-lsf">
                 <summary><span class="ayuda-lsf-ico" aria-hidden="true">?</span>¿Qué es la Licencia Sanitaria Federal y cómo la obtengo?</summary>
@@ -13778,7 +13779,8 @@ function _faltantesRecetaReNaPDiS(d){
   if(!d.nombreProfesional || !d.nombreProfesional.trim()) faltantes.push('nombre del profesional (revisá tu perfil)');
   if(!d.profesion) faltantes.push('profesión (revisá tu perfil)');
   if(!d.matriculaMN && !d.matriculaMP) faltantes.push('matrícula (M.N. o M.P., revisá tu perfil)');
-  if(!d.refeps || !d.refeps.trim()) faltantes.push('Licencia Sanitaria Federal (código REFEPS)');
+  // Licencia Sanitaria Federal: dato exclusivo de Argentina; a los médicos de otros países ni se les muestra el campo ni se les exige.
+  if(medicoEsArgentina() && (!d.refeps || !d.refeps.trim())) faltantes.push('Licencia Sanitaria Federal (código REFEPS)');
   if(!d.jurisdiccion || !d.jurisdiccion.trim()) faltantes.push('jurisdicción/entidad que emitió la matrícula');
   if(!d.domicilio || !d.domicilio.trim()) faltantes.push('domicilio del consultorio');
   if(!d.pac || !d.pac.trim()) faltantes.push('nombre del paciente');
@@ -13786,7 +13788,10 @@ function _faltantesRecetaReNaPDiS(d){
   return faltantes;
 }
 function _alertarFaltantesReceta(faltantes){
-  alert('Faltan estos datos obligatorios para emitir la receta:\n\n— '+faltantes.join('\n— ')+'\n\nEl domicilio, la jurisdicción de la matrícula y el código REFEPS se completan una vez y quedan guardados en tu perfil para las próximas recetas.');
+  var _datosUnaVez = medicoEsArgentina()
+    ? 'El domicilio, la jurisdicción de la matrícula y el código REFEPS se completan una vez y quedan guardados en tu perfil para las próximas recetas.'
+    : 'El domicilio y la jurisdicción de la matrícula se completan una vez y quedan guardados en tu perfil para las próximas recetas.';
+  alert('Faltan estos datos obligatorios para emitir la receta:\n\n— '+faltantes.join('\n— ')+'\n\n'+_datosUnaVez);
 }
 
 function _generarPDFRecetaReNaPDiS(d, callback){
@@ -13986,7 +13991,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   profLineas.push(['PROFESIÓN / ESPECIALIDAD', profEsp]);
   var matTxt = [d.matriculaMN?('M.N. '+d.matriculaMN):'', d.matriculaMP?('M.P. '+d.matriculaMP):''].filter(Boolean).join(' · ');
   profLineas.push(['MATRÍCULA', matTxt||'(no indicada)']);
-  profLineas.push(['LICENCIA SANITARIA FEDERAL (REFEPS)', d.refeps||'(no indicada)']);
+  if(medicoEsArgentina()) profLineas.push(['LICENCIA SANITARIA FEDERAL (REFEPS)', d.refeps||'(no indicada)']);
   profLineas.push(['JURISDICCIÓN / ENTIDAD EMISORA', d.jurisdiccion||'(no indicada)']);
   profLineas.push(['DOMICILIO PROFESIONAL (LUGAR DEL ACTO MÉDICO)', d.domicilio||'(no indicado)']);
   var contactoOpc = [d.telefonoProfesional?('Tel: '+d.telefonoProfesional):'', d.emailProfesional?('Email: '+d.emailProfesional):''].filter(Boolean).join('   ·   ');
@@ -16878,6 +16883,7 @@ function precargarDatosMedico(u){
   // Código REFEPS (Licencia Sanitaria Federal) — Resolución 2214/2025, dato
   // obligatorio del bloque profesional. Mismo patrón que domicilio/jurisdicción:
   // vive en usuarios.refeps, se precarga una vez y se guarda solo al cambiar.
+  // Solo Argentina: el campo únicamente se muestra (y se exige) a médicos de Argentina.
   var refepsEl = document.getElementById('rx2-refeps');
   if(refepsEl){
     if(!refepsEl.value){
