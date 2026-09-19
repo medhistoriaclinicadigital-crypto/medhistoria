@@ -525,6 +525,10 @@ tr:hover td{background:var(--g9);}
 input[type="text"], input[type="email"], input[type="search"], textarea { text-transform: none; }
 input[type="email"] { text-transform: lowercase; }
 #login-usuario, #ml-user { text-transform: lowercase; }
+/* Textos de firma por país: por defecto se ve el texto de siempre (.firma-solo-otros); si el médico es de Argentina
+   (body.firma-ar, ver aplicarTextosFirmaPorPais) se ve el de Firma Electrónica (.firma-solo-ar). */
+body:not(.firma-ar) .firma-solo-ar { display: none !important; }
+body.firma-ar .firma-solo-otros { display: none !important; }
 
 </style>
 <script>
@@ -727,7 +731,7 @@ document.addEventListener('DOMContentLoaded', function(){
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   // Subir a mano cada vez que cambie el texto de Términos/Privacidad/Cookies
   // (ver registrarAceptacionLegal) — queda guardado junto a cada consentimiento.
-  const TERMINOS_VERSION = "2026-09-12";
+  const TERMINOS_VERSION = "2026-09-18";
   function registrarAceptacionLegal(){
     try{
       sb.functions.invoke('registrar-consentimiento', { body: { version: TERMINOS_VERSION } })
@@ -1034,7 +1038,7 @@ function mhcdRechazarCookies(){
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;max-width:940px;margin:0 auto;">
       <div class="enfoque-item"><span class="enfoque-ico">📋</span>Historia clínica digital</div>
-      <div class="enfoque-item"><span class="enfoque-ico">💊</span>Recetas electrónicas con firma digital</div>
+      <div class="enfoque-item"><span class="enfoque-ico">💊</span>Recetas electrónicas con firma electrónica</div>
       <div class="enfoque-item"><span class="enfoque-ico">🔗</span>Derivaciones a especialistas</div>
       <div class="enfoque-item"><span class="enfoque-ico">🔬</span>Pedidos de estudios y órdenes médicas</div>
       <div class="enfoque-item"><span class="enfoque-ico">📅</span>Agenda de turnos</div>
@@ -1078,7 +1082,7 @@ function mhcdRechazarCookies(){
         <hr class="pline">
         <ul class="pfeats">
           <li>IA incluida</li><li>Citas y consultas ilimitadas</li>
-          <li>Recetas ilimitadas</li><li>Firma digital integrada</li><li>Derivaciones y órdenes ilimitadas</li>
+          <li>Recetas ilimitadas</li><li>Firma electrónica integrada</li><li>Derivaciones y órdenes ilimitadas</li>
           <li>CIE-10 integrado</li><li>Agenda</li>
           <li>Calculadora clínica</li><li>Facturación</li>
           <li>Videoconsulta integrada</li>
@@ -1099,7 +1103,7 @@ function mhcdRechazarCookies(){
         <hr class="pline">
         <ul class="pfeats">
           <li>IA incluida</li><li>Citas y consultas ilimitadas</li>
-          <li>Recetas, derivaciones y órdenes ilimitadas</li><li>Firma digital integrada</li><li>Videoconsulta integrada</li>
+          <li>Recetas, derivaciones y órdenes ilimitadas</li><li>Firma electrónica integrada</li><li>Videoconsulta integrada</li>
           <li>CIE-10 integrado</li><li>Agenda</li>
           <li>Calculadora clínica</li><li>Facturación</li>
           <li>Vademecum inteligente</li><li>1.500 imágenes y archivos</li>
@@ -1405,7 +1409,6 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
     <div class="sec-head">
       <div class="sec-tag" style="background:rgba(109,222,150,.15);color:var(--g7);border-color:rgba(109,222,150,.3);">Documentos digitales</div>
       <h2 class="sec-title" style="color:#fff;">Recetas, Derivaciones y Estudios</h2>
-      <p class="sec-sub" style="color:var(--g8);">Documentos con firma digital, en proceso de inscripción para validez legal plena.</p>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:10px;">
 
@@ -1553,7 +1556,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       <div class="legal-card"><span class="legal-num">Ley 26.529</span><span class="legal-ok">✔ Cumplida</span><h3>Derechos del Paciente</h3><p>El paciente es titular de sus datos y tiene derecho a que el profesional le entregue su historia clínica cuando la solicite (Ley 26.529, art. 14).</p><div class="legal-ci">El profesional está obligado a entregarla — el paciente no accede directo a la plataforma</div></div>
       <div class="legal-card"><span class="legal-num">Ley 25.326</span><span class="legal-ok">✔ Cumplida</span><h3>Protección de Datos Personales</h3><p>Datos sensibles de salud con cifrado AES-256. Sin cesión a terceros bajo ninguna circunstancia.</p><div class="legal-ci">Cifrado AES-256 · Sin cesión a terceros</div></div>
      
-      <div class="legal-card"><span class="legal-num">Ley 25.506</span><span class="legal-ok">⏳ Disponible mediante trámite del profesional</span><h3>Firma Digital</h3><p>La plataforma acompaña al profesional en el trámite oficial de Firma Digital. La validez legal plena depende de que cada médico complete su certificación ante el Estado.</p><div class="legal-ci">Firma digital disponible, sujeta a certificación individual del profesional</div></div>
+      <div class="legal-card"><span class="legal-num">Ley 25.506 · art. 5</span><span class="legal-ok">✔ Disponible</span><h3>Firma Electrónica</h3><p>Cada receta se firma electrónicamente con una clave personal del médico, sin trámites ni códigos adicionales. Queda registrada con fecha y hora exactas, IP y huella (hash) del documento, y un QR permite verificar en una página pública que la firmó ese médico y que el archivo no se alteró. Es firma electrónica, no firma digital con certificado oficial.</p><div class="legal-ci">Evidencia técnica resguardada por la plataforma · Verificación pública por QR</div></div>
       <div class="legal-card"><span class="legal-num">Res. 648/2013 MS</span><span class="legal-ok">✔ Cumplida</span><h3>HC Electrónica como documento legal</h3><p>La HCE es auténtica, inalterable, perdurable e inviolable. Trazabilidad completa de cada registro.</p><div class="legal-ci">Trazabilidad completa garantizada</div></div>
       <div class="legal-card"><span class="legal-num">Ley 17.132</span><span class="legal-ok">✔ Considerada</span><h3>Ejercicio de la Medicina</h3><p>La confidencialidad médica que exige esta ley depende en parte de la conducta del profesional (por ejemplo, no ingresar datos del paciente en la IA). La plataforma aporta cifrado, acceso restringido y advertencias, pero no puede garantizar por sí sola el cumplimiento total de una obligación que es, ante todo, del médico.</p><div class="legal-ci">Resguardo técnico + advertencias — responsabilidad final del profesional</div></div>
     </div>
@@ -1582,7 +1585,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
         <div style="display:flex;flex-direction:column;gap:6px;">
           <div style="background:var(--g9);border-radius:6px;padding:6px 10px;font-size:.78rem;"><span style="font-weight:700;color:var(--g3);">Ley 26.529</span> <span style="color:var(--muted);">— Derechos del Paciente e Historia Clínica</span></div>
           <div style="background:var(--g9);border-radius:6px;padding:6px 10px;font-size:.78rem;"><span style="font-weight:700;color:var(--g3);">Ley 27.706</span> <span style="color:var(--muted);">— Digitalización de Historias Clínicas</span></div>
-          <div style="background:var(--g9);border-radius:6px;padding:6px 10px;font-size:.78rem;"><span style="font-weight:700;color:var(--g3);">Ley 25.506</span> <span style="color:var(--muted);">— Firma Digital con validez legal</span></div>
+          <div style="background:var(--g9);border-radius:6px;padding:6px 10px;font-size:.78rem;"><span style="font-weight:700;color:var(--g3);">Ley 25.506</span> <span style="color:var(--muted);">— Firma Electrónica (art. 5)</span></div>
           <div style="background:var(--g9);border-radius:6px;padding:6px 10px;font-size:.78rem;"><span style="font-weight:700;color:var(--g3);">Ley 25.326</span> <span style="color:var(--muted);">— Protección de Datos Personales</span></div>
         </div>
       </div>
@@ -1723,7 +1726,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
     <div id="seccion-tyc">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
         <h2 style="font-size:1.15rem;color:#042b10;margin:0;">Términos y Condiciones de Uso</h2>
-        <span style="background:#e3fbed;color:#145a32;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">Versión 2.2 · Septiembre 2026</span>
+        <span style="background:#e3fbed;color:#145a32;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">Versión 2.3 · Septiembre 2026</span>
       </div>
       <p style="font-size:.78rem;color:#5a7362;margin:0 0 24px;">Estos Términos y Condiciones regulan el acceso y uso de la plataforma MedHistoriaClinicaOnline. Al registrarse o utilizar la plataforma, el usuario acepta íntegramente las presentes condiciones.</p>
 
@@ -1783,7 +1786,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <li>El médico titular es responsable de que el tratamiento de los datos de pacientes dentro del Centro —incluido el acceso compartido a esos datos por parte de los profesionales que integró— se realice conforme a la Ley 26.529, la Ley 25.326 y demás normativa aplicable, y de contar con el consentimiento informado de los pacientes para dicho tratamiento compartido.</li>
             <li><strong>La responsabilidad legal frente a cualquier litigio, reclamo, denuncia o sanción que surja del uso indebido del Centro Médico</strong> —sea por parte de los profesionales que el titular invitó, o del uso, acceso o divulgación indebidos de los datos o las historias clínicas de los pacientes compartidos dentro del Centro— <strong>recae exclusivamente sobre el médico titular del Centro y, en su caso, sobre el profesional que hubiera cometido el acto</strong>, de forma solidaria entre ellos según corresponda.</li>
             <li><strong>MedHistoriaClinicaOnline no asume responsabilidad alguna</strong> por dichos litigios, reclamos o daños, ni por los actos u omisiones de los profesionales que integran un Centro Médico. La plataforma se limita a proveer la herramienta tecnológica; la organización, supervisión y control del Centro y de su equipo son de exclusiva incumbencia del médico titular.</li>
-            <li>Lo dispuesto en esta cláusula se entiende sin perjuicio de las demás responsabilidades del profesional usuario (cláusula 4) y de la limitación de responsabilidad (cláusula 10).</li>
+            <li>Lo dispuesto en esta cláusula se entiende sin perjuicio de las demás responsabilidades del profesional usuario (cláusula 4) y de la limitación de responsabilidad (cláusula 11).</li>
           </ul>
         </div>
 
@@ -1803,7 +1806,20 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
         </div>
 
         <div style="border-bottom:1px solid #e3fbed;padding:16px 0;">
-          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">7</span> PLANES, PRECIOS Y FACTURACIÓN</div>
+          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">7</span> RECETAS ELECTRÓNICAS Y FIRMA ELECTRÓNICA (ARGENTINA)</div>
+          <p style="margin:0 0 8px;">En la República Argentina, las recetas emitidas desde la plataforma se firman mediante <strong>firma electrónica</strong>, en los términos del art. 5 de la Ley 25.506. La plataforma <strong>no emite ni integra firma digital</strong> (certificados de un certificador licenciado) y no exige al profesional realizar trámite alguno para firmar. En relación con esta función:</p>
+          <ul style="margin:0;padding-left:20px;">
+            <li><strong>Cómo funciona:</strong> al emitir cada receta, la plataforma genera el PDF, calcula su huella criptográfica (hash SHA-256) y la firma en el servidor con una clave personal generada para la cuenta del profesional, sin pasos ni códigos adicionales. La clave se activa automáticamente con la primera receta o desde el panel "Mi Firma Electrónica". La clave privada se guarda cifrada y no se expone al profesional ni a terceros.</li>
+            <li><strong>Evidencia técnica:</strong> por cada receta firmada la plataforma registra, en un registro de solo incorporación (los datos ya registrados no pueden modificarse ni eliminarse desde la plataforma), la huella del documento, la firma, la fecha y hora exactas (según el reloj de los servidores de la plataforma), la dirección IP, los datos del navegador y de la sesión desde la que se emitió, y el nombre y la matrícula del profesional. No se conserva una copia del PDF a estos fines.</li>
+            <li><strong>Verificación pública:</strong> cada receta incluye un código QR que abre una página pública, sin necesidad de iniciar sesión, donde cualquier persona puede comprobar que fue firmada por el profesional indicado, en qué fecha y hora y —cargando el archivo PDF— que su contenido no fue alterado. Esa página no muestra datos del paciente ni de la medicación. Una copia impresa en papel no puede compararse por huella: para ello debe utilizarse el archivo digital original.</li>
+            <li><strong>Naturaleza legal de la firma:</strong> se trata de una firma electrónica y, como tal, no goza de las presunciones de autoría e integridad que la Ley 25.506 reconoce a la firma digital (arts. 7 y 8). En caso de ser desconocida, corresponde a quien la invoca acreditar su validez (art. 5); la plataforma resguarda la evidencia técnica descripta para ese fin.</li>
+            <li><strong>Validez de la receta:</strong> la validez de la receta como documento de prescripción proviene de la Ley 27.553 y su reglamentación, con independencia del CUIR y del Registro de Recetarios Electrónicos (ReNaPDiS). El CUIR y la inscripción de la plataforma en ese registro son trámites de la plataforma ante el Ministerio de Salud de la Nación; cuando el registro esté completo, la plataforma incorporará a cada receta el CUIR y los demás códigos de identificación que correspondan.</li>
+            <li><strong>Responsabilidad del profesional:</strong> toda receta emitida desde una cuenta autenticada se firma con la clave personal de ese profesional, quien es responsable de su contenido y de la custodia de sus credenciales de acceso. Ante cualquier uso no autorizado de su cuenta debe informarlo de inmediato a la plataforma, para que pueda adoptar las medidas del caso, incluida la revocación de la clave.</li>
+          </ul>
+        </div>
+
+        <div style="border-bottom:1px solid #e3fbed;padding:16px 0;">
+          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">8</span> PLANES, PRECIOS Y FACTURACIÓN</div>
           <ul style="margin:0;padding-left:20px;">
             <li><strong>Período de prueba:</strong> 30 días gratuitos con acceso completo. Sin tarjeta de crédito requerida.</li>
             <li><strong>Facturación:</strong> Mensual, en dólares estadounidenses (USD), procesada mediante pasarelas de pago internacionales (Stripe, PayPal u otras habilitadas).</li>
@@ -1815,7 +1831,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
         </div>
 
         <div style="border-bottom:1px solid #e3fbed;padding:16px 0;">
-          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">8</span> DISPONIBILIDAD, MANTENIMIENTO Y RESPALDO</div>
+          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">9</span> DISPONIBILIDAD, MANTENIMIENTO Y RESPALDO</div>
           <ul style="margin:0;padding-left:20px;">
             <li>La plataforma opera en modalidad <strong>24/7</strong>, con objetivo de disponibilidad del 99,5% mensual.</li>
             <li>Se podrán realizar ventanas de mantenimiento programado, notificadas con 48hs de anticipación, preferentemente en horario de baja actividad.</li>
@@ -1825,12 +1841,12 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
         </div>
 
         <div style="border-bottom:1px solid #e3fbed;padding:16px 0;">
-          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">9</span> PROPIEDAD INTELECTUAL</div>
+          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">10</span> PROPIEDAD INTELECTUAL</div>
           <p style="margin:0;">La marca, diseño, código fuente, algoritmos, base de datos del vademécum, calculadoras y todos los contenidos de MedHistoriaClinicaOnline son propiedad exclusiva del titular de la plataforma y están protegidos por las leyes de propiedad intelectual vigentes (Ley 11.723). Los datos clínicos ingresados por el profesional son de su exclusiva titularidad. Queda prohibida la reproducción, distribución o explotación comercial de cualquier componente de la plataforma sin autorización expresa y por escrito del titular.</p>
         </div>
 
         <div style="border-bottom:1px solid #e3fbed;padding:16px 0;">
-          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">10</span> LIMITACIÓN DE RESPONSABILIDAD</div>
+          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">11</span> LIMITACIÓN DE RESPONSABILIDAD</div>
           <p style="margin:0 0 8px;">MedHistoriaClinicaOnline <strong>no asume responsabilidad</strong> por:</p>
           <ul style="margin:0;padding-left:20px;">
             <li>Daños derivados del uso incorrecto o no autorizado de la plataforma</li>
@@ -1843,16 +1859,16 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
         </div>
 
         <div style="border-bottom:1px solid #e3fbed;padding:16px 0;">
-          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">11</span> MODIFICACIONES DE LOS TÉRMINOS</div>
+          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">12</span> MODIFICACIONES DE LOS TÉRMINOS</div>
           <p style="margin:0;">MedHistoriaClinicaOnline podrá modificar los presentes Términos y Condiciones en cualquier momento, notificando a los usuarios mediante correo electrónico y/o aviso en la plataforma con <strong>30 días de anticipación</strong>. El uso continuado de la plataforma tras la entrada en vigencia de las modificaciones implica la aceptación de los nuevos términos.</p>
         </div>
 
         <div style="padding:16px 0 0;">
-          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">12</span> JURISDICCIÓN Y LEY APLICABLE</div>
+          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">13</span> JURISDICCIÓN Y LEY APLICABLE</div>
           <p style="margin:0 0 10px;">MedHistoriaClinicaOnline opera formalmente en la <strong>República Argentina</strong>, país donde tiene su sede y se rigen los presentes Términos:</p>
           <div style="display:flex;flex-direction:column;gap:6px;font-size:.82rem;">
             <div style="background:#e3fbed;border-radius:8px;padding:10px 14px;border-left:3px solid #22a050;">
-              <strong>🇦🇷 Argentina:</strong> Ley 26.529 (Historia Clínica — Derechos del Paciente), Ley 27.553 (Recetas Electrónicas y Telemedicina), Ley 25.506 (Firma Digital), Ley 25.326 (Protección de Datos Personales), Ley 24.240 (Defensa del Consumidor), Ley 11.723 (Propiedad Intelectual). Jurisdicción: tribunales ordinarios de la Ciudad Autónoma de Buenos Aires.
+              <strong>🇦🇷 Argentina:</strong> Ley 26.529 (Historia Clínica — Derechos del Paciente), Ley 27.553 (Recetas Electrónicas y Telemedicina), Ley 25.506 (Firma Digital y Firma Electrónica), Ley 25.326 (Protección de Datos Personales), Ley 24.240 (Defensa del Consumidor), Ley 11.723 (Propiedad Intelectual). Jurisdicción: tribunales ordinarios de la Ciudad Autónoma de Buenos Aires.
             </div>
           </div>
           <p style="margin:10px 0 0;font-size:.8rem;color:#5a7362;background:#f8f8f8;border-radius:8px;padding:10px 14px;">
@@ -1890,6 +1906,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:8px;">🔵 2. DATOS QUE SE TRATAN</div>
           <p style="margin:0 0 8px;"><strong>Datos del profesional usuario:</strong> nombre y apellido completos, DNI, CUIL/CUIT, dirección, matrícula profesional, especialidad, correo electrónico y teléfono. En el caso del profesional que registra un <strong>Centro Médico</strong>, se solicitan además el CUIT y la dirección del titular del Centro, necesarios para la emisión de la factura de la suscripción del Centro. Todos estos datos se utilizan para la prestación del servicio, la identificación del profesional y la facturación. <strong>Categoría:</strong> datos personales comunes (Ley 25.326, art. 2).</p>
           <p style="margin:0;"><strong>Datos de pacientes:</strong> nombre, DNI, fecha de nacimiento, datos de contacto, obra social, historia clínica completa (motivo de consulta, diagnósticos, medicación, estudios, evoluciones, imágenes). <strong>Categoría:</strong> datos sensibles de salud — protección reforzada (Ley 25.326, art. 7).</p>
+          <p style="margin:8px 0 0;"><strong>Datos de la firma electrónica de recetas:</strong> al emitir una receta se generan y registran la clave pública del profesional (y su clave privada, cifrada), la huella criptográfica (hash SHA-256) del PDF y la firma resultante, la fecha y hora exactas de la firma, la <strong>dirección IP</strong>, los datos del navegador y el identificador de la sesión desde la que se emitió, el nombre y la matrícula del profesional y los identificadores internos de la receta, del profesional y del paciente. Estos datos se conservan como <strong>evidencia técnica</strong> de la firma; no incluyen el contenido de la receta ni el nombre o el DNI del paciente, y no se guarda una copia del PDF a estos fines. La página pública de verificación (a la que se accede con el QR de la receta) muestra únicamente el nombre y la matrícula del profesional, la fecha y hora de la firma y la huella del documento. <strong>Categoría:</strong> datos personales comunes del profesional (Ley 25.326, art. 2).</p>
         </div>
 
         <div style="border-bottom:1px solid #e3fbed;padding:16px 0;">
@@ -1897,6 +1914,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <ul style="margin:0;padding-left:20px;">
             <li>Prestación del servicio de historia clínica digital contratado</li>
             <li>Generación de recetas, derivaciones y documentación médica-legal</li>
+            <li>Firma electrónica de las recetas y conservación de la evidencia técnica necesaria para acreditar su autoría, su fecha y que no fueron alteradas</li>
             <li>Gestión de turnos y comunicaciones con pacientes</li>
             <li>Facturación y gestión de la suscripción del profesional</li>
             <li>Mejora del servicio mediante análisis estadísticos anonimizados (sin identificar pacientes ni profesionales)</li>
@@ -1909,6 +1927,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <ul style="margin:0;padding-left:20px;">
             <li><strong>Ejecución del contrato:</strong> el tratamiento es necesario para prestar el servicio contratado</li>
             <li><strong>Cumplimiento legal:</strong> la Ley 26.529 obliga al profesional a mantener la historia clínica del paciente</li>
+            <li><strong>Ejecución del contrato e interés legítimo:</strong> registrar la evidencia técnica de la firma electrónica es necesario para prestar la función de receta electrónica y para poder acreditar la validez de cada firma (Ley 25.506, art. 5)</li>
             <li><strong>Consentimiento informado del paciente:</strong> el profesional es responsable de obtenerlo conforme al art. 5 de la Ley 26.529</li>
             <li><strong>Interés legítimo:</strong> para la mejora del servicio con datos anonimizados</li>
           </ul>
@@ -1953,6 +1972,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
         <div style="border-bottom:1px solid #e3fbed;padding:16px 0;">
           <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:8px;">🔵 8. CONSERVACIÓN DE LOS DATOS</div>
           <p style="margin:0;">Los datos clínicos se conservan durante el plazo que el profesional mantenga su suscripción activa y, tras la baja, durante un período adicional de <strong>10 años</strong> (plazo mínimo legal de conservación de historia clínica — Ley 26.529, art. 18) en modalidad de archivo inactivo. Transcurrido dicho plazo, los datos son eliminados de forma segura e irrecuperable. El profesional puede solicitar la exportación y eliminación anticipada de sus datos previa acreditación de cumplimiento del plazo legal de conservación.</p>
+          <p style="margin:8px 0 0;">La evidencia técnica de la firma electrónica de las recetas (punto 2) se conserva junto con la receta durante el mismo plazo y, por su finalidad probatoria, no puede modificarse ni eliminarse mientras dure.</p>
         </div>
 
         <div style="padding:16px 0 0;">
@@ -2224,7 +2244,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       <button class="sb-item" onclick="showPanel('ia')"><span class="sb-icon">🤖</span><span>IA Asistente</span></button>
       <button class="sb-item" onclick="showPanel('vademecum')"><span class="sb-icon">💊</span><span>Vademécum</span></button>
       <button class="sb-item" onclick="showPanel('calculadoras')"><span class="sb-icon">🧮</span><span>Calculadoras</span></button>
-      <button class="sb-item" onclick="showPanel('firma-medico')"><span class="sb-icon">✍️</span><span>Mi Firma Digital</span></button>
+      <button class="sb-item" onclick="showPanel('firma-medico')"><span class="sb-icon">✍️</span><span id="sb-firma-lbl">Mi Firma Digital</span></button>
       <button class="sb-item" onclick="showPanel('centro-medico')"><span class="sb-icon">🏥</span><span>Mi Centro Médico</span></button>
       <button class="sb-item" onclick="abrirMejorarPlanIndividual()"><span class="sb-icon">⬆️</span><span>Mejorar mi plan</span></button>
       <button class="sb-item" onclick="showPanel('analitica')"><span class="sb-icon">📊</span><span>Analítica</span></button>
@@ -2569,7 +2589,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
           <div>
             <div class="app-page-title">Recetas Médicas</div>
-            <div class="app-page-sub">Emití recetas con firma digital y validez legal</div>
+            <div class="app-page-sub"><span class="firma-solo-otros">Emití recetas con firma digital y validez legal</span><span class="firma-solo-ar">Emití recetas con firma electrónica y verificación por QR</span></div>
           </div>
           <button onclick="limpiarReceta()" style="background:var(--g9);border:1.5px solid var(--g8);color:var(--g3);font-size:.82rem;font-weight:600;padding:7px 14px;border-radius:9px;cursor:pointer;font-family:'Outfit',sans-serif;">↩ Volver a Historia Clínica</button>
           <button onclick="finalizarAtencion()" style="margin-left:8px;background:linear-gradient(135deg,#22a050,#1a7a42);color:#fff;border:none;font-size:.82rem;font-weight:600;padding:7px 14px;border-radius:9px;cursor:pointer;font-family:'Outfit',sans-serif;">✅ Finalizar atención</button>
@@ -2652,7 +2672,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
           <div>
             <div class="app-page-title">Derivaciones</div>
-            <div class="app-page-sub">Derivaciones a especialistas con firma digital</div>
+            <div class="app-page-sub"><span class="firma-solo-otros">Derivaciones a especialistas con firma digital</span><span class="firma-solo-ar">Derivaciones a especialistas con firma electrónica</span></div>
           </div>
            <button onclick="limpiarDerivacion()" style="background:var(--g9);border:1.5px solid var(--g8);color:var(--g3);font-size:.82rem;font-weight:600;padding:7px 14px;border-radius:9px;cursor:pointer;font-family:'Outfit',sans-serif;">↩ Volver a Historia Clínica</button>
           <button onclick="finalizarAtencion()" style="margin-left:8px;background:linear-gradient(135deg,#22a050,#1a7a42);color:#fff;border:none;font-size:.82rem;font-weight:600;padding:7px 14px;border-radius:9px;cursor:pointer;font-family:'Outfit',sans-serif;">✅ Finalizar atención</button>
@@ -4191,13 +4211,22 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
 
         <!-- CONTENIDO REAL (ahora siempre visible, es gratis para todos) -->
         <div id="firma-contenido-real">
-        <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--g2);margin-bottom:4px;">✍️ Mi Firma Digital</h2>
-        <p style="color:var(--muted);font-size:.85rem;margin-bottom:24px;line-height:1.6;">Completá los dos pasos para que tu firma aparezca con validez legal en todos tus documentos.</p>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--g2);margin-bottom:4px;">✍️ <span class="firma-solo-otros">Mi Firma Digital</span><span class="firma-solo-ar">Mi Firma Electrónica</span></h2>
+        <p style="color:var(--muted);font-size:.85rem;margin-bottom:24px;line-height:1.6;"><span class="firma-solo-otros">Completá los dos pasos para que tu firma aparezca con validez legal en todos tus documentos.</span><span class="firma-solo-ar">Cada receta que emitís se firma electrónicamente, sin trámites ni pasos extra.</span></p>
 
         <!-- FIRMA ELECTRÓNICA DE RECETAS (clave personal + registro de evidencia) -->
         <div id="fe-card" style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:12px;padding:16px 18px;margin-bottom:20px;">
           <div style="font-weight:700;color:#0c4a6e;font-size:.88rem;margin-bottom:4px;">🔐 Firma electrónica de tus recetas</div>
-          <p style="font-size:.78rem;color:#075985;line-height:1.6;margin-bottom:10px;">Cada receta que emitas se firma automáticamente con una clave personal generada para tu cuenta y queda registrada con fecha, hora, IP y sesión. El PDF lleva un QR con el que cualquiera puede verificar que la firmaste vos y que el archivo no se alteró. Tu clave privada se guarda cifrada en el servidor y no se puede descargar.</p>
+          <p class="firma-solo-otros" style="font-size:.78rem;color:#075985;line-height:1.6;margin-bottom:10px;">Cada receta que emitas se firma automáticamente con una clave personal generada para tu cuenta y queda registrada con fecha, hora, IP y sesión. El PDF lleva un QR con el que cualquiera puede verificar que la firmaste vos y que el archivo no se alteró. Tu clave privada se guarda cifrada en el servidor y no se puede descargar.</p>
+          <div class="firma-solo-ar">
+            <p style="font-size:.78rem;color:#075985;line-height:1.6;margin-bottom:8px;">Cada receta que emitís se firma automáticamente, sin trámites ni códigos OTP:</p>
+            <ul style="font-size:.78rem;color:#075985;line-height:1.6;margin:0 0 10px;padding-left:18px;">
+              <li><strong>Se activa sola</strong> con tu primera receta, o desde el botón de abajo.</li>
+              <li>Se firma con una <strong>clave personal</strong> de tu cuenta y queda registrada con <strong>fecha, hora exacta, IP</strong> y sesión.</li>
+              <li>El PDF lleva un <strong>QR de verificación pública</strong>: cualquiera puede comprobar que la firmaste vos y que el archivo no se alteró, sin ver datos del paciente.</li>
+            </ul>
+            <p style="font-size:.75rem;color:#075985;line-height:1.6;margin-bottom:10px;">Es una firma electrónica (Ley 25.506, art. 5), distinta de la firma digital con certificado oficial: por eso no requiere ningún trámite. Tu clave privada se guarda cifrada en el servidor y no se puede descargar.</p>
+          </div>
           <div id="fe-estado" style="font-size:.8rem;color:#075985;margin-bottom:10px;">Consultando estado…</div>
           <button id="fe-btn" onclick="activarFirmaElectronica()" style="display:none;padding:8px 16px;background:linear-gradient(135deg,#0284c7,#0c4a6e);color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Activar firma electrónica</button>
         </div>
@@ -4210,6 +4239,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <button onclick="guardarLegajoRenapdis()" style="margin-left:8px;padding:8px 16px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Guardar</button>
         </div>
 
+        <div class="firma-solo-otros">
         <!-- PASO 1 -->
         <div style="background:#fff;border-radius:14px;border:1.5px solid var(--g9);border-left:4px solid var(--g4);padding:22px 20px;margin-bottom:16px;">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
@@ -4239,21 +4269,24 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           </div>
         </div>
 
+        </div>
+
         <!-- PASO 2 -->
         <div style="background:#fff;border-radius:14px;border:1.5px solid var(--g9);border-left:4px solid var(--g4);padding:22px 20px;">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-            <div style="width:32px;height:32px;min-width:32px;background:linear-gradient(135deg,var(--g5),var(--g4));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.9rem;font-weight:800;">2</div>
+            <div class="firma-solo-otros" style="width:32px;height:32px;min-width:32px;background:linear-gradient(135deg,var(--g5),var(--g4));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.9rem;font-weight:800;">2</div>
+            <div class="firma-solo-ar" style="width:32px;height:32px;min-width:32px;background:linear-gradient(135deg,var(--g5),var(--g4));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.9rem;">🖋️</div>
             <div>
-              <div style="font-weight:700;color:var(--g2);font-size:.95rem;">Dibujá tu firma manuscrita</div>
-              <div style="font-size:.78rem;color:var(--muted);margin-top:2px;">Representación visual · Aparece automáticamente en tus documentos</div>
+              <div style="font-weight:700;color:var(--g2);font-size:.95rem;"><span class="firma-solo-otros">Dibujá tu firma manuscrita</span><span class="firma-solo-ar">Imagen de tu firma manuscrita (opcional)</span></div>
+              <div style="font-size:.78rem;color:var(--muted);margin-top:2px;"><span class="firma-solo-otros">Representación visual · Aparece automáticamente en tus documentos</span><span class="firma-solo-ar">Solo aspecto visual · No es la firma electrónica de tus recetas</span></div>
             </div>
             <div id="paso2-ok" style="display:none;margin-left:auto;background:#dcfce7;color:#15803d;border-radius:20px;padding:3px 12px;font-size:.75rem;font-weight:700;">✓ Guardada</div>
           </div>
           <p style="font-size:.83rem;color:var(--muted);line-height:1.65;margin-bottom:14px;">
-             Dibujá tu firma manuscrita. Esta imagen aparecerá en el pie de cada receta, derivación y pedido de estudios que generes, junto con tu nombre y matrícula.
+             <span class="firma-solo-otros">Dibujá tu firma manuscrita. Esta imagen aparecerá en el pie de cada receta, derivación y pedido de estudios que generes, junto con tu nombre y matrícula.</span><span class="firma-solo-ar">Si querés, dibujá tu firma manuscrita: va a aparecer como imagen en el pie de cada receta, derivación y pedido de estudios que generes, junto con tu nombre y matrícula. Es solo una representación visual; la firma electrónica de tus recetas es la de la tarjeta de arriba.</span>
           </p>
 
-          <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:12px 16px;margin-bottom:14px;">
+          <div class="firma-solo-otros" style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:12px 16px;margin-bottom:14px;">
             <p style="font-size:.82rem;color:#991b1b;line-height:1.6;margin:0;">
               ⚠️ <strong>Importante:</strong> esta imagen dibujada, por sí sola, <strong>no tiene validez legal</strong>. Para que tu firma cumpla realmente con la Ley 25.506 y sea 100% legal, primero tenés que completar el <strong>Paso 1</strong> — el registro oficial de tu Firma Digital ante el Estado. Sin ese registro, esta imagen es solo una referencia visual.
             </p>
@@ -4263,7 +4296,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
               <input type="checkbox" id="chk-consentimiento-firma" onchange="toggleConsentimientoFirma(this.checked)" style="margin-top:3px;min-width:16px;width:16px;height:16px;cursor:pointer;">
               <span style="font-size:.8rem;color:#78350f;line-height:1.6;">
-                Entiendo que esta firma es una imagen manuscrita de referencia, dibujada por mí, y no un certificado de Firma Digital oficial. Si no completé el trámite de Firma Digital (Ley 25.506) ante el Estado, esta firma no tiene validez legal certificada, y <strong>MedHistoriaClinicaOnline no se hace responsable por reclamos, disputas o problemas legales derivados del uso de documentos firmados sin ese certificado.</strong>
+                <span class="firma-solo-otros">Entiendo que esta firma es una imagen manuscrita de referencia, dibujada por mí, y no un certificado de Firma Digital oficial. Si no completé el trámite de Firma Digital (Ley 25.506) ante el Estado, esta firma no tiene validez legal certificada, y <strong>MedHistoriaClinicaOnline no se hace responsable por reclamos, disputas o problemas legales derivados del uso de documentos firmados sin ese certificado.</strong></span><span class="firma-solo-ar">Entiendo que esta firma es una imagen manuscrita de referencia, dibujada por mí: por sí sola no acredita mi identidad ni que el documento no fue alterado, y no reemplaza la firma electrónica de mis recetas. <strong>MedHistoriaClinicaOnline no se hace responsable por reclamos o problemas legales derivados de considerar esta imagen como una firma con validez legal por sí misma.</strong></span>
               </span>
             </label>
           </div>
@@ -5600,6 +5633,7 @@ function toggleMore(){
 
 // ── APP PANELS (sidebar) ──
 function showPanel(id){
+  try{ aplicarTextosFirmaPorPais(); }catch(eFp){ console.warn('[catch]', eFp); }
   // Ocultar TODOS los paneles primero
   document.querySelectorAll('.app-panel').forEach(function(p){
     p.classList.remove('act');
@@ -8479,6 +8513,20 @@ function activarFirmaElectronica(){
     if(btn){ btn.disabled = false; btn.textContent = 'Activar firma electrónica'; }
     alert('No se pudo conectar para activar la firma electrónica. Revisá tu conexión.');
   });
+}
+
+// ── Textos de firma según el país del médico ──
+// Argentina ve los textos de Firma Electrónica (.firma-solo-ar); el resto de los países sigue viendo exactamente el texto de siempre
+// (.firma-solo-otros). El país es el del registro (usuarioActual.pais); sin dato o desconocido = Argentina, igual que en los PDFs.
+function medicoEsArgentina(){
+  var p = (typeof usuarioActual !== 'undefined' && usuarioActual) ? usuarioActual.pais : '';
+  return !p || p === 'ar' || !firmaInfo[p];
+}
+function aplicarTextosFirmaPorPais(){
+  var ar = medicoEsArgentina();
+  document.body.classList.toggle('firma-ar', ar);
+  var lbl = document.getElementById('sb-firma-lbl');
+  if(lbl) lbl.textContent = ar ? 'Mi Firma Electrónica' : 'Mi Firma Digital';
 }
 
 function initPanelFirma(){
@@ -14008,10 +14056,15 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   doc.setTextColor(20,20,20); doc.setFontSize(9); doc.setFont('helvetica','normal');
   doc.text(d.fecha.toUpperCase(), W-margin, footerY-4, {align:'right'});
   doc.setTextColor(20,90,50); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
-  doc.text('FIRMA ELECTRÓNICA / DIGITAL DEL PROFESIONAL — '+(matTxt||'MATRÍCULA NO INDICADA'), x, footerY+5);
+  // Argentina: la receta se firma electrónicamente (ver emitirRecetaFirmada). Para otros países se deja la leyenda de siempre.
+  var _esArgPdf = (_paisMedico === 'ar');
+  doc.text((_esArgPdf ? 'FIRMA ELECTRÓNICA DEL PROFESIONAL — ' : 'FIRMA ELECTRÓNICA / DIGITAL DEL PROFESIONAL — ')+(matTxt||'MATRÍCULA NO INDICADA'), x, footerY+5);
 
   doc.setTextColor(90,90,90); doc.setFontSize(6.29); doc.setFont('helvetica','italic'); // tamaño distinto a propósito: es texto legal de letra chica, no una etiqueta de sección
-  var _leyendaFirma = 'Este documento ha sido firmado -electrónica o digitalmente según corresponda- por '+(usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ')+d.nombreProfesional+'.';
+  var _prefijoDrPdf = (usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ');
+  var _leyendaFirma = _esArgPdf
+    ? ((d.firmaToken ? 'Este documento ha sido firmado electrónicamente por ' : 'Documento emitido por ')+_prefijoDrPdf+d.nombreProfesional+'.')
+    : ('Este documento ha sido firmado -electrónica o digitalmente según corresponda- por '+_prefijoDrPdf+d.nombreProfesional+'.');
   var _legajoTxt = d.legajoRL ? d.legajoRL : '(en trámite de inscripción)';
   var _leyendaInscripcion = 'Receta emitida bajo '+_leyFirmaPais+' · Registro de Recetarios Electrónicos del Ministerio de Salud de la Nación - '+_legajoTxt+' · Válido conforme normativa vigente en '+_paisNombreMedico+'.';
   var _lf = doc.splitTextToSize(_leyendaFirma, W-margin*2);

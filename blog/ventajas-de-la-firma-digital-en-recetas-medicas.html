@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Ventajas de la Firma Digital en Recetas Médicas | MedHistoriaClínicaOnline</title>
-<meta name="description" content="Qué es la firma digital en una receta médica y qué ventajas concretas ofrece frente a la receta en papel: rapidez, envío directo al paciente, trazabilidad y más.">
-<meta name="keywords" content="firma digital en recetas médicas, receta electrónica, firma digital receta, ventajas firma digital médica, receta con firma digital Argentina">
+<title>Ventajas de la Firma Electrónica en Recetas Médicas | MedHistoriaClínicaOnline</title>
+<meta name="description" content="Qué es la firma electrónica en una receta médica, cómo se verifica con un código QR y qué ventajas concretas ofrece frente a la receta en papel: rapidez, trazabilidad y evidencia técnica de cada firma.">
+<meta name="keywords" content="firma electrónica en recetas médicas, receta electrónica, firma electrónica receta, verificar receta con QR, ventajas firma electrónica médica, receta con firma electrónica Argentina">
 <meta name="author" content="MedHistoriaClínicaOnline">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://medhistoriaclinicaonline.com/blog/ventajas-de-la-firma-digital-en-recetas-medicas.html">
 
 <meta property="og:type" content="article">
-<meta property="og:title" content="Ventajas de la Firma Digital en Recetas Médicas">
-<meta property="og:description" content="Qué es la firma digital en una receta médica y qué ventajas concretas ofrece frente a la receta en papel: rapidez, envío directo al paciente, trazabilidad y más.">
+<meta property="og:title" content="Ventajas de la Firma Electrónica en Recetas Médicas">
+<meta property="og:description" content="Qué es la firma electrónica en una receta médica, cómo se verifica con un código QR y qué ventajas concretas ofrece frente a la receta en papel: rapidez, trazabilidad y evidencia técnica de cada firma.">
 <meta property="og:locale" content="es_AR">
 <meta property="og:site_name" content="MedHistoriaClínicaOnline">
 
@@ -21,11 +21,12 @@
 {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": "Ventajas de la Firma Digital en Recetas Médicas",
-  "description": "Qué es la firma digital en una receta médica y qué ventajas concretas ofrece frente a la receta en papel: rapidez, envío directo al paciente, trazabilidad y más.",
+  "headline": "Ventajas de la Firma Electrónica en Recetas Médicas",
+  "description": "Qué es la firma electrónica en una receta médica, cómo se verifica con un código QR y qué ventajas concretas ofrece frente a la receta en papel: rapidez, trazabilidad y evidencia técnica de cada firma.",
   "author": { "@type": "Organization", "name": "MedHistoriaClínicaOnline" },
   "publisher": { "@type": "Organization", "name": "MedHistoriaClínicaOnline" },
   "datePublished": "2026-09-13",
+  "dateModified": "2026-09-18",
   "inLanguage": "es-AR"
 }
 </script>
@@ -44,34 +45,46 @@
 
 <main class="blog-main">
   <div class="blog-kicker">Recursos para médicos</div>
-  <h1>Ventajas de la Firma Digital en Recetas Médicas</h1>
-  <div class="blog-meta">Actualizado en septiembre de 2026 · Lectura de 6 minutos</div>
+  <h1>Ventajas de la Firma Electrónica en Recetas Médicas</h1>
+  <div class="blog-meta">Actualizado en septiembre de 2026 · Lectura de 4 minutos</div>
 
-  <p>Para muchos consultorios que ya digitalizaron gran parte de su historia clínica, la receta sigue siendo el último trámite en papel: imprimir, firmar a mano y sellar. La firma digital resuelve justamente ese último paso. Veamos qué es y qué ventajas concretas ofrece.</p>
+  <p>Para muchos consultorios que ya digitalizaron gran parte de su historia clínica, la receta sigue siendo el último trámite en papel: imprimir, firmar a mano y sellar. La firma electrónica resuelve justamente ese último paso. Veamos qué es, cómo se puede verificar y qué ventajas concretas ofrece.</p>
 
-  <h2>¿Qué es la firma digital en una receta médica?</h2>
-  <p>En la mayoría de las plataformas actuales, funciona así: el médico dibuja su firma una única vez, y el sistema la guarda para estamparla automáticamente, como imagen, sobre cada receta que genera a partir de ese momento. Así se elimina el paso de imprimir, firmar a mano y escanear — la receta queda lista para entregar en el momento, con la firma ya incluida.</p>
+  <h2>¿Qué es la firma electrónica en una receta médica?</h2>
+  <p>En Argentina, la Ley 25.506 (art. 5) define la firma electrónica como el conjunto de datos electrónicos asociados a un documento y utilizados por quien firma como su medio de identificación. Es distinta de la firma digital, que exige un certificado emitido por un certificador licenciado y cuenta con presunciones legales específicas de autoría e integridad.</p>
+  <p>Esa diferencia importa: si una firma electrónica es desconocida, le corresponde a quien la invoca acreditar su validez. Por eso, lo que vuelve sólida a una firma electrónica es la <strong>evidencia técnica</strong> que deja cada receta: quién firmó, cuándo y que el documento no cambió.</p>
 
-  <h2>Ventajas concretas de firmar recetas digitalmente</h2>
+  <h2>¿Cómo funciona en MedHistoriaClinicaOnline?</h2>
+  <p>El médico no hace ningún trámite ni ingresa códigos adicionales. El flujo es simple:</p>
+  <ol>
+    <li>La firma se activa sola con la primera receta (o desde el panel "Mi Firma Electrónica") y genera una clave personal para la cuenta del médico.</li>
+    <li>El médico carga la receta durante la consulta: paciente, medicación e indicaciones.</li>
+    <li>Al emitirla, el sistema genera el PDF, calcula su huella criptográfica (hash) y lo firma con la clave personal del médico.</li>
+    <li>La plataforma registra la fecha y la hora exactas, la dirección IP y la huella del documento como evidencia de la firma.</li>
+    <li>La receta queda disponible para enviar al paciente por WhatsApp o email, o para imprimir si hace falta una copia en papel.</li>
+  </ol>
+
+  <h2>Verificación con código QR</h2>
+  <p>Cada receta lleva un código QR. Al escanearlo se abre una página pública de verificación, sin necesidad de iniciar sesión, que confirma quién firmó la receta y cuándo. Si además se carga el archivo PDF en esa página, se comprueba que su contenido no fue alterado: si se modificó aunque sea un carácter, la verificación falla. La página no muestra datos del paciente ni de la medicación.</p>
+  <p>La comprobación del contenido se hace sobre el archivo digital: una copia impresa en papel no puede compararse por huella.</p>
+
+  <h2>Ventajas concretas de firmar recetas electrónicamente</h2>
   <ul>
-    <li><strong>Rapidez:</strong> no hace falta imprimir, firmar a mano ni escanear nada — la receta queda lista para entregar apenas se completa la consulta.</li>
+    <li><strong>Rapidez y sin trámites:</strong> no hace falta imprimir, firmar a mano ni escanear nada, ni tramitar certificados ni usar códigos de un solo uso — la receta queda lista para entregar apenas se completa la consulta.</li>
     <li><strong>Envío directo al paciente:</strong> se puede mandar por WhatsApp o email en el momento, sin que el paciente tenga que pasar por el consultorio a buscar el papel.</li>
-    <li><strong>Trazabilidad:</strong> cada receta emitida queda registrada dentro del sistema, con fecha y datos del paciente, a diferencia de un talonario de papel del que no queda copia.</li>
+    <li><strong>Trazabilidad con evidencia técnica:</strong> cada receta emitida queda registrada con fecha y hora exactas, IP y huella del documento, a diferencia de un talonario de papel del que no queda copia.</li>
+    <li><strong>Verificación en segundos:</strong> el paciente, la farmacia o quien reciba la receta puede comprobar con el QR que fue firmada por ese médico y en qué momento.</li>
+    <li><strong>Detección de alteraciones:</strong> si el archivo se modifica después de firmado, la verificación lo detecta.</li>
     <li><strong>Legibilidad total:</strong> se termina el riesgo de una interpretación errónea por una letra manuscrita poco clara, tanto en la medicación como en la dosis.</li>
     <li><strong>Queda vinculada a la historia clínica:</strong> cada receta firmada se integra automáticamente al resto del historial del paciente, sin pasos manuales adicionales.</li>
     <li><strong>Asistencia de inteligencia artificial antes de firmar:</strong> al estar todo dentro de un sistema digital, una IA médica puede ayudar a verificar dosis o alertar sobre posibles interacciones medicamentosas antes de que el médico firme la receta — algo que una receta en papel no tiene forma de ofrecer.</li>
   </ul>
 
-  <h2>¿Cómo funciona en la práctica?</h2>
-  <p>El flujo, en un sistema de historia clínica electrónica con firma digital integrada, es simple:</p>
-  <ol>
-    <li>El médico carga la receta durante la consulta: paciente, medicación e indicaciones.</li>
-    <li>El sistema estampa automáticamente su firma, ya guardada, sobre la receta.</li>
-    <li>La receta queda disponible para enviar al paciente por WhatsApp o email, o para imprimir si hace falta una copia en papel.</li>
-  </ol>
+  <h2>Qué alcance tiene esta firma</h2>
+  <p>La receta electrónica o digital está prevista en la Ley 27.553. La firma electrónica de MedHistoriaClinicaOnline es una firma electrónica en los términos del art. 5 de la Ley 25.506: no equivale a una firma digital con certificado ni cuenta con sus presunciones legales, y la plataforma resguarda la evidencia técnica descripta para poder acreditar su validez si fuera necesario. Cada profesional es responsable de cumplir los requisitos que su jurisdicción y su colegio profesional exijan para las recetas.</p>
 
   <div class="blog-cta">
-    <p>¿Buscás emitir recetas con firma digital?<br>Conocé MedHistoriaClinicaOnline</p>
+    <p>¿Buscás emitir recetas con firma electrónica?<br>Conocé MedHistoriaClinicaOnline</p>
     <a href="../index.html">Ver la plataforma →</a>
   </div>
 </main>
