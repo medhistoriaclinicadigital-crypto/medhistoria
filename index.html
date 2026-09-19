@@ -7517,6 +7517,15 @@ function tieneConsentimientoFirma(){
   if(usuarioActual){ return usuarioActual.firma_consentimiento === true; }
   return localStorage.getItem('medhistoria_firma_consentimiento')==='1';
 }
+// Argentina: la aceptación se da a propósito en cada visita al panel (la casilla arranca sin tildar), así que vale solo si la casilla
+// está tildada ahora. Resto de los países: se sigue usando la aceptación guardada, como siempre.
+function consentimientoFirmaVigente(){
+  if(medicoEsArgentina()){
+    var chk = document.getElementById('chk-consentimiento-firma');
+    return !!(chk && chk.checked);
+  }
+  return tieneConsentimientoFirma();
+}
 
 function toggleConsentimientoFirma(aceptado, soloRestaurar){
   if(!soloRestaurar){
@@ -7540,7 +7549,7 @@ function limpiarFirma(){
 }
 
 function guardarFirma(){
-  if(!tieneConsentimientoFirma()){alert('Primero tildá la casilla de aceptación.');return;}
+  if(!consentimientoFirmaVigente()){alert('Primero tildá la casilla de aceptación.');return;}
   if(!_firmaCanvas){alert('Primero dibujá tu firma.');return;}
   var data=_firmaCtx.getImageData(0,0,_firmaCanvas.width,_firmaCanvas.height).data;
   var hayTrazo=false;
@@ -7571,9 +7580,9 @@ function cargarPreviewFirma(){
     var p1=document.getElementById('paso1-ok');
     if(p1) p1.style.display='inline-block';
   }
-  // Restaurar consentimiento
-  var yaAcepto = tieneConsentimientoFirma();
+  // Restaurar consentimiento (Argentina: no se restaura lo guardado; la casilla queda como está en pantalla y arranca sin tildar)
   var chk=document.getElementById('chk-consentimiento-firma');
+  var yaAcepto = medicoEsArgentina() ? !!(chk && chk.checked) : tieneConsentimientoFirma();
   if(chk){ chk.checked = yaAcepto; }
   toggleConsentimientoFirma(yaAcepto, true);
 }
@@ -8494,6 +8503,13 @@ function initPanelFirma(){
   if(tieneAddonFirma()){
     setTimeout(function(){
       initCanvasFirma();
+      // Argentina: la aceptación se da a propósito en cada visita → la casilla arranca sin tildar y el canvas bloqueado
+      // (soloRestaurar=true: no se escribe nada en la cuenta). El navegador tampoco puede dejarla tildada de una visita anterior.
+      if(medicoEsArgentina()){
+        var chkFirma = document.getElementById('chk-consentimiento-firma');
+        if(chkFirma){ chkFirma.checked = false; }
+        toggleConsentimientoFirma(false, true);
+      }
       var sel=document.getElementById('select-pais-firma');
       if(sel&&typeof paisActual!=='undefined') sel.value=paisActual;
       actualizarPaisFirma(sel?sel.value:'ar');
