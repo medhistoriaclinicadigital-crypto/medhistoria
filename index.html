@@ -525,8 +525,8 @@ tr:hover td{background:var(--g9);}
 input[type="text"], input[type="email"], input[type="search"], textarea { text-transform: none; }
 input[type="email"] { text-transform: lowercase; }
 #login-usuario, #ml-user { text-transform: lowercase; }
-/* Textos de firma por país: por defecto se ve el texto de siempre (.firma-solo-otros); si el médico es de Argentina
-   (body.firma-ar, ver aplicarTextosFirmaPorPais) se ve el de Firma Electrónica (.firma-solo-ar). */
+/* Contenido por país: .firma-solo-ar = contenido específico de Argentina (firma electrónica, REFEPS, CUIL, ReNaPDiS, leyes argentinas)
+   que solo ve un médico de Argentina (body.firma-ar, ver aplicarTextosFirmaPorPais); .firma-solo-otros = el texto de siempre para el resto. */
 body:not(.firma-ar) .firma-solo-ar { display: none !important; }
 body.firma-ar .firma-solo-otros { display: none !important; }
 /* Ayuda de la Licencia Sanitaria Federal (REFEPS) en el formulario de receta. Solo Argentina: el bloque va dentro de .firma-solo-ar. */
@@ -2600,11 +2600,11 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <div id="validez-recetas"></div>
           <div class="form-g2">
             <div class="fl"><label>Paciente<input type="text" id="rx2-paciente" placeholder="Apellido y nombre"></div>
-            <div class="fl"><label>DNI<input type="text" id="rx2-dni" placeholder="30.000.000" onchange="_autocompletarCuilReceta()"></div>
-            <div class="fl"><label>CUIL<input type="text" id="rx2-cuil" placeholder="20-30000000-1"></div>
+            <div class="fl"><label>DNI<input type="text" id="rx2-dni" placeholder="30.000.000" data-ph-solo-ar onchange="_autocompletarCuilReceta()"></div>
+            <div class="fl firma-solo-ar"><label>CUIL<input type="text" id="rx2-cuil" placeholder="20-30000000-1"></div>
             <div class="fl"><label>Fecha de Nacimiento<input type="date" id="rx2-fnac"></div>
             <div class="fl"><label>Sexo<select id="rx2-sexo" onchange="_autocompletarCuilReceta()"><option value="">Seleccionar...</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
-            <div class="fl"><label>Obra Social / Prepaga<input type="text" id="rx2-os" placeholder="OSDE / IOMA / Swiss Medical..."></div>
+            <div class="fl"><label>Obra Social / Prepaga<input type="text" id="rx2-os" placeholder="OSDE / IOMA / Swiss Medical..." data-ph-solo-ar></div>
             <div class="fl"><label>N° Afiliado / N° Seg. Social / N° Colegiado<input type="text" id="rx2-afiliado" placeholder="N° afiliado / N° seguro social / N° colegiado"></div>
             <div class="fl"><label>Plan<input type="text" id="rx2-plan" placeholder="Ej: Plan 210 / Plan Básico / Gold"></div>
             <div class="fl full" style="grid-column:1/-1;">
@@ -2634,14 +2634,14 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
                 <button type="button" onclick="agregarMedicamentoReceta()" style="padding:7px 16px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">+ Agregar a la receta</button>
               </div>
               <textarea id="rx2-med" style="width:100%;min-height:100px;box-sizing:border-box;" placeholder="Los medicamentos que agregues arriba van a aparecer acá. También podés escribir directo si preferís."></textarea>
-              <div style="font-size:.72rem;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:6px 10px;margin-top:6px;">💡 Para cumplir con el Registro de Recetarios Electrónicos, cada medicamento necesita: nombre genérico (IFA), forma farmacéutica, presentación y cantidad de unidades. Usá el formulario de arriba para no olvidarte de ninguno.</div>
+              <div class="firma-solo-ar" style="font-size:.72rem;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:6px 10px;margin-top:6px;">💡 Para cumplir con el Registro de Recetarios Electrónicos, cada medicamento necesita: nombre genérico (IFA), forma farmacéutica, presentación y cantidad de unidades. Usá el formulario de arriba para no olvidarte de ninguno.</div>
               <button class="ai-assist" style="margin-top:6px;">🤖 IA: completar medicación según historial</button><div style="font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-top:6px;">⚠️ Este campo puede enviarse a un servicio de IA externo. No escribas el nombre del paciente acá. Vos sos responsable de que los datos que cargues sean correctos y de revisar la respuesta antes de usarla clínicamente. MedHistoriaClinicaOnline no asume responsabilidad legal por las decisiones clínicas que el profesional adopte a partir de esta sugerencia — la decisión y la responsabilidad son siempre del médico tratante.</div>
             </div>
             <div class="fl"><label>Validez<select id="rx2-validez"><option>30 días</option><option>60 días</option><option>90 días</option></select></div>
             <div class="fl"><label>Fecha de inicio de vigencia (opcional, si es distinta a hoy)<input type="date" id="rx2-fecha-inicio-vigencia"></label></div>
             <div class="fl"><label>Médico prescriptor<input type="text" id="rx2-medico" placeholder="Dr. Apellido · Especialidad · Matrícula 00000"></div>
             <div class="fl"><label>Domicilio del consultorio (acto médico)<input type="text" id="rx2-domicilio" placeholder="Calle, número, ciudad"></label></div>
-            <div class="fl"><label>Jurisdicción / entidad que emitió la matrícula<input type="text" id="rx2-jurisdiccion" placeholder="Ej: Colegio de Médicos de la Pcia. de Buenos Aires"></label></div>
+            <div class="fl"><label>Jurisdicción / entidad que emitió la matrícula<input type="text" id="rx2-jurisdiccion" placeholder="Ej: Colegio de Médicos de la Pcia. de Buenos Aires" data-ph-solo-ar></label></div>
             <!-- Licencia Sanitaria Federal (REFEPS): dato exclusivo de Argentina (Decreto 98/2023). El resto de los países no ve el campo ni se le exige. -->
             <div class="fl firma-solo-ar"><label>Licencia Sanitaria Federal (código REFEPS)<input type="text" id="rx2-refeps" placeholder="Código REFEPS"></label><span style="font-size:.68rem;color:#888;display:block;margin-top:3px;">No es tu número de matrícula. Lo encontrás en la app Mi Argentina → Matrículas profesional de la salud → Licencia Sanitaria Federal.</span></div>
             <div class="firma-solo-ar" style="grid-column:1/-1;">
@@ -2664,7 +2664,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               </div>
             </div>
           <div style="margin-top:18px;">
- <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('receta')">✦ Generar Receta (Ley 27.553)</button>
+ <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('receta')">✦ Generar Receta<span class="firma-solo-ar"> (Ley 27.553)</span></button>
           </div>
           <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
             <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#dc2626,#991b1b);" onclick="descargarPDF('receta')">📄 Descargar PDF</button>
@@ -2695,10 +2695,10 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <div id="validez-derivaciones"></div>
           <div class="form-g2">
             <div class="fl"><label>Paciente<input type="text" id="der-paciente" placeholder="Apellido y nombre"></div>
-            <div class="fl"><label>DNI<input type="text" id="der-dni" placeholder="30.000.000"></div>
+            <div class="fl"><label>DNI<input type="text" id="der-dni" placeholder="30.000.000" data-ph-solo-ar></div>
             <div class="fl"><label>Fecha de Nacimiento<input type="date" id="der-fnac"></div>
             <div class="fl"><label>Sexo<select id="der-sexo"><option value="">Seleccionar...</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
-            <div class="fl"><label>Obra Social / Prepaga<input type="text" id="der-os" placeholder="OSDE / IOMA / Swiss Medical..."></div>
+            <div class="fl"><label>Obra Social / Prepaga<input type="text" id="der-os" placeholder="OSDE / IOMA / Swiss Medical..." data-ph-solo-ar></div>
             <div class="fl"><label>N° Afiliado / N° Seg. Social / N° Colegiado<input type="text" id="der-afiliado" placeholder="N° afiliado / N° seguro social / N° colegiado"></div>
             <div class="fl"><label>Plan<input type="text" id="der-plan" placeholder="Ej: Plan 210 / Plan Básico / Gold"></div>
             <div class="fl full"><label style="display:block;margin-bottom:6px;">Especialidad</label><select id="der-especialidad" style="width:100%;">
@@ -2805,7 +2805,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             </div>
           </div>
           <div style="margin-top:18px;">
-            <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('derivacion')">✦ Generar Derivación (Ley 27.553)</button>
+            <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('derivacion')">✦ Generar Derivación<span class="firma-solo-ar"> (Ley 27.553)</span></button>
           <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
             <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#dc2626,#991b1b);" onclick="descargarPDF('derivacion')">📄 Descargar PDF</button>
             <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#374151,#1f2937);" onclick="imprimirDoc('derivacion')">🖨️ Imprimir</button>
@@ -2836,10 +2836,10 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           
           <div class="form-g2">
             <div class="fl"><label>Paciente<input type="text" id="est-paciente" placeholder="Apellido y nombre"></div>
-            <div class="fl"><label>DNI<input type="text" id="est-dni" placeholder="30.000.000"></div>
+            <div class="fl"><label>DNI<input type="text" id="est-dni" placeholder="30.000.000" data-ph-solo-ar></div>
             <div class="fl"><label>Fecha de Nacimiento<input type="date" id="est-fnac"></div>
             <div class="fl"><label>Sexo<select id="est-sexo"><option value="">Seleccionar...</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
-            <div class="fl"><label>Obra Social / Prepaga<input type="text" id="est-os" placeholder="OSDE / IOMA / Swiss Medical..."></div>
+            <div class="fl"><label>Obra Social / Prepaga<input type="text" id="est-os" placeholder="OSDE / IOMA / Swiss Medical..." data-ph-solo-ar></div>
             <div class="fl"><label>N° Afiliado / N° Seg. Social / N° Colegiado<input type="text" id="est-afiliado" placeholder="N° afiliado / N° seguro social / N° colegiado"></div>
             <div class="fl"><label>Plan<input type="text" id="est-plan" placeholder="Ej: Plan 210 / Plan Básico / Gold"></div>
             <div class="fl full" style="grid-column:1/-1;">
@@ -2861,7 +2861,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
 
           </div>
           <div style="margin-top:18px;">
-             <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('pedido')">✦ Generar Pedido de Estudios (Ley 27.553)</button>
+             <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('pedido')">✦ Generar Pedido de Estudios<span class="firma-solo-ar"> (Ley 27.553)</span></button>
           </div>
           <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
             <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#dc2626,#991b1b);" onclick="descargarPDF('pedido')">📄 Descargar PDF</button>
@@ -4678,13 +4678,13 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
     <div id="pf-rx" class="mform" style="display:none;gap:10px;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Paciente<input class="mi" id="rx-paciente" type="text" placeholder="Apellido y nombre"></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">DNI<input class="mi" id="rx-dni" type="text" placeholder="30.000.000" onchange="_autocompletarCuilRx()"></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">CUIL<input class="mi" id="rx-cuil" type="text" placeholder="20-30000000-1"></div>
+        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">DNI<input class="mi" id="rx-dni" type="text" placeholder="30.000.000" data-ph-solo-ar onchange="_autocompletarCuilRx()"></div>
+        <div class="firma-solo-ar"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">CUIL<input class="mi" id="rx-cuil" type="text" placeholder="20-30000000-1"></div>
         <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Sexo<select class="mi" id="rx-sexo" onchange="_autocompletarCuilRx()"><option value="">-</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
         <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Fecha de nac.<input class="mi" id="rx-fnac" type="date"></div>
         <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Diagnóstico CIE-10<input class="mi" id="rx-diag" type="text" placeholder="Hipertensión — I10"></div>
         <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Medicación<textarea class="mi" id="rx-med" style="min-height:80px;" placeholder="Enalapril 10mg — 1 comp. cada 12 hs × 30 días"></textarea></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Obra Social / Prepaga<input class="mi" id="rx-os" type="text" placeholder="OSDE / Swiss Medical..."></div>
+        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Obra Social / Prepaga<input class="mi" id="rx-os" type="text" placeholder="OSDE / Swiss Medical..." data-ph-solo-ar></div>
         <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">N° Afiliado / N° Seg. Social / N° Colegiado<input class="mi" id="rx-afiliado" type="text" placeholder="N° afiliado / N° seguro social / N° colegiado"></div>
         <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Validez<select class="mi" id="rx-validez"><option>30 días</option><option>60 días</option><option>90 días</option></select></div>
         <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Indicaciones<textarea class="mi" id="rx-ind" style="min-height:50px;" placeholder="Indicaciones al paciente..."></textarea></div>
@@ -4778,6 +4778,7 @@ function calcularCUIL(dni, sexo){
 }
 
 function _autocompletarCuilReceta(){
+  if(!medicoEsArgentina()) return; // el CUIL es solo de Argentina
   var cuilEl = document.getElementById('rx2-cuil');
   if(!cuilEl || cuilEl.value.trim()) return; // nunca pisa un CUIL ya cargado a mano
   var dni = (document.getElementById('rx2-dni')||{}).value||'';
@@ -4789,6 +4790,7 @@ function _autocompletarCuilReceta(){
 // Mismo autocompletado que _autocompletarCuilReceta(), para el formulario
 // rápido de receta (modal "Imprimir documento" → pestaña Receta, campos rx-*).
 function _autocompletarCuilRx(){
+  if(!medicoEsArgentina()) return; // el CUIL es solo de Argentina
   var cuilEl = document.getElementById('rx-cuil');
   if(!cuilEl || cuilEl.value.trim()) return; // nunca pisa un CUIL ya cargado a mano
   var dni = (document.getElementById('rx-dni')||{}).value||'';
@@ -5574,7 +5576,8 @@ async function consultarIA(){
 function generarDocumento(tipo){
   var nombres = {receta:'Receta Médica', pedido:'Pedido de Estudios', derivacion:'Derivación'};
   var leyes = {receta:'Ley 27.553 · Ley 26.529', pedido:'Ley 27.553 · Ley 27.706', derivacion:'Ley 27.553 · Ley 27.706'};
-  var ley = leyes[tipo] || 'Ley 27.553';
+  // Las leyes que cita el aviso son argentinas: fuera de Argentina el aviso no cita ninguna.
+  var ley = medicoEsArgentina() ? (leyes[tipo] || 'Ley 27.553') : '';
 
   // Registrar en el historial de cambios del paciente
   var registrarAudDoc = function(){
@@ -5602,7 +5605,7 @@ function generarDocumento(tipo){
       btnRx.style.background = 'linear-gradient(135deg,#145a32,#0a3d1f)';
       setTimeout(function(){ btnRx.innerHTML = originalRx; btnRx.style.background = ''; btnRx.disabled = false; }, 3000);
       setTimeout(function(){
-        if(confirm('✅ Receta Médica generada y firmada electrónicamente.\n\n' + ley + '\n\nCódigo de verificación: ' + _firmaRxTokenFmt(em.token) + '\n\n¿Querés imprimirla ahora?')){
+        if(confirm('✅ Receta Médica generada y firmada electrónicamente.\n\n' + (ley ? ley + '\n\n' : '') + 'Código de verificación: ' + _firmaRxTokenFmt(em.token) + '\n\n¿Querés imprimirla ahora?')){
           imprimirDoc('receta');
         }
       }, 400);
@@ -5626,7 +5629,7 @@ function generarDocumento(tipo){
   }, 3000);
   // Ofrecer imprimir
   setTimeout(function(){
-    if(confirm('✅ ' + nombres[tipo] + ' generada con firma electrónica.\n\n' + ley + '\n\n¿Querés imprimirla ahora?')){
+    if(confirm('✅ ' + nombres[tipo] + ' generada con firma electrónica.\n\n' + (ley ? ley + '\n\n' : '') + '¿Querés imprimirla ahora?')){
       imprimirDoc(tipo);
     }
   }, 400);
@@ -8549,6 +8552,11 @@ function aplicarTextosFirmaPorPais(){
   document.body.classList.toggle('firma-ar', ar);
   var lbl = document.getElementById('sb-firma-lbl');
   if(lbl) lbl.textContent = ar ? 'Mi Firma Electrónica' : 'Mi Firma Digital';
+  // Ejemplos (placeholder) propios de Argentina (DNI, obras sociales, colegio de médicos): fuera de Argentina el campo queda sin ejemplo.
+  document.querySelectorAll('[data-ph-solo-ar]').forEach(function(el){
+    if(!el.hasAttribute('data-ph-ar')) el.setAttribute('data-ph-ar', el.getAttribute('placeholder') || '');
+    el.setAttribute('placeholder', ar ? el.getAttribute('data-ph-ar') : '');
+  });
 }
 
 function initPanelFirma(){
@@ -13840,6 +13848,8 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   var _paisMedico = (usuarioActual && usuarioActual.pais) ? usuarioActual.pais : (typeof paisActual !== 'undefined' ? paisActual : 'ar');
   var _leyFirmaPais = (firmaInfo[_paisMedico] && firmaInfo[_paisMedico].ley) ? firmaInfo[_paisMedico].ley : firmaInfo.ar.ley;
   var _paisNombreMedico = (firmaInfo[_paisMedico] && firmaInfo[_paisMedico].pais) ? firmaInfo[_paisMedico].pais : 'Argentina';
+  // El ReNaPDiS, el CUIR, el CUIL y el Buscador Nacional de Medicamentos son de Argentina: fuera de Argentina no se dibujan.
+  var _esArg = medicoEsArgentina();
 
   // ── HEADER ──
   doc.setFillColor(255,255,255); doc.rect(0,0,W,52,'F');
@@ -13856,15 +13866,18 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   doc.setFontSize(13); doc.setFont('times','bold');
   doc.text('RECETA MÉDICA ELECTRÓNICA', W/2, 27, {align:'center'});
   doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(90,90,90);
-  doc.text('Modelo preparado para la Inscripción al Registro Nacional de Prescripción Digital y Recetas Electrónicas (ReNaPDiS)', W/2, 32, {align:'center', maxWidth:W-margin*2-10});
+  if(_esArg) doc.text('Modelo preparado para la Inscripción al Registro Nacional de Prescripción Digital y Recetas Electrónicas (ReNaPDiS)', W/2, 32, {align:'center', maxWidth:W-margin*2-10});
   doc.setDrawColor(20,90,50); doc.setLineWidth(0.8);
   doc.line(margin,37,W-margin,37);
 
   var y = 42;
-  var colIzqW = 122, colDerX = margin+colIzqW+6, colDerW = W-margin-colDerX;
+  // El CUIR y el QR/código de identificación reservados son del ReNaPDiS (Argentina): fuera de Argentina no se dibujan
+  // y el recuadro del paciente ocupa todo el ancho.
+  var colIzqW = _esArg ? 122 : (W-margin*2), colDerX = margin+colIzqW+6, colDerW = W-margin-colDerX;
 
   // ── CUIR + QR reservados (columna derecha) ──
-  var cuirH=20;
+  var cuirH=20, qrY = y+cuirH+4, qrH=20;
+  if(_esArg){
   doc.setDrawColor(160,160,160); doc.setLineWidth(0.3); doc.setLineDashPattern([1.3,1],0);
   doc.roundedRect(colDerX, y, colDerW, cuirH, 2.5, 2.5, 'S');
   doc.setLineDashPattern([],0);
@@ -13873,7 +13886,6 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   doc.setFontSize(5.8); doc.setFont('helvetica','normal');
   doc.text('A ASIGNAR POR ReNaPDiS', colDerX+colDerW/2, y+12.5, {align:'center', maxWidth:colDerW-4});
 
-  var qrY = y+cuirH+4, qrH=20;
   doc.setDrawColor(160,160,160); doc.setLineWidth(0.3); doc.setLineDashPattern([1.3,1],0);
   doc.roundedRect(colDerX, qrY, colDerW, qrH, 2.5, 2.5, 'S');
   doc.setLineDashPattern([],0);
@@ -13882,6 +13894,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   doc.text('IDENTIFICACIÓN', colDerX+colDerW/2, qrY+10.5, {align:'center'});
   doc.setFontSize(5.5); doc.setFont('helvetica','normal');
   doc.text('ESPACIO RESERVADO', colDerX+colDerW/2, qrY+15, {align:'center'});
+  }
 
   // ── DATOS DEL PACIENTE (columna izquierda, junto a CUIR/QR) ──
   var pacBoxY = y;
@@ -13895,7 +13908,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,60);
   var lineaPac1 = [];
   if(d.dni) lineaPac1.push('DNI: '+d.dni);
-  if(d.cuil) lineaPac1.push('CUIL: '+d.cuil);
+  if(_esArg && d.cuil) lineaPac1.push('CUIL: '+d.cuil);
   if(d.fnac){ var fn=d.fnac.split('-'); if(fn.length===3) lineaPac1.push('F. Nac.: '+fn[2]+'/'+fn[1]+'/'+fn[0]); }
   if(d.sexo) lineaPac1.push('Sexo: '+d.sexo);
   if(lineaPac1.length){
@@ -13912,7 +13925,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   }
   var pacBoxH = (y - pacBoxY) + 3;
   doc.roundedRect(margin, pacBoxY, colIzqW, pacBoxH, 2.5, 2.5, 'S');
-  y = Math.max(pacBoxH+pacBoxY, qrY+qrH) + 6;
+  y = (_esArg ? Math.max(pacBoxH+pacBoxY, qrY+qrH) : (pacBoxH+pacBoxY)) + 6;
 
   // ── Fecha de inicio de vigencia (si corresponde) — la fecha de confección
   // se muestra más abajo, junto al bloque de firma. ──
@@ -13993,13 +14006,16 @@ function _generarPDFRecetaReNaPDiS(d, callback){
 
   // ── Buscador Nacional de Medicamentos — recurso oficial (argentina.gob.ar)
   // para que el paciente pueda comparar precios y elegir la opción más
-  // conveniente entre las presentaciones disponibles del medicamento. ──
+  // conveniente entre las presentaciones disponibles del medicamento.
+  // Es un recurso de Argentina: solo se incluye en recetas de médicos de Argentina. ──
+  if(_esArg){
   doc.setTextColor(70,70,70); doc.setFontSize(7); doc.setFont('helvetica','normal');
   doc.text('Para comparar precios y elegir la opción más conveniente, consultá el ', x, y);
   var _buscadorPre = doc.getTextWidth('Para comparar precios y elegir la opción más conveniente, consultá el ');
   doc.setTextColor(20,90,160); doc.setFont('helvetica','bold');
   doc.textWithLink('Buscador Nacional de Medicamentos', x+_buscadorPre, y, { url: 'https://www.argentina.gob.ar/buscador-de-precios-de-medicamentos' });
   y += 6;
+  }
 
   // ── Indicaciones al paciente ──
   if(d.ind){
@@ -14099,7 +14115,10 @@ function _generarPDFRecetaReNaPDiS(d, callback){
     ? ((d.firmaToken ? 'Este documento ha sido firmado electrónicamente por ' : 'Documento emitido por ')+_prefijoDrPdf+d.nombreProfesional+'.')
     : ('Este documento ha sido firmado -electrónica o digitalmente según corresponda- por '+_prefijoDrPdf+d.nombreProfesional+'.');
   var _legajoTxt = d.legajoRL ? d.legajoRL : '(en trámite de inscripción)';
-  var _leyendaInscripcion = 'Receta emitida bajo '+_leyFirmaPais+' · Registro de Recetarios Electrónicos del Ministerio de Salud de la Nación - '+_legajoTxt+' · Válido conforme normativa vigente en '+_paisNombreMedico+'.';
+  // El Registro de Recetarios Electrónicos (ReNaPDiS) y su legajo son de Argentina: fuera de Argentina la leyenda no los cita.
+  var _leyendaInscripcion = _esArg
+    ? 'Receta emitida bajo '+_leyFirmaPais+' · Registro de Recetarios Electrónicos del Ministerio de Salud de la Nación - '+_legajoTxt+' · Válido conforme normativa vigente en '+_paisNombreMedico+'.'
+    : 'Receta emitida bajo '+_leyFirmaPais+' · Válido conforme normativa vigente en '+_paisNombreMedico+'.';
   var _lf = doc.splitTextToSize(_leyendaFirma, W-margin*2);
   doc.text(_lf, x, footerY+11);
   var _li = doc.splitTextToSize(_leyendaInscripcion, W-margin*2);
@@ -14802,7 +14821,8 @@ function getDatosDocumento(tipo){
     // y sexo por otro camino que no disparó el autocompletado en pantalla)
     // se calcula acá igual, para que el PDF nunca salga sin CUIL teniendo
     // los datos para calcularlo.
-    datos.cuil=(document.getElementById('rx2-cuil')||{}).value||(document.getElementById('rx-cuil')||{}).value||calcularCUIL(datos.dni, datos.sexo)||'';
+    // El CUIL es solo de Argentina: fuera de Argentina el campo no existe, no se calcula y no sale en el PDF.
+    datos.cuil=medicoEsArgentina() ? ((document.getElementById('rx2-cuil')||{}).value||(document.getElementById('rx-cuil')||{}).value||calcularCUIL(datos.dni, datos.sexo)||'') : '';
     datos.os=(document.getElementById('rx2-os')||{}).value||(document.getElementById('rx-os')||{}).value||'';
     datos.afiliado=(document.getElementById('rx2-afiliado')||{}).value||(document.getElementById('rx-afiliado')||{}).value||'';
     datos.plan=(document.getElementById('rx2-plan')||{}).value||'';
