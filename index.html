@@ -5112,7 +5112,12 @@ function _setLabelText(el, nuevoTexto){
                        pais==='co' ? 'Cédula de ciudadanía' :
                        '30.000.000';
     }
-    if(el.placeholder.includes('Matrícula') || el.placeholder.includes('colegiado')){
+    // Se cambia solo la PALABRA "Matrícula" por el término del país. Antes se pisaba el placeholder entero, y
+    // "M.N. (Matrícula Nacional)" / "M.P. (Matrícula Provincial, opcional)" del registro (y el ejemplo de "Médico
+    // prescriptor") quedaban en un simple "Matrícula" apenas se abría "Mi Firma Digital".
+    if(el.placeholder.includes('Matrícula')){
+      el.placeholder = el.placeholder.replace('Matrícula', t.matricula);
+    } else if(el.placeholder.includes('colegiado')){
       el.placeholder = t.matricula;
     }
   });
@@ -5373,8 +5378,16 @@ function mostrarRecuperarPass(){
 }
 function cerrarApp(){
   try{ detenerControlInactividad(); }catch(e){ console.warn('[catch]', e); }
-  try{ sb.auth.signOut(); }catch(e){ console.warn('[catch]', e); }
+  // Lo guardado en el navegador del médico se persiste con SU clave mientras usuarioActual todavía está seteado
+  // (si no, el guardado del cierre iría a la clave "guest" con los pacientes de este médico).
+  try{ guardarLocal(); }catch(e){ console.warn('[catch]', e); }
+  // Nada del médico debe quedar en la clave "guest" (la que usa el navegador cuando no hay nadie logueado).
+  try{ ['mhcd_pacientes','mhcd_turnos','mhcd_videoconsultas'].forEach(function(base){ localStorage.removeItem(base+'_guest'); }); }catch(e){ console.warn('[catch]', e); }
+  var pSalida = null;
+  try{ pSalida = sb.auth.signOut(); }catch(e){ console.warn('[catch]', e); }
   usuarioActual = null;
+  // La receta firmada (PDF con datos del paciente) y una emisión pendiente no deben sobrevivir al cierre de sesión.
+  _recetaFirmadaCache = null; _recetaFirmaPendiente = null;
   document.body.classList.remove('in-app');
   document.getElementById('app').style.display='none';
   document.getElementById('landing').style.display='block';
@@ -5388,6 +5401,20 @@ function cerrarApp(){
     if(rEl) rEl.checked=false;
     localStorage.removeItem('mhcd_recordar_user');
   }
+  // LIMPIEZA TOTAL: al salir se recarga la página. Así no queda nada del médico anterior en memoria ni en pantalla
+  // (pacientes, turnos, formularios de receta / derivación / estudios / historia clínica, receta firmada, etc.):
+  // en una computadora compartida el médico siguiente arranca de cero. Se espera a que termine el cierre de sesión
+  // (si no, la navegación podría cortar el pedido y dejar la sesión guardada) — con un tope por si no hay conexión.
+  var recargado = false;
+  var recargar = function(){
+    if(recargado) return;
+    recargado = true;
+    try{ window.removeEventListener('beforeunload', guardarLocal); }catch(e){ console.warn('[catch]', e); }
+    try{ pacientes = []; turnos = []; videoconsultas = []; }catch(e){ console.warn('[catch]', e); }
+    location.replace(location.origin + location.pathname);
+  };
+  if(pSalida && typeof pSalida.then === 'function'){ pSalida.then(recargar, recargar); } else { recargar(); }
+  setTimeout(recargar, 2500);
 }
 
 // ── CIERRE DE SESIÓN POR INACTIVIDAD ──
@@ -16858,6 +16885,9 @@ function mlRegistrar(){
       usuario: email, email: email,
       nombre: nombre, sexo: sexo, dni: dni, cuil: cuil, telefono: tel,
       mn: mn, mp: mp, especialidad: esp,
+      // Mismo texto que se guarda en usuarios.matricula (abajo): la receta (getDatosDocumento) lee la matrícula de acá,
+      // y sin esto la PRIMERA sesión de una cuenta nueva no podía emitir recetas hasta salir y volver a entrar.
+      matricula: (mn?'M.N. '+mn:(mp?'M.P. '+mp:'')),
       subespecialidad: subesp, institucion: inst,
       pais: pais, region: prov, ciudad: ciudad,
       plan: planElegido
