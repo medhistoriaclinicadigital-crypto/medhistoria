@@ -14891,26 +14891,8 @@ function enviarDesdeOverlay(canal){
   if(_tipoEnvioActual && !_docEntraEnUnaHoja(_tipoEnvioActual)) return;
   document.getElementById('envioOverlay').style.display = 'none';
   var tipo = _tipoEnvioActual;
-  // Guardar derivación en Supabase
-  if(tipo==='derivacion' && usuarioActual && usuarioActual.id){
-    var dDer = getDatosDocumento('derivacion');
-    var dniDer = (document.getElementById('der-dni')||{}).value||'';
-    if(dniDer){
-      buscarPacienteIdCompartido(dniDer, function(pacienteIdDer){
-        var derSB = {
-          paciente_id: pacienteIdDer,
-          medico_id: usuarioActual.id,
-          especialidad: dDer.esp||'',
-          motivo_derivacion: dDer.contenido||'',
-          antecedentes_relevantes: (document.getElementById('der-ant')||{}).value||'',
-          urgencia: (document.getElementById('der-urgencia')||{}).value||'',
-          whatsapp_envio: '',
-          email_envio: ''
-        };
-        sb.from('derivaciones').insert(derSB).then(function(){});
-      });
-    }
-  }
+  // (La derivación y el pedido de estudios se registran en descargarPDF, una sola vez: todos los canales pasan por ahí.
+  //  Registrar la derivación también acá la guardaba dos veces, y una vez aunque después el envío se frenara por el add-on.)
   if(canal === 'pdf'){
     descargarPDF(tipo);
     return;
