@@ -5640,6 +5640,7 @@ function generarDocumento(tipo){
 function showPanelMob(id, btn){
   document.querySelectorAll('.app-panel').forEach(p=>p.classList.remove('act'));
   document.getElementById('panel-'+id).classList.add('act');
+  if(id==='recetas'){ try{ _iniciarRecetaSiHaceFalta(); _sincronizarMedicamentoReceta(); }catch(eIr){ console.warn('[catch]', eIr); } }
   document.querySelectorAll('.mob-btn').forEach(b=>b.classList.remove('act'));
   if(btn) btn.classList.add('act');
   // scroll to top
@@ -5653,6 +5654,7 @@ function toggleMore(){
 // ── APP PANELS (sidebar) ──
 function showPanel(id){
   try{ aplicarTextosFirmaPorPais(); }catch(eFp){ console.warn('[catch]', eFp); }
+  if(id==='recetas'){ try{ _iniciarRecetaSiHaceFalta(); }catch(eIr){ console.warn('[catch]', eIr); } }
   // Ocultar TODOS los paneles primero
   document.querySelectorAll('.app-panel').forEach(function(p){
     p.classList.remove('act');
@@ -8265,8 +8267,16 @@ function agregarMedicamentoReceta(){
 }
 
 // Cada receta lleva un solo medicamento (todos los países): con uno cargado se bloquea el mini-formulario y aparece "Quitar".
+// Línea de texto de un medicamento de la lista (la misma que se ve en la vista previa).
+function _lineaMedicamentoDe(m){
+  return construirLineaMedicamento(m.ifa, m.comercial, m.forma, m.presentacion, m.cantidad, m.posologia);
+}
 function _sincronizarMedicamentoReceta(){
   var cargado = (typeof _recetaMedicamentosData !== 'undefined') && _recetaMedicamentosData.length >= 1;
+  // El cuadro "Medicación prescripta" solo muestra lo que hay en la lista: nunca puede quedar ahí un texto suelto (por ejemplo, uno que el
+  // navegador restauró de una visita anterior) que no se pueda quitar y que salga en la receta.
+  var cuadro = document.getElementById('rx2-med');
+  if(cuadro) cuadro.value = cargado ? _recetaMedicamentosData.map(_lineaMedicamentoDe).join('\n') : '';
   ['rx2-med-ifa','rx2-med-comercial','rx2-med-forma','rx2-med-presentacion','rx2-med-cantidad','rx2-med-posologia'].forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.disabled = cargado;
@@ -8284,6 +8294,33 @@ function quitarMedicamentoReceta(){
   var textarea = document.getElementById('rx2-med');
   if(textarea) textarea.value = '';
   _sincronizarMedicamentoReceta();
+}
+
+// La receta arranca en blanco en cada carga de la página. Los datos de la receta viven solo en memoria: al recargar no hay ninguna receta en curso.
+// Pero el navegador puede restaurar los campos que tenían texto en la visita anterior (Firefox al recargar; Chrome/Edge al volver con "Atrás" o al
+// reabrir la pestaña), y un medicamento de prueba viejo aparecía "cargado" y bloqueaba el mini-formulario. Acá se vacían los
+// campos de contenido que no se completan solos desde el perfil del médico ni desde la historia clínica. (rx-med / rx-diag / rx-ind son los de la
+// pestaña Receta del modal "Imprimir documento", hoy oculta.)
+function _reiniciarContenidoReceta(){
+  ['rx2-med-ifa','rx2-med-comercial','rx2-med-forma','rx2-med-presentacion','rx2-med-cantidad','rx2-med-posologia','rx2-med',
+   'rx2-cuil','rx2-diag','rx2-ind','rx2-fecha-inicio-vigencia','rx2-wa','rx2-email',
+   'rx-med','rx-diag','rx-ind'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = '';
+  });
+  var validez = document.getElementById('rx2-validez'); if(validez) validez.selectedIndex = 0;
+  var contacto = document.getElementById('rx2-incluir-contacto'); if(contacto) contacto.checked = false;
+  _recetaMedicamentosData = [];
+  try{ actualizarPreviaMedicamento(); }catch(eRm){ console.warn('[catch]', eRm); }
+  try{ _sincronizarMedicamentoReceta(); }catch(eRm2){ console.warn('[catch]', eRm2); }
+}
+var _recetaIniciada = false;
+// Se llama la primera vez que se abre la receta en cada carga de la página (showPanel / showPanelMob), antes de completar los datos del paciente.
+// No se hace al terminar de cargar la página porque el navegador puede restaurar los campos después de la carga (se comprobó en Chrome al volver con
+// "Atrás") y pisaría ese reinicio; las veces siguientes no se toca nada, para no perder lo que el médico está escribiendo si cambia de pantalla y vuelve.
+function _iniciarRecetaSiHaceFalta(){
+  if(_recetaIniciada) return;
+  _recetaIniciada = true;
+  _reiniciarContenidoReceta();
 }
 
 function agregarMedicoACentro(){
@@ -14927,8 +14964,10 @@ function getDatosDocumento(tipo){
     datos.afiliado=(document.getElementById('rx2-afiliado')||{}).value||(document.getElementById('rx-afiliado')||{}).value||'';
     datos.plan=(document.getElementById('rx2-plan')||{}).value||'';
     datos.diag=(document.getElementById('rx2-diag')||{}).value||(document.getElementById('rx-diag')||{}).value||'';
-    datos.contenido=(document.getElementById('rx2-med')||{}).value||(document.getElementById('rx-med')||{}).value||'';
     datos.medicamentos=(typeof _recetaMedicamentosData!=='undefined' && _recetaMedicamentosData.length) ? _recetaMedicamentosData.slice() : null;
+    // El medicamento sale SIEMPRE de la lista armada con los campos (un solo medicamento por receta), nunca de un texto suelto que haya
+    // quedado en pantalla: sin medicamento cargado el contenido queda vacío y la receta pide cargarlo.
+    datos.contenido=datos.medicamentos ? datos.medicamentos.map(_lineaMedicamentoDe).join('\n') : '';
     datos.ind=(document.getElementById('rx2-ind')||{}).value||(document.getElementById('rx-ind')||{}).value||'';
     datos.medico=(document.getElementById('rx2-medico')||{}).value||(document.getElementById('rx-medico')||{}).value||'';
     datos.domicilio=(document.getElementById('rx2-domicilio')||{}).value||(usuarioActual?(usuarioActual.domicilio_profesional||localStorage.getItem('medhistoria_domicilio_'+(usuarioActual.email||usuarioActual.id||'default'))||''):'');
