@@ -6263,16 +6263,88 @@ function cargarReportesReales(){
   });
 }
 
+// ── Pestaña "🖊️ Firmas": evidencia de cada receta firmada y claves de firma de los médicos ──
+// Los datos vienen de la RPC admin_firmas_panel: solo administrador con 2FA (se verifica en el servidor, no solo en esta pantalla). Sin datos del paciente,
+// sin el contenido de la receta y sin ningún secreto (la clave privada de cada médico nunca sale del servidor).
+function _admFirmasCorto(t, n){ t = String(t == null ? '' : t); return t.length > n ? t.slice(0, n) + '…' : t; }
+function buscarFirmasAdmin(){
+  var input = document.getElementById('admin-firmas-buscar');
+  cargarFirmasAdmin(input ? input.value : '');
+}
+function cargarFirmasAdmin(buscar){
+  var kpis = document.getElementById('admin-firmas-kpis');
+  var tbody = document.getElementById('admin-firmas-tbody');
+  var tbodyC = document.getElementById('admin-claves-tbody');
+  var nota = document.getElementById('admin-firmas-nota');
+  if(!tbody || !tbodyC) return;
+  var q = String(buscar == null ? '' : buscar).trim();
+  var LIMITE = 100;
+  tbody.innerHTML = '<tr><td colspan="6" style="padding:14px;color:rgba(109,222,150,.4);">Cargando...</td></tr>';
+  tbodyC.innerHTML = '<tr><td colspan="4" style="padding:14px;color:rgba(109,222,150,.4);">Cargando...</td></tr>';
+  if(nota) nota.textContent = '';
+  var mostrarError = function(msg){
+    tbody.innerHTML = '<tr><td colspan="6" style="padding:14px;color:#ff8080;">⚠️ '+escHtml(msg)+'</td></tr>';
+    tbodyC.innerHTML = '<tr><td colspan="4" style="padding:14px;color:#ff8080;">⚠️ '+escHtml(msg)+'</td></tr>';
+    if(kpis) kpis.innerHTML = '';
+  };
+  sb.rpc('admin_firmas_panel', { p_buscar: q || null, p_limite: LIMITE }).then(function(r){
+    if(r.error){
+      var falta = /could not find the function|PGRST202|does not exist/i.test(String(r.error.message || '') + ' ' + String(r.error.code || ''));
+      mostrarError(falta ? 'Todavía no está instalada la consulta de firmas en la base (falta correr el SQL de admin_firmas_panel).' : ('No se pudo cargar: ' + (r.error.message || 'error desconocido')));
+      console.error('Error cargando firmas:', r.error);
+      return;
+    }
+    var d = r.data || {}, res = d.resumen || {}, firmas = d.firmas || [], claves = d.claves || [];
+    if(kpis){
+      var tarjeta = function(etq, v){ return '<div style="flex:1;min-width:150px;background:#0f2318;border:1px solid rgba(52,196,100,.2);border-radius:10px;padding:12px 14px;"><div style="color:rgba(109,222,150,.6);font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;">'+escHtml(etq)+'</div><div style="color:#fff;font-size:1.4rem;font-weight:700;">'+escHtml(Number(v||0).toLocaleString('es-AR'))+'</div></div>'; };
+      kpis.innerHTML = tarjeta('Recetas firmadas', res.firmas_total) + tarjeta('Últimos 30 días', res.firmas_30_dias) + tarjeta('Médicos con clave activa', res.medicos_con_clave) + tarjeta('Claves revocadas', res.claves_revocadas);
+    }
+    if(nota) nota.textContent = firmas.length >= LIMITE ? '(se muestran las últimas ' + LIMITE + ')' : '';
+    if(!firmas.length){
+      tbody.innerHTML = '<tr><td colspan="6" style="padding:14px;color:rgba(109,222,150,.4);">' + (q ? 'Sin resultados para esa búsqueda.' : 'Todavía no hay recetas firmadas.') + '</td></tr>';
+    } else {
+      tbody.innerHTML = firmas.map(function(f){
+        var fechaTxt = f.firmado_en ? new Date(f.firmado_en).toLocaleString('es-AR') : '-';
+        return '<tr style="border-bottom:1px solid rgba(52,196,100,.08);">'
+          +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);white-space:nowrap;">'+escHtml(fechaTxt)+'</td>'
+          +'<td style="padding:10px 12px;color:#fff;">'+escHtml(f.medico_nombre||'-')+(f.medico_matricula ? ' <span style="color:rgba(255,255,255,.4);font-size:.75rem;">· '+escHtml(f.medico_matricula)+'</span>' : '')+'<br><span style="color:rgba(255,255,255,.4);font-size:.75rem;">'+escHtml(f.medico_email||'')+'</span></td>'
+          +'<td style="padding:10px 12px;color:var(--g6);font-family:monospace;font-size:.75rem;white-space:nowrap;">'+escHtml(_firmaRxTokenFmt(f.token||''))+'</td>'
+          +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);font-family:monospace;font-size:.75rem;" title="'+escHtml(f.hash_pdf||'')+'">'+escHtml(_admFirmasCorto(f.hash_pdf, 16))+'</td>'
+          +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);font-family:monospace;font-size:.75rem;" title="'+escHtml((f.algoritmo||'')+' · '+(f.huella_clave||''))+'">'+escHtml(_admFirmasCorto(f.huella_clave, 12))+'</td>'
+          +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);">'+escHtml(f.ip||'—')+'<br><span style="color:rgba(255,255,255,.35);font-size:.72rem;" title="'+escHtml(f.user_agent||'')+'">'+escHtml(_admFirmasCorto(f.user_agent||'', 38))+'</span></td>'
+          +'</tr>';
+      }).join('');
+    }
+    if(!claves.length){
+      tbodyC.innerHTML = '<tr><td colspan="4" style="padding:14px;color:rgba(109,222,150,.4);">' + (q ? 'Sin resultados para esa búsqueda.' : 'Todavía ningún médico activó su clave de firma.') + '</td></tr>';
+    } else {
+      tbodyC.innerHTML = claves.map(function(c){
+        var alta = c.creada_en ? new Date(c.creada_en).toLocaleString('es-AR') : '-';
+        var estado = c.activa ? '<span style="color:#6dde96;font-weight:600;">Activa</span>' : '<span style="color:#fbbf24;font-weight:600;">Revocada'+(c.revocada_en ? ' el '+escHtml(new Date(c.revocada_en).toLocaleDateString('es-AR')) : '')+'</span>';
+        return '<tr style="border-bottom:1px solid rgba(52,196,100,.08);">'
+          +'<td style="padding:10px 12px;color:#fff;">'+escHtml(c.medico_nombre||'-')+'<br><span style="color:rgba(255,255,255,.4);font-size:.75rem;">'+escHtml(c.medico_email||'')+'</span></td>'
+          +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);font-family:monospace;font-size:.75rem;" title="'+escHtml((c.algoritmo||'')+' · '+(c.huella||''))+'">'+escHtml(_admFirmasCorto(c.huella, 20))+'</td>'
+          +'<td style="padding:10px 12px;color:rgba(255,255,255,.6);white-space:nowrap;">'+escHtml(alta)+'</td>'
+          +'<td style="padding:10px 12px;">'+estado+'</td>'
+          +'</tr>';
+      }).join('');
+    }
+  }, function(err){
+    mostrarError('Error de conexión al cargar las firmas.');
+  });
+}
+
 function switchAdminTab(btn, id){
   document.querySelectorAll('.admin-tab').forEach(function(b){ b.classList.remove('on'); });
   btn.classList.add('on');
-  ['at-mp','at-reportes','at-facturacion','at-consentimientos','at-mensajes'].forEach(function(t){
+  ['at-mp','at-reportes','at-facturacion','at-consentimientos','at-firmas','at-mensajes'].forEach(function(t){
     var el = document.getElementById(t);
     if(el) el.style.display = t===id?'block':'none';
   });
   if(id === 'at-mp') iniciarPagos2FA();
   if(id === 'at-reportes'){ cargarReportesReales(); cargarCentrosPendientesPago(); }
   if(id === 'at-facturacion') cargarFacturacionEditable();
+  if(id === 'at-firmas') cargarFirmasAdmin('');
   if(id === 'at-mensajes') cargarMensajesZoho();
 }
 
@@ -16379,6 +16451,7 @@ window.addEventListener('beforeunload', guardarLocal);
       <button class="admin-tab" onclick="switchAdminTab(this,'at-reportes')">📅 Reportes reales</button>
       <button class="admin-tab" onclick="switchAdminTab(this,'at-facturacion')">🧾 Facturación ARCA</button>
       <button class="admin-tab" onclick="switchAdminTab(this,'at-consentimientos')">🔏 Consentimientos</button>
+      <button class="admin-tab" onclick="switchAdminTab(this,'at-firmas')">🖊️ Firmas</button>
       <button class="admin-tab" onclick="switchAdminTab(this,'at-mensajes')">📧 Mensajes</button>
     </div>
 
@@ -16541,6 +16614,49 @@ window.addEventListener('beforeunload', guardarLocal);
               </tr>
             </thead>
             <tbody id="admin-consent-tbody"><tr><td colspan="4" style="padding:14px;color:rgba(109,222,150,.4);">Ingresá un email y tocá Buscar.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: FIRMAS ELECTRÓNICAS DE RECETAS -->
+    <div id="at-firmas" style="display:none;">
+      <div style="background:#0a1a0f;border:1px solid rgba(52,196,100,.2);border-radius:14px;padding:20px;">
+        <div style="color:#fff;font-weight:700;margin-bottom:6px;">🖊️ Firmas electrónicas de recetas</div>
+        <div style="color:rgba(109,222,150,.6);font-size:.82rem;margin-bottom:16px;max-width:680px;">Constancia de cada receta firmada: cuándo, qué médico, con qué clave y desde qué IP. Solo lectura. No incluye el nombre del paciente ni el contenido de la receta. Buscá por email o nombre del médico, o por el código de verificación de la receta.</div>
+        <div id="admin-firmas-kpis" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;"></div>
+        <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
+          <input id="admin-firmas-buscar" type="text" placeholder="email o nombre del médico, o código de verificación" style="flex:1;min-width:220px;background:#0f2318;border:1px solid rgba(52,196,100,.3);color:#fff;border-radius:8px;padding:10px 14px;font-size:.85rem;" onkeydown="if(event.key==='Enter')buscarFirmasAdmin()">
+          <button onclick="buscarFirmasAdmin()" style="padding:10px 22px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;">🔎 Buscar</button>
+        </div>
+        <div style="color:#fff;font-weight:600;font-size:.85rem;margin-bottom:8px;">Recetas firmadas <span id="admin-firmas-nota" style="color:rgba(109,222,150,.5);font-weight:400;font-size:.75rem;"></span></div>
+        <div style="overflow-x:auto;margin-bottom:22px;">
+          <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+            <thead>
+              <tr style="background:rgba(52,196,100,.08);">
+                <th style="padding:10px 12px;text-align:left;color:rgba(109,222,150,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;">Fecha y hora</th>
+                <th style="padding:10px 12px;text-align:left;color:rgba(109,222,150,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;">Médico</th>
+                <th style="padding:10px 12px;text-align:left;color:rgba(109,222,150,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;">Código de verificación</th>
+                <th style="padding:10px 12px;text-align:left;color:rgba(109,222,150,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;">Huella del PDF</th>
+                <th style="padding:10px 12px;text-align:left;color:rgba(109,222,150,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;">Clave</th>
+                <th style="padding:10px 12px;text-align:left;color:rgba(109,222,150,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;">IP / navegador</th>
+              </tr>
+            </thead>
+            <tbody id="admin-firmas-tbody"><tr><td colspan="6" style="padding:14px;color:rgba(109,222,150,.4);">Tocá la pestaña para cargar.</td></tr></tbody>
+          </table>
+        </div>
+        <div style="color:#fff;font-weight:600;font-size:.85rem;margin-bottom:8px;">Claves de firma de los médicos</div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+            <thead>
+              <tr style="background:rgba(52,196,100,.08);">
+                <th style="padding:10px 12px;text-align:left;color:rgba(109,222,150,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;">Médico</th>
+                <th style="padding:10px 12px;text-align:left;color:rgba(109,222,150,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;">Huella de la clave</th>
+                <th style="padding:10px 12px;text-align:left;color:rgba(109,222,150,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;">Creada</th>
+                <th style="padding:10px 12px;text-align:left;color:rgba(109,222,150,.7);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="admin-claves-tbody"><tr><td colspan="4" style="padding:14px;color:rgba(109,222,150,.4);">Tocá la pestaña para cargar.</td></tr></tbody>
           </table>
         </div>
       </div>
