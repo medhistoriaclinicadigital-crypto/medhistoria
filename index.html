@@ -2638,6 +2638,10 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               <div class="firma-solo-ar" style="font-size:.72rem;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:6px 10px;margin-top:6px;">💡 Para cumplir con el Registro de Recetarios Electrónicos, cada medicamento necesita: nombre genérico (IFA), forma farmacéutica, presentación y cantidad de unidades. Usá el formulario de arriba para no olvidarte de ninguno.</div>
               <button class="ai-assist" style="margin-top:6px;">🤖 IA: completar medicación según historial</button><div style="font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-top:6px;">⚠️ Este campo puede enviarse a un servicio de IA externo. No escribas el nombre del paciente acá. Vos sos responsable de que los datos que cargues sean correctos y de revisar la respuesta antes de usarla clínicamente. MedHistoriaClinicaOnline no asume responsabilidad legal por las decisiones clínicas que el profesional adopte a partir de esta sugerencia — la decisión y la responsabilidad son siempre del médico tratante.</div>
             </div>
+            <div class="fl full" style="grid-column:1/-1;">
+              <label for="rx2-ind" style="display:block;margin-bottom:4px;">Indicaciones para el paciente (opcional)</label>
+              <textarea id="rx2-ind" autocomplete="off" style="width:100%;min-height:64px;box-sizing:border-box;" placeholder="Indicaciones al paciente..."></textarea>
+            </div>
             <div class="fl"><label>Validez<select id="rx2-validez"><option>30 días</option><option>60 días</option><option>90 días</option></select></div>
             <div class="fl"><label>Fecha de inicio de vigencia (opcional, si es distinta a hoy)<input type="date" id="rx2-fecha-inicio-vigencia"></label></div>
             <div class="fl"><label>Médico prescriptor<input type="text" id="rx2-medico" placeholder="Dr. Apellido · Especialidad · Matrícula 00000"></div>
