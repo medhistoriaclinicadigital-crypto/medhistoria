@@ -13826,8 +13826,8 @@ function enviarRecordatorioWANuevoTurno(diasAntes){
   var medico = medicoEl ? medicoEl.textContent.replace(/✏️/g,'').trim() : 'Su médico';
   if(!medico || medico === 'Dr. Usuario') medico = 'Su médico';
 
-  // Email del médico para recibir confirmaciones
-  var emailMedico = 'medhistoriaclinicaonline@gmail.com';
+  // Email del médico que emite el turno: a ese mail le llegan las respuestas del paciente (si no hubiera ninguno, la línea no se agrega)
+  var emailMedico = (usuarioActual && usuarioActual.email) ? String(usuarioActual.email).trim() : '';
 
   var cuando = diasAntes === 2 ? 'RECORDATORIO — faltan 2 días para su turno' : 'RECORDATORIO — mañana es su turno';
   var pacMayus = pac.toUpperCase();
@@ -13847,7 +13847,7 @@ function enviarRecordatorioWANuevoTurno(diasAntes){
     +'👨‍⚕️ Médico: *'+medico+'*\n\n'
     +'✅ Para *CONFIRMAR* su turno responda este mensaje con la palabra:\n*CONFIRMO*\n\n'
     +'❌ Para *CANCELAR* responda con:\n*CANCELO*\n\n'
-    +'📧 O puede responder por email a:\n'+emailMedico+'\n\n'
+    +(emailMedico ? '📧 O puede responder por email a:\n'+emailMedico+'\n\n' : '')
     +'_MedHistoriaClinicaOnline_';
 
   window.open('https://wa.me/'+_waNumero(wa)+'?text='+encodeURIComponent(msg),'_blank');
