@@ -14287,7 +14287,14 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   callback(doc, d);
 }
 
-function generarPDFbase64(tipo, callback){
+// ¿El documento (derivación, pedido de estudios, orden, resumen HC) entra en una hoja? Si no entra ni con la letra más chica, avisa y devuelve false.
+// Se usa ANTES de registrar o entregar nada, para no dejar un registro guardado de un PDF que después no se puede generar. La receta tiene su propio armado.
+function _docEntraEnUnaHoja(tipo){
+  if(tipo === 'receta') return true;
+  try{ return generarPDFbase64(tipo, null, true) !== false; }catch(eEnt){ console.warn('[catch]', eEnt); return true; }
+}
+
+function generarPDFbase64(tipo, callback, soloVerificar){
   var d = getDatosDocumento(tipo);
 
   // La receta tiene su propio armado completo (modelo ReNaPDiS), separado
@@ -14452,38 +14459,83 @@ function generarPDFbase64(tipo, callback){
   }
 
   // Caja verde claro
-  var contenidoLines = doc.splitTextToSize(d.contenido || '', W - margin*2 - 20);
-  var antLines = (tipo==='derivacion' && d.ant) ? doc.splitTextToSize(d.ant, W-margin*2-20) : [];
-  var cajaH = tipo==='pedido' ? Math.max(90, contenidoLines.length * 6 + 16) : tipo==='derivacion' ? Math.max(120, contenidoLines.length * 6 + (antLines.length>0 ? antLines.length*6+22 : 0) + 30) : Math.max(90, contenidoLines.length * 6 + 16);
+  // Los renglones se miden con la MISMA letra con la que después se dibujan. Antes se medían con la del rótulo (7 pt en negrita): un párrafo largo
+  // salía más ancho que el recuadro y se cortaba en el borde de la hoja (en el pedido de estudios llegaba a 229 mm de una hoja de 210 mm). Además, si el
+  // texto es muy largo se achica el aire del recuadro (como en la receta) y, si hace falta, la letra (hasta 8 pt) para que el recuadro no pise las
+  // leyendas y la firma del pie; si ni así entra en una hoja, se avisa (sin guardar ni entregar nada) en vez de entregar un PDF roto.
+  var _anchoTxt = W - margin*2 - 20;
+  var _conEsp = (tipo==='derivacion' && d.esp) ? true : false;
+  var _LIM_CAJA = 252;                 // el pie de la hoja (leyendas y firma) empieza en ~253 mm
+  var _sfDoc = doc.internal.scaleFactor;
+  var _armarCaja = function(fs, compacto){
+    var fsA = Math.min(9, fs - 1);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(fs);  var _cl = doc.splitTextToSize(d.contenido || '', _anchoTxt);
+    doc.setFontSize(fsA); var _al = (tipo==='derivacion' && d.ant) ? doc.splitTextToSize(d.ant, _anchoTxt) : [];
+    var _il = d.ind ? doc.splitTextToSize(d.ind, W - margin*2 - 4) : [];
+    var lh = fs * 1.15 / _sfDoc, lhA = fsA * 1.15 / _sfDoc;
+    var g = { fs:fs, fsA:fsA, cl:_cl, al:_al, il:_il };
+    if(!compacto){
+      // el diseño de siempre (los mismos números que antes)
+      g.cajaH = tipo==='derivacion' ? Math.max(120, _cl.length*6 + (_al.length>0 ? _al.length*6+22 : 0) + 30) : Math.max(90, _cl.length*6 + 16);
+      g.yRotulo = 50; g.yTxt = _conEsp ? 57 : 14;
+      g.yAnt = _conEsp ? 57 + _cl.length*6 + 8 : 14 + _cl.length*6 + 4;
+      g.indH = Math.max(16, _il.length*6 + 6);
+    } else {
+      // con la altura real de cada renglón y sin el aire de sobra (en Derivación el rótulo sube junto a la especialidad)
+      g.yRotulo = 26; g.yTxt = _conEsp ? 33 : 14;
+      var fin = g.yTxt + _cl.length * lh;
+      g.yAnt = fin + 6;
+      if(_al.length > 0) fin = g.yAnt + 5 + _al.length * lhA;
+      g.cajaH = fin + 8;
+      g.indH = _il.length ? _il.length * lhA + 8 : 0;
+    }
+    g.fondo = y + g.cajaH + (d.ind ? 6 + 4 + g.indH : 0);   // dónde termina todo lo que va sobre el pie de la hoja
+    g.finTxt = (_al.length > 0) ? g.yAnt + 5 + (_al.length - 1) * lhA : g.yTxt + (_cl.length - 1) * lh;   // último renglón de texto (relativo al recuadro)
+    return g;
+  };
+  var _g = _armarCaja(10, false);
+  if(_g.fondo > _LIM_CAJA || _g.finTxt > _g.cajaH - 4){   // no entra sobre el pie, o el texto se sale por abajo del propio recuadro
+    _g = null;
+    for(var _fsT = 10; _fsT >= 8 && !_g; _fsT -= 0.5){ var _gg = _armarCaja(_fsT, true); if(_gg.fondo <= _LIM_CAJA) _g = _gg; }
+    if(!_g){
+      alert('Este documento tiene demasiado texto para entrar en una hoja, ni siquiera con la letra más chica.\n\nAcortalo (dejá solo lo esencial) o dividilo en dos documentos, y volvé a intentar. No se guardó ni se envió nada.');
+      return false;
+    }
+  }
+  if(soloVerificar) return true;
+  var contenidoLines = _g.cl;
+  var antLines = _g.al;
+  var cajaH = _g.cajaH;
   doc.setFillColor(240,253,244); doc.setDrawColor(134,239,172);
 	doc.rect(x, y, W-margin*2, cajaH, 'FD');
 
   // S/P centrado con especialidad para derivaciones
   doc.setTextColor(20,90,50); doc.setFontSize(9); doc.setFont('helvetica','bold');
-  if(tipo==='derivacion' && d.esp){
+  if(_conEsp){
     var spTxt = 'S/P';
     doc.text(spTxt, x+3, y+7);
     // Especialidad centrada
     doc.setFontSize(12); doc.setFont('helvetica','bold');
     doc.text(d.esp, (W)/2, y+16, {align:'center'});
     doc.setTextColor(20,90,50); doc.setFontSize(8); doc.setFont('helvetica','bold');
-    doc.text('MOTIVO DE DERIVACIÓN', x+3, y+50);
-    doc.setTextColor(15,60,30); doc.setFontSize(10); doc.setFont('helvetica','normal');
-    doc.text(contenidoLines, x+3, y+57);
-    var yAnt = y + 57 + contenidoLines.length * 6 + 8;
+    doc.text('MOTIVO DE DERIVACIÓN', x+3, y+_g.yRotulo);
+    doc.setTextColor(15,60,30); doc.setFontSize(_g.fs); doc.setFont('helvetica','normal');
+    doc.text(contenidoLines, x+3, y+_g.yTxt);
+    var yAnt = y + _g.yAnt;
   } else {
     var spTxt = 'S/P';
     doc.text(spTxt, x+3, y+7);
-    doc.setTextColor(15,60,30); doc.setFontSize(10); doc.setFont('helvetica','normal');
-    doc.text(contenidoLines, x+3, y+14);
-    var yAnt = y + 14 + contenidoLines.length * 6 + 4;
+    doc.setTextColor(15,60,30); doc.setFontSize(_g.fs); doc.setFont('helvetica','normal');
+    doc.text(contenidoLines, x+3, y+_g.yTxt);
+    var yAnt = y + _g.yAnt;
   }
 
   // Antecedentes relevantes debajo a la izquierda
   if(tipo==='derivacion' && antLines.length > 0){
     doc.setTextColor(20,90,50); doc.setFontSize(8); doc.setFont('helvetica','bold');
     doc.text('ANTECEDENTES RELEVANTES', x+3, yAnt);
-    doc.setTextColor(15,60,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.setTextColor(15,60,30); doc.setFontSize(_g.fsA); doc.setFont('helvetica','normal');
     doc.text(antLines, x+3, yAnt+5);
   }
 
@@ -14505,11 +14557,11 @@ function generarPDFbase64(tipo, callback){
     doc.setTextColor(20,90,50); doc.setFontSize(7); doc.setFont('helvetica','bold');
     doc.text(tipo==='hc' ? 'ANTECEDENTES' : 'INDICACIONES AL PACIENTE', x, y);
     y += 4;
-    var indLines = doc.splitTextToSize(d.ind, W-margin*2-4);
-    var indH = Math.max(16, indLines.length*6+6);
+    var indLines = _g.il;
+    var indH = _g.indH;
     doc.setFillColor(255,251,235); doc.setDrawColor(253,230,138);
     doc.rect(x, y, W-margin*2, indH, 'FD');
-    doc.setTextColor(80,50,10); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.setTextColor(80,50,10); doc.setFontSize(_g.fsA); doc.setFont('helvetica','normal');
     doc.text(indLines, x+3, y+5);
     y += indH + 6;
   }
@@ -14748,6 +14800,7 @@ function descargarPDF(tipo){
   var d = getDatosDocumento(tipo);
   if(!d.pac){ alert('Completá el nombre del paciente primero.'); return; }
   if(tipo === 'receta'){ _descargarRecetaFirmada(); return; }
+  if(!_docEntraEnUnaHoja(tipo)) return;   // si el texto no entra en una hoja se avisa antes de registrar nada
    if(tipo==='derivacion' && usuarioActual && usuarioActual.id){
       var dniDer = (document.getElementById('der-dni')||{}).value||'';
       if(dniDer){
@@ -14877,6 +14930,8 @@ function mostrarOpcionesEnvio(tipo){
   overlay.style.display = 'flex';
 }
 function enviarDesdeOverlay(canal){
+  // Si el documento no entra en una hoja se avisa ANTES de registrar o enviar nada (el cuadro de envío queda abierto).
+  if(_tipoEnvioActual && !_docEntraEnUnaHoja(_tipoEnvioActual)) return;
   document.getElementById('envioOverlay').style.display = 'none';
   var tipo = _tipoEnvioActual;
   // Guardar derivación en Supabase
