@@ -2661,7 +2661,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 14px;grid-column:1/-1;margin-top:4px;">
               <div style="font-size:.72rem;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:8px;">📤 Envío automático — completá para enviar sin pasos adicionales</div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">📱 WhatsApp del paciente<input class="mi" id="rx2-wa" type="tel" placeholder="11 1234-5678" style="margin-top:4px;"></div>
+                <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">📱 WhatsApp del paciente<input class="mi" id="rx2-wa" type="tel" placeholder="11 1234-5678" data-wa-ph="{ej}" style="margin-top:4px;"></div>
                 <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">✉️ Email del paciente<input class="mi" id="rx2-email" type="email" placeholder="paciente@email.com" style="margin-top:4px;"></div>
               </div>
             </div>
@@ -2801,7 +2801,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 14px;grid-column:1/-1;margin-top:4px;">
               <div style="font-size:.72rem;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:8px;">📤 Envío automático — completá para enviar sin pasos adicionales</div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">📱 WhatsApp del paciente<input class="mi" id="der-wa" type="tel" placeholder="11 1234-5678" style="margin-top:4px;"></div>
+                <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">📱 WhatsApp del paciente<input class="mi" id="der-wa" type="tel" placeholder="11 1234-5678" data-wa-ph="{ej}" style="margin-top:4px;"></div>
                 <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">✉️ Email del paciente<input class="mi" id="der-email" type="email" placeholder="paciente@email.com" style="margin-top:4px;"></div>
               </div>
             </div>
@@ -2856,7 +2856,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 14px;grid-column:1/-1;margin-top:4px;">
               <div style="font-size:.72rem;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:8px;">📤 Envío automático — completá para enviar sin pasos adicionales</div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">📱 WhatsApp del paciente<input class="mi" id="est-wa" type="tel" placeholder="11 1234-5678" style="margin-top:4px;"></div>
+                <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">📱 WhatsApp del paciente<input class="mi" id="est-wa" type="tel" placeholder="11 1234-5678" data-wa-ph="{ej}" style="margin-top:4px;"></div>
                 <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">✉️ Email del paciente<input class="mi" id="est-email" type="email" placeholder="paciente@email.com" style="margin-top:4px;"></div>
               </div>
             </div>
@@ -3157,7 +3157,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               <label style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">📋 Motivo de consulta
               <input class="mi" id="turno-motivo" type="text" placeholder="Ej: Control HTA, Primera consulta...">
               <label style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">WhatsApp del paciente
-              <input class="mi" id="turno-wa" type="text" placeholder="11 1234-5678" style="margin-bottom:8px;">
+              <input class="mi" id="turno-wa" type="text" placeholder="11 1234-5678" data-wa-ph="{ej}" style="margin-bottom:8px;">
               <label style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Email del paciente <span style="font-weight:400;text-transform:none;">(para recibir confirmaciones)</span>
               <input class="mi" id="turno-email" type="email" placeholder="paciente@email.com" style="margin-bottom:8px;">
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -3237,7 +3237,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
                   <option>60 minutos</option>
                 </select>
               </div>
-              <div class="fl"><label>Teléfono / WhatsApp del paciente<input type="text" id="tele-tel" placeholder="11 1234-5678"></div>
+              <div class="fl"><label>Teléfono / WhatsApp del paciente<input type="text" id="tele-tel" placeholder="11 1234-5678" data-wa-ph="{ej}"></div>
               <div class="fl"><label>Email del paciente (opcional)<input type="email" id="tele-email" placeholder="paciente@email.com"></div>
               <div class="fl full"><label>Motivo de consulta<textarea id="tele-motivo" placeholder="Motivo de la videoconsulta..." style="min-height:60px;"></textarea></div>
             </div>
@@ -4401,7 +4401,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
                 <div style="font-size:.78rem;color:var(--muted);margin-bottom:6px;">Código generado:</div>
                 <div id="centro-codigo-texto" style="font-size:1.1rem;font-weight:800;color:var(--g2);letter-spacing:1px;margin-bottom:12px;"></div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                  <input type="tel" id="centro-codigo-tel" placeholder="WhatsApp del médico (11 1234-5678)" style="flex:1;min-width:200px;padding:9px 14px;border:1.5px solid var(--g8);border-radius:8px;font-size:.85rem;font-family:'Outfit',sans-serif;">
+                  <input type="tel" id="centro-codigo-tel" placeholder="WhatsApp del médico (11 1234-5678)" data-wa-ph="WhatsApp del médico ({ej})" style="flex:1;min-width:200px;padding:9px 14px;border:1.5px solid var(--g8);border-radius:8px;font-size:.85rem;font-family:'Outfit',sans-serif;">
                   <button onclick="enviarCodigoWhatsApp()" style="padding:9px 20px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">📲 Enviar por WhatsApp</button>
                 </div>
                 <div style="font-size:.72rem;color:var(--muted);margin-top:8px;">Se abre WhatsApp con el mensaje listo — solo falta que toques "Enviar" ahí.</div>
@@ -6856,11 +6856,11 @@ function procesarCancelacion(){
 }
 
 function enviarLandingWA(tipo){
-  var tel = prompt('N° de WhatsApp del paciente (con código de área):');
+  var tel = prompt('N° de WhatsApp del paciente ('+_waFormato().corto+'):');
   if(!tel) return;
   var labels = {receta:'Receta Médica Online', derivacion:'Derivación Médica', estudios:'Pedido de Estudios'};
   var txt = '🏥 *MedHistoriaClinicaOnline · '+labels[tipo]+'*\n\nFirmado electrónicamente · Ley 27.553\n\n_medhistoriaclinicaonline.com_';
-  window.open('https://wa.me/54'+tel+'?text='+encodeURIComponent(txt),'_blank');
+  window.open('https://wa.me/'+_waNumero(tel)+'?text='+encodeURIComponent(txt),'_blank');
 }
 
 function enviarLandingEmail(tipo){
@@ -8335,7 +8335,7 @@ function generarCodigoInvitacion(){
 function enviarCodigoWhatsApp(){
   if(!_ultimoCodigoInvitacion){ alert('Primero generá un código.'); return; }
   var telInp = document.getElementById('centro-codigo-tel');
-  var tel = telInp ? (telInp.value||'').replace(/\D/g,'') : '';
+  var tel = telInp ? _waNumero(telInp.value) : '';
   if(!tel){ alert('Ingresá el WhatsApp del médico.'); return; }
   var nombreCentro = miCentro ? miCentro.nombre : 'nuestro centro';
   var linkDirecto = 'https://medhistoriaclinicaonline.com/?codigo='+encodeURIComponent(_ultimoCodigoInvitacion);
@@ -8344,7 +8344,7 @@ function enviarCodigoWhatsApp(){
     + linkDirecto + '\n\n'
     + 'Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automáticamente al centro, con tu propio usuario y contraseña.';
   _wappBypassAddon = true;
-  window.open('https://wa.me/54'+tel+'?text='+encodeURIComponent(msg), '_blank');
+  window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg), '_blank');
 }
 
 function actualizarPaisFirma(pais){
@@ -8589,10 +8589,56 @@ function aplicarTextosFirmaPorPais(){
     if(!el.hasAttribute('data-ph-ar')) el.setAttribute('data-ph-ar', el.getAttribute('placeholder') || '');
     el.setAttribute('placeholder', ar ? el.getAttribute('data-ph-ar') : '');
   });
+  try{ aplicarFormatoWhatsAppPorPais(); }catch(eWa){ console.warn('[catch]', eWa); }
 }
 // Leyenda de firma de los mensajes al paciente ("Firma Electrónica · Ley 27.553"): es del texto de Argentina; fuera de Argentina
 // no se agrega (queda solo el resto del mensaje).
 function _firmaLeyMsg(txt){ return medicoEsArgentina() ? txt : ''; }
+
+// ── WhatsApp: prefijo de país del número del paciente ──
+// El link de WhatsApp (wa.me) necesita el número con el código de país. Antes se anteponía siempre "54" (Argentina): fuera de
+// Argentina el link quedaba mal armado y el mensaje podía ir a un número equivocado. Ahora se usa el código del país del médico
+// (usuarioActual.pais; sin país cargado = Argentina, igual que en el resto de la app). Si el número viene con "+" o "00" ya es
+// internacional y se respeta tal cual (paciente de otro país); si ya empieza con el código del país del médico, no se repite.
+// "Otro país" no tiene prefijo que adivinar: el médico escribe el número completo, con "+".
+//   cod = código de país · largo = dígitos del número nacional (para reconocer que ya trae el código) · cero = se saca el 0 inicial
+//   corto / aviso / modal = ayuda que se muestra al pedir el número · ej = ejemplo del cuadro de diálogo · ejForm = ejemplo de los campos
+var _WA_PAISES = {
+  ar:   { cod:'54',  largo:10, corto:'con código de área', aviso:'con código de área, sin 0 ni 15', modal:'con código de área (sin 0 ni 15)', ej:'1155443322', ejForm:'11 1234-5678' },
+  es:   { cod:'34',  largo:9,  corto:'los 9 dígitos, sin el +34', aviso:'los 9 dígitos, sin el +34', modal:'de 9 dígitos (sin el +34)', ej:'612345678', ejForm:'612 34 56 78' },
+  mx:   { cod:'52',  largo:10, corto:'los 10 dígitos, con clave LADA y sin el +52', aviso:'los 10 dígitos, con clave LADA y sin el +52', modal:'de 10 dígitos, con clave LADA (sin el +52)', ej:'5512345678', ejForm:'55 1234 5678' },
+  co:   { cod:'57',  largo:10, corto:'los 10 dígitos, sin el +57', aviso:'los 10 dígitos, sin el +57', modal:'de 10 dígitos (sin el +57)', ej:'3001234567', ejForm:'300 123 4567' },
+  cl:   { cod:'56',  largo:9,  corto:'los 9 dígitos, sin el +56', aviso:'los 9 dígitos, sin el +56', modal:'de 9 dígitos (sin el +56)', ej:'912345678', ejForm:'9 1234 5678' },
+  pe:   { cod:'51',  largo:9,  corto:'los 9 dígitos, sin el +51', aviso:'los 9 dígitos, sin el +51', modal:'de 9 dígitos (sin el +51)', ej:'912345678', ejForm:'912 345 678' },
+  uy:   { cod:'598', largo:8,  cero:true, corto:'los 8 dígitos, sin el 0 inicial ni el +598', aviso:'los 8 dígitos, sin el 0 inicial ni el +598', modal:'de 8 dígitos (sin el 0 inicial ni el +598)', ej:'99123456', ejForm:'99 123 456' },
+  otro: { cod:'',    largo:0,  corto:'completo, con + y el código de país', aviso:'completo, con + y el código de país', modal:'completo, con + y el código de país', ej:'+5511912345678', ejForm:'+55 11 91234-5678' }
+};
+function _waPaisMedico(){
+  var p = (typeof usuarioActual !== 'undefined' && usuarioActual && usuarioActual.pais) ? String(usuarioActual.pais).toLowerCase() : '';
+  if(!p) return 'ar';                   // sin país cargado = Argentina
+  return _WA_PAISES[p] ? p : 'otro';    // "otro" o un código que no está en la lista: no se adivina el prefijo
+}
+function _waFormato(){ return _WA_PAISES[_waPaisMedico()]; }
+// Número listo para poner después de "https://wa.me/" (solo dígitos, con el código de país); '' si no hay ningún dígito.
+function _waNumero(tel){
+  var t = String(tel == null ? '' : tel).trim();
+  var dig = t.replace(/\D/g, '');
+  if(!dig) return '';
+  if(t.charAt(0) === '+') return dig;                               // "+34 612 34 56 78": ya es internacional
+  if(dig.indexOf('00') === 0) return dig.replace(/^0+/, '');        // "0034 612…": 00 es el prefijo de llamada internacional
+  var f = _waFormato();
+  if(!f.cod) return dig;                                            // "Otro país": se toma el número como lo escribió el médico
+  if(dig.indexOf(f.cod) === 0 && dig.length >= f.cod.length + f.largo) return dig;   // ya trae el código de su país
+  if(f.cero && dig.charAt(0) === '0') dig = dig.slice(1);           // Uruguay: 099 123 456 → 99123456
+  return f.cod + dig;
+}
+// Ejemplos de los campos de WhatsApp (placeholder) según el país del médico; en Argentina quedan como siempre.
+function aplicarFormatoWhatsAppPorPais(){
+  var f = _waFormato();
+  document.querySelectorAll('[data-wa-ph]').forEach(function(el){
+    el.setAttribute('placeholder', el.getAttribute('data-wa-ph').replace('{ej}', f.ejForm));
+  });
+}
 
 function initPanelFirma(){
   checkAddonFirma();
@@ -12604,7 +12650,7 @@ async function generarVideollamada(){
     +'</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px;">'
       +'<button onclick="window.open(\''+escJs(linkVideollamada)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">🎥 Entrar a la videollamada ahora</button>'
-      +(tel?'<button onclick="window.open(\'https://wa.me/54'+tel.replace(/\D/g,'')+'?text='+encodeURIComponent(msg)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">📱 Enviar link al paciente por WhatsApp</button>':'')
+      +(tel?'<button onclick="window.open(\'https://wa.me/'+_waNumero(tel)+'?text='+encodeURIComponent(msg)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">📱 Enviar link al paciente por WhatsApp</button>':'')
       +(email?'<button onclick="window.location.href=\'mailto:'+escJs(email)+'?subject='+encodeURIComponent('Videoconsulta · '+fechaDisplay)+'&body='+encodeURIComponent(msg.replace(/\*/g,'').replace(/_/g,''))+'\';" style="padding:12px;background:linear-gradient(135deg,#1a6aab,#0e4d8a);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">✉️ Enviar link por Email</button>':'')
       +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+escJs(linkVideollamada)+'\');this.textContent=\'✅ Copiado!\';" style="padding:12px;background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;color:#145a32;">📋 Copiar link</button>'
       +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:10px;background:none;border:1.5px solid #e5e7eb;border-radius:9px;font-size:.88rem;cursor:pointer;color:#6b7280;">Cerrar</button>'
@@ -12646,7 +12692,8 @@ function getDatosTele(){
   var fechaInput = document.getElementById('tele-fecha').value;
   var hora = document.getElementById('tele-hora').value || '09:00';
   var duracion = document.getElementById('tele-duracion').value;
-  var tel = (document.getElementById('tele-tel').value||'').replace(/\D/g,'');
+  var telRaw = (document.getElementById('tele-tel').value||'').trim();
+  var tel = telRaw.replace(/\D/g,'') ? ((telRaw.charAt(0)==='+' ? '+' : '') + telRaw.replace(/\D/g,'')) : '';   // conserva el "+" (número internacional)
   var email = (document.getElementById('tele-email').value||'').trim();
   var motivo = (document.getElementById('tele-motivo').value||'Consulta medica').trim();
   var fechaDisplay = fechaInput ? new Date(fechaInput+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}) : hoy();
@@ -12715,7 +12762,7 @@ function enviarLinkExterno(nombre){
     +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;font-weight:700;color:#042b10;margin-bottom:12px;">📤 Enviar al paciente</div>'
     +'<div style="background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:.82rem;word-break:break-all;color:#145a32;"><strong>Link:</strong> '+escHtml(linkExt)+'</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px;">'
-      +(d.tel?'<button onclick="window.open(\'https://wa.me/54'+d.tel+'?text='+encodeURIComponent(msg)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">📱 Enviar por WhatsApp</button>':'')
+      +(d.tel?'<button onclick="window.open(\'https://wa.me/'+_waNumero(d.tel)+'?text='+encodeURIComponent(msg)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">📱 Enviar por WhatsApp</button>':'')
       +(d.email?'<button onclick="window.location.href=\'mailto:'+escJs(d.email)+'?subject='+encodeURIComponent('Videoconsulta '+nombre+' · '+d.fechaDisplay)+'&body='+encodeURIComponent(msg.replace(/\*/g,'').replace(/_/g,''))+'\';" style="padding:12px;background:linear-gradient(135deg,#1a6aab,#0e4d8a);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">✉️ Enviar por Email</button>':'')
       +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+escJs(linkExt)+'\');this.textContent=\'✅ Copiado!\';" style="padding:12px;background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;color:#145a32;">📋 Copiar link</button>'
       +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:10px;background:none;border:1.5px solid #e5e7eb;border-radius:9px;font-size:.88rem;cursor:pointer;color:#6b7280;">Cerrar</button>'
@@ -12759,7 +12806,7 @@ function mostrarOpcionesLlamada(i){
   var opciones = '';
   if(v.link==='whatsapp'){
     if(v.telefono){
-      opciones += '<button onclick="window.open(\'https://wa.me/54'+v.telefono+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;width:100%;">📱 Abrir WhatsApp con '+escHtml(v.pac)+'</button>';
+      opciones += '<button onclick="window.open(\'https://wa.me/'+_waNumero(v.telefono)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;width:100%;">📱 Abrir WhatsApp con '+escHtml(v.pac)+'</button>';
     } else {
       opciones += '<div style="color:#6b7280;font-size:.85rem;margin-bottom:8px;">No hay teléfono guardado para este paciente.</div>';
     }
@@ -13181,10 +13228,10 @@ function imprimirFacturaHistorial(idx){
 	  var f = window._histFacturas && window._histFacturas[idx];
   if(!f) return;
   var totalTxt = '$ '+(parseFloat(f.total)||0).toFixed(2);
-  var tel = prompt('N° de WhatsApp (con código de área):');
+  var tel = prompt('N° de WhatsApp ('+_waFormato().corto+'):');
   if(!tel) return;
   var txt = '🏥 *MedHistoriaClinicaOnline - '+(f.tipo==='particular'?'Recibo Particular':'Factura Obra Social')+'*\n\nPaciente: '+f.nombrePac+'\nTotal: '+totalTxt+'\n\n_MedHistoriaClinicaOnline · medhistoriaclinicaonline.com_';
-  window.open('https://wa.me/54'+tel+'?text='+encodeURIComponent(txt),'_blank');
+  window.open('https://wa.me/'+_waNumero(tel)+'?text='+encodeURIComponent(txt),'_blank');
 }
 
 function enviarFacturaHistorialEmail(idx){
@@ -13286,10 +13333,10 @@ function enviarFacturaWA(tipo){
   var prefix = tipo==='os'?'fo':'fp';
   var pac = (document.getElementById(prefix+'-paciente')||{}).value||'';
   var total = (document.getElementById(prefix+'-total')||{}).value||'$ 0.00';
-  var tel = prompt('N° de WhatsApp (con código de área):');
+  var tel = prompt('N° de WhatsApp ('+_waFormato().corto+'):');
   if(!tel) return;
   var txt = '🏥 *MedHistoriaClinicaOnline - '+(tipo==='os'?'Factura Obra Social':'Recibo Particular')+'*\n\nPaciente: '+pac+'\nTotal: '+total+'\n\n_MedHistoriaClinicaOnline · medhistoriaclinicaonline.com_';
-  window.open('https://wa.me/54'+tel+'?text='+encodeURIComponent(txt),'_blank');
+  window.open('https://wa.me/'+_waNumero(tel)+'?text='+encodeURIComponent(txt),'_blank');
 }
 
 function enviarFacturaEmail(tipo){
@@ -13690,7 +13737,7 @@ function enviarRecordatorioWANuevoTurno(diasAntes){
     +'📧 O puede responder por email a:\n'+emailMedico+'\n\n'
     +'_MedHistoriaClinicaOnline_';
 
-  window.open('https://wa.me/54'+wa.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+  window.open('https://wa.me/'+_waNumero(wa)+'?text='+encodeURIComponent(msg),'_blank');
 }
 
 function guardarTurno(){
@@ -14731,8 +14778,8 @@ function enviarAutoWA(tipo){
         +'📎 *El PDF se descargó automáticamente en tu dispositivo.*\n'
         +'_Adjuntá el archivo PDF a este mensaje para enviarlo al paciente._\n\n'
       +'_'+_firmaLeyMsg('Firma Electrónica · Ley 27.553 · ')+'MedHistoriaClinicaOnline_'; 
-      var numLimpio = tel.replace(/\D/g,'');
-      window.open('https://wa.me/54'+numLimpio+'?text='+encodeURIComponent(msg),'_blank');
+      var numLimpio = _waNumero(tel);
+      window.open('https://wa.me/'+numLimpio+'?text='+encodeURIComponent(msg),'_blank');
     }, 800);
   });
 }
@@ -14859,7 +14906,7 @@ function _enviarWhatsAppDoc(d, tel){
     +'Adjuntalo a este mensaje desde el clip 📎\n\n'
     +'_'+_firmaLeyMsg('Firma Electrónica · Ley 27.553 · ')+'MedHistoriaClinicaOnline_';
 
-  window.open('https://wa.me/54'+tel.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+  window.open('https://wa.me/'+_waNumero(tel)+'?text='+encodeURIComponent(msg),'_blank');
 }
 
 function getDatosDocumento(tipo){
@@ -14968,7 +15015,7 @@ function getDatosDocumento(tipo){
 // ── ENVIAR POR WHATSAPP ──
 function enviarWhatsApp(tipo){
   if(!checkAddonComunicacion()) return;
-  var tel = prompt('Ingresá el número de WhatsApp del paciente (con código de área, sin 0 ni 15):\nEj: 1155443322');
+  var tel = prompt('Ingresá el número de WhatsApp del paciente ('+_waFormato().aviso+'):\nEj: '+_waFormato().ej);
   if(!tel) return;
   var texto = '';
   if(tipo === 'receta'){
@@ -15016,7 +15063,7 @@ function enviarWhatsApp(tipo){
       +'\n\n👨‍⚕️ '+medico
       +'\n\n_'+_firmaLeyMsg('Emitido con firma electrónica · Ley 27.553 · ')+'medhistoriaclinicaonline.com_';
   }
-  var url = 'https://wa.me/54'+tel+'?text='+encodeURIComponent(texto);
+  var url = 'https://wa.me/'+_waNumero(tel)+'?text='+encodeURIComponent(texto);
   window.open(url, '_blank');
 }
 
@@ -15409,7 +15456,7 @@ function _enviarRecordatorioTurno(t, tel){
     +'❌ Para *CANCELAR* su turno escriba:\n*CANCELO*\n\n'
     +'_Gracias · MedHistoriaClinicaOnline_';
 
-  window.open('https://wa.me/54'+tel.replace(/\D/g,'')+'?text='+encodeURIComponent(msg), '_blank');
+  window.open('https://wa.me/'+_waNumero(tel)+'?text='+encodeURIComponent(msg), '_blank');
 }
 
 // ══ LÍMITE DE PACIENTES POR PLAN ══
@@ -15648,8 +15695,9 @@ var _modalTelCallback = null;
 function pedirTelefono(textoAyuda, callback){
   var txt = document.getElementById('modalTelTexto');
   var inp = document.getElementById('modalTelInput');
-  if(txt) txt.textContent = textoAyuda || 'Ingresá el número con código de área (sin 0 ni 15)';
+  if(txt) txt.textContent = textoAyuda || ('Ingresá el número '+_waFormato().modal);
   if(inp) inp.value = '';
+  if(inp) inp.setAttribute('placeholder', 'Ej: '+_waFormato().ej);
   _modalTelCallback = callback;
   document.getElementById('modalTelOverlay').style.display = 'flex';
   setTimeout(function(){ if(inp) inp.focus(); }, 100);
