@@ -2618,7 +2618,8 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div class="fl full" style="grid-column:1/-1;">
               <label style="display:block;margin-bottom:4px;">Medicación prescripta</label>
               <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:12px;margin-bottom:10px;">
-                <div style="font-size:.75rem;font-weight:700;color:#145a32;margin-bottom:8px;">➕ Agregar medicamento (completá cada dato por separado — así se arma solo, sin que te olvides de nada)</div>
+                <div style="font-size:.75rem;font-weight:700;color:#145a32;margin-bottom:8px;">➕ Medicamento de la receta — cada receta lleva un solo medicamento (completá cada dato por separado, así no te olvidás de nada)</div>
+  <div id="rx2-med-nota-limite" style="display:none;font-size:.78rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-bottom:8px;">🔒 Esta receta ya tiene su medicamento (cada receta lleva uno solo). Para cambiarlo, tocá "Quitar medicamento".</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
                   <input type="text" id="rx2-med-ifa" placeholder="Nombre genérico / IFA (ej: Enalapril)" oninput="actualizarPreviaMedicamento()" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
                   <input type="text" id="rx2-med-comercial" placeholder="Nombre comercial (opcional)" oninput="actualizarPreviaMedicamento()" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
@@ -2631,9 +2632,10 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
                   <div style="font-weight:700;color:#145a32;margin-bottom:2px;">👁️ Vista previa de la línea:</div>
                   <div id="rx2-med-preview-texto" style="color:#6b7280;font-style:italic;">Completá los datos de arriba para ver cómo va a quedar.</div>
                 </div>
-                <button type="button" onclick="agregarMedicamentoReceta()" style="padding:7px 16px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">+ Agregar a la receta</button>
+                <button type="button" id="rx2-med-agregar" onclick="agregarMedicamentoReceta()" style="padding:7px 16px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">+ Agregar a la receta</button>
+  <button type="button" id="rx2-med-quitar" onclick="quitarMedicamentoReceta()" style="display:none;margin-left:8px;padding:7px 16px;background:#fff;color:#b91c1c;border:1.5px solid #fecaca;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">✖ Quitar medicamento</button>
               </div>
-              <textarea id="rx2-med" style="width:100%;min-height:100px;box-sizing:border-box;" placeholder="Los medicamentos que agregues arriba van a aparecer acá. También podés escribir directo si preferís."></textarea>
+              <textarea id="rx2-med" readonly style="width:100%;min-height:64px;box-sizing:border-box;background:#f3f4f6;cursor:default;" placeholder="El medicamento que cargues arriba va a aparecer acá."></textarea>
               <div class="firma-solo-ar" style="font-size:.72rem;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:6px 10px;margin-top:6px;">💡 Para cumplir con el Registro de Recetarios Electrónicos, cada medicamento necesita: nombre genérico (IFA), forma farmacéutica, presentación y cantidad de unidades. Usá el formulario de arriba para no olvidarte de ninguno.</div>
               <button class="ai-assist" style="margin-top:6px;">🤖 IA: completar medicación según historial</button><div style="font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-top:6px;">⚠️ Este campo puede enviarse a un servicio de IA externo. No escribas el nombre del paciente acá. Vos sos responsable de que los datos que cargues sean correctos y de revisar la respuesta antes de usarla clínicamente. MedHistoriaClinicaOnline no asume responsabilidad legal por las decisiones clínicas que el profesional adopte a partir de esta sugerencia — la decisión y la responsabilidad son siempre del médico tratante.</div>
             </div>
@@ -4654,7 +4656,8 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
     </div>
     <div class="mtabs" style="margin-bottom:16px;">
       <button class="mtab on" id="pt-hc" onclick="cambiarPrint('hc')">📋 Resumen HC</button>
-      <button class="mtab" id="pt-rx" onclick="cambiarPrint('rx')">💊 Receta</button>
+      <!-- La receta se emite solo desde la sección Recetas (un medicamento por receta, cargado por campos): esta pestaña de texto libre queda oculta. -->
+  <button class="mtab" id="pt-rx" onclick="cambiarPrint('rx')" style="display:none;">💊 Receta</button>
       <button class="mtab" id="pt-ord" onclick="cambiarPrint('ord')">📄 Orden</button>
     </div>
     <!-- HC -->
@@ -5759,6 +5762,7 @@ function showPanel(id){
     }catch(e){ console.warn('[catch]', e); }
   }
 if(id==='recetas' || id==='derivaciones' || id==='estudios'){ try{ mostrarValidezPais(id); }catch(e){ console.warn('[catch]', e); } }
+if(id==='recetas'){ try{ _sincronizarMedicamentoReceta(); }catch(e){ console.warn('[catch]', e); } }
 }
 
 function mostrarValidezPais(tipoId){
@@ -8216,6 +8220,11 @@ function actualizarPreviaMedicamento(){
 }
 
 function agregarMedicamentoReceta(){
+  // Cada receta lleva un solo medicamento (todos los países).
+  if(_recetaMedicamentosData.length >= 1){
+    alert('Cada receta lleva un solo medicamento.\n\nSi tenés que recetar otro, emití otra receta. Si querés cambiar el medicamento cargado, tocá "Quitar medicamento".');
+    return;
+  }
   var ifa = (document.getElementById('rx2-med-ifa')||{}).value||'';
   var comercial = (document.getElementById('rx2-med-comercial')||{}).value||'';
   var forma = (document.getElementById('rx2-med-forma')||{}).value||'';
@@ -8237,7 +8246,7 @@ function agregarMedicamentoReceta(){
 
   var textarea = document.getElementById('rx2-med');
   if(textarea){
-    textarea.value = (textarea.value ? textarea.value+'\n' : '') + linea;
+    textarea.value = linea; // un solo medicamento por receta
   }
   // Guardar también la versión estructurada (además del texto libre de
   // arriba), para que el PDF pueda resaltar el principio activo por
@@ -8252,6 +8261,29 @@ function agregarMedicamentoReceta(){
     if(el) el.value = '';
   });
   actualizarPreviaMedicamento();
+  _sincronizarMedicamentoReceta();
+}
+
+// Cada receta lleva un solo medicamento (todos los países): con uno cargado se bloquea el mini-formulario y aparece "Quitar".
+function _sincronizarMedicamentoReceta(){
+  var cargado = (typeof _recetaMedicamentosData !== 'undefined') && _recetaMedicamentosData.length >= 1;
+  ['rx2-med-ifa','rx2-med-comercial','rx2-med-forma','rx2-med-presentacion','rx2-med-cantidad','rx2-med-posologia'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.disabled = cargado;
+  });
+  var bAgregar = document.getElementById('rx2-med-agregar');
+  if(bAgregar){ bAgregar.disabled = cargado; bAgregar.style.opacity = cargado ? '.45' : ''; bAgregar.style.cursor = cargado ? 'not-allowed' : 'pointer'; }
+  var bQuitar = document.getElementById('rx2-med-quitar');
+  if(bQuitar) bQuitar.style.display = cargado ? 'inline-block' : 'none';
+  var nota = document.getElementById('rx2-med-nota-limite');
+  if(nota) nota.style.display = cargado ? 'block' : 'none';
+}
+
+function quitarMedicamentoReceta(){
+  _recetaMedicamentosData = [];
+  var textarea = document.getElementById('rx2-med');
+  if(textarea) textarea.value = '';
+  _sincronizarMedicamentoReceta();
 }
 
 function agregarMedicoACentro(){
@@ -13826,7 +13858,7 @@ function _faltantesRecetaReNaPDiS(d){
   if(!d.jurisdiccion || !d.jurisdiccion.trim()) faltantes.push('jurisdicción/entidad que emitió la matrícula');
   if(!d.domicilio || !d.domicilio.trim()) faltantes.push('domicilio del consultorio');
   if(!d.pac || !d.pac.trim()) faltantes.push('nombre del paciente');
-  if((!d.medicamentos || !d.medicamentos.length) && (!d.contenido || !d.contenido.trim())) faltantes.push('medicación prescripta');
+  if((!d.medicamentos || !d.medicamentos.length) && (!d.contenido || !d.contenido.trim())) faltantes.push('medicación prescripta (completá los datos del medicamento y tocá "Agregar a la receta")');
   return faltantes;
 }
 function _alertarFaltantesReceta(faltantes){
@@ -15312,7 +15344,7 @@ derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afilia
     if(el.tagName==='SELECT'){ el.selectedIndex = 0; } else { el.value = ''; }
   });
   if(tipo==='receta'){
-    _recetaMedicamentosData = [];
+    _recetaMedicamentosData = []; try{ _sincronizarMedicamentoReceta(); }catch(eSm){ console.warn('[catch]', eSm); }
     _recetaFirmadaCache = null; // receta nueva = emisión nueva (otro PDF, otro código, otra firma)
     var chkContacto = document.getElementById('rx2-incluir-contacto');
     if(chkContacto) chkContacto.checked = false;
@@ -17154,7 +17186,7 @@ function finalizarAtencion(){
   ['rx-paciente','rx-dni','rx-cuil','rx-fnac','rx-os','rx-afiliado','rx-plan','rx-diag','rx-med','rx-ind','rx2-paciente','rx2-dni','rx2-cuil','rx2-fnac','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value='';
   });
-  _recetaMedicamentosData = [];
+  _recetaMedicamentosData = []; try{ _sincronizarMedicamentoReceta(); }catch(eSm){ console.warn('[catch]', eSm); }
   var chkContactoFin = document.getElementById('rx2-incluir-contacto'); if(chkContactoFin) chkContactoFin.checked = false;
   var rxSexo=document.getElementById('rx-sexo'); if(rxSexo) rxSexo.selectedIndex=0;
   // Limpiar Derivaciones
@@ -17179,7 +17211,7 @@ function limpiarReceta(){
     var el=document.getElementById(id); if(el) el.value='';
   });
   var s=document.getElementById('rx2-sexo'); if(s) s.selectedIndex=0;
-  _recetaMedicamentosData = [];
+  _recetaMedicamentosData = []; try{ _sincronizarMedicamentoReceta(); }catch(eSm){ console.warn('[catch]', eSm); }
   var chkContactoLim = document.getElementById('rx2-incluir-contacto'); if(chkContactoLim) chkContactoLim.checked = false;
   showPanel('hc');
 }
