@@ -6058,6 +6058,17 @@ function cerrarAdmin(){
 // (o sea, la de admin) — ningún médico se ve afectado.
 var _mfaAdmin = { factorId:null, challengeId:null, modo:null };
 
+// Nombre con el que queda la entrada del 2FA en la app de autenticación: "MedHistoria" en producción y "MedHistoria staging" en cualquier otro
+// entorno, así las entradas de cada proyecto (con el mismo mail) no se confunden. Se decide por el proyecto de Supabase al que apunta esta página.
+function _nombreEntorno2FA(){
+  return String(SUPABASE_URL).indexOf('rgwqiguojmwmkifrxfra') !== -1 ? 'MedHistoria' : 'MedHistoria staging';
+}
+// Dirección otpauth:// (la que va dentro del QR) con ese nombre. El secreto es el mismo que devolvió el servidor.
+function _uriTotp(cuenta, secreto){
+  var emisor = _nombreEntorno2FA();
+  return 'otpauth://totp/' + encodeURIComponent(emisor) + ':' + encodeURIComponent(cuenta) + '?secret=' + encodeURIComponent(secreto) + '&issuer=' + encodeURIComponent(emisor);
+}
+
 function _abrirPanelAdmin(){
   document.getElementById('admin-login').style.display='none';
   var mfa = document.getElementById('admin-mfa'); if(mfa) mfa.style.display='none';
@@ -6100,7 +6111,7 @@ function _prepararEnrolamientoMfa(){
   sb.auth.mfa.listFactors().then(function(lf){
     var noVerificados = _factoresTotp(lf).filter(function(f){ return f.status !== 'verified'; });
     Promise.all(noVerificados.map(function(f){ return sb.auth.mfa.unenroll({ factorId: f.id }); })).then(function(){
-      sb.auth.mfa.enroll({ factorType:'totp', friendlyName:'panel-admin' }).then(function(en){
+      sb.auth.mfa.enroll({ factorType:'totp', friendlyName:'panel-admin', issuer:_nombreEntorno2FA() }).then(function(en){
         if(en.error || !en.data || !en.data.totp){
           sb.auth.signOut();
           alert('No se pudo iniciar la configuración del segundo factor.\n\nDetalle: ' + (en.error ? en.error.message : 'desconocido') + '\n\n(Verificá que TOTP / "Authenticator app" esté activado en el proyecto de Supabase.)');
@@ -6797,7 +6808,7 @@ function iniciarPagos2FA(){
         document.getElementById('pagos-2fa-secret').textContent = r2.data.secret;
         var qrEl = document.getElementById('pagos-2fa-qr');
         qrEl.innerHTML = '';
-        new QRCode(qrEl, { text: r2.data.otpauth_uri, width:170, height:170 });
+        new QRCode(qrEl, { text: (r2.data.secret ? _uriTotp('Pagos', r2.data.secret) : r2.data.otpauth_uri), width:170, height:170 });
         document.getElementById('pagos-2fa-alta').style.display = 'block';
       });
     }
