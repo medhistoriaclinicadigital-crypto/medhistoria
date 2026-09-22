@@ -5441,8 +5441,9 @@ function cerrarApp(){
   var pSalida = null;
   try{ pSalida = sb.auth.signOut(); }catch(e){ console.warn('[catch]', e); }
   usuarioActual = null;
-  // La receta firmada (PDF con datos del paciente) y una emisión pendiente no deben sobrevivir al cierre de sesión.
+  // La receta o el documento firmado (PDF con datos del paciente) y una emisión pendiente no deben sobrevivir al cierre de sesión.
   _recetaFirmadaCache = null; _recetaFirmaPendiente = null;
+  _docFirmadoCache = {}; _docFirmaPendiente = {}; _docEmisionEnCurso = {};
   document.body.classList.remove('in-app');
   document.getElementById('app').style.display='none';
   document.getElementById('landing').style.display='block';
@@ -5599,20 +5600,26 @@ function generarDocumento(tipo){
     }catch(eAud){ console.error('Error registrando auditoría de documento:', eAud); }
   };
 
-  // Receta: se emite y se firma en el servidor ANTES de darla por generada (si la firma falla, no se registra ni se confirma).
-  if(tipo === 'receta'){
+  // Receta, derivación y pedido de estudios: se emiten y se firman en el servidor ANTES de darlos por generados (si la firma falla, no se registra ni se confirma).
+  if(tipo === 'receta' || tipo === 'derivacion' || tipo === 'pedido'){
+    var etq = {
+      receta:     { firmando:'⏳ Firmando receta…',             hecho:'✅ Receta Médica generada y firmada',      msg:'✅ Receta Médica generada y firmada electrónicamente.',      imp:'imprimirla' },
+      derivacion: { firmando:'⏳ Firmando derivación…',         hecho:'✅ Derivación generada y firmada',         msg:'✅ Derivación generada y firmada electrónicamente.',         imp:'imprimirla' },
+      pedido:     { firmando:'⏳ Firmando pedido de estudios…', hecho:'✅ Pedido de Estudios generado y firmado', msg:'✅ Pedido de Estudios generado y firmado electrónicamente.', imp:'imprimirlo' }
+    }[tipo];
+    var emitirGen = tipo === 'receta' ? emitirRecetaFirmada : function(ok, fail){ emitirDocumentoFirmado(tipo, ok, fail); };
     var btnRx = event.currentTarget;
     var originalRx = btnRx.innerHTML;
     btnRx.disabled = true;
-    btnRx.innerHTML = '⏳ Firmando receta…';
-    emitirRecetaFirmada(function(em){
+    btnRx.innerHTML = etq.firmando;
+    emitirGen(function(em){
       registrarAudDoc();
-      btnRx.innerHTML = '✅ Receta Médica generada y firmada';
+      btnRx.innerHTML = etq.hecho;
       btnRx.style.background = 'linear-gradient(135deg,#145a32,#0a3d1f)';
       setTimeout(function(){ btnRx.innerHTML = originalRx; btnRx.style.background = ''; btnRx.disabled = false; }, 3000);
       setTimeout(function(){
-        if(confirm('✅ Receta Médica generada y firmada electrónicamente.\n\n' + (ley ? ley + '\n\n' : '') + 'Código de verificación: ' + _firmaRxTokenFmt(em.token) + '\n\n¿Querés imprimirla ahora?')){
-          imprimirDoc('receta');
+        if(confirm(etq.msg + '\n\n' + (ley ? ley + '\n\n' : '') + 'Código de verificación: ' + _firmaRxTokenFmt(em.token) + '\n\n¿Querés ' + etq.imp + ' ahora?')){
+          imprimirDoc(tipo);
         }
       }, 400);
     }, function(){
@@ -14262,8 +14269,10 @@ function _docEntraEnUnaHoja(tipo){
   try{ return generarPDFbase64(tipo, null, true) !== false; }catch(eEnt){ console.warn('[catch]', eEnt); return true; }
 }
 
-function generarPDFbase64(tipo, callback, soloVerificar){
+function generarPDFbase64(tipo, callback, soloVerificar, extra){
   var d = getDatosDocumento(tipo);
+  // extra: datos que se suman al documento cuando se emite firmado (firmaToken y firmaUrl → QR de verificación en el pie)
+  if(extra){ for(var _kx in extra){ if(Object.prototype.hasOwnProperty.call(extra, _kx)) d[_kx] = extra[_kx]; } }
 
   // La receta tiene su propio armado completo (modelo ReNaPDiS), separado
   // de este para no arriesgarse a romper derivación/pedido/orden/resumen.
@@ -14274,7 +14283,7 @@ function generarPDFbase64(tipo, callback, soloVerificar){
   var jsPDF = window.jspdf ? window.jspdf.jsPDF : (window.jsPDF || null);
   if(!jsPDF){ alert('Librería PDF no cargada. Verificá tu conexión a internet.'); return; }
 
-  var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4', compress:true });
   var W = 210, margin = 14, y = 0, lineH = 7;
 
   // ── HEADER estilo recetario ──
@@ -14367,7 +14376,8 @@ function generarPDFbase64(tipo, callback, soloVerificar){
 
   // ── Borde del cuerpo ──
   doc.setDrawColor(20,90,50); doc.setLineWidth(0.5);
-  var bordeAlto = tipo==='pedido' ? 230 : tipo==='receta' ? 215 : 225;
+  // El pedido firmado lleva el bloque del QR debajo de la línea de firma: su recuadro termina en la línea, como el de los demás documentos.
+  var bordeAlto = (tipo==='pedido' && !d.firmaToken) ? 230 : tipo==='receta' ? 215 : 225;
   doc.rect(margin-2, 47, W-margin*2+4, bordeAlto, 'S');
 
   y = (tipo === 'receta') ? 79 : 57;
@@ -14561,6 +14571,24 @@ function generarPDFbase64(tipo, callback, soloVerificar){
   doc.setTextColor(20,90,50); doc.setFontSize(7); doc.setFont('helvetica','bold');
   doc.text('MÉDICO PRESCRIPTOR / SOLICITANTE', x, footerY+7);
 
+
+  // ── Verificación de la firma electrónica: QR + código (solo cuando el documento se emite firmado: ver emitirDocumentoFirmado). ──
+  // Va DEBAJO de la línea de firma, a la derecha: no toca la firma dibujada, ni las leyendas del pie, ni el recuadro del texto
+  // (así la capacidad para textos largos es la de siempre). Por eso el recuadro del pedido firmado termina en la línea, como el de los demás.
+  if(d.firmaToken && d.firmaUrl){
+    var _qrImg = _qrDataUrl(d.firmaUrl);
+    if(!_qrImg) throw new Error('No se pudo generar el QR de verificación');
+    var _qrSize = 17, _qrX = W-margin-_qrSize, _qrY = footerY+3;
+    doc.addImage(_qrImg, 'PNG', _qrX, _qrY, _qrSize, _qrSize);
+    doc.setTextColor(20,90,50); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+    doc.text('VERIFICACIÓN DE FIRMA ELECTRÓNICA', _qrX-3, _qrY+4, {align:'right'});
+    doc.setTextColor(70,70,70); doc.setFontSize(6.3); doc.setFont('helvetica','normal');
+    doc.text('Escaneá el QR o ingresá en '+location.host+'/verificar', _qrX-3, _qrY+8, {align:'right'});
+    doc.text('Código: '+_firmaRxTokenFmt(d.firmaToken), _qrX-3, _qrY+11.5, {align:'right'});
+    var _tituloDoc = String(d.titulo || 'Documento médico'); _tituloDoc = _tituloDoc.charAt(0) + _tituloDoc.slice(1).toLowerCase();
+    doc.setProperties({ title:_tituloDoc, subject:_tituloDoc+' firmado electrónicamente', keywords:d.firmaToken, creator:'MedHistoriaClinicaOnline' });
+  }
+
   // ── Leyendas obligatorias del ReNaPDiS (solo recetas) ──
   if(tipo === 'receta'){
     var _leyendaFirma = 'Este documento ha sido firmado -electrónica o digitalmente según corresponda- por '+(medicoNombreSolo||'Dr./Dra.');
@@ -14741,11 +14769,142 @@ function emitirRecetaFirmada(onOk, onFail){
   });
 }
 
-// Devuelve un objeto "tipo jsPDF" (save / output) para que los flujos de entrega existentes sigan igual: para la receta
-// entrega los bytes ya firmados; para el resto de los documentos, el PDF de siempre.
+// ══ FIRMA ELECTRÓNICA DE DERIVACIONES, PEDIDOS DE ESTUDIOS Y ÓRDENES ═══════════════════════════════════════
+// Mismo mecanismo que la receta (más arriba) y con la misma clave personal del médico: el documento se REGISTRA primero
+// (tablas derivaciones / pedidos_estudios) para tener su id, se genera el PDF con su QR, esos bytes se firman en el servidor
+// (Edge Function firma-documento → tabla firmas_documentos, append-only, verificable en /verificar/) y esos MISMOS bytes se
+// descargan, imprimen o envían. Una emisión por contenido: descargar, imprimir y enviar el mismo documento reutilizan la
+// misma emisión firmada, así que no se duplican filas. Si la firma falla, el documento NO se entrega (se reintenta sin
+// duplicar el registro). tipo = 'derivacion' | 'pedido' | 'ord' (la "Orden" del cuadro de imprimir).
+var _docFirmadoCache = {};    // por tipo: { key, d, bytes, token, url, idDoc, hash, firmadoEn }
+var _docFirmaPendiente = {};  // por tipo: { key, tabla, tipoDb, que, idDoc, token, url, bytes, d } — reintento sin duplicar el registro
+var _docEmisionEnCurso = {};  // por tipo: { key, esperando:[{ok,fail}] } — evita emisiones dobles por clicks seguidos
+
+// A qué tabla y a qué tipo de firma corresponde cada documento. La "Orden" del cuadro de imprimir se guarda como derivación si es
+// una "Derivación a especialista" y como pedido de estudios en cualquier otro caso (laboratorio, imágenes, internación).
+function _docFirmaInfo(tipo){
+  var esDer = tipo === 'derivacion' || (tipo === 'ord' && /^deriv/i.test((document.getElementById('ord-tipo')||{}).value||''));
+  if(esDer) return { tabla:'derivaciones', tipoDb:'derivacion', que:'la derivación' };
+  return { tabla:'pedidos_estudios', tipoDb:'pedido_estudios', que: tipo === 'ord' ? 'la orden médica' : 'el pedido de estudios' };
+}
+// Lo que se guarda de cada documento en su tabla (lo mismo que se guardaba antes al descargar; ahora una sola vez por emisión).
+function _docFilaSB(tipo, info, d, pacienteId){
+  var v = function(id){ return (document.getElementById(id)||{}).value||''; };
+  var fila = { paciente_id:pacienteId, medico_id:(usuarioActual ? usuarioActual.id : null), whatsapp_envio:'', email_envio:'' };
+  if(info.tabla === 'derivaciones'){
+    fila.especialidad = tipo === 'ord' ? '' : (d.esp || '');
+    fila.motivo_derivacion = d.contenido || '';
+    fila.antecedentes_relevantes = tipo === 'ord' ? v('ord-ant') : (d.ant || '');
+    fila.urgencia = v(tipo === 'ord' ? 'ord-urgencia' : 'der-urgencia');
+  } else {
+    fila.estudios_solicitados = d.contenido || '';
+    fila.tipo_estudio = tipo === 'ord' ? v('ord-tipo') : v('est-tipo');
+    fila.urgencia = tipo === 'ord' ? v('ord-urgencia') : 'Programada';   // el formulario de pedidos no tiene urgencia (antes se copiaba la de Derivaciones por error)
+  }
+  return fila;
+}
+// Huella del contenido: si cambia cualquier dato del PDF (o de lo que se guarda), es otra emisión.
+function _firmaDocClave(tipo, d, info){
+  var o = {};
+  for(var k in d){ if(Object.prototype.hasOwnProperty.call(d,k) && k !== 'hora' && k !== 'firmaToken' && k !== 'firmaUrl') o[k] = d[k]; }
+  var img = tieneAddonFirma() ? (usuarioActual ? usuarioActual.firma_imagen : localStorage.getItem('medhistoria_firma')) : null;
+  return JSON.stringify([tipo, info.tabla, o, _docFilaSB(tipo, info, d, 0), img ? String(img).length : 0]);
+}
+function _firmarDocumentoServidor(p, ok, fail){
+  var Que = p.que.charAt(0).toUpperCase() + p.que.slice(1);
+  sb.functions.invoke('firma-documento', {
+    body: { accion:'firmar', tipo:p.tipoDb, id_documento:p.idDoc, token:p.token, pdf_base64:_bytesToB64(p.bytes) }
+  }).then(function(r){
+    if(r.error || !r.data || !r.data.ok){
+      _msgErrorFuncion(r.error, 'Error desconocido.').then(function(m){
+        fail('No se pudo firmar '+p.que+'.\n\n'+m+'\n\n'+Que+' NO se entregó. Revisá tu conexión y volvé a intentar.');
+      });
+      return;
+    }
+    ok(r.data);
+  }, function(){
+    fail('No se pudo conectar para firmar '+p.que+'.\n\n'+Que+' NO se entregó. Revisá tu conexión y volvé a intentar.');
+  });
+}
+
+// Emite el documento actual: lo registra, genera el PDF con su QR, lo firma en el servidor y entrega los bytes firmados.
+// onOk(em) recibe { bytes, d, token, hash, firmadoEn, ... }. onFail() se llama si se abortó o falló (ya se avisó al médico).
+function emitirDocumentoFirmado(tipo, onOk, onFail){
+  onFail = onFail || function(){};
+  var d = getDatosDocumento(tipo);
+  if(!d.pac){ alert('Completá el nombre del paciente primero.'); onFail(); return; }
+  if(typeof sb === 'undefined' || !usuarioActual || !usuarioActual.id){ alert('Iniciá sesión para emitir el documento.'); onFail(); return; }
+  var info = _docFirmaInfo(tipo);
+  var key = _firmaDocClave(tipo, d, info);
+  if(_docFirmadoCache[tipo] && _docFirmadoCache[tipo].key === key){ onOk(_docFirmadoCache[tipo]); return; }
+  var enCurso = _docEmisionEnCurso[tipo];
+  if(enCurso && enCurso.key === key){ enCurso.esperando.push({ ok:onOk, fail:onFail }); return; }
+  // Si el texto no entra en una hoja se avisa ANTES de registrar nada.
+  if(!_docEntraEnUnaHoja(tipo)){ onFail(); return; }
+
+  var en = { key:key, esperando:[{ ok:onOk, fail:onFail }] };
+  _docEmisionEnCurso[tipo] = en;
+  _toastFirma('⏳ Firmando '+info.que+'…');
+  var terminar = function(em, msgError){
+    if(_docEmisionEnCurso[tipo] === en) _docEmisionEnCurso[tipo] = null;
+    _toastFirma('');
+    if(em){ en.esperando.forEach(function(c){ try{ c.ok(em); }catch(e){ console.error(e); } }); return; }
+    if(msgError) alert(msgError);
+    en.esperando.forEach(function(c){ try{ c.fail(); }catch(e){ console.error(e); } });
+  };
+  var firmar = function(p){
+    _firmarDocumentoServidor(p, function(res){
+      var em = { key:p.key, d:p.d, bytes:p.bytes, token:p.token, url:p.url, idDoc:p.idDoc, hash:res.hash_pdf, firmadoEn:res.firmado_en };
+      _docFirmadoCache[tipo] = em; _docFirmaPendiente[tipo] = null;
+      terminar(em);
+    }, function(msg){ terminar(null, msg); });
+  };
+
+  // Reintento de una emisión que falló al firmar: se reenvían los MISMOS bytes y el MISMO código, sin duplicar el registro.
+  var pend = _docFirmaPendiente[tipo];
+  if(pend && pend.key === key){ firmar(pend); return; }
+  // Emisión anterior que nunca se firmó y ahora es otro contenido: se descarta su fila huérfana.
+  if(pend){ _docFirmaPendiente[tipo] = null; sb.from(pend.tabla).delete().eq('id', pend.idDoc).then(function(){}); }
+
+  asegurarPacienteId({ dni:d.dni, nombre:d.pac }, function(pacienteId){
+    if(!pacienteId){
+      terminar(null, 'No se pudo registrar al paciente para emitir '+info.que+'. Revisá el nombre del paciente (y el límite de pacientes de tu plan) e intentá de nuevo.');
+      return;
+    }
+    sb.from(info.tabla).insert(_docFilaSB(tipo, info, d, pacienteId)).select('id').then(function(r){
+      if(r.error || !r.data || !r.data[0]){ terminar(null, 'No se pudo registrar '+info.que+'. Revisá tu conexión e intentá de nuevo.'); return; }
+      var idDoc = r.data[0].id;
+      var token = _firmaRxToken(), url = _firmaRxUrl(token);
+      var bytes = null;
+      try{
+        generarPDFbase64(tipo, function(doc){ bytes = new Uint8Array(doc.output('arraybuffer')); }, false, { firmaToken:token, firmaUrl:url });
+      }catch(eGen){ console.error('Error generando el PDF firmado:', eGen); }
+      if(!bytes){
+        sb.from(info.tabla).delete().eq('id', idDoc).then(function(){});
+        terminar(null, 'No se pudo generar el PDF de '+info.que+'. Probá de nuevo.');
+        return;
+      }
+      var p = { key:key, tabla:info.tabla, tipoDb:info.tipoDb, que:info.que, idDoc:idDoc, token:token, url:url, bytes:bytes, d:Object.assign({}, d, { firmaToken:token, firmaUrl:url }) };
+      _docFirmaPendiente[tipo] = p;
+      firmar(p);
+    }, function(){ terminar(null, 'No se pudo registrar '+info.que+'. Revisá tu conexión e intentá de nuevo.'); });
+  });
+}
+
+// Devuelve un objeto "tipo jsPDF" (save / output) para que los flujos de entrega existentes sigan igual: para la receta, la derivación,
+// el pedido de estudios y la orden entrega los bytes ya firmados; para el resto de los documentos (resumen de HC), el PDF de siempre.
 function _generarParaEntregar(tipo, onOk, onFail){
   if(tipo === 'receta'){
     emitirRecetaFirmada(function(em){
+      onOk({
+        save: function(nombre){ _descargarBytesPDF(em.bytes, nombre); },
+        output: function(kind){ return kind === 'blob' ? new Blob([em.bytes], {type:'application/pdf'}) : em.bytes; }
+      }, em.d);
+    }, onFail);
+    return;
+  }
+  if(tipo === 'derivacion' || tipo === 'pedido' || tipo === 'ord'){
+    emitirDocumentoFirmado(tipo, function(em){
       onOk({
         save: function(nombre){ _descargarBytesPDF(em.bytes, nombre); },
         output: function(kind){ return kind === 'blob' ? new Blob([em.bytes], {type:'application/pdf'}) : em.bytes; }
@@ -14764,48 +14923,24 @@ function _descargarRecetaFirmada(){
   });
 }
 
+// Descarga el documento (derivación, pedido de estudios u orden) ya registrado y firmado: los bytes son los del PDF firmado.
+function _descargarDocumentoFirmado(tipo){
+  emitirDocumentoFirmado(tipo, function(em){
+    var d = em.d;
+    var nombre = d.titulo.replace(/ /g,'_')+'_'+d.pac.replace(/ /g,'_')+'_'+new Date().toLocaleDateString('es-AR').replace(/\//g,'-')+'.pdf';
+    _descargarBytesPDF(em.bytes, nombre);
+  });
+}
+
 function descargarPDF(tipo){
   var d = getDatosDocumento(tipo);
   if(!d.pac){ alert('Completá el nombre del paciente primero.'); return; }
   if(tipo === 'receta'){ _descargarRecetaFirmada(); return; }
-  if(!_docEntraEnUnaHoja(tipo)) return;   // si el texto no entra en una hoja se avisa antes de registrar nada
-   if(tipo==='derivacion' && usuarioActual && usuarioActual.id){
-      var dniDer = (document.getElementById('der-dni')||{}).value||'';
-      if(dniDer){
-        buscarPacienteIdCompartido(dniDer, function(pacienteIdDer){
-          var derSB = {
-            paciente_id: pacienteIdDer,
-            medico_id: usuarioActual.id,
-            especialidad: (document.getElementById('der-especialidad')||{}).value||'',
-            motivo_derivacion: (document.getElementById('der-motivo')||{}).value||'',
-            antecedentes_relevantes: (document.getElementById('der-ant')||{}).value||'',
-            urgencia: (document.getElementById('der-urgencia')||{}).value||'',
-            whatsapp_envio: '',
-            email_envio: ''
-          };
-          sb.from('derivaciones').insert(derSB).then(function(){});
-        });
-      }
-    }
-  // (La receta ya no se registra acá: la registra emitirRecetaFirmada, una sola vez por emisión, con su firma.)
-  if(tipo==='pedido' && usuarioActual && usuarioActual.id){
-		  var dniEst = (document.getElementById('est-dni')||{}).value||'';
-		  if(dniEst){
-		    buscarPacienteIdCompartido(dniEst, function(pacienteIdEst){
-		      var estSB = {
-		        paciente_id: pacienteIdEst,
-		        medico_id: usuarioActual.id,
-		        estudios_solicitados: (document.getElementById('est-det')||{}).value||'',
-		        tipo_estudio: (document.getElementById('est-tipo')||{}).value||'',
-		        urgencia: (document.getElementById('der-urgencia')||{}).value||'',
-		        whatsapp_envio: '',
-		        email_envio: ''
-		      };
-		      sb.from('pedidos_estudios').insert(estSB).then(function(){});
-		    });
-		  }
-		}
-  
+  // Derivación, pedido de estudios y orden: se registran y se firman en el servidor antes de entregarse, una sola vez por emisión
+  // (emitirDocumentoFirmado avisa si el texto no entra en una hoja antes de registrar nada).
+  if(tipo === 'derivacion' || tipo === 'pedido' || tipo === 'ord'){ _descargarDocumentoFirmado(tipo); return; }
+  // (La receta, la derivación y el pedido ya no se registran acá: los registra la emisión firmada, una sola vez, junto con su firma.)
+  if(!_docEntraEnUnaHoja(tipo)) return;   // si el texto no entra en una hoja se avisa antes de entregar nada
   generarPDFbase64(tipo, function(doc, d){
     var nombre = d.titulo.replace(/ /g,'_')+'_'+d.pac.replace(/ /g,'_')+'_'+new Date().toLocaleDateString('es-AR').replace(/\//g,'-')+'.pdf';
     doc.save(nombre);
@@ -14902,8 +15037,8 @@ function enviarDesdeOverlay(canal){
   if(_tipoEnvioActual && !_docEntraEnUnaHoja(_tipoEnvioActual)) return;
   document.getElementById('envioOverlay').style.display = 'none';
   var tipo = _tipoEnvioActual;
-  // (La derivación y el pedido de estudios se registran en descargarPDF, una sola vez: todos los canales pasan por ahí.
-  //  Registrar la derivación también acá la guardaba dos veces, y una vez aunque después el envío se frenara por el add-on.)
+  // (La derivación y el pedido de estudios se registran y se firman una sola vez por emisión, en emitirDocumentoFirmado: todos los canales
+  //  pasan por ahí. Registrar la derivación también acá la guardaba dos veces, y una vez aunque después el envío se frenara por el add-on.)
   if(canal === 'pdf'){
     descargarPDF(tipo);
     return;
@@ -15413,10 +15548,10 @@ function exportarCSV(){
 
 // ── GUARDAR DATOS EN LOCALSTORAGE (persistencia básica) ──
 function imprimirDoc(tipo){
-  // La receta se firma en el servidor antes de imprimirse (es asíncrono): la ventana se abre YA, dentro del click del
-  // médico, para que el navegador no la bloquee, y después se le carga el PDF firmado.
+  // La receta, la derivación, el pedido de estudios y la orden se firman en el servidor antes de imprimirse (es asíncrono): la
+  // ventana se abre YA, dentro del click del médico, para que el navegador no la bloquee, y después se le carga el PDF firmado.
   var previa = null;
-  if(tipo === 'receta'){ try{ previa = window.open('', '_blank'); }catch(ePop){ previa = null; } }
+  if(tipo === 'receta' || tipo === 'derivacion' || tipo === 'pedido' || tipo === 'ord'){ try{ previa = window.open('', '_blank'); }catch(ePop){ previa = null; } }
   _generarParaEntregar(tipo, function(doc){
     var blob = doc.output('blob');
     var url = URL.createObjectURL(blob);
@@ -15460,6 +15595,7 @@ derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afilia
     var chkContacto = document.getElementById('rx2-incluir-contacto');
     if(chkContacto) chkContacto.checked = false;
   }
+  if(tipo==='derivacion' || tipo==='pedido'){ _docFirmadoCache[tipo] = null; }   // documento nuevo = emisión nueva (otro PDF, otro código, otra firma)
   // Scroll al inicio del formulario
   var panel = document.getElementById('panel-'+(tipo==='pedido'?'estudios':tipo==='receta'?'recetas':'derivaciones'));
   if(panel) panel.scrollTop = 0;

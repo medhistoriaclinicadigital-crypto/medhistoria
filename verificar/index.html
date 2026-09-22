@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Verificar receta firmada | MedHistoriaClínicaOnline</title>
-<meta name="description" content="Verificá que una receta fue firmada electrónicamente por el profesional y que el archivo no fue alterado.">
+<title>Verificar documento firmado | MedHistoriaClínicaOnline</title>
+<meta name="description" content="Verificá que una receta, una derivación o un pedido de estudios fue firmado electrónicamente por el profesional y que el archivo no fue alterado.">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -66,8 +66,8 @@ details.card[open] summary{margin-bottom:12px;}
 
 <main class="wrap">
   <p class="kicker">Verificación pública</p>
-  <h1>Verificar una receta firmada electrónicamente</h1>
-  <p class="lead">Ingresá el código que figura debajo del QR de la receta (o escaneá el QR). No hace falta iniciar sesión.</p>
+  <h1>Verificar un documento firmado electrónicamente</h1>
+  <p class="lead">Ingresá el código que figura debajo del QR del documento (receta, derivación o pedido de estudios), o escaneá el QR. No hace falta iniciar sesión.</p>
 
   <form class="card" id="f" autocomplete="off">
     <label class="l" for="cod">Código de verificación</label>
@@ -88,9 +88,9 @@ details.card[open] summary{margin-bottom:12px;}
     </div>
 
     <div class="card">
-      <h2>¿Tenés el archivo PDF de la receta?</h2>
+      <h2>¿Tenés el archivo PDF del documento?</h2>
       <p>Soltalo acá o elegilo: se calcula su huella (SHA-256) <strong>en tu navegador</strong> y se compara con la registrada al firmar. El archivo no se sube a ningún servidor.</p>
-      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Elegir o soltar el PDF de la receta">Soltá el PDF acá o <u>elegí un archivo</u></div>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Elegir o soltar el PDF del documento">Soltá el PDF acá o <u>elegí un archivo</u></div>
       <input type="file" id="file" accept="application/pdf,.pdf" hidden>
       <div id="archivo" class="banner" hidden style="margin:14px 0 0;"></div>
     </div>
@@ -98,11 +98,11 @@ details.card[open] summary{margin-bottom:12px;}
     <details class="card">
       <summary>Detalle técnico</summary>
       <dl id="tecnico"></dl>
-      <p style="margin-top:12px;">La firma se calcula sobre un texto canónico que incluye la huella (SHA-256) del PDF, los identificadores de la receta, el código, la fecha y hora con microsegundos y la huella de la clave del profesional. Algoritmo: ECDSA P-256 con SHA-256 (formato r‖s, base64). Esta página vuelve a verificar la firma en tu navegador con la clave pública registrada.</p>
+      <p style="margin-top:12px;">La firma se calcula sobre un texto canónico que incluye la huella (SHA-256) del PDF, los identificadores del documento, el código, la fecha y hora con microsegundos y la huella de la clave del profesional. Algoritmo: ECDSA P-256 con SHA-256 (formato r‖s, base64). Esta página vuelve a verificar la firma en tu navegador con la clave pública registrada.</p>
     </details>
   </section>
 
-  <p class="limits">Esta página confirma quién firmó el registro de la receta y cuándo y, si cargás el archivo, que no fue alterado después de firmarse. Una receta impresa en papel no se puede comparar por huella: usá el archivo PDF original. La fecha y la hora son las del servidor de MedHistoriaClinicaOnline. No se evalúa el contenido clínico ni la vigencia legal de la prescripción.</p>
+  <p class="limits">Esta página confirma quién firmó el registro del documento y cuándo y, si cargás el archivo, que no fue alterado después de firmarse. Un documento impreso en papel no se puede comparar por huella: usá el archivo PDF original. La fecha y la hora son las del servidor de MedHistoriaClinicaOnline. No se evalúa el contenido clínico ni la vigencia legal de la prescripción, la derivación o el pedido. Esta página no muestra datos del paciente ni el contenido del documento.</p>
 </main>
 
 <script>
@@ -117,6 +117,13 @@ details.card[open] summary{margin-bottom:12px;}
 
   var $ = function(id){ return document.getElementById(id); };
   var ultimo = null; // último resultado verificado
+  // Qué documento es (lo informa el servidor). Sin dato (respuesta de una versión anterior) se trata como receta.
+  var TIPOS = {
+    receta:          { nombre: 'Receta médica',                       de: 'de esta receta' },
+    derivacion:      { nombre: 'Derivación médica',                   de: 'de esta derivación' },
+    pedido_estudios: { nombre: 'Pedido de estudios u orden médica',   de: 'de este pedido de estudios u orden médica' }
+  };
+  function tipoDe(j){ return TIPOS[j && j.tipo] || TIPOS.receta; }
 
   function normalizar(s){ return (s||'').toUpperCase().replace(/[^A-Z2-7]/g,''); }
   function formatear(c){ return c.replace(/(.{5})(?=.)/g,'$1-'); }
@@ -145,6 +152,8 @@ details.card[open] summary{margin-bottom:12px;}
       var huellaReal = hex(await crypto.subtle.digest('SHA-256', b64ToBytes(j.clave_publica_spki)));
       var coherente = p.hash_sha256 === j.hash_pdf && p.token === j.codigo && p.huella_clave === j.huella_clave &&
                       p.firmado_en === j.firmado_en && huellaReal === j.huella_clave;
+      // Derivaciones y pedidos: lo firmado tiene que ser de ESE tipo de documento (no se puede presentar otra cosa como derivación).
+      if(j.tipo && j.tipo !== 'receta') coherente = coherente && p.tipo_documento === j.tipo;
       return ok && coherente;
     }catch(e){ return null; }
   }
@@ -155,12 +164,13 @@ details.card[open] summary{margin-bottom:12px;}
     var valida = j.firma_valida === true && enNavegador !== false;
     if(valida){
       banner($('banner'), 'ok', '✔ Firma verificada',
-        'El registro de esta receta fue firmado con la clave del profesional indicado, en la fecha y hora indicadas.');
+        'El registro ' + tipoDe(j).de + ' fue firmado con la clave del profesional indicado, en la fecha y hora indicadas.');
     } else {
       banner($('banner'), 'bad', '✖ La firma NO se pudo verificar',
         'Los datos registrados no coinciden con su firma. No confíes en este documento.');
     }
     var d = $('datos'); d.textContent = '';
+    fila(d, 'Documento', tipoDe(j).nombre);
     fila(d, 'Profesional', j.medico && j.medico.nombre ? j.medico.nombre : '(sin dato)');
     fila(d, 'Matrícula', j.medico && j.medico.matricula ? j.medico.matricula : '(sin dato)');
     fila(d, 'Firmada el', fechaLocal(j.firmado_en));
@@ -189,7 +199,7 @@ details.card[open] summary{margin-bottom:12px;}
       .then(function(r){ return r.json().catch(function(){ return { ok:false, error:'Respuesta inesperada del servidor.' }; }); })
       .then(async function(j){
         if(!j || !j.ok){
-          banner($('msg'), 'bad', 'No se encontró la receta', (j && j.error) || 'No se pudo verificar.');
+          banner($('msg'), 'bad', 'No se encontró el documento', (j && j.error) || 'No se pudo verificar.');
           return;
         }
         mostrar(j, await verificarEnNavegador(j));
@@ -209,7 +219,7 @@ details.card[open] summary{margin-bottom:12px;}
           'No fue modificado desde que se firmó. Huella: ' + h);
       } else {
         banner(el, 'bad', '✖ El archivo NO coincide con el registrado',
-          'Fue modificado después de firmarse, o no es el archivo original de esta receta. Huella del archivo: ' + h + ' — huella registrada: ' + ultimo.hash_pdf);
+          'Fue modificado después de firmarse, o no es el archivo original de este documento. Huella del archivo: ' + h + ' — huella registrada: ' + ultimo.hash_pdf);
       }
     }catch(e){
       banner(el, 'neutral', 'No se pudo leer el archivo', 'Probá de nuevo con el PDF original.');
