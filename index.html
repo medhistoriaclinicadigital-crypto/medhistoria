@@ -761,12 +761,21 @@ document.addEventListener('DOMContentLoaded', function(){
 	var _autoLoginYaProceso = false;
 	window._sesionInicial = null;
 	window._sesionInicialLlegoAntes = false;
+	// Logging temporal de diagnóstico — filtrar la consola por "REINGRESO-DEBUG".
+	// Sacar esto una vez encontrada la causa del bug reportado; no cambia
+	// ningún comportamiento, solo deja rastro.
+	window._dbgR = function(label, data){
+	  try{ console.log('[REINGRESO-DEBUG] +'+Math.round(performance.now())+'ms | '+label, data===undefined?'':data); }catch(e){}
+	};
+	_dbgR('script principal arrancó', { mhcdRecordar: localStorage.getItem('mhcd_recordar') });
 	sb.auth.onAuthStateChange(function(event, session){
+	  _dbgR('onAuthStateChange event='+event, { haySesion: !!session, userId: session&&session.user&&session.user.id });
 	  if(event === 'PASSWORD_RECOVERY'){ _pendingPasswordRecovery = true; if(window._appListoParaRecuperarPass){ mostrarFormNuevaPass(); } }
 	  if(event === 'INITIAL_SESSION' && !_autoLoginYaProceso){
 	    _autoLoginYaProceso = true;
 	    window._sesionInicial = session;
 	    window._sesionInicialLlegoAntes = true;
+	    _dbgR('INITIAL_SESSION procesado', { funcionYaDefinida: !!window._procesarReingresoAutomatico });
 	    if(window._procesarReingresoAutomatico){ window._procesarReingresoAutomatico(session); }
 	  }
 	});
@@ -845,19 +854,6 @@ function mhcdRechazarCookies(){
      LANDING PAGE
 ══════════════════════════════════════ -->
 <div id="landing"><div id="verificandoSesionOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.92);z-index:999998;align-items:center;justify-content:center;color:#fff;font-family:inherit;font-size:1rem;text-align:center;padding:20px;box-sizing:border-box;">Verificando sesión…</div>
-<div id="continuarComoOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.92);z-index:999998;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">
-  <div id="continuarComoTarjeta" style="background:white;padding:32px 28px;border-radius:18px;width:380px;max-width:92vw;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
-    <p id="continuarComoTexto" style="font-family:'Cormorant Garamond',Georgia,serif;font-size:1.2rem;color:#145a32;font-weight:700;margin:0 0 20px;">¿Continuar?</p>
-    <button onclick="_confirmarContinuarSi()" style="width:100%;padding:13px;background:linear-gradient(135deg,#22a050,#145a32);color:white;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">Ingresar</button>
-    <p style="margin:14px 0 0;font-size:.83rem;color:#666;cursor:pointer;text-decoration:underline;text-underline-offset:2px;" onclick="_mostrarConfirmarCerrarSesion()">Cerrar esta sesión</p>
-  </div>
-  <div id="confirmarCerrarSesionTarjeta" style="display:none;background:white;padding:32px 28px;border-radius:18px;width:380px;max-width:92vw;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
-    <p id="confirmarCerrarSesionTexto" style="font-family:'Cormorant Garamond',Georgia,serif;font-size:1.1rem;color:#145a32;font-weight:700;margin:0 0 10px;">¿Seguro que querés cerrar esta sesión?</p>
-    <p style="font-size:.83rem;color:#666;line-height:1.6;margin:0 0 22px;">La próxima vez vas a tener que ingresar usuario y contraseña de nuevo.</p>
-    <button onclick="_ocultarConfirmarCerrarSesion()" style="width:100%;padding:12px;background:#fff;color:#145a32;border:1.5px solid #bbf7d0;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:10px;">Cancelar</button>
-    <button onclick="_confirmarContinuarNo()" style="width:100%;padding:12px;background:#fff;color:#a32d2d;border:1.5px solid #f0997b;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;">Cerrar sesión</button>
-  </div>
-</div>
 <script>
   // Si hay algo para reingresar solo, tapamos la landing (incluido su botón
   // "Ingresar") hasta saber si el reingreso automático funcionó o no. Sin
@@ -5446,6 +5442,7 @@ function mostrarRecuperarPass(){
   });
 }
 function cerrarApp(){
+  if(window._dbgR) window._dbgR('cerrarApp() llamado', { mhcdRecordar: localStorage.getItem('mhcd_recordar'), stack: (new Error()).stack });
   try{ detenerControlInactividad(); }catch(e){ console.warn('[catch]', e); }
   // Lo guardado en el navegador del médico se persiste con SU clave mientras usuarioActual todavía está seteado
   // (si no, el guardado del cierre iría a la clave "guest" con los pacientes de este médico).
@@ -13866,8 +13863,9 @@ try {
   // lo procesamos recién ahora que toda la página cargó y
   // _procesarReingresoAutomatico ya existe.
   try{
+    if(window._dbgR) window._dbgR('DOMContentLoaded llegó al punto de chequeo', { sesionInicialLlegoAntes: window._sesionInicialLlegoAntes, mhcdRecordar: localStorage.getItem('mhcd_recordar') });
     if(window._sesionInicialLlegoAntes){ _procesarReingresoAutomatico(window._sesionInicial); }
-  }catch(e){ console.warn('[catch]', e); }
+  }catch(e){ if(window._dbgR) window._dbgR('excepción en el chequeo de DOMContentLoaded', e && e.message); console.warn('[catch]', e); }
   // Auto-fill fecha actual en campos type="date" (formato YYYY-MM-DD)
   var hoyISO = new Date().toISOString().split('T')[0];
   var eaFecha = document.getElementById('hc-ea-fecha');
@@ -17224,9 +17222,9 @@ function mlIngresar(){
 // emailFallback solo se usa si todavía no hay fila en "usuarios" para
 // mostrar algo razonable mientras carga — nunca se guarda en ningún lado.
 // Se llama desde el login manual (mlIngresar) y desde el reingreso
-// automático (_confirmarContinuarSi) — en los dos casos "Guardar usuario"
-// ya quedó guardado en localStorage por su propio onchange o por una
-// sesión previa, acá no hace falta releerlo.
+// automático (_verificarDispositivoConReintento) — en los dos casos
+// "Guardar usuario" ya quedó guardado en localStorage por su propio
+// onchange o por una sesión previa, acá no hace falta releerlo.
 function continuarLoginTrasDispositivo(authId, emailFallback){
     // Si "Recordar" quedó tildado, guardamos el usuario para precargarlo
     // la próxima vez que se abra el login (la contraseña la maneja el
@@ -17264,11 +17262,9 @@ function continuarLoginTrasDispositivo(authId, emailFallback){
 // Reingreso automático ("Guardar usuario"): la sesión real de Supabase ya
 // persiste sola (createClient sin opciones = persistSession + autoRefresh).
 // Nunca guardamos la contraseña acá, ni en claro ni cifrada — solo usamos
-// esa sesión si "Guardar usuario" quedó tildado la última vez. En vez de
-// entrar directo a la app sin avisar, mostramos "¿Continuar como...?" y el
-// médico aprieta un botón él mismo. Si en cambio toca "Cerrar esta sesión",
-// pedimos una confirmación aparte (con el nombre puesto) antes de cerrarla
-// de verdad — la versión vieja de esto cerraba sin avisar y confundía.
+// esa sesión si "Guardar usuario" quedó tildado la última vez. Con sesión
+// válida y dispositivo aprobado, entra derecho a la app: sin pantalla de
+// confirmación, sin que el médico tenga que apretar nada.
 function _ocultarVerificandoSesion(){
   var ov = document.getElementById('verificandoSesionOverlay');
   if(ov) ov.style.display = 'none';
@@ -17280,11 +17276,14 @@ function _ocultarVerificandoSesion(){
 // realmente no exista.
 function _procesarReingresoAutomatico(session, intento){
   intento = intento || 1;
-  if(localStorage.getItem('mhcd_recordar') !== '1'){ return; }
+  if(window._dbgR) window._dbgR('_procesarReingresoAutomatico intento='+intento, { mhcdRecordar: localStorage.getItem('mhcd_recordar'), haySesion: !!session, hayUser: !!(session&&session.user) });
+  if(localStorage.getItem('mhcd_recordar') !== '1'){ if(window._dbgR) window._dbgR('sale: mhcd_recordar no es 1'); return; }
   if(!session || !session.user){
     if(intento < 3){
+      if(window._dbgR) window._dbgR('sin sesión válida, programo reintento en 1200ms');
       setTimeout(function(){
         sb.auth.getSession().then(function(r){
+          if(window._dbgR) window._dbgR('getSession() de reintento resolvió', { error: r.error, haySesion: !!(r.data&&r.data.session) });
           _procesarReingresoAutomatico(r.data && r.data.session, intento+1);
         });
       }, 1200);
@@ -17293,6 +17292,7 @@ function _procesarReingresoAutomatico(session, intento){
     // Se agotaron los reintentos: no hay una sesión real para reingresar,
     // aunque "Guardar usuario" haya quedado tildado. Apagamos el flag para
     // que la casilla no siga mostrándose tildada sin nada real detrás.
+    if(window._dbgR) window._dbgR('se agotaron los 3 intentos sin sesión — borro mhcd_recordar');
     localStorage.removeItem('mhcd_recordar');
     _ocultarVerificandoSesion();
     return;
@@ -17302,12 +17302,16 @@ function _procesarReingresoAutomatico(session, intento){
 window._procesarReingresoAutomatico = _procesarReingresoAutomatico;
 
 function _verificarDispositivoConReintento(session, intento){
+  if(window._dbgR) window._dbgR('_verificarDispositivoConReintento intento='+intento+' — llamando RPC verificar_dispositivo');
+  var _t0 = performance.now();
   sb.rpc('verificar_dispositivo', { p_device_token: _deviceToken(), p_descripcion: _descripcionDispositivo() }).then(function(rDisp){
+    if(window._dbgR) window._dbgR('RPC verificar_dispositivo respondió en '+Math.round(performance.now()-_t0)+'ms', { error: rDisp.error ? (rDisp.error.message||JSON.stringify(rDisp.error)) : null, data: rDisp.data });
     if(rDisp.error){
       if(intento < 3){
         setTimeout(function(){ _verificarDispositivoConReintento(session, intento+1); }, 1200);
         return;
       }
+      if(window._dbgR) window._dbgR('se agotaron los 3 intentos del RPC con error — borro mhcd_recordar');
       localStorage.removeItem('mhcd_recordar');
       _ocultarVerificandoSesion();
       return;
@@ -17316,77 +17320,16 @@ function _verificarDispositivoConReintento(session, intento){
     if(!estadoDisp.permitido){
       // Dispositivo no aprobado o revocado desde la última vez: que inicie
       // sesión de nuevo a mano, no hay nada real para recordar acá.
+      if(window._dbgR) window._dbgR('dispositivo NO permitido — signOut + borro mhcd_recordar', estadoDisp);
       localStorage.removeItem('mhcd_recordar');
       sb.auth.signOut();
       _ocultarVerificandoSesion();
       return;
     }
-    _mostrarConfirmarContinuar(session.user.id, session.user.email);
+    if(window._dbgR) window._dbgR('dispositivo permitido, reingreso directo sin preguntar');
+    _ocultarVerificandoSesion();
+    continuarLoginTrasDispositivo(session.user.id, session.user.email);
   });
-}
-
-function _mostrarConfirmarContinuar(authId, email){
-  _ocultarVerificandoSesion();
-  // Por si esta pantalla ya se había mostrado antes en la misma carga de
-  // página (no debería pasar en el uso normal): siempre arranca en la
-  // tarjeta principal, nunca en la de confirmar cierre de una vez anterior.
-  var tarjetaPrincipal = document.getElementById('continuarComoTarjeta');
-  var tarjetaConfirmar = document.getElementById('confirmarCerrarSesionTarjeta');
-  if(tarjetaPrincipal) tarjetaPrincipal.style.display = 'block';
-  if(tarjetaConfirmar) tarjetaConfirmar.style.display = 'none';
-  var ov = document.getElementById('continuarComoOverlay');
-  var txt = document.getElementById('continuarComoTexto');
-  if(txt) txt.textContent = '¿Continuar como ' + email + '?';
-  if(ov){
-    ov.style.display = 'flex';
-    ov.setAttribute('data-auth-id', authId);
-    ov.setAttribute('data-email', email);
-    ov.setAttribute('data-nombre', email);
-  }
-  sb.from('usuarios').select('nombre,sexo').eq('auth_id', authId).then(function(r){
-    var perfil = (r.data && r.data[0]) || null;
-    if(perfil){
-      var nombreConTit = nombreConTitulo(perfil);
-      if(txt) txt.textContent = '¿Continuar como ' + nombreConTit + '?';
-      if(ov) ov.setAttribute('data-nombre', nombreConTit);
-    }
-  });
-}
-
-function _confirmarContinuarSi(){
-  var ov = document.getElementById('continuarComoOverlay');
-  var authId = ov ? ov.getAttribute('data-auth-id') : null;
-  var email = ov ? ov.getAttribute('data-email') : null;
-  if(ov) ov.style.display = 'none';
-  if(authId) continuarLoginTrasDispositivo(authId, email);
-}
-
-// "Cerrar esta sesión" ya no cierra al toque: pide confirmar en una tarjeta
-// aparte, con el nombre puesto, en vez de cerrar sin avisar (esa confusión
-// fue justamente lo que hizo sacar todo este mecanismo la primera vez).
-function _mostrarConfirmarCerrarSesion(){
-  var ov = document.getElementById('continuarComoOverlay');
-  var nombre = ov ? ov.getAttribute('data-nombre') : '';
-  var txt = document.getElementById('confirmarCerrarSesionTexto');
-  if(txt) txt.textContent = '¿Seguro que querés cerrar la sesión de ' + nombre + '?';
-  var principal = document.getElementById('continuarComoTarjeta');
-  var confirmar = document.getElementById('confirmarCerrarSesionTarjeta');
-  if(principal) principal.style.display = 'none';
-  if(confirmar) confirmar.style.display = 'block';
-}
-
-function _ocultarConfirmarCerrarSesion(){
-  var principal = document.getElementById('continuarComoTarjeta');
-  var confirmar = document.getElementById('confirmarCerrarSesionTarjeta');
-  if(confirmar) confirmar.style.display = 'none';
-  if(principal) principal.style.display = 'block';
-}
-
-function _confirmarContinuarNo(){
-  var ov = document.getElementById('continuarComoOverlay');
-  if(ov) ov.style.display = 'none';
-  localStorage.removeItem('mhcd_recordar');
-  sb.auth.signOut();
 }
 
 function guardarLegajoRenapdis(){
