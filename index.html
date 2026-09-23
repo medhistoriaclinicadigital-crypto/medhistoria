@@ -5484,6 +5484,12 @@ function cerrarApp(){
   try{ ['mhcd_pacientes','mhcd_turnos','mhcd_videoconsultas'].forEach(function(base){ localStorage.removeItem(base+'_guest'); }); }catch(e){ console.warn('[catch]', e); }
   var pSalida = null;
   try{ pSalida = sb.auth.signOut(); }catch(e){ console.warn('[catch]', e); }
+  // "Salir" es una acción explícita: cierra la sesión de verdad, tildado o
+  // no "Guardar usuario". Si no borráramos el flag acá, la próxima carga de
+  // página igual intentaría el reingreso automático, agotaría los 3
+  // reintentos contra una sesión que ya no existe y recién ahí lo borraría
+  // sola — unos segundos de espera de más para nada.
+  localStorage.removeItem('mhcd_recordar');
   usuarioActual = null;
   // La receta o el documento firmado (PDF con datos del paciente) y una emisión pendiente no deben sobrevivir al cierre de sesión.
   _recetaFirmadaCache = null; _recetaFirmaPendiente = null;
