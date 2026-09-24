@@ -859,7 +859,7 @@ function mhcdRechazarCookies(){
   // "Ingresar") hasta saber si el reingreso automático funcionó o no. Sin
   // esto, un clic justo cuando la sesión se restaura sola puede terminar
   // cayendo sobre el botón "Salir" de la app ya cargada debajo.
-  if(localStorage.getItem('mhcd_recordar')==='1'){
+  if(localStorage.getItem('mhcd_recordar')==='1' && localStorage.getItem('mhcd_salio')!=='1'){
     var _ovVS = document.getElementById('verificandoSesionOverlay');
     if(_ovVS) _ovVS.style.display = 'flex';
     // Red de seguridad: si por lo que sea nada oculta el overlay a tiempo,
@@ -916,7 +916,7 @@ function mhcdRechazarCookies(){
         <button type="button" onclick="togglePass('ml-pass',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;color:#aaa;padding:4px;"><span style="position:relative;display:inline-block;font-size:1.1rem;">👁<span style="position:absolute;left:0;top:50%;transform:translateY(-50%) rotate(-45deg);width:100%;height:2px;background:#888;display:block;border-radius:2px;"></span></span></button>
       </div>
       <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#666;margin:10px 0 0;cursor:pointer;">
-       <input type="checkbox" id="ml-recordar" style="accent-color:#22a050;width:15px;height:15px;" onchange="(function(c,chk){var u=(document.getElementById('ml-user')||{}).value||'';var p=(document.getElementById('ml-pass')||{}).value||'';if(c && (!u.trim()||!p.trim())){chk.checked=false;alert('Completá usuario y contraseña antes de tildar \'Guardar usuario\'.');return;}if(c){localStorage.setItem('mhcd_recordar','1');}else{localStorage.removeItem('mhcd_recordar');localStorage.removeItem('mhcd_recordar_user');}})(this.checked,this)">
+       <input type="checkbox" id="ml-recordar" style="accent-color:#22a050;width:15px;height:15px;" onchange="(function(c,chk){var u=(document.getElementById('ml-user')||{}).value||'';var p=(document.getElementById('ml-pass')||{}).value||'';if(c && (!u.trim()||!p.trim())){chk.checked=false;alert('Completá usuario y contraseña antes de tildar \'Guardar usuario\'.');return;}if(c){localStorage.setItem('mhcd_recordar','1');}else{localStorage.removeItem('mhcd_recordar');localStorage.removeItem('mhcd_recordar_user');localStorage.removeItem('mhcd_salio');}})(this.checked,this)">
         Guardar usuario
       </label>
       <p style="margin:2px 0 4px 23px;font-size:.72rem;color:#999;">Por seguridad, no guardamos tu contraseña.</p>
@@ -5452,11 +5452,13 @@ function cerrarApp(){
   var pSalida = null;
   try{ pSalida = sb.auth.signOut(); }catch(e){ console.warn('[catch]', e); }
   // "Salir" es una acción explícita: cierra la sesión de verdad, tildado o
-  // no "Guardar usuario". Si no borráramos el flag acá, la próxima carga de
-  // página igual intentaría el reingreso automático, agotaría los 3
-  // reintentos contra una sesión que ya no existe y recién ahí lo borraría
-  // sola — unos segundos de espera de más para nada.
-  localStorage.removeItem('mhcd_recordar');
+  // no "Guardar usuario". Lo que "Guardar usuario" recuerda (el email y la
+  // casilla tildada, mhcd_recordar / mhcd_recordar_user) NO se borra: solo se
+  // marca que ya no hay sesión para retomar (mhcd_salio), así la próxima carga
+  // no intenta el reingreso automático contra una sesión que ya no existe
+  // (agotaría los 3 reintentos, unos segundos de espera de más para nada).
+  // La contraseña nunca se guarda. La marca se limpia en el próximo ingreso.
+  if(localStorage.getItem('mhcd_recordar') === '1') localStorage.setItem('mhcd_salio', '1');
   usuarioActual = null;
   // La receta o el documento firmado (PDF con datos del paciente) y una emisión pendiente no deben sobrevivir al cierre de sesión.
   _recetaFirmadaCache = null; _recetaFirmaPendiente = null;
@@ -17232,6 +17234,8 @@ function mlIngresar(){
 // "Guardar usuario" ya quedó guardado en localStorage por su propio
 // onchange o por una sesión previa, acá no hace falta releerlo.
 function continuarLoginTrasDispositivo(authId, emailFallback){
+    // Hay sesión real de nuevo: el próximo cierre de pestaña (sin "Salir") puede reingresar solo.
+    localStorage.removeItem('mhcd_salio');
     // Si "Recordar" quedó tildado, guardamos el usuario para precargarlo
     // la próxima vez que se abra el login (la contraseña la maneja el
     // gestor del navegador). Ver mostrarLogin().
@@ -17284,6 +17288,7 @@ function _procesarReingresoAutomatico(session, intento){
   intento = intento || 1;
   if(window._dbgR) window._dbgR('_procesarReingresoAutomatico intento='+intento, { mhcdRecordar: localStorage.getItem('mhcd_recordar'), haySesion: !!session, hayUser: !!(session&&session.user) });
   if(localStorage.getItem('mhcd_recordar') !== '1'){ if(window._dbgR) window._dbgR('sale: mhcd_recordar no es 1'); return; }
+  if(localStorage.getItem('mhcd_salio') === '1'){ if(window._dbgR) window._dbgR('sale: cerró sesión con Salir, no hay sesión que retomar'); return; }
   if(!session || !session.user){
     if(intento < 3){
       if(window._dbgR) window._dbgR('sin sesión válida, programo reintento en 1200ms');
@@ -17295,11 +17300,11 @@ function _procesarReingresoAutomatico(session, intento){
       }, 1200);
       return;
     }
-    // Se agotaron los reintentos: no hay una sesión real para reingresar,
-    // aunque "Guardar usuario" haya quedado tildado. Apagamos el flag para
-    // que la casilla no siga mostrándose tildada sin nada real detrás.
-    if(window._dbgR) window._dbgR('se agotaron los 3 intentos sin sesión — borro mhcd_recordar');
-    localStorage.removeItem('mhcd_recordar');
+    // Se agotaron los reintentos: no hay una sesión real para reingresar
+    // (venció, por ejemplo). El email y la casilla quedan guardados; se marca
+    // que no hay sesión que retomar para no repetir los 3 intentos en cada carga.
+    if(window._dbgR) window._dbgR('se agotaron los 3 intentos sin sesión — marco mhcd_salio');
+    localStorage.setItem('mhcd_salio', '1');
     _ocultarVerificandoSesion();
     return;
   }
@@ -17317,8 +17322,8 @@ function _verificarDispositivoConReintento(session, intento){
         setTimeout(function(){ _verificarDispositivoConReintento(session, intento+1); }, 1200);
         return;
       }
-      if(window._dbgR) window._dbgR('se agotaron los 3 intentos del RPC con error — borro mhcd_recordar');
-      localStorage.removeItem('mhcd_recordar');
+      if(window._dbgR) window._dbgR('se agotaron los 3 intentos del RPC con error — marco mhcd_salio');
+      localStorage.setItem('mhcd_salio', '1');
       _ocultarVerificandoSesion();
       return;
     }
@@ -17326,8 +17331,8 @@ function _verificarDispositivoConReintento(session, intento){
     if(!estadoDisp.permitido){
       // Dispositivo no aprobado o revocado desde la última vez: que inicie
       // sesión de nuevo a mano, no hay nada real para recordar acá.
-      if(window._dbgR) window._dbgR('dispositivo NO permitido — signOut + borro mhcd_recordar', estadoDisp);
-      localStorage.removeItem('mhcd_recordar');
+      if(window._dbgR) window._dbgR('dispositivo NO permitido — signOut + marco mhcd_salio', estadoDisp);
+      localStorage.setItem('mhcd_salio', '1');
       sb.auth.signOut();
       _ocultarVerificandoSesion();
       return;
