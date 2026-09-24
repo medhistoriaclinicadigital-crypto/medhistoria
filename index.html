@@ -1124,8 +1124,17 @@ function mhcdRechazarCookies(){
         <span class="law-badge">Res. 648/2013 MS</span>
       </div>
     </div>
+    <div style="max-width:900px;margin:0 auto 32px;background:#f0fdf4;border:1.5px solid var(--g8);border-radius:16px;padding:24px 28px;">
+      <div style="font-weight:700;color:#145a32;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px;text-align:center;">Todos los planes incluyen</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 18px;">
+        <div style="font-size:.85rem;color:#145a32;">✓ Citas y consultas ilimitadas</div>
+        <div style="font-size:.85rem;color:#145a32;">✓ CIE-10 integrado</div>
+        <div style="font-size:.85rem;color:#145a32;">✓ Usuarios ilimitados</div>
+        <div style="font-size:.85rem;color:#145a32;">✓ Soporte dedicado 24/7</div>
+      </div>
+    </div>
     <div class="planes-grid">
-      <div class="plan">
+      <div class="plan" style="border-left:6px solid var(--g7);">
         <span class="plan-icon">🆓</span>
         <div class="pname">Prueba Gratuita</div>
         <div class="pdesc">Empezá sin compromiso y probá la IA desde el día uno.</div>
@@ -1134,39 +1143,24 @@ function mhcdRechazarCookies(){
         <div class="ppat">Hasta 35 pacientes</div>
         <hr class="pline">
         <ul class="pfeats">
-          <li>10 consultas de IA/mes</li><li>Citas y consultas ilimitadas</li>
-          <li>Hasta 20 recetas/mes</li><li>Firma electrónica integrada</li><li>Derivaciones y órdenes ilimitadas</li>
-          <li>CIE-10 integrado</li><li>Agenda</li>
-          <li>Calculadora clínica</li><li>Facturación</li>
-          <li>Videoconsulta integrada</li>
-          <li>Vademecum inteligente</li><li>50 imágenes y archivos</li>
-          <li>Backup diario de tus datos</li>
-          <li>Usuarios ilimitados</li><li>Soporte dedicado 24/7</li>
+          <li>Hasta 20 recetas/mes</li><li>50 imágenes y archivos</li>
           <li>Sin tarjeta de crédito</li>
         </ul>
         <button class="pbtn" onclick="abrirRegistro('free')">Empezar gratis</button>
       </div>
-      <div class="plan">
+      <div class="plan" style="border-left:6px solid var(--g6);">
         <span class="plan-icon">🩺</span>
         <div class="pname">Starter</div>
         <div class="pdesc">Para el médico que da el primer paso hacia la digitalización.</div>
         <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">29</span><span class="pprice-p">/mes</span></div>
         <div class="ppat">Pacientes y recetas ilimitados</div>
-
         <hr class="pline">
         <ul class="pfeats">
-          <li>100 consultas de IA/mes</li><li>Citas y consultas ilimitadas</li>
-          <li>Recetas, derivaciones y órdenes ilimitadas</li><li>Firma electrónica integrada</li><li>Videoconsulta integrada</li>
-          <li>CIE-10 integrado</li><li>Agenda</li>
-          <li>Calculadora clínica</li><li>Facturación</li>
-          <li>Vademecum inteligente</li><li>1.500 imágenes y archivos</li>
-          <li>Usuarios ilimitados</li>
-          <li>Backup diario de tus datos</li>
-          <li>Soporte dedicado 24/7</li>
+          <li>1.500 imágenes y archivos</li>
         </ul>
         <button class="pbtn" onclick="abrirPago('Starter','29')">Elegir Starter</button>
       </div>
-      <div class="plan">
+      <div class="plan" style="border-left:6px solid var(--g5);">
         <span class="plan-icon">⚕️</span>
         <div class="pname">Pro</div>
         <div class="pdesc">Para el médico con consulta establecida.</div>
@@ -1174,14 +1168,12 @@ function mhcdRechazarCookies(){
         <div class="ppat">Pacientes y recetas ilimitados</div>
         <hr class="pline">
         <ul class="pfeats">
-          <li>Todo lo de Starter</li>
-          <li>300 consultas de IA/mes</li>
           <li>5.000 imágenes y archivos</li>
           <li>Analítica avanzada</li>
         </ul>
         <button class="pbtn" onclick="abrirPago('Pro','41')">Elegir Pro</button>
       </div>
-      <div class="plan">
+      <div class="plan" style="border-left:6px solid var(--g4);">
         <span class="plan-icon">👑</span>
         <div class="pname">Premium</div>
         <div class="pdesc">Para profesionales con alta demanda y múltiples consultorios.</div>
@@ -1189,8 +1181,6 @@ function mhcdRechazarCookies(){
         <div class="ppat">Pacientes y recetas ilimitados</div>
         <hr class="pline">
         <ul class="pfeats">
-          <li>Todo lo de Pro</li>
-          <li>800 consultas de IA/mes</li>
           <li>15.000 imágenes y archivos</li>
         </ul>
         <button class="pbtn" onclick="abrirPago('Premium','71')">Elegir Premium</button>
@@ -1198,41 +1188,43 @@ function mhcdRechazarCookies(){
     </div><!-- /planes-grid -->
 
     <!-- ADD-ON RECORDATORIOS AUTOMÁTICOS -->
-    <div class="sec-head" style="margin-top:56px;">
-      <div class="sec-tag">Add-on opcional</div>
-      <h2 class="sec-title" style="font-size:clamp(1.5rem,3vw,2rem);">Recordatorios Automáticos</h2>
-      <p class="sec-sub">El envío manual de WhatsApp y mail (tocando un botón vos) es <strong>gratis en todos los planes</strong>. Este add-on es solo para el envío <strong>automático</strong>, sin que tengas que tocar nada.</p>
-    </div>
-    <div class="planes-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
-      <div class="plan">
-        <span class="plan-icon">💬</span>
-        <div class="pname">Chico</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">14</span><span class="pprice-p">/mes</span></div>
-        <hr class="pline">
-        <ul class="pfeats"><li>150 WhatsApp automáticos/mes</li><li>300 emails automáticos/mes</li></ul>
+    <div style="max-width:900px;margin:56px auto 0;background:linear-gradient(135deg,#f0fdf4,#eef2ff);border:1.5px solid var(--g8);border-left:6px solid var(--g4);border-radius:18px;padding:34px 36px;box-shadow:0 16px 40px rgba(20,90,50,.14);">
+      <div class="sec-head">
+        <div class="sec-tag">Add-on opcional</div>
+        <h2 class="sec-title" style="font-size:clamp(1.5rem,3vw,2rem);">Recordatorios Automáticos</h2>
+        <p class="sec-sub">El envío manual de WhatsApp y mail (tocando un botón vos) es <strong>gratis en todos los planes</strong>. Este add-on es solo para el envío <strong>automático</strong>, sin que tengas que tocar nada.</p>
       </div>
-      <div class="plan">
-        <span class="plan-icon">💬</span>
-        <div class="pname">Mediano</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">24</span><span class="pprice-p">/mes</span></div>
-        <hr class="pline">
-        <ul class="pfeats"><li>300 WhatsApp automáticos/mes</li><li>800 emails automáticos/mes</li></ul>
-      </div>
-      <div class="plan">
-        <span class="plan-icon">💬</span>
-        <div class="pname">Grande</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">40</span><span class="pprice-p">/mes</span></div>
-        <hr class="pline">
-        <ul class="pfeats"><li>600 WhatsApp automáticos/mes</li><li>2.000 emails automáticos/mes</li></ul>
-      </div>
-      <div class="plan">
-        <span class="plan-icon">💬</span>
-        <div class="pname">Pro</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">70</span><span class="pprice-p">/mes</span></div>
-        <hr class="pline">
-        <ul class="pfeats"><li>1.200 WhatsApp automáticos/mes</li><li>4.000 emails automáticos/mes</li></ul>
-      </div>
-    </div><!-- /add-on grid -->
+      <div class="planes-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+        <div class="plan" style="border-left:4px solid var(--g4);">
+          <span class="plan-icon">💬</span>
+          <div class="pname">Chico</div>
+          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">14</span><span class="pprice-p">/mes</span></div>
+          <hr class="pline">
+          <ul class="pfeats"><li>150 WhatsApp automáticos/mes</li><li>300 emails automáticos/mes</li></ul>
+        </div>
+        <div class="plan" style="border-left:4px solid var(--g4);">
+          <span class="plan-icon">💬</span>
+          <div class="pname">Mediano</div>
+          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">24</span><span class="pprice-p">/mes</span></div>
+          <hr class="pline">
+          <ul class="pfeats"><li>300 WhatsApp automáticos/mes</li><li>800 emails automáticos/mes</li></ul>
+        </div>
+        <div class="plan" style="border-left:4px solid var(--g4);">
+          <span class="plan-icon">💬</span>
+          <div class="pname">Grande</div>
+          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">40</span><span class="pprice-p">/mes</span></div>
+          <hr class="pline">
+          <ul class="pfeats"><li>600 WhatsApp automáticos/mes</li><li>2.000 emails automáticos/mes</li></ul>
+        </div>
+        <div class="plan" style="border-left:4px solid var(--g4);">
+          <span class="plan-icon">💬</span>
+          <div class="pname">Pro</div>
+          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">70</span><span class="pprice-p">/mes</span></div>
+          <hr class="pline">
+          <ul class="pfeats"><li>1.200 WhatsApp automáticos/mes</li><li>4.000 emails automáticos/mes</li></ul>
+        </div>
+      </div><!-- /add-on grid -->
+    </div><!-- /add-on panel -->
 
     <!-- TU CENTRO MÉDICO -->
     <details id="sec-centro-medico" style="max-width:760px;margin:72px auto 0;background:linear-gradient(135deg,#f0fdf4,#eef2ff);border:1.5px solid var(--g8);border-left:6px solid var(--g4);border-radius:18px;padding:34px 36px;box-shadow:0 16px 40px rgba(20,90,50,.14);scroll-margin-top:90px;">
@@ -1251,21 +1243,22 @@ function mhcdRechazarCookies(){
       <div style="margin-top:18px;">
         <div class="ctr-notice">⏳ <span><strong>El Paso 1 todavía no está activo.</strong> Podés leer toda la guía para saber qué esperar, pero si hoy tocás <span class="ctr-ui">Inscribir mi Centro Médico</span> te va a aparecer este aviso: <span class="ctr-mono">"🏥 Estamos terminando de habilitar la inscripción de Centros Médicos — va a estar disponible en muy poco."</span> Te avisamos apenas se habilite.</span></div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0;">
-          <div style="background:#fff;border:1.5px solid var(--g8);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:.82rem;color:#145a32;text-align:center;background:#fff;border:1.5px solid var(--g8);border-radius:10px;padding:10px 14px;margin:0 0 14px;">✓ IA compartida &nbsp;·&nbsp; ✓ Todo lo de Premium por médico &nbsp;·&nbsp; ✓ Secretarias ilimitadas — <strong>en los 3 planes de Centro Médico</strong></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 20px;">
+          <div style="background:#fff;border:1.5px solid var(--g8);border-left:6px solid var(--g4);border-radius:12px;padding:16px;text-align:center;">
             <div style="font-weight:700;color:#145a32;margin-bottom:4px;">Centro Chico</div>
             <div style="font-size:1.3rem;font-weight:800;color:#145a32;">u$s 149<span style="font-size:.7rem;font-weight:600;color:var(--muted);">/mes</span></div>
-            <div style="font-size:.78rem;color:var(--muted);margin-top:6px;">Hasta 5 médicos · secretarias ilimitadas · 1.000 consultas de IA compartidas/mes · todo lo de Premium por médico</div>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:6px;">Hasta 5 médicos</div>
           </div>
-          <div style="background:#fff;border:1.5px solid var(--g8);border-radius:12px;padding:16px;text-align:center;">
+          <div style="background:#fff;border:1.5px solid var(--g8);border-left:6px solid var(--g4);border-radius:12px;padding:16px;text-align:center;">
             <div style="font-weight:700;color:#145a32;margin-bottom:4px;">Centro Mediano</div>
             <div style="font-size:1.3rem;font-weight:800;color:#145a32;">u$s 299<span style="font-size:.7rem;font-weight:600;color:var(--muted);">/mes</span></div>
-            <div style="font-size:.78rem;color:var(--muted);margin-top:6px;">Hasta 20 médicos · 4.000 consultas de IA compartidas/mes</div>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:6px;">Hasta 20 médicos</div>
           </div>
-          <div style="background:#fff;border:1.5px solid var(--g8);border-radius:12px;padding:16px;text-align:center;">
+          <div style="background:#fff;border:1.5px solid var(--g8);border-left:6px solid var(--g4);border-radius:12px;padding:16px;text-align:center;">
             <div style="font-weight:700;color:#145a32;margin-bottom:4px;">Centro Grande</div>
             <div style="font-size:1.3rem;font-weight:800;color:#145a32;">u$s 699<span style="font-size:.7rem;font-weight:600;color:var(--muted);">/mes</span></div>
-            <div style="font-size:.78rem;color:var(--muted);margin-top:6px;">Hasta 50 médicos · 10.000 consultas de IA compartidas/mes</div>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:6px;">Hasta 50 médicos</div>
           </div>
         </div>
         <p style="font-size:.8rem;color:var(--muted);text-align:center;margin:-8px 0 20px;">¿Más de 50 médicos? Escribinos y lo cotizamos a medida.</p>
