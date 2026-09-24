@@ -623,7 +623,7 @@ function abrirRegistroCentro(){
   document.querySelectorAll('.centro-medico-only').forEach(function(el){ el.style.display = 'block'; });
   overlay.setAttribute('data-registro-centro', 'true');
   var btn=document.getElementById('pago-submit-btn'); if(btn) btn.textContent='✦ Crear mi Centro Médico';
-  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='El centro se crea al instante. Te mostramos los datos para transferir — el límite de pacientes es el que corresponde a tu plan elegido, y se activa apenas confirmemos el pago.';
+  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='El centro se crea al instante. Te mostramos los datos para transferir — el plan completo (pacientes ilimitados) se activa apenas confirmemos el pago.';
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
@@ -886,10 +886,9 @@ function mhcdRechazarCookies(){
       <div style="font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:6px 0 4px;">Plan</div>
       <select id="ml-reg-plan" style="width:100%;padding:10px 14px;margin:4px 0 10px;border:1.5px solid #22a050;border-radius:8px;box-sizing:border-box;font-size:.9rem;display:block;outline:none;background:#f0fdf4;color:#145a32;font-weight:600;">
         <option value="Prueba Gratuita">🆓 Prueba Gratuita — 30 días gratis</option>
-        <option value="Starter">⚕️ Starter — U$S 34/mes</option>
-        <option value="Pro">💊 Pro — U$S 49/mes</option>
-        <option value="Premium">👑 Premium — U$S 89/mes</option>
-        <option value="Ilimitado">♾️ Ilimitado — U$S 199/mes</option>
+        <option value="Starter">⚕️ Starter — U$S 29/mes</option>
+        <option value="Pro">💊 Pro — U$S 41/mes</option>
+        <option value="Premium">👑 Premium — U$S 71/mes</option>
       </select>
       <div style="font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:6px 0 4px;">¿Te invitó un Centro Médico?</div>
       <input id="ml-reg-codigo-centro" type="text" autocomplete="off" placeholder="Código de invitación (opcional)" style="width:100%;padding:10px 14px;margin:4px 0 10px;border:1.5px solid #d1d5db;border-radius:8px;box-sizing:border-box;font-size:.9rem;display:block;outline:none;background:transparent;text-transform:uppercase;">
@@ -1092,8 +1091,8 @@ function mhcdRechazarCookies(){
         <div class="ppat">Hasta 35 pacientes</div>
         <hr class="pline">
         <ul class="pfeats">
-          <li>IA incluida</li><li>Citas y consultas ilimitadas</li>
-          <li>Recetas ilimitadas</li><li>Firma electrónica integrada</li><li>Derivaciones y órdenes ilimitadas</li>
+          <li>10 consultas de IA/mes</li><li>Citas y consultas ilimitadas</li>
+          <li>Hasta 20 recetas/mes</li><li>Firma electrónica integrada</li><li>Derivaciones y órdenes ilimitadas</li>
           <li>CIE-10 integrado</li><li>Agenda</li>
           <li>Calculadora clínica</li><li>Facturación</li>
           <li>Videoconsulta integrada</li>
@@ -1108,12 +1107,12 @@ function mhcdRechazarCookies(){
         <span class="plan-icon">🩺</span>
         <div class="pname">Starter</div>
         <div class="pdesc">Para el médico que da el primer paso hacia la digitalización.</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">34</span><span class="pprice-p">/mes</span></div>
-        <div class="ppat">Hasta 50 pacientes</div>
+        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">29</span><span class="pprice-p">/mes</span></div>
+        <div class="ppat">Pacientes y recetas ilimitados</div>
 
         <hr class="pline">
         <ul class="pfeats">
-          <li>IA incluida</li><li>Citas y consultas ilimitadas</li>
+          <li>100 consultas de IA/mes</li><li>Citas y consultas ilimitadas</li>
           <li>Recetas, derivaciones y órdenes ilimitadas</li><li>Firma electrónica integrada</li><li>Videoconsulta integrada</li>
           <li>CIE-10 integrado</li><li>Agenda</li>
           <li>Calculadora clínica</li><li>Facturación</li>
@@ -1122,52 +1121,75 @@ function mhcdRechazarCookies(){
           <li>Backup diario de tus datos</li>
           <li>Soporte dedicado 24/7</li>
         </ul>
-        <button class="pbtn" onclick="abrirPago('Starter','34')">Elegir Starter</button>
+        <button class="pbtn" onclick="abrirPago('Starter','29')">Elegir Starter</button>
       </div>
       <div class="plan">
         <span class="plan-icon">⚕️</span>
         <div class="pname">Pro</div>
         <div class="pdesc">Para el médico con consulta establecida.</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">49</span><span class="pprice-p">/mes</span></div>
-        <div class="ppat">Hasta 200 pacientes</div>
+        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">41</span><span class="pprice-p">/mes</span></div>
+        <div class="ppat">Pacientes y recetas ilimitados</div>
         <hr class="pline">
         <ul class="pfeats">
           <li>Todo lo de Starter</li>
-          <li>3.500 imágenes y archivos</li>
+          <li>300 consultas de IA/mes</li>
+          <li>5.000 imágenes y archivos</li>
+          <li>Analítica avanzada</li>
         </ul>
-        <button class="pbtn" onclick="abrirPago('Pro','49')">Elegir Pro</button>
+        <button class="pbtn" onclick="abrirPago('Pro','41')">Elegir Pro</button>
       </div>
       <div class="plan">
         <span class="plan-icon">👑</span>
         <div class="pname">Premium</div>
         <div class="pdesc">Para profesionales con alta demanda y múltiples consultorios.</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">89</span><span class="pprice-p">/mes</span></div>
-        <div class="ppat">Hasta 500 pacientes</div>
+        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">71</span><span class="pprice-p">/mes</span></div>
+        <div class="ppat">Pacientes y recetas ilimitados</div>
         <hr class="pline">
         <ul class="pfeats">
           <li>Todo lo de Pro</li>
-          <li>10.000 imágenes y archivos</li>
+          <li>800 consultas de IA/mes</li>
+          <li>15.000 imágenes y archivos</li>
         </ul>
-        <button class="pbtn" onclick="abrirPago('Premium','89')">Elegir Premium</button>
-      </div>
-
-      <!-- PLAN ILIMITADO -->
-      <div class="plan">
-        <div class="plan-chip" style="background:linear-gradient(135deg,#2d2d2d,#4a4a4a);">♾️ Sin límites</div>
-        <span class="plan-icon">♾️</span>
-        <div class="pname">Ilimitado</div>
-        <div class="pdesc">Para clínicas, centros médicos y grupos de profesionales sin límite de ningún tipo.</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">199</span><span class="pprice-p">/mes</span></div>
-        <div class="ppat">Pacientes, usuarios y todo — sin límite</div>
-        <hr class="pline">
-        <ul class="pfeats">
-          <li>Todo lo de Premium</li>
-          <li>Pacientes ilimitados</li>
-          <li>Imágenes y archivos ilimitados</li>
-        </ul>
-        <button class="pbtn" onclick="abrirPago('Ilimitado','199')">Elegir Ilimitado</button>
+        <button class="pbtn" onclick="abrirPago('Premium','71')">Elegir Premium</button>
       </div>
     </div><!-- /planes-grid -->
+
+    <!-- ADD-ON RECORDATORIOS AUTOMÁTICOS -->
+    <div class="sec-head" style="margin-top:56px;">
+      <div class="sec-tag">Add-on opcional</div>
+      <h2 class="sec-title" style="font-size:clamp(1.5rem,3vw,2rem);">Recordatorios Automáticos</h2>
+      <p class="sec-sub">El envío manual de WhatsApp y mail (tocando un botón vos) es <strong>gratis en todos los planes</strong>. Este add-on es solo para el envío <strong>automático</strong>, sin que tengas que tocar nada.</p>
+    </div>
+    <div class="planes-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+      <div class="plan">
+        <span class="plan-icon">💬</span>
+        <div class="pname">Chico</div>
+        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">14</span><span class="pprice-p">/mes</span></div>
+        <hr class="pline">
+        <ul class="pfeats"><li>150 WhatsApp automáticos/mes</li><li>300 emails automáticos/mes</li></ul>
+      </div>
+      <div class="plan">
+        <span class="plan-icon">💬</span>
+        <div class="pname">Mediano</div>
+        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">24</span><span class="pprice-p">/mes</span></div>
+        <hr class="pline">
+        <ul class="pfeats"><li>300 WhatsApp automáticos/mes</li><li>800 emails automáticos/mes</li></ul>
+      </div>
+      <div class="plan">
+        <span class="plan-icon">💬</span>
+        <div class="pname">Grande</div>
+        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">40</span><span class="pprice-p">/mes</span></div>
+        <hr class="pline">
+        <ul class="pfeats"><li>600 WhatsApp automáticos/mes</li><li>2.000 emails automáticos/mes</li></ul>
+      </div>
+      <div class="plan">
+        <span class="plan-icon">💬</span>
+        <div class="pname">Pro</div>
+        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">70</span><span class="pprice-p">/mes</span></div>
+        <hr class="pline">
+        <ul class="pfeats"><li>1.200 WhatsApp automáticos/mes</li><li>4.000 emails automáticos/mes</li></ul>
+      </div>
+    </div><!-- /add-on grid -->
 
     <!-- TU CENTRO MÉDICO -->
     <details id="sec-centro-medico" style="max-width:760px;margin:72px auto 0;background:linear-gradient(135deg,#f0fdf4,#eef2ff);border:1.5px solid var(--g8);border-left:6px solid var(--g4);border-radius:18px;padding:34px 36px;box-shadow:0 16px 40px rgba(20,90,50,.14);scroll-margin-top:90px;">
@@ -1186,6 +1208,25 @@ function mhcdRechazarCookies(){
       <div style="margin-top:18px;">
         <div class="ctr-notice">⏳ <span><strong>El Paso 1 todavía no está activo.</strong> Podés leer toda la guía para saber qué esperar, pero si hoy tocás <span class="ctr-ui">Inscribir mi Centro Médico</span> te va a aparecer este aviso: <span class="ctr-mono">"🏥 Estamos terminando de habilitar la inscripción de Centros Médicos — va a estar disponible en muy poco."</span> Te avisamos apenas se habilite.</span></div>
 
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0;">
+          <div style="background:#fff;border:1.5px solid var(--g8);border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-weight:700;color:#145a32;margin-bottom:4px;">Centro Chico</div>
+            <div style="font-size:1.3rem;font-weight:800;color:#145a32;">u$s 149<span style="font-size:.7rem;font-weight:600;color:var(--muted);">/mes</span></div>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:6px;">Hasta 5 médicos · secretarias ilimitadas · 1.000 consultas de IA compartidas/mes · todo lo de Premium por médico</div>
+          </div>
+          <div style="background:#fff;border:1.5px solid var(--g8);border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-weight:700;color:#145a32;margin-bottom:4px;">Centro Mediano</div>
+            <div style="font-size:1.3rem;font-weight:800;color:#145a32;">u$s 299<span style="font-size:.7rem;font-weight:600;color:var(--muted);">/mes</span></div>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:6px;">Hasta 20 médicos · 4.000 consultas de IA compartidas/mes</div>
+          </div>
+          <div style="background:#fff;border:1.5px solid var(--g8);border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-weight:700;color:#145a32;margin-bottom:4px;">Centro Grande</div>
+            <div style="font-size:1.3rem;font-weight:800;color:#145a32;">u$s 699<span style="font-size:.7rem;font-weight:600;color:var(--muted);">/mes</span></div>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:6px;">Hasta 50 médicos · 10.000 consultas de IA compartidas/mes</div>
+          </div>
+        </div>
+        <p style="font-size:.8rem;color:var(--muted);text-align:center;margin:-8px 0 20px;">¿Más de 50 médicos? Escribinos y lo cotizamos a medida.</p>
+
         <!-- PASO 1 -->
         <div class="ctr-step">
           <div class="ctr-rail"><div class="ctr-num">1</div><div class="ctr-line"></div></div>
@@ -1193,20 +1234,20 @@ function mhcdRechazarCookies(){
             <div class="ctr-head"><h4>Crear tu Centro Médico</h4><span class="ctr-tag owner">Vos</span><span class="ctr-tag soon">⏳ Próximamente</span></div>
             <p>Se hace una sola vez, con el botón <span class="ctr-ui">Inscribir mi Centro Médico</span> de abajo — un mismo formulario cubre el registro, el centro y el plan.</p>
             <ol>
-              <li>Completá el <span class="ctr-ui">Nombre del Centro Médico</span> y elegí el <span class="ctr-ui">Plan del centro</span> (Starter, Pro, Premium o Ilimitado) — el que cubre a todo el equipo.</li>
+              <li>Completá el <span class="ctr-ui">Nombre del Centro Médico</span> y elegí el <span class="ctr-ui">Plan del centro</span> (Centro Chico, Centro Mediano o Centro Grande) — el que cubre a todo el equipo.</li>
               <li>¿Vos también vas a atender pacientes ahí? Dejá tildado <span class="ctr-ui">¿Sos médico y también vas a atender pacientes en este centro?</span> y completá tu matrícula y especialidad. Si el centro lo administra alguien que no es médico, destildalo.</li>
               <li>Completá tus datos personales (nombre, apellido, email, DNI/CUIT, WhatsApp, dirección) y elegí tu contraseña.</li>
               <li>Aceptá los Términos y Condiciones y tocá <span class="ctr-ui">✦ Crear mi Centro Médico</span>.</li>
             </ol>
             <p>Tu cuenta y tu centro quedan creados al instante — sin trámites por mail — y entrás directo a tu panel, ya como dueño/a del centro.</p>
-            <div class="ctr-tip">💡 <span>El límite de pacientes es el que corresponde a tu plan elegido. Se activa apenas confirmes la transferencia. Apenas termina el registro se abre solo el panel con los datos para transferir.</span></div>
+            <div class="ctr-tip">💡 <span>Los pacientes son ilimitados en cualquier plan de Centro Médico. Se activa apenas confirmes la transferencia. Apenas termina el registro se abre solo el panel con los datos para transferir.</span></div>
             <ol>
               <li>Hacé la transferencia con los datos que te muestra ese panel.</li>
               <li>Volvé y tocá <span class="ctr-ui">Ya hice la transferencia</span>.</li>
             </ol>
             <div class="ctr-callout">
               <div class="ctr-callout-label">Confirmación en pantalla</div>
-              <span class="ctr-mono" style="font-size:.85rem;">"✅ ¡Gracias! Anotamos que hiciste la transferencia. En cuanto la veamos en la cuenta, tu centro queda con el límite de pacientes de tu plan elegido."</span>
+              <span class="ctr-mono" style="font-size:.85rem;">"✅ ¡Gracias! Anotamos que hiciste la transferencia. En cuanto la veamos en la cuenta, tu centro queda con el plan completo activado."</span>
             </div>
             <p>Nuestro equipo confirma el ingreso y activa tu plan completo — no tenés que hacer nada más de tu lado. Si más adelante necesitás volver a ver esos datos, o cambiar de plan, los botones <span class="ctr-ui">💳 Ver datos para transferir</span> y <span class="ctr-ui">⬆️ Cambiar plan</span> están siempre en <span class="ctr-ui">Mi Centro Médico</span>.</p>
             <div class="ctr-aside">
@@ -1319,78 +1360,12 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       </div>
     </details>
 
-    <!-- SERVICIOS ADICIONALES -->
-    <div style="margin-top:72px;">
-      <!-- Header -->
-      <div style="text-align:center;margin-bottom:40px;">
-        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(20,90,50,.10);color:#0a3d1f;border:1px solid rgba(20,90,50,.35);border-radius:20px;padding:5px 18px;font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">
-          <span style="display:inline-block;width:6px;height:6px;background:#22a050;border-radius:50%;"></span>
-          Servicios adicionales
-        </div>
-        <h3 style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:#0a3d1f;margin:0 0 10px;font-weight:700;">Potenciá tu plan con add-ons</h3>
-        <p style="color:#3a5c44;font-size:.95rem;max-width:480px;margin:0 auto;line-height:1.6;">Funcionalidades extra que se suman a cualquier plan. Activá solo lo que necesitás.</p>
-      </div>
-
-      <!-- Cards -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:24px;max-width:980px;margin:0 auto;">
-
-        <!-- WhatsApp Directo -->
-        <div style="background:linear-gradient(145deg,#0d4a25,#082e17);border:2px solid rgba(52,196,100,.5);border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:0;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.3);">
-          <div style="position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle at top right,rgba(52,196,100,.08),transparent 70%);pointer-events:none;"></div>
-          <!-- Ícono + badge -->
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
-            <div style="width:52px;height:52px;background:rgba(52,196,100,.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:1px solid rgba(52,196,100,.25);">📲</div>
-            <div style="background:rgba(52,196,100,.2);color:#6dde96;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid rgba(52,196,100,.3);letter-spacing:.05em;">ADD-ON</div>
-          </div>
-          <!-- Título y descripción -->
-          <div style="font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:700;color:#fff;margin-bottom:8px;line-height:1.2;">Comunicación Directa</div>
-          <div style="font-size:.875rem;color:#b8dfc8;line-height:1.65;margin-bottom:20px;flex:1;">Enviá recetas, turnos y videoconsultas directo al celular del paciente por WhatsApp y Email. Sin pasos adicionales, sin confirmaciones.</div>
-          <!-- Bullets -->
-          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px;">
-            <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#a8d5b5;"><span style="color:#34c464;font-size:.9rem;">✓</span> Envío por WhatsApp al paciente</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#a8d5b5;"><span style="color:#34c464;font-size:.9rem;">✓</span> Envío por Email al paciente</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#a8d5b5;"><span style="color:#34c464;font-size:.9rem;">✓</span> Recordatorios de turnos</div>
-          </div>
-          <!-- Precio + botón -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding-top:16px;border-top:1px solid rgba(52,196,100,.2);">
-            <div>
-              <div style="font-size:.7rem;color:#6dde96;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Por mes</div>
-              <div style="font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:700;color:#34c464;line-height:1;">U$S 29<span style="font-size:.9rem;font-weight:400;color:#6dde96;">/mes</span></div>
-            </div>
-            <button style="padding:11px 22px;border-radius:10px;background:#22a050;color:#fff;border:none;font-weight:700;font-size:.88rem;cursor:pointer;font-family:'Outfit',sans-serif;transition:background .2s;box-shadow:0 4px 12px rgba(34,160,80,.3);" onmouseover="this.style.background='#1a8040'" onmouseout="this.style.background='#22a050'" onclick="solicitarAddon('Comunicación Directa','29')">Agregar →</button>
-          </div>
-        </div>
-
-        <!-- Firma Digital Integrada: sacada de Servicios Adicionales el 2026-09-11 —
-             decisión de negocio, pasó a ser gratuita para todos los médicos, ya
-             no es un add-on pago. Ver tieneAddonFirma(). -->
-
-        <!-- Analítica Avanzada -->
-        <div style="background:linear-gradient(145deg,#0d4a25,#082e17);border:2px solid rgba(52,196,100,.5);border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:0;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.3);">
-          <div style="position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle at top right,rgba(52,196,100,.08),transparent 70%);pointer-events:none;"></div>
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
-            <div style="width:52px;height:52px;background:rgba(52,196,100,.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:1px solid rgba(52,196,100,.25);">📊</div>
-            <div style="background:rgba(52,196,100,.2);color:#6dde96;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid rgba(52,196,100,.3);letter-spacing:.05em;">ADD-ON</div>
-          </div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:700;color:#fff;margin-bottom:8px;line-height:1.2;">Analítica Avanzada</div>
-          <div style="font-size:.875rem;color:#b8dfc8;line-height:1.65;margin-bottom:20px;flex:1;">Reportes mensuales de tu consultorio: pacientes atendidos, diagnósticos frecuentes, facturación por obra social y tendencias clínicas.</div>
-          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px;">
-            <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#a8d5b5;"><span style="color:#34c464;font-size:.9rem;">✓</span> Pacientes atendidos y diagnósticos top</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#a8d5b5;"><span style="color:#34c464;font-size:.9rem;">✓</span> Facturación por obra social</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#a8d5b5;"><span style="color:#34c464;font-size:.9rem;">✓</span> Tendencias clínicas y alertas</div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding-top:16px;border-top:1px solid rgba(52,196,100,.2);">
-            <div>
-              <div style="font-size:.7rem;color:#6dde96;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Por mes</div>
-              <div style="font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:700;color:#34c464;line-height:1;">U$S 19<span style="font-size:.9rem;font-weight:400;color:#6dde96;">/mes</span></div>
-            </div>
-            <button style="padding:11px 22px;border-radius:10px;background:#22a050;color:#fff;border:none;font-weight:700;font-size:.88rem;cursor:pointer;font-family:'Outfit',sans-serif;transition:background .2s;box-shadow:0 4px 12px rgba(34,160,80,.3);" onmouseover="this.style.background='#1a8040'" onmouseout="this.style.background='#22a050'" onclick="solicitarAddon('Analítica Avanzada','19')">Agregar →</button>
-          </div>
-        </div>
-
-      </div>
-    </div>
-    <!-- /SERVICIOS ADICIONALES -->
+    <!-- SERVICIOS ADICIONALES: sección retirada el 2026-09-24 (estructura de
+         precios final). "Comunicación Directa" ($29/mes) pasó a ser gratis en
+         todos los planes (ver tieneAddonComunicacion) y "Analítica Avanzada"
+         ($19/mes) quedó incluida en Pro/Premium/Centro (ver tieneAddonAnalitica).
+         El único add-on pago ahora es "Recordatorios Automáticos", más arriba
+         en planes-grid. Firma Digital ya se había sacado de acá el 2026-09-11. -->
 
   </div><!-- /container -->
 </section><!-- /planes-sec -->
@@ -2944,8 +2919,8 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
         <div style="background:linear-gradient(135deg,var(--g2),var(--g1));border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
           <span style="font-size:1.5rem;">📊</span>
           <div><div style="color:#fff;font-weight:700;font-size:.95rem;">Activá Analítica Avanzada</div>
-          <div style="color:var(--g8);font-size:.8rem;">Gráficos, tendencias y reportes detallados por U$S 19/mes</div></div>
-          <button onclick="solicitarAddon('Analítica Avanzada','19')" style="margin-left:auto;padding:8px 18px;background:#22a050;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;">Activar →</button>
+          <div style="color:var(--g8);font-size:.8rem;">Gráficos, tendencias y reportes detallados — incluido en Pro, Premium y Centro Médico</div></div>
+          <button onclick="abrirMejorarPlanIndividual()" style="margin-left:auto;padding:8px 18px;background:#22a050;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;">Mejorar plan →</button>
         </div>
         <div class="dash-stats">
           <div class="dstat"><div class="dstat-icon">📊</div><div class="dstat-n">142</div><div class="dstat-l">Consultas este mes</div></div>
@@ -2971,7 +2946,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <div style="font-size:3rem;margin-bottom:16px;">🔒</div>
           <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--g2);margin-bottom:8px;">Analítica Avanzada</h3>
           <p style="color:var(--muted);font-size:.88rem;line-height:1.7;margin-bottom:24px;">
-            Este módulo requiere el add-on <strong>Analítica Avanzada</strong> por <strong>U$S 19/mes</strong>.<br>
+            Analítica Avanzada está incluida en los planes <strong>Pro</strong>, <strong>Premium</strong> y en cualquier <strong>Centro Médico</strong>.<br>
             Reportes mensuales de tu consultorio con gráficos, tendencias y alertas clínicas.
           </p>
           <ul style="text-align:left;list-style:none;padding:0;margin:0 0 24px;display:inline-block;">
@@ -2980,8 +2955,8 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <li style="font-size:.83rem;color:var(--g3);">✅ Tendencias clínicas y alertas</li>
           </ul>
           <br>
-          <button onclick="solicitarAddon('Analítica Avanzada','19')" style="padding:12px 28px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(34,160,80,.3);">
-            Contratar por U$S 19/mes →
+          <button onclick="abrirMejorarPlanIndividual()" style="padding:12px 28px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(34,160,80,.3);">
+            Mejorar plan →
           </button>
           <br><br>
           <button onclick="mostrarIngresarCodigo('analitica')" style="padding:10px 24px;background:#f0fdf4;border:1.5px solid var(--g8);color:var(--g3);border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;">
@@ -4201,11 +4176,13 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               </div>
               <div class="fl"><label>Plan contratado
                 <select id="fs-plan">
-                  
-<option>Starter — U$S 34/mes</option>
-<option>Pro — U$S 49/mes</option>
-<option>Premium — U$S 89/mes</option>
-<option>Ilimitado — U$S 199/mes</option>
+
+<option>Starter — U$S 29/mes</option>
+<option>Pro — U$S 41/mes</option>
+<option>Premium — U$S 71/mes</option>
+<option>Centro Chico — U$S 149/mes</option>
+<option>Centro Mediano — U$S 299/mes</option>
+<option>Centro Grande — U$S 699/mes</option>
                 </select>
               </div>
               <div class="fl"><label>Período<input type="text" id="fs-periodo" placeholder="Ej: Mayo 2026"></div>
@@ -4367,14 +4344,13 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <input type="text" id="centro-nombre-nuevo" placeholder="Nombre del centro médico" style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--g8);border-radius:8px;font-size:.9rem;font-family:'Outfit',sans-serif;margin-bottom:12px;">
           <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Plan del centro:</label>
           <select id="centro-plan-nuevo" style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--g8);border-radius:8px;font-size:.9rem;font-family:'Outfit',sans-serif;margin-bottom:12px;">
-            <option value="starter">Starter — 50 pacientes · u$s 34/mes</option>
-            <option value="pro">Pro — 200 pacientes · u$s 49/mes</option>
-            <option value="premium">Premium — 500 pacientes · u$s 89/mes</option>
-            <option value="ilimitado">Ilimitado — u$s 199/mes</option>
+            <option value="chico">Centro Chico — hasta 5 médicos · u$s 149/mes</option>
+            <option value="mediano">Centro Mediano — hasta 20 médicos · u$s 299/mes</option>
+            <option value="grande">Centro Grande — hasta 50 médicos · u$s 699/mes</option>
           </select>
           <input type="text" id="centro-cuit-nuevo" placeholder="CUIT (para la factura)" style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--g8);border-radius:8px;font-size:.9rem;font-family:'Outfit',sans-serif;margin-bottom:12px;">
           <input type="text" id="centro-direccion-nueva" placeholder="Dirección (para la factura)" style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--g8);border-radius:8px;font-size:.9rem;font-family:'Outfit',sans-serif;margin-bottom:12px;">
-          <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 10px;margin-bottom:12px;line-height:1.5;">El centro se crea al instante y ya podés usarlo. Al crearlo te mostramos los datos para transferir — el límite de pacientes es el que corresponde a tu plan elegido, y se activa apenas confirmemos la transferencia.</div>
+          <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 10px;margin-bottom:12px;line-height:1.5;">El centro se crea al instante y ya podés usarlo. Al crearlo te mostramos los datos para transferir — el plan completo (pacientes ilimitados) se activa apenas confirmemos la transferencia.</div>
           <button onclick="crearCentroMedico()" style="padding:10px 24px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Crear Centro Médico</button>
           <div style="border-top:1px solid var(--g9);margin-top:20px;padding-top:16px;">
             <div style="font-weight:700;color:var(--g2);font-size:.9rem;margin-bottom:4px;">¿Te invitaron a un centro?</div>
@@ -4494,13 +4470,12 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       <label style="font-size:.72rem;color:#888;display:block;margin:10px 0 3px;">Plan del centro *
         <select class="mi" id="pago-centro-plan" style="margin:0;width:100%;box-sizing:border-box;">
           <option value="">Elegí un plan…</option>
-          <option value="starter">Starter — 50 pacientes · u$s 34/mes</option>
-          <option value="pro">Pro — 200 pacientes · u$s 49/mes</option>
-          <option value="premium">Premium — 500 pacientes · u$s 89/mes</option>
-          <option value="ilimitado">Ilimitado — u$s 199/mes</option>
+          <option value="chico">Centro Chico — hasta 5 médicos · u$s 149/mes</option>
+          <option value="mediano">Centro Mediano — hasta 20 médicos · u$s 299/mes</option>
+          <option value="grande">Centro Grande — hasta 50 médicos · u$s 699/mes</option>
         </select>
       </label>
-      <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 10px;margin-top:8px;line-height:1.5;">El centro se crea al instante y ya podés usarlo. Al terminar te mostramos los datos para transferir — el límite de pacientes es el que corresponde a tu plan elegido, y se activa apenas confirmemos la transferencia.</div>
+      <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 10px;margin-top:8px;line-height:1.5;">El centro se crea al instante y ya podés usarlo. Al terminar te mostramos los datos para transferir — el plan completo (pacientes ilimitados) se activa apenas confirmemos la transferencia.</div>
       <div style="font-size:.75rem;color:#666;margin-top:8px;line-height:1.5;">Vas a poder agregar a los demás médicos de tu equipo apenas termines este paso.</div>
       <label style="display:flex;align-items:flex-start;gap:8px;font-size:.8rem;color:#145a32;font-weight:600;margin-top:12px;padding-top:12px;border-top:1px solid #bbf7d0;cursor:pointer;">
         <input type="checkbox" id="pago-centro-tambien-medico" checked onchange="toggleCentroTambienMedico()" style="margin-top:2px;flex-shrink:0;accent-color:#22a050;width:16px;height:16px;">
@@ -6231,7 +6206,7 @@ function cargarReportesReales(){
 
     // Helper: agrupar por plan y sumar precio
     function agruparPorPlan(lista){
-      var porPlan = {Starter:0, Pro:0, Premium:0, Ilimitado:0};
+      var porPlan = {Starter:0, Pro:0, Premium:0, 'Centro Chico':0, 'Centro Mediano':0, 'Centro Grande':0};
       var total = 0;
       lista.forEach(function(f){
         var p = f.plan || '(sin plan)';
@@ -6594,7 +6569,7 @@ function renderAdmin(){
   // Ingresos
   var ingEl = document.getElementById('admin-ingresos-cards');
   if(ingEl){
-    var porPlan = {Starter:0, Pro:0, Premium:0, Ilimitado:0};
+    var porPlan = {Starter:0, Pro:0, Premium:0, 'Centro Chico':0, 'Centro Mediano':0, 'Centro Grande':0};
     suscriptores.forEach(function(s){ if(porPlan[s.plan]!==undefined) porPlan[s.plan] += s.monto; });
     ingEl.innerHTML = Object.keys(porPlan).map(function(p){
       return '<div style="background:#0a1a0f;border:1px solid rgba(52,196,100,.2);border-radius:12px;padding:20px;text-align:center;">'
@@ -7172,7 +7147,7 @@ function procesarRegistroCentro(){
   if(!nombreCompleto){ alert('Ingresá tu nombre y apellido.'); return; }
   if(!sexo){ alert('Elegí el tratamiento (Dr. o Dra.).'); return; }
   if(!email){ alert('Ingresá tu email.'); return; }
-  if(['starter','pro','premium','ilimitado'].indexOf(plan) === -1){ alert('Elegí un plan para el centro.'); return; }
+  if(['chico','mediano','grande'].indexOf(plan) === -1){ alert('Elegí un plan para el centro.'); return; }
   if(!centroNombre){ alert('Ingresá el nombre de tu Centro Médico.'); return; }
   if(esTambienMedico){
     if(!matricula){ alert('Ingresá tu matrícula.'); return; }
@@ -7812,7 +7787,7 @@ function renderCentroMedico(){
   var planBadgeEl = document.getElementById('centro-plan-badge');
   if(planBadgeEl){
     var planCentro = (miCentro.plan||'trial').toLowerCase();
-    var nombresPlan = {trial:'Prueba gratuita', starter:'Starter', pro:'Pro', premium:'Premium', ilimitado:'Ilimitado'};
+    var nombresPlan = {trial:'Prueba gratuita', chico:'Centro Chico', mediano:'Centro Mediano', grande:'Centro Grande'};
     var nombrePlanTxt = nombresPlan[planCentro] || planCentro;
     if((miCentro.plan_estado||'activo') !== 'activo'){
       // Centro creado, transferencia todavía sin confirmar por la operadora → capado a 35
@@ -7952,10 +7927,17 @@ function rechazarDispositivoUI(id){
 
 // ══ MEJORAR PLAN (Centro Médico) ══
 var MP_PLANES = [
-  {id:'starter', nombre:'Starter', precio:34},
-  {id:'pro', nombre:'Pro', precio:49},
-  {id:'premium', nombre:'Premium', precio:89},
-  {id:'ilimitado', nombre:'Ilimitado', precio:199}
+  {id:'starter', nombre:'Starter', precio:29},
+  {id:'pro', nombre:'Pro', precio:41},
+  {id:'premium', nombre:'Premium', precio:71}
+];
+// Los planes de Centro Médico son un conjunto aparte (Chico/Mediano/Grande,
+// por cantidad de médicos) — ya no comparten nombres ni precios con los
+// planes individuales de arriba.
+var MP_PLANES_CENTRO = [
+  {id:'chico', nombre:'Centro Chico', precio:149},
+  {id:'mediano', nombre:'Centro Mediano', precio:299},
+  {id:'grande', nombre:'Centro Grande', precio:699}
 ];
 var mpPlanElegido = null;
 
@@ -7971,7 +7953,7 @@ function abrirMejorarPlan(){
   if(nombreEl) nombreEl.textContent = miCentro.nombre;
   var lista = document.getElementById('mp-planes-lista');
   if(lista){
-    lista.innerHTML = MP_PLANES.map(function(p){
+    lista.innerHTML = MP_PLANES_CENTRO.map(function(p){
       return '<button type="button" onclick="elegirPlanMejora(\''+p.id+'\')" data-plan="'+p.id+'" class="mp-plan-btn" style="text-align:left;padding:14px 16px;border:2px solid #e5e7eb;border-radius:12px;background:#fff;cursor:pointer;font-family:\'Outfit\',sans-serif;display:flex;justify-content:space-between;align-items:center;">'
         +'<span style="font-weight:700;color:#145a32;">'+p.nombre+'</span>'
         +'<span style="font-weight:700;color:#22a050;">U$S '+p.precio+'/mes</span>'
@@ -8042,7 +8024,8 @@ function confirmarMejorarPlan(){
   if(!mpPlanElegido){ alert('Elegí un plan primero.'); return; }
   if(!mpModoIndividual && !miCentro){ alert('No encontramos tu centro médico.'); return; }
   var planInfo = null;
-  for(var i=0;i<MP_PLANES.length;i++){ if(MP_PLANES[i].id === mpPlanElegido) planInfo = MP_PLANES[i]; }
+  var listaBusqueda = mpModoIndividual ? MP_PLANES : MP_PLANES_CENTRO;
+  for(var i=0;i<listaBusqueda.length;i++){ if(listaBusqueda[i].id === mpPlanElegido) planInfo = listaBusqueda[i]; }
   if(!planInfo) return;
   var btn = document.getElementById('btn-confirmar-mejorar-plan');
   if(btn){ btn.disabled = true; btn.textContent = 'Enviando...'; }
@@ -8109,7 +8092,7 @@ function confirmarMejorarPlan(){
 // confirme la transferencia desde el panel admin (activar_plan_centro).
 // El médico ve los datos para transferir apenas se crea el centro.
 function _precioPlanCentro(plan){
-  for(var i=0;i<MP_PLANES.length;i++){ if(MP_PLANES[i].id===plan) return MP_PLANES[i].precio; }
+  for(var i=0;i<MP_PLANES_CENTRO.length;i++){ if(MP_PLANES_CENTRO[i].id===plan) return MP_PLANES_CENTRO[i].precio; }
   return 0;
 }
 
@@ -8123,7 +8106,7 @@ function crearCentroMedico(){
   var cuit = ((document.getElementById('centro-cuit-nuevo')||{}).value||'').trim();
   var direccion = ((document.getElementById('centro-direccion-nueva')||{}).value||'').trim();
   if(!nombre){ alert('Ingresá el nombre del centro médico.'); return; }
-  if(['starter','pro','premium','ilimitado'].indexOf(planElegido) === -1){ alert('Elegí un plan para el centro.'); return; }
+  if(['chico','mediano','grande'].indexOf(planElegido) === -1){ alert('Elegí un plan para el centro.'); return; }
   if(!usuarioActual || !usuarioActual.id){ alert('Tenés que estar logueada para hacer esto.'); return; }
 
   sb.rpc('crear_centro_medico', { p_nombre: nombre, p_plan: planElegido, p_cuit: cuit || null, p_direccion: direccion || null }).then(function(r){
@@ -8170,7 +8153,7 @@ function crearCentroMedico(){
 // ── Panel "datos para transferir" del centro recién creado ──
 function abrirPanelTransferenciaCentro(plan){
   var precio = _precioPlanCentro(plan);
-  var nombresPlan = {starter:'Starter', pro:'Pro', premium:'Premium', ilimitado:'Ilimitado'};
+  var nombresPlan = {chico:'Centro Chico', mediano:'Centro Mediano', grande:'Centro Grande'};
   var old = document.getElementById('centro-transfer-overlay');
   if(old) old.remove();
   var datos = [
@@ -8186,7 +8169,7 @@ function abrirPanelTransferenciaCentro(plan){
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(4,20,10,.55);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;';
   ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:440px;width:100%;padding:24px;font-family:\'Outfit\',sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;">'
     + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.4rem;color:var(--g2);font-weight:700;margin-bottom:4px;">🏥 Centro creado — falta el pago</div>'
-    + '<p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin:0 0 16px;">Tu centro ya funciona. El límite de pacientes es el que corresponde a tu plan elegido, y se activa apenas confirmemos la transferencia. Transferí <strong>u$s '+precio+'</strong> (Plan '+(nombresPlan[plan]||plan)+') a esta cuenta:</p>'
+    + '<p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin:0 0 16px;">Tu centro ya funciona. El plan completo (pacientes ilimitados) se activa apenas confirmemos la transferencia. Transferí <strong>u$s '+precio+'</strong> (Plan '+(nombresPlan[plan]||plan)+') a esta cuenta:</p>'
     + '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-bottom:16px;">'+filas+'</div>'
     + '<p style="font-size:.78rem;color:var(--muted);line-height:1.55;margin:0 0 16px;">Cuando tengamos la transferencia activamos tu plan completo (puede tardar hasta 24hs hábiles). Mientras tanto seguí usando el centro.</p>'
     + '<div style="display:flex;gap:10px;flex-wrap:wrap;">'
@@ -8211,7 +8194,7 @@ function confirmarTransferenciaCentro(){
   sb.rpc('informar_transferencia_centro', { p_centro_id: miCentro.id }).then(function(r){
     if(r.error) console.error('Error informando transferencia:', r.error);
     cerrarPanelTransferenciaCentro();
-    alert('✅ ¡Gracias! Anotamos que hiciste la transferencia.\n\nEn cuanto la veamos en la cuenta, tu centro queda con el límite de pacientes de tu plan elegido.');
+    alert('✅ ¡Gracias! Anotamos que hiciste la transferencia.\n\nEn cuanto la veamos en la cuenta, tu centro queda con el plan completo activado.');
   });
 }
 
@@ -8526,8 +8509,19 @@ function _sincronizarAddonsServidor(cb){
   }, function(err){ console.warn('[catch]', err); if(cb) cb(); });
 }
 
+// Decisión de negocio (2026-09-24, estructura de precios final): Analítica
+// Avanzada deja de venderse aparte — queda incluida en los planes Pro,
+// Premium y en cualquier Centro Médico activo (Centro Chico ya incluye "todo
+// lo de Premium por médico", así que cualquier plan de centro la incluye).
+// Se conserva addon_analitica por compatibilidad, por si algún médico Starter
+// ya la tenía activada por código antes de este cambio.
 function tieneAddonAnalitica(){
-  if(usuarioActual){ return usuarioActual.addon_analitica === true; }
+  if(typeof miCentro !== 'undefined' && miCentro && (miCentro.plan_estado||'activo') === 'activo') return true;
+  if(usuarioActual){
+    var plan = (usuarioActual.plan || 'free').toLowerCase();
+    if(plan.includes('premium') || plan.includes('pro') || plan.includes('ilimitado')) return true;
+    return usuarioActual.addon_analitica === true;
+  }
   return localStorage.getItem('medhistoria_addon_analitica')==='1';
 }
 
@@ -15249,31 +15243,21 @@ function enviarWhatsApp(tipo){
 }
 
 // ── ENVIAR POR EMAIL ──
+// Decisión de negocio (2026-09-24, estructura de precios final): el envío
+// MANUAL de WhatsApp y Email (el médico toca un botón) pasa a ser gratis en
+// TODOS los planes — deja de ser el add-on pago "Comunicación Directa". Antes
+// devolvía usuarioActual.addon_whatsapp === true; ahora es incondicional,
+// igual que se hizo con tieneAddonFirma() en 2026-09-11. El envío AUTOMÁTICO
+// (sin que el médico toque nada) es el add-on nuevo "Recordatorios
+// Automáticos" — todavía no está implementado (ver PLANES_CENTRO/getLimite*).
 function tieneAddonComunicacion(){
-  if(usuarioActual){ return usuarioActual.addon_whatsapp === true; }
-  return localStorage.getItem('medhistoria_addon_whatsapp')==='1';
+  return true;
 }
 
 function checkAddonComunicacion(){
-  if(tieneAddonComunicacion()) return true;
-  var html = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;" id="wsp-addon-overlay" onclick="if(event.target===this)this.remove()">'
-    +'<div style="background:#fff;border-radius:16px;padding:36px 32px;max-width:420px;width:90%;text-align:center;">'
-    +'<div style="font-size:2.5rem;margin-bottom:12px;">🔒</div>'
-    +'<h3 style="font-family:\'Cormorant Garamond\',serif;font-size:1.4rem;color:#1a3a2a;margin-bottom:8px;">Comunicación Directa</h3>'
-    +'<p style="color:#6b7280;font-size:.87rem;line-height:1.7;margin-bottom:20px;">Este módulo requiere el add-on <strong>Comunicación Directa</strong> por <strong>U$S 29/mes</strong>.<br>Enviá recetas, turnos y documentos por WhatsApp y Email directo al paciente.</p>'
-    +'<ul style="text-align:left;list-style:none;padding:0;margin:0 0 20px;display:inline-block;">'
-    +'<li style="font-size:.82rem;color:#374151;margin-bottom:5px;">✅ Envío por WhatsApp al paciente</li>'
-    +'<li style="font-size:.82rem;color:#374151;margin-bottom:5px;">✅ Envío por Email al paciente</li>'
-    +'<li style="font-size:.82rem;color:#374151;margin-bottom:5px;">✅ Recordatorios de turnos</li>'
-    +'<li style="font-size:.82rem;color:#374151;">✅ Sin salir de la plataforma</li>'
-    +'</ul><br>'
-    +'<button onclick="solicitarAddon(\'Comunicación Directa\',\'29\')" style="padding:11px 24px;background:linear-gradient(135deg,#1a8040,#22a050);color:#fff;border:none;border-radius:9px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">Contratar por U$S 29/mes →</button>'
-    +'<br><br><button onclick="mostrarIngresarCodigo(\'whatsapp\')" style="padding:9px 20px;background:#f0fdf4;border:1.5px solid #22a050;color:#15803d;border-radius:9px;font-size:.83rem;font-weight:600;cursor:pointer;font-family:\'Outfit\',sans-serif;">🔑 Ya tengo un código de activación</button>'
-
-    +'<button onclick="document.getElementById(\'wsp-addon-overlay\').remove()" style="margin-top:10px;background:none;border:1.5px solid #e3fbed;color:#5a7362;border-radius:9px;padding:9px 20px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:Outfit,sans-serif;">Cerrar</button>'
-    +'</div></div>';
-  document.body.insertAdjacentHTML('beforeend', html);
-  return false;
+  // Ya no hay pantalla de bloqueo (ver tieneAddonComunicacion) — se deja la
+  // función para no tener que tocar cada call site de envío por separado.
+  return true;
 }
 
 function enviarEmail(tipo){
@@ -15641,30 +15625,91 @@ function _enviarRecordatorioTurno(t, tel){
   window.open('https://wa.me/54'+tel.replace(/\D/g,'')+'?text='+encodeURIComponent(msg), '_blank');
 }
 
-// ══ LÍMITE DE PACIENTES POR PLAN ══
+// ══ ESTRUCTURA DE PRECIOS (2026-09-24) — planes individuales, Centro Médico y
+// el add-on "Recordatorios Automáticos". Bloqueada por dos cosas hasta que la
+// usuaria confirme lo contrario: la IA sigue rota (ver firma-documentos /
+// informe de costos de IA) y falta resolver la pasarela de pagos con el
+// financista — igual se implementa la estructura (definiciones, límites,
+// textos) porque así lo pidió explícitamente.
+// PLANES_IA / PLANES_ARCHIVOS quedan como referencia de cupos: no hay todavía
+// un contador real de consultas de IA (falta construirlo, igual que con los
+// archivos: el límite de archivos siempre fue solo informativo, nunca se
+// contó de verdad).
+var PLANES_INDIVIDUALES = {
+  free:    { nombre:'Prueba Gratuita', precio:0,  pacientes:35,       recetas:20,        ia:10,  archivos:50 },
+  starter: { nombre:'Starter',         precio:29, pacientes:Infinity, recetas:Infinity,  ia:100, archivos:1500 },
+  pro:     { nombre:'Pro',             precio:41, pacientes:Infinity, recetas:Infinity,  ia:300, archivos:5000 },
+  premium: { nombre:'Premium',         precio:71, pacientes:Infinity, recetas:Infinity,  ia:800, archivos:15000 }
+};
+var PLANES_CENTRO = {
+  chico:   { nombre:'Centro Chico',   precio:149, medicos:5,  ia:1000 },
+  mediano: { nombre:'Centro Mediano', precio:299, medicos:20, ia:4000 },
+  grande:  { nombre:'Centro Grande',  precio:699, medicos:50, ia:10000 }
+};
+
 // Límite de PACIENTES PROPIOS del médico (no cuenta los del centro)
+// "ilimitado" ya no es un plan individual nuevo (lo reemplazan los planes de
+// Centro Médico), pero se deja el caso por si queda alguna cuenta vieja con
+// ese valor guardado — sigue con pacientes sin límite, como siempre tuvo.
 function getLimitePacientes(){
-  if(!usuarioActual) return 35; // free por defecto
+  if(!usuarioActual) return PLANES_INDIVIDUALES.free.pacientes;
   var plan = (usuarioActual.plan || 'free').toLowerCase();
   if(plan.includes('ilimitado') || plan.includes('unlimited')) return Infinity;
-  if(plan.includes('premium')) return 500;
-  if(plan.includes('pro'))     return 200;
-  if(plan.includes('starter')) return 50;
-  return 35; // free / prueba gratuita
+  if(plan.includes('premium')) return PLANES_INDIVIDUALES.premium.pacientes;
+  if(plan.includes('pro'))     return PLANES_INDIVIDUALES.pro.pacientes;
+  if(plan.includes('starter')) return PLANES_INDIVIDUALES.starter.pacientes;
+  return PLANES_INDIVIDUALES.free.pacientes;
 }
 
-// Límite de PACIENTES DEL CENTRO (compartido entre todos los médicos del centro)
+// Límite de RECETAS por mes (solo aplica de verdad a la Prueba Gratuita — el
+// resto de los planes las tiene ilimitadas). Se deja preparado para cuando
+// se cuenten de verdad; hoy no hay contador de recetas por mes.
+function getLimiteRecetasMes(){
+  if(!usuarioActual) return PLANES_INDIVIDUALES.free.recetas;
+  var plan = (usuarioActual.plan || 'free').toLowerCase();
+  if(plan.includes('premium') || plan.includes('pro') || plan.includes('starter')) return Infinity;
+  return PLANES_INDIVIDUALES.free.recetas;
+}
+
+// Cupo de consultas de IA por mes. Preparado para cuando exista un contador
+// real (hoy no hay ninguno — ver el informe de costos de IA del 2026-09-22):
+// mientras tanto es solo el número que se muestra, no algo que se haga cumplir.
+function getLimiteConsultasIA(){
+  if(typeof miCentro !== 'undefined' && miCentro && (miCentro.plan_estado||'activo') === 'activo'){
+    var pc = (miCentro.plan||'').toLowerCase();
+    if(pc.includes('grande'))  return PLANES_CENTRO.grande.ia;
+    if(pc.includes('mediano')) return PLANES_CENTRO.mediano.ia;
+    if(pc.includes('chico'))   return PLANES_CENTRO.chico.ia;
+  }
+  if(!usuarioActual) return PLANES_INDIVIDUALES.free.ia;
+  var plan = (usuarioActual.plan || 'free').toLowerCase();
+  if(plan.includes('premium')) return PLANES_INDIVIDUALES.premium.ia;
+  if(plan.includes('pro'))     return PLANES_INDIVIDUALES.pro.ia;
+  if(plan.includes('starter')) return PLANES_INDIVIDUALES.starter.ia;
+  return PLANES_INDIVIDUALES.free.ia;
+}
+
+// Límite de PACIENTES DEL CENTRO (compartido entre todos los médicos del centro):
+// los planes de Centro Médico ya no tienen tope de pacientes propio — cada
+// médico del centro queda con pacientes ilimitados (como Premium individual).
 function getLimiteCentroPacientes(){
   if(typeof miCentro === 'undefined' || !miCentro) return null; // no pertenece a ningún centro
   // Mientras la operadora no confirme el pago de la transferencia, el centro
   // funciona pero capado al límite gratuito — no bloqueado, no completo.
-  if((miCentro.plan_estado||'activo') !== 'activo') return 35;
-  var planCentro = (miCentro.plan||'trial').toLowerCase();
-  if(planCentro.includes('ilimitado') || planCentro.includes('unlimited')) return Infinity;
-  if(planCentro.includes('premium')) return 500;
-  if(planCentro.includes('pro'))     return 200;
-  if(planCentro.includes('starter')) return 50;
-  return 35; // trial / centro recién creado, todavía sin el plan pago activado
+  if((miCentro.plan_estado||'activo') !== 'activo') return PLANES_INDIVIDUALES.free.pacientes;
+  return Infinity;
+}
+
+// Límite de MÉDICOS del centro (Chico/Mediano/Grande). null = sin tope (más
+// de 50 médicos, "a cotizar" — se maneja a mano, no por este límite).
+function getLimiteMedicosCentro(){
+  if(typeof miCentro === 'undefined' || !miCentro) return null;
+  if((miCentro.plan_estado||'activo') !== 'activo') return PLANES_CENTRO.chico.medicos;
+  var planCentro = (miCentro.plan||'chico').toLowerCase();
+  if(planCentro.includes('grande'))  return PLANES_CENTRO.grande.medicos;
+  if(planCentro.includes('mediano')) return PLANES_CENTRO.mediano.medicos;
+  if(planCentro.includes('chico'))   return PLANES_CENTRO.chico.medicos;
+  return null; // "más de 50 médicos" a cotizar: sin tope numérico acá
 }
 
 function contarPacientesPropios(){
@@ -15675,13 +15720,21 @@ function contarPacientesCentro(){
 }
 
 function getNombrePlan(){
-  if(!usuarioActual) return 'Prueba Gratuita';
+  if(!usuarioActual) return PLANES_INDIVIDUALES.free.nombre;
   var plan = (usuarioActual.plan || 'free').toLowerCase();
-  if(plan.includes('ilimitado')) return 'Ilimitado';
-  if(plan.includes('premium'))   return 'Premium';
-  if(plan.includes('pro'))       return 'Pro';
-  if(plan.includes('starter'))   return 'Starter';
-  return 'Prueba Gratuita';
+  if(plan.includes('ilimitado')) return 'Ilimitado'; // cuenta vieja, ver getLimitePacientes
+  if(plan.includes('premium'))   return PLANES_INDIVIDUALES.premium.nombre;
+  if(plan.includes('pro'))       return PLANES_INDIVIDUALES.pro.nombre;
+  if(plan.includes('starter'))   return PLANES_INDIVIDUALES.starter.nombre;
+  return PLANES_INDIVIDUALES.free.nombre;
+}
+
+function getNombrePlanCentro(){
+  if(typeof miCentro === 'undefined' || !miCentro) return null;
+  var planCentro = (miCentro.plan||'chico').toLowerCase();
+  if(planCentro.includes('grande'))  return PLANES_CENTRO.grande.nombre;
+  if(planCentro.includes('mediano')) return PLANES_CENTRO.mediano.nombre;
+  return PLANES_CENTRO.chico.nombre;
 }
 
 
@@ -17368,7 +17421,7 @@ function mlRegistrar(){
       registrarAceptacionLegal();
 
       // Guardar la solicitud real en el reporte del panel admin (incluida Prueba Gratuita)
-      var preciosPlan = {'Prueba Gratuita':0, 'Starter':34, 'Pro':49, 'Premium':89, 'Ilimitado':199};
+      var preciosPlan = {'Prueba Gratuita':0, 'Starter':29, 'Pro':41, 'Premium':71};
       sb.from('solicitudes_suscripcion').insert({
         medico_nombre: nombre,
         medico_email: email,
