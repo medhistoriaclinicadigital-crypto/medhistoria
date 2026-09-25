@@ -762,21 +762,12 @@ document.addEventListener('DOMContentLoaded', function(){
 	var _autoLoginYaProceso = false;
 	window._sesionInicial = null;
 	window._sesionInicialLlegoAntes = false;
-	// Logging temporal de diagnóstico — filtrar la consola por "REINGRESO-DEBUG".
-	// Sacar esto una vez encontrada la causa del bug reportado; no cambia
-	// ningún comportamiento, solo deja rastro.
-	window._dbgR = function(label, data){
-	  try{ console.log('[REINGRESO-DEBUG] +'+Math.round(performance.now())+'ms | '+label, data===undefined?'':data); }catch(e){}
-	};
-	_dbgR('script principal arrancó', { mhcdRecordar: localStorage.getItem('mhcd_recordar') });
 	sb.auth.onAuthStateChange(function(event, session){
-	  _dbgR('onAuthStateChange event='+event, { haySesion: !!session, userId: session&&session.user&&session.user.id });
 	  if(event === 'PASSWORD_RECOVERY'){ _pendingPasswordRecovery = true; if(window._appListoParaRecuperarPass){ mostrarFormNuevaPass(); } }
 	  if(event === 'INITIAL_SESSION' && !_autoLoginYaProceso){
 	    _autoLoginYaProceso = true;
 	    window._sesionInicial = session;
 	    window._sesionInicialLlegoAntes = true;
-	    _dbgR('INITIAL_SESSION procesado', { funcionYaDefinida: !!window._procesarReingresoAutomatico });
 	    if(window._procesarReingresoAutomatico){ window._procesarReingresoAutomatico(session); }
 	  }
 	});
@@ -1215,13 +1206,6 @@ function mhcdRechazarCookies(){
           <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">30</span><span class="pprice-p">/mes</span></div>
           <hr class="pline">
           <ul class="pfeats"><li>600 WhatsApp automáticos/mes</li><li>2.000 emails automáticos/mes</li></ul>
-        </div>
-        <div class="plan" style="border-left:4px solid var(--g4);">
-          <span class="plan-icon">💬</span>
-          <div class="pname">Pro</div>
-          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">70</span><span class="pprice-p">/mes</span></div>
-          <hr class="pline">
-          <ul class="pfeats"><li>1.200 WhatsApp automáticos/mes</li><li>4.000 emails automáticos/mes</li></ul>
         </div>
       </div><!-- /add-on grid -->
     </div><!-- /add-on panel -->
@@ -5443,7 +5427,6 @@ function mostrarRecuperarPass(){
   });
 }
 function cerrarApp(){
-  if(window._dbgR) window._dbgR('cerrarApp() llamado', { mhcdRecordar: localStorage.getItem('mhcd_recordar'), stack: (new Error()).stack });
   try{ detenerControlInactividad(); }catch(e){ console.warn('[catch]', e); }
   // Lo guardado en el navegador del médico se persiste con SU clave mientras usuarioActual todavía está seteado
   // (si no, el guardado del cierre iría a la clave "guest" con los pacientes de este médico).
@@ -13986,9 +13969,8 @@ try {
   // lo procesamos recién ahora que toda la página cargó y
   // _procesarReingresoAutomatico ya existe.
   try{
-    if(window._dbgR) window._dbgR('DOMContentLoaded llegó al punto de chequeo', { sesionInicialLlegoAntes: window._sesionInicialLlegoAntes, mhcdRecordar: localStorage.getItem('mhcd_recordar') });
     if(window._sesionInicialLlegoAntes){ _procesarReingresoAutomatico(window._sesionInicial); }
-  }catch(e){ if(window._dbgR) window._dbgR('excepción en el chequeo de DOMContentLoaded', e && e.message); console.warn('[catch]', e); }
+  }catch(e){ console.warn('[catch]', e); }
   // Auto-fill fecha actual en campos type="date" (formato YYYY-MM-DD)
   var hoyISO = new Date().toISOString().split('T')[0];
   var eaFecha = document.getElementById('hc-ea-fecha');
@@ -17414,15 +17396,12 @@ function _ocultarVerificandoSesion(){
 // realmente no exista.
 function _procesarReingresoAutomatico(session, intento){
   intento = intento || 1;
-  if(window._dbgR) window._dbgR('_procesarReingresoAutomatico intento='+intento, { mhcdRecordar: localStorage.getItem('mhcd_recordar'), haySesion: !!session, hayUser: !!(session&&session.user) });
-  if(localStorage.getItem('mhcd_recordar') !== '1'){ if(window._dbgR) window._dbgR('sale: mhcd_recordar no es 1'); return; }
-  if(localStorage.getItem('mhcd_salio') === '1'){ if(window._dbgR) window._dbgR('sale: cerró sesión con Salir, no hay sesión que retomar'); return; }
+  if(localStorage.getItem('mhcd_recordar') !== '1'){ return; }
+  if(localStorage.getItem('mhcd_salio') === '1'){ return; }
   if(!session || !session.user){
     if(intento < 3){
-      if(window._dbgR) window._dbgR('sin sesión válida, programo reintento en 1200ms');
       setTimeout(function(){
         sb.auth.getSession().then(function(r){
-          if(window._dbgR) window._dbgR('getSession() de reintento resolvió', { error: r.error, haySesion: !!(r.data&&r.data.session) });
           _procesarReingresoAutomatico(r.data && r.data.session, intento+1);
         });
       }, 1200);
@@ -17431,7 +17410,6 @@ function _procesarReingresoAutomatico(session, intento){
     // Se agotaron los reintentos: no hay una sesión real para reingresar
     // (venció, por ejemplo). El email y la casilla quedan guardados; se marca
     // que no hay sesión que retomar para no repetir los 3 intentos en cada carga.
-    if(window._dbgR) window._dbgR('se agotaron los 3 intentos sin sesión — marco mhcd_salio');
     localStorage.setItem('mhcd_salio', '1');
     _ocultarVerificandoSesion();
     return;
@@ -17441,16 +17419,12 @@ function _procesarReingresoAutomatico(session, intento){
 window._procesarReingresoAutomatico = _procesarReingresoAutomatico;
 
 function _verificarDispositivoConReintento(session, intento){
-  if(window._dbgR) window._dbgR('_verificarDispositivoConReintento intento='+intento+' — llamando RPC verificar_dispositivo');
-  var _t0 = performance.now();
   sb.rpc('verificar_dispositivo', { p_device_token: _deviceToken(), p_descripcion: _descripcionDispositivo() }).then(function(rDisp){
-    if(window._dbgR) window._dbgR('RPC verificar_dispositivo respondió en '+Math.round(performance.now()-_t0)+'ms', { error: rDisp.error ? (rDisp.error.message||JSON.stringify(rDisp.error)) : null, data: rDisp.data });
     if(rDisp.error){
       if(intento < 3){
         setTimeout(function(){ _verificarDispositivoConReintento(session, intento+1); }, 1200);
         return;
       }
-      if(window._dbgR) window._dbgR('se agotaron los 3 intentos del RPC con error — marco mhcd_salio');
       localStorage.setItem('mhcd_salio', '1');
       _ocultarVerificandoSesion();
       return;
@@ -17459,13 +17433,11 @@ function _verificarDispositivoConReintento(session, intento){
     if(!estadoDisp.permitido){
       // Dispositivo no aprobado o revocado desde la última vez: que inicie
       // sesión de nuevo a mano, no hay nada real para recordar acá.
-      if(window._dbgR) window._dbgR('dispositivo NO permitido — signOut + marco mhcd_salio', estadoDisp);
       localStorage.setItem('mhcd_salio', '1');
       sb.auth.signOut();
       _ocultarVerificandoSesion();
       return;
     }
-    if(window._dbgR) window._dbgR('dispositivo permitido, reingreso directo sin preguntar');
     _ocultarVerificandoSesion();
     continuarLoginTrasDispositivo(session.user.id, session.user.email);
   });
