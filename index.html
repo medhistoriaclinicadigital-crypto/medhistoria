@@ -14787,6 +14787,7 @@ function emitirRecetaFirmada(onOk, onFail){
       email_envio: ''
     };
     sb.from('recetas').insert(recSB).select('id').then(function(r){
+      if(r.error && /l[ií]mite de recetas/i.test(r.error.message||'')){ terminar(null, '⚠️ ' + r.error.message + '\n\nActualizá tu plan para emitir más recetas.'); return; }
       if(r.error || !r.data || !r.data[0]){ terminar(null, 'No se pudo registrar la receta. Revisá tu conexión e intentá de nuevo.'); return; }
       var idReceta = r.data[0].id;
       var token = _firmaRxToken(), url = _firmaRxUrl(token);
