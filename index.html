@@ -11926,7 +11926,8 @@ function _subirArchivoAEstudios(file, meta){
         descripcion: meta.descripcion||null
       }).then(function(rIns){
         if(rIns.error){
-          alert('El archivo se subió pero no se pudo registrar: '+rIns.error.message);
+          if(/l[ií]mite de archivos/i.test(rIns.error.message||'')) alert('⚠️ '+rIns.error.message+'\n\nEl archivo NO se guardó. Actualizá tu plan para subir más archivos.');
+          else alert('El archivo se subió pero no se pudo registrar: '+rIns.error.message);
           sb.storage.from(ESTUDIOS_BUCKET).remove([path]).then(function(){});
           return;
         }
