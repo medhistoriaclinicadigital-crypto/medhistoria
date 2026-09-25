@@ -2614,6 +2614,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:12px;margin-bottom:10px;">
                 <div style="font-size:.75rem;font-weight:700;color:#145a32;margin-bottom:8px;">➕ Medicamento de la receta — cada receta lleva un solo medicamento (completá cada dato por separado, así no te olvidás de nada)</div>
   <div id="rx2-med-nota-limite" style="display:none;font-size:.78rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-bottom:8px;">🔒 Medicamento cargado. Cada receta lleva uno solo — si necesitás cambiarlo, tocá "Quitar medicamento".</div>
+                <div id="rx2-med-campos" style="position:relative;">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
                   <input type="text" id="rx2-med-ifa" placeholder="Nombre genérico / IFA (ej: Enalapril)" oninput="actualizarPreviaMedicamento()" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
                   <input type="text" id="rx2-med-comercial" placeholder="Nombre comercial (opcional)" oninput="actualizarPreviaMedicamento()" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
@@ -2621,6 +2622,8 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
                   <input type="text" id="rx2-med-presentacion" placeholder="Presentación (ej: caja x 30 comp.)" oninput="actualizarPreviaMedicamento()" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
                   <input type="text" id="rx2-med-cantidad" placeholder="Cantidad de unidades (ej: 1 caja)" oninput="actualizarPreviaMedicamento()" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
                   <input type="text" id="rx2-med-posologia" placeholder="Posología (ej: 1 comp. cada 12hs × 30 días)" oninput="actualizarPreviaMedicamento()" style="padding:7px 10px;border:1px solid #bbf7d0;border-radius:7px;font-size:.85rem;box-sizing:border-box;">
+                </div>
+                <div id="rx2-med-capa" onclick="_avisarUnSoloMedicamento()" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:2;cursor:not-allowed;"></div>
                 </div>
                 <div style="padding:8px 12px;background:#fff;border:1.5px dashed #86efac;border-radius:8px;font-size:.82rem;margin-bottom:8px;">
                   <div style="font-weight:700;color:#145a32;margin-bottom:2px;">👁️ Vista previa de la línea:</div>
@@ -8344,7 +8347,7 @@ function actualizarPreviaMedicamento(){
 function agregarMedicamentoReceta(){
   // Cada receta lleva un solo medicamento (todos los países).
   if(_recetaMedicamentosData.length >= 1){
-    alert('Cada receta lleva un solo medicamento.\n\nSi tenés que recetar otro, emití otra receta. Si querés cambiar el medicamento cargado, tocá "Quitar medicamento".');
+    _avisarUnSoloMedicamento();
     return;
   }
   var ifa = (document.getElementById('rx2-med-ifa')||{}).value||'';
@@ -8402,11 +8405,23 @@ function _sincronizarMedicamentoReceta(){
     if(el) el.disabled = cargado;
   });
   var bAgregar = document.getElementById('rx2-med-agregar');
-  if(bAgregar){ bAgregar.disabled = cargado; bAgregar.style.opacity = cargado ? '.45' : ''; bAgregar.style.cursor = cargado ? 'not-allowed' : 'pointer'; }
+  if(bAgregar){ bAgregar.disabled = false; bAgregar.style.opacity = cargado ? '.45' : ''; bAgregar.style.cursor = cargado ? 'not-allowed' : 'pointer'; }
   var bQuitar = document.getElementById('rx2-med-quitar');
   if(bQuitar) bQuitar.style.display = cargado ? 'inline-block' : 'none';
   var nota = document.getElementById('rx2-med-nota-limite');
-  if(nota) nota.style.display = cargado ? 'block' : 'none';
+  if(nota) nota.style.display = 'none';
+  var capa = document.getElementById('rx2-med-capa');
+  if(capa) capa.style.display = cargado ? 'block' : 'none';
+}
+
+// El aviso de "un solo medicamento" solo aparece cuando el médico intenta cargar otro (toca los campos bloqueados o "Agregar").
+var _notaMedTimer = null;
+function _avisarUnSoloMedicamento(){
+  var nota = document.getElementById('rx2-med-nota-limite');
+  if(!nota) return;
+  nota.style.display = 'block';
+  clearTimeout(_notaMedTimer);
+  _notaMedTimer = setTimeout(function(){ nota.style.display = 'none'; }, 8000);
 }
 
 function quitarMedicamentoReceta(){
