@@ -16134,12 +16134,28 @@ function cargarLocal(){
     if(v) videoconsultas = JSON.parse(v);
   } catch(e){ pacientes = []; }
 }
+// Un paciente del servidor ya está en la lista local si coincide el DNI; si falta el DNI en alguno
+// de los dos, se compara por apellido y nombre (si no, los pacientes sin DNI se duplicaban en cada carga).
+function _normNombrePac(s){ return (s||'').toString().trim().toLowerCase().replace(/\s+/g,' '); }
+function _coincidePacienteRemoto(p, remoto){
+  if(p.dni && remoto.dni) return p.dni.trim()===remoto.dni.trim();
+  return _normNombrePac(p.nombre) === _normNombrePac((remoto.apellido||'')+', '+(remoto.nombre||''));
+}
+// Saca de la lista local los repetidos que ya quedaron guardados (mismo DNI, o mismo nombre sin DNI).
+function _quitarPacientesDuplicados(){
+  var vistos = {};
+  pacientes = pacientes.filter(function(p){
+    var clave = (p.dni && p.dni.trim()) ? 'dni:'+p.dni.trim() : 'nom:'+_normNombrePac(p.nombre)+'|'+(p.esDeCentro?'c':'p');
+    if(vistos[clave]) return false;
+    vistos[clave] = true; return true;
+  });
+}
 function sincronizarPacientesSupabase(){
   if(!usuarioActual || !usuarioActual.id) return;
   sb.from('pacientes').select('*').eq('medico_id', usuarioActual.id).then(function(r){
     if(r.data){
       r.data.forEach(function(remoto){
-        var existe = pacientes.find(function(p){ return p.dni && remoto.dni && p.dni.trim()===remoto.dni.trim(); });
+        var existe = pacientes.find(function(p){ return _coincidePacienteRemoto(p, remoto); });
         if(!existe){
           pacientes.unshift({
             nombre: (remoto.apellido||'') + ', ' + (remoto.nombre||''),
@@ -16159,6 +16175,7 @@ function sincronizarPacientesSupabase(){
           });
         }
       });
+      _quitarPacientesDuplicados();
       localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(pacientes));
       renderPacientes();
     }
@@ -16167,7 +16184,7 @@ function sincronizarPacientesSupabase(){
       sb.rpc('obtener_pacientes_centro', {p_device_token: _deviceToken()}).then(function(r2){
         if(r2.data){
           r2.data.forEach(function(remoto){
-            var existe = pacientes.find(function(p){ return p.dni && remoto.dni && p.dni.trim()===remoto.dni.trim(); });
+            var existe = pacientes.find(function(p){ return _coincidePacienteRemoto(p, remoto); });
             if(!existe){
               pacientes.unshift({
                 nombre: (remoto.apellido||'') + ', ' + (remoto.nombre||''),
@@ -16191,6 +16208,7 @@ function sincronizarPacientesSupabase(){
               existe.centroNombre = miCentro.nombre;
             }
           });
+          _quitarPacientesDuplicados();
           localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(pacientes));
           renderPacientes();
         }
