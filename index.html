@@ -4945,6 +4945,22 @@ function guardarPaciente(){
     pac.centroNombre = miCentro.nombre;
   }
 
+  // ── CHEQUEO LÍMITE DE PACIENTES (solo altas nuevas) ──
+  // Se avisa antes de guardar, así no se muestra "registrado" para un alta que el servidor va a rechazar.
+  // El que hace cumplir el límite de verdad es el servidor (trigger verificar_limite_pacientes).
+  if(!(_editandoPacienteIdx >= 0 && pacientes[_editandoPacienteIdx])){
+    var yaExiste = pacientes.some(function(p){
+      return (pac.dni && p.dni && p.dni.trim()===pac.dni.trim()) || (p.nombre && p.nombre.toLowerCase()===pac.nombre.toLowerCase());
+    });
+    var vaAlCentroNuevo = (typeof miCentro !== 'undefined' && miCentro && miCentro.id);
+    var limiteNuevo = vaAlCentroNuevo ? getLimiteCentroPacientes() : getLimitePacientes();
+    var totalNuevo = vaAlCentroNuevo ? contarPacientesCentro() : contarPacientesPropios();
+    if(!yaExiste && totalNuevo >= limiteNuevo){
+      alert('⚠️ Límite de pacientes alcanzado\n\n' + (vaAlCentroNuevo ? ('Centro: '+miCentro.nombre) : getNombrePlan()) + ' permite hasta ' + limiteNuevo + ' pacientes.\nYa hay ' + totalNuevo + ' pacientes registrados' + (vaAlCentroNuevo?' en el centro':'') + '.\n\n' + (vaAlCentroNuevo ? 'Contactá al dueño del centro para actualizar su plan.' : 'Actualizá tu plan para agregar más pacientes.'));
+      return;
+    }
+  }
+
   // Guardar o actualizar en localStorage
   var reales = [];
   try { reales = JSON.parse(localStorage.getItem(_userKey('mhcd_pacientes'))||'[]'); } catch(e){ console.warn('[catch]', e); }
