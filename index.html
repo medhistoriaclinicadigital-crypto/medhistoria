@@ -2490,6 +2490,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
 
 
             <!-- Lista de estudios subidos -->
+            <div id="estudios-cupo" style="display:none;font-size:.82rem;margin:0 0 10px;padding:6px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;"></div>
             <div id="estudios-lista">
               <div style="text-align:center;color:var(--muted);padding:20px;font-size:.85rem;">No hay estudios adjuntos aún.</div>
             </div>
@@ -11764,6 +11765,7 @@ function cargarEstudiosPaciente(){
         };
       });
       renderEstudios();
+      _actualizarCupoArchivos();
     });
   });
 }
@@ -11824,17 +11826,58 @@ function _subirArchivoAEstudios(file, meta){
   });
 }
 
+// Cupo de archivos del plan (lo calcula el servidor: mi_cupo_archivos). limite null = sin tope. Si la consulta falla, no se muestra ni se bloquea nada.
+var _cupoArchivos = null;
+function _pintarCupoArchivos(){
+  var el = document.getElementById('estudios-cupo');
+  if(!el) return;
+  var c = _cupoArchivos;
+  if(!c || c.limite == null){ el.style.display = 'none'; return; }
+  var pct = Math.round((c.usado / c.limite) * 100);
+  var color = pct >= 90 ? '#dc2626' : pct >= 70 ? '#d97706' : 'var(--g4)';
+  el.innerHTML = '📎 <span style="color:'+color+';font-weight:700;">'+c.usado+'</span> / '+c.limite+' archivos <span style="color:var(--muted);">('+escHtml(getNombrePlan())+')</span>';
+  el.style.display = 'block';
+}
+function _actualizarCupoArchivos(cb){
+  var listo = function(){ _pintarCupoArchivos(); if(cb) cb(); };
+  // Pacientes de un Centro Médico: sin tope de archivos.
+  if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){ _cupoArchivos = null; listo(); return; }
+  sb.rpc('mi_cupo_archivos').then(function(r){
+    _cupoArchivos = (r.error || !r.data) ? null : r.data;
+    listo();
+  }, function(){ _cupoArchivos = null; listo(); });
+}
+
 function subirEstudios(files){
   var cat = (document.getElementById('estudio-categoria')||{}).value||'Laboratorio';
   var desc = (document.getElementById('estudio-desc')||{}).value||'';
   var filesArr = Array.from(files);
   if(!filesArr.length) return;
-  filesArr.forEach(function(file){ _subirArchivoAEstudios(file, {categoria:cat, descripcion:desc}); });
-  var descEl = document.getElementById('estudio-desc');
-  if(descEl) descEl.value = '';
-  // Reset file input so the same file can be re-uploaded
-  var fi = document.getElementById('file-input');
-  if(fi) fi.value = '';
+  var limpiar = function(){
+    var descEl = document.getElementById('estudio-desc');
+    if(descEl) descEl.value = '';
+    // Reset file input so the same file can be re-uploaded
+    var fi = document.getElementById('file-input');
+    if(fi) fi.value = '';
+  };
+  // Se consulta el cupo antes de subir: así el aviso es claro y no se sube nada a Storage para después descartarlo.
+  // El que hace cumplir el límite de verdad es el servidor (trigger de estudios + política de Storage).
+  _actualizarCupoArchivos(function(){
+    var c = _cupoArchivos;
+    if(c && c.limite != null){
+      var libres = c.limite - c.usado;
+      if(libres <= 0){
+        alert('⚠️ Llegaste al límite de archivos de tu plan ('+c.usado+' / '+c.limite+').\n\nNo se subió ningún archivo. Actualizá tu plan para subir más.');
+        limpiar(); return;
+      }
+      if(filesArr.length > libres){
+        alert('⚠️ Elegiste '+filesArr.length+' archivos, pero a tu plan le quedan '+libres+' ('+c.usado+' / '+c.limite+').\n\nNo se subió ninguno. Elegí menos archivos o actualizá tu plan.');
+        limpiar(); return;
+      }
+    }
+    filesArr.forEach(function(file){ _subirArchivoAEstudios(file, {categoria:cat, descripcion:desc}); });
+    limpiar();
+  });
 }
 
 function handleDrop(event){
