@@ -4999,11 +4999,11 @@ function guardarPaciente(){
       if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){ pacSB.centro_id = miCentro.id; }
       buscarPacienteIdCompartido(dniOriginalSB || pac.dni || '', function(pacienteIdExistente){
         if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
-          sb.rpc('guardar_paciente_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteIdExistente||null, p_campos: pacSB}).then(function(r){ if(r.error) console.error('Error guardando paciente de centro:', r.error); });
+          sb.rpc('guardar_paciente_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteIdExistente||null, p_campos: pacSB}).then(function(r){ if(r.error){ console.error('Error guardando paciente de centro:', r.error); _revertirPacienteRechazado(pac, r.error); } });
         } else if(pacienteIdExistente){
           sb.from('pacientes').update(pacSB).eq('id', pacienteIdExistente).then(function(){});
         } else {
-          sb.from('pacientes').insert(pacSB).then(function(){});
+          sb.from('pacientes').insert(pacSB).then(function(r){ if(r.error){ console.error('Error guardando paciente:', r.error); _revertirPacienteRechazado(pac, r.error); } });
         }
       });
     }
@@ -15884,6 +15884,20 @@ function getNombrePlanCentro(){
 
 
 // ══ GUARDAR HC Y REGISTRAR PACIENTE ══
+// El servidor (trigger verificar_limite_pacientes) es quien hace cumplir el límite de la Prueba Gratuita.
+// Si rechaza el alta, el paciente ya quedó cargado en memoria/localStorage: se saca y se avisa.
+function _revertirPacienteRechazado(pac, err){
+  if(!err || !/l[ií]mite de pacientes/i.test(err.message||'')) return;
+  var mismo = function(p){ return (pac.dni && p.dni) ? p.dni.trim()===pac.dni.trim() : p.nombre===pac.nombre; };
+  try {
+    var reales = JSON.parse(localStorage.getItem(_userKey('mhcd_pacientes'))||'[]').filter(function(p){ return !mismo(p); });
+    localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(reales));
+  } catch(e){ console.warn('[catch]', e); }
+  pacientes = pacientes.filter(function(p){ return !mismo(p); });
+  renderPacientes();
+  alert('⚠️ ' + err.message + '\n\nEl paciente NO se guardó. Actualizá tu plan para agregar más pacientes.');
+}
+
 function guardarDesdeHC(){
   var ga = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
   var nombre = ga('hc-paciente');
