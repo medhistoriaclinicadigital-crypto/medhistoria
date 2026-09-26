@@ -4965,29 +4965,6 @@ function abrirEditarPaciente(idx){
 function cerrarNuevoPaciente(){
   document.getElementById('pacienteOverlay').style.display='none';
 }
-function borrarPaciente(nombre, cardEl){
-  if(!confirm('¿Borrar a '+nombre+'?')) return;
-  var reales = [];
-  try { reales = JSON.parse(localStorage.getItem(_userKey('mhcd_pacientes'))||'[]'); } catch(e){ console.warn('[catch]', e); }
-  reales = reales.filter(function(p){ return p.nombre !== nombre; });
-  localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(reales));
-  pacientes = reales;
-  renderPacientes();
-}
-
-function borrarPacienteIdx(idx){
-  if(!pacientes[idx]) return;
-  var nombre = pacientes[idx].nombre || 'este paciente';
-  if(!confirm('¿Borrar a '+nombre+'?')) return;
-  pacientes = pacientes.filter(function(p){ return p.nombre !== nombre; });
-  // Guardar en usuario actual
-  if(usuarioActual){
-    usuarioActual.pacientes = pacientes;
-  }
-  localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(pacientes));
-  renderPacientes();
-}
-
 function guardarPaciente(){
   var ga = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
   var apellido = ga('pac-apellido');
@@ -13665,8 +13642,7 @@ function renderPacientes(lista){
       +'<div style="font-size:.75rem;color:var(--muted);margin-bottom:4px;">DNI '+escHtml(p.dni||'—')+(p.os?' · '+escHtml(p.os):'')+'</div>'
       +(p.ultima?'<div style="font-size:.72rem;color:var(--muted);">Última: '+escHtml(p.ultima)+'</div>':'')
       +(p.prox?'<div style="font-size:.72rem;color:var(--g3);margin-top:4px;">📅 Próx: '+escHtml(p.prox)+'</div>':'')
-      +'<div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;">'
-      +'<button onclick="borrarPaciente(\''+nomEsc+'\')" style="background:none;border:1px solid #dc2626;color:#dc2626;border-radius:6px;padding:4px 10px;font-size:.72rem;cursor:pointer;">🗑 Borrar</button>'
+      +'<div style="margin-top:10px;display:flex;justify-content:flex-end;align-items:center;gap:8px;">'
       +'<div style="display:flex;gap:8px;">'
       +'<button onclick="abrirEditarPacienteDNI(\''+dniEsc+'\',\''+nomEsc+'\')" style="background:none;border:1px solid var(--g3);color:var(--g3);border-radius:6px;padding:4px 12px;font-size:.75rem;font-weight:600;cursor:pointer;">✏️ Editar</button>'
       +'<button onclick="abrirHC(\''+nomEsc+'\',\''+dniEsc+'\',\''+escJs(p.edad)+'\',\''+escJs(p.os)+'\')" style="background:linear-gradient(135deg,#22a050,#1a7a42);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:.75rem;font-weight:600;cursor:pointer;">📋 Historia Clínica</button>'
@@ -13994,7 +13970,7 @@ try {
         var card = document.createElement('div');
         card.className = 'pac-card';
         card.setAttribute('onclick', "abrirHC('"+escJs(pac.nombre)+"','"+escJs(pac.dni)+"','"+escJs(pac.edad)+"','"+escJs(pac.os)+"')");
-        card.innerHTML = '<div class="pac-card-top"><span class="pac-card-name">'+escHtml(pac.nombre)+'</span>'+(pac.edad?'<span style="background:#e8f5e9;color:#2e7d32;border-radius:10px;padding:2px 8px;font-size:.75rem;font-weight:600;">'+escHtml(pac.edad)+' años</span>':'')+'</div>'          +'<div class="pac-card-info">DNI '+(escHtml(pac.dni)||'—')+(pac.os?' · '+escHtml(pac.os):'')+'</div>'          +'<div class="pac-card-fecha">Última consulta: '+escHtml(pac.ultima||pac.ultimaConsulta||'—')+'</div>'          +'<div style="margin-top:8px;text-align:right;"><button onclick="event.stopPropagation();borrarPaciente(\''+escJs(pac.nombre)+'\',this.parentNode)" style="background:none;border:1px solid #dc2626;color:#dc2626;border-radius:6px;padding:3px 10px;font-size:.72rem;cursor:pointer;">🗑 Borrar</button></div>';
+        card.innerHTML = '<div class="pac-card-top"><span class="pac-card-name">'+escHtml(pac.nombre)+'</span>'+(pac.edad?'<span style="background:#e8f5e9;color:#2e7d32;border-radius:10px;padding:2px 8px;font-size:.75rem;font-weight:600;">'+escHtml(pac.edad)+' años</span>':'')+'</div>'          +'<div class="pac-card-info">DNI '+(escHtml(pac.dni)||'—')+(pac.os?' · '+escHtml(pac.os):'')+'</div>'          +'<div class="pac-card-fecha">Última consulta: '+escHtml(pac.ultima||pac.ultimaConsulta||'—')+'</div>';
         lista.insertBefore(card, lista.firstChild);
       });
     }
