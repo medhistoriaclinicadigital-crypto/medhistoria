@@ -13,7 +13,7 @@ Archivo grande: para ubicar código, usar Grep por nombre de función/variable e
 ## 2. Los dos entornos — la regla más importante del proyecto
 
 - **`staging`** → Supabase staging, proyecto `zkppmeayukqxavknhsoe` — SQL Editor: https://supabase.com/dashboard/project/zkppmeayukqxavknhsoe/sql/new
-- **`main`** → Supabase producción, proyecto `rgwqiguojmwmkifrxfra` — servido en https://medhistoriaclinicadigital-crypto.github.io/medhistoria/ — SQL Editor: https://supabase.com/dashboard/project/rgwqiguojmwmkifrxfra/sql/new
+- **`main`** → Supabase producción, proyecto `rgwqiguojmwmkifrxfra` — servido en https://medhistoriaclinicaonline.com/ (dominio propio; la vieja URL de github.io solo redirige a esta, así que un `curl` sin `-L` no ve la app) — SQL Editor: https://supabase.com/dashboard/project/rgwqiguojmwmkifrxfra/sql/new
 
 El único diff esperado entre las dos ramas es el bloque `SUPABASE_URL`/`SUPABASE_KEY` (cerca de la línea 670, con un comentario que dice a qué proyecto apunta). Antes de tocar lógica, confirmar en qué rama se está parado (`git branch`) y leer ese comentario para saber a qué proyecto real apunta ese checkout.
 
@@ -24,13 +24,13 @@ Flujo de cambios: la lógica arranca siempre en `staging`, se prueba ahí, y rec
 2. `git cherry-pick <hash del commit en staging>`
 3. `git push origin main`
 4. `git checkout staging` — no terminar nunca parado en `main`.
-5. Confirmar que GitHub Pages ya sirve el cambio (ej. `curl` a la URL de producción buscando algo del cambio nuevo) antes de avisar que ya está listo — el deploy no es instantáneo.
+5. Confirmar que GitHub Pages ya sirve el cambio (ej. `curl -sL "https://medhistoriaclinicaonline.com/?cb=$RANDOM"` — con `-L` y un cache-buster — buscando algo del cambio nuevo) antes de avisar que ya está listo — el deploy no es instantáneo.
 
 Los scripts `.sql` de las migraciones no viven en este repo — están en una carpeta local separada, hermana a este repositorio (su nombre menciona "staging" pero ahí van los scripts para los dos entornos, no solo staging).
 
 ## 3. Cómo probar en local
 
-Netlify de staging puede estar caído/pausado por créditos — no asumir que ya volvió sin confirmarlo con la usuaria. Alternativa: levantar `serve.ps1` (servidor estático nativo de PowerShell, sin dependencias) — ya está configurado en `.claude/launch.json` como `medhistoria-local`, puerto 8080.
+Netlify de staging (https://medhistoria-staging-v2.netlify.app) puede estar caído/pausado por créditos — no asumir que ya volvió sin confirmarlo con la usuaria. Alternativa: levantar `serve.ps1` (servidor estático nativo de PowerShell, sin dependencias) — ya está configurado en `.claude/launch.json` como `medhistoria-local`, puerto 8080.
 
 **Gotcha de recarga:** para forzar una recarga genuina (no una restauración desde bfcache, que da falsos positivos/negativos) no alcanza con `navigate` a la misma URL ni `location.reload()` — hay que navegar a otra URL del mismo origen primero (ej. `/manifest.json`) y volver a `/index.html`.
 
