@@ -242,12 +242,23 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;
 .pbtn:hover{background:var(--g5);color:#fff;}
 a.pbtn{display:block;text-align:center;text-decoration:none;box-sizing:border-box;}
 .prox-tag{display:inline-block;background:#fffbeb;color:#92400e;border:1px solid #fde68a;border-radius:999px;padding:1px 8px;font-size:.66rem;font-weight:700;white-space:nowrap;}
-#sec-planes{position:relative;}
-.ribbon-esq-wrap{position:absolute;top:0;right:0;width:170px;height:170px;overflow:hidden;pointer-events:none;z-index:5;}
-.ribbon-esq{position:absolute;top:42px;right:-50px;width:230px;transform:rotate(45deg);text-align:center;background:linear-gradient(135deg,#d97706,#b45309);color:#fff;font-weight:800;font-size:.74rem;letter-spacing:.03em;padding:8px 0;box-shadow:0 4px 12px rgba(0,0,0,.28);}
+/* Cinta "Lanzamiento en noviembre" en la portada (hero): esquina superior IZQUIERDA, debajo de la barra fija de 64px. Oro metálico con brillos y sombras. */
+.hero-cinta-wrap{position:absolute;top:64px;left:0;width:320px;height:320px;overflow:hidden;pointer-events:none;z-index:6;}
+.hero-cinta{position:absolute;top:91px;left:-100px;width:470px;transform:rotate(-45deg);text-align:center;padding:14px 0;
+  font-family:'Outfit',sans-serif;font-weight:800;font-size:1.08rem;letter-spacing:.1em;text-transform:uppercase;color:#3a2200;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.6) 16%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 58%,rgba(255,255,255,.4) 72%,rgba(255,255,255,0) 86%),
+    linear-gradient(180deg,#fff4b0 0%,#ffd84d 20%,#f5b400 44%,#b87700 60%,#e6a610 78%,#ffe58a 100%);
+  border-top:2px solid #fff6c4;border-bottom:2px solid #7a4d00;
+  box-shadow:0 6px 10px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.85),inset 0 -2px 3px rgba(90,50,0,.55);
+  text-shadow:0 1px 0 rgba(255,244,190,.85),0 -1px 0 rgba(90,50,0,.35);}
+.hero-cinta::before,.hero-cinta::after{content:'';position:absolute;left:0;right:0;height:0;border-top:1px dashed rgba(90,50,0,.55);}
+.hero-cinta::before{top:5px;}
+.hero-cinta::after{bottom:5px;}
 @media(max-width:600px){
-  .ribbon-esq-wrap{width:128px;height:128px;}
-  .ribbon-esq{top:40px;right:-42px;width:176px;font-size:.56rem;padding:5px 0;letter-spacing:0;}
+  .hero-cinta-wrap{width:250px;height:240px;}
+  .hero-cinta{top:77px;left:-64px;width:300px;font-size:.78rem;letter-spacing:.06em;padding:8px 0;}
+  .hero{padding-top:270px;}
 }
 .hl .pbtn{background:var(--g5);color:#fff;border-color:var(--g5);}
 
@@ -1082,6 +1093,7 @@ function mhcdRechazarCookies(){
 <section class="hero">
   <div class="orb orb1"></div>
   <div class="orb orb2"></div>
+  <div class="hero-cinta-wrap"><div class="hero-cinta">Lanzamiento en noviembre</div></div>
   <div class="hero-inner">
     <div class="hero-pill"><span></span>Multipaís · Cumplimiento Legal por País</div>
     <div class="hero-kicker">Hecho por médicos, para médicos</div>
@@ -1126,7 +1138,6 @@ function mhcdRechazarCookies(){
 
 <!-- PLANES -->
 <section class="sec planes-sec" id="sec-planes">
-  <div class="ribbon-esq-wrap"><div class="ribbon-esq">Lanzamiento en noviembre</div></div>
   <div class="container">
     <div class="sec-head">
       <div class="sec-tag">Planes y precios</div>
