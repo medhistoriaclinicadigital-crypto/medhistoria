@@ -570,9 +570,9 @@ function _limpiarFormPago(){
 }
 
 // ── IA Extra (PRÓXIMAMENTE, lanzamiento previsto en noviembre): el botón NO contrata ni cobra nada, solo abre un contacto para avisar interés. ──
-// PENDIENTE: reemplazar por el número de WhatsApp definitivo (solo dígitos, con código de país, ej. '5491112345678').
-// Mientras esté vacío, el botón abre un mail a soporte. No hace falta tocar nada más.
-var IA_EXTRA_WHATSAPP = '';
+// Número de WhatsApp al que llegan los avisos de interés en IA Extra (solo dígitos, con código de país).
+// Si se deja vacío, el botón abre un mail a soporte en su lugar.
+var IA_EXTRA_WHATSAPP = '5491133471724';
 var IA_EXTRA_EMAIL = 'medhistoriaclinicaonline@gmail.com';
 function avisarInteresIAExtra(el){
   var nivel = (el && el.getAttribute('data-nivel')) || '';
