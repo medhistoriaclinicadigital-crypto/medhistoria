@@ -240,6 +240,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;
 .hl .pfeats li::before{color:var(--g7);}
 .pbtn{width:100%;padding:8px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;border:1.5px solid var(--g5);background:transparent;color:var(--g3);transition:all .2s;}
 .pbtn:hover{background:var(--g5);color:#fff;}
+a.pbtn{display:block;text-align:center;text-decoration:none;box-sizing:border-box;}
+.prox-tag{display:inline-block;background:#fffbeb;color:#92400e;border:1px solid #fde68a;border-radius:999px;padding:1px 8px;font-size:.66rem;font-weight:700;white-space:nowrap;}
 .hl .pbtn{background:var(--g5);color:#fff;border-color:var(--g5);}
 
 /* ══ IA ══ */
@@ -558,6 +560,25 @@ function _limpiarFormPago(){
   if(tipomat) tipomat.value = 'M.N.';
   var term = document.getElementById('pago-acepto-terminos');
   if(term) term.checked = false;
+}
+
+// ── IA Extra (PRÓXIMAMENTE, lanzamiento previsto en noviembre): el botón NO contrata ni cobra nada, solo abre un contacto para avisar interés. ──
+// PENDIENTE: reemplazar por el número de WhatsApp definitivo (solo dígitos, con código de país, ej. '5491112345678').
+// Mientras esté vacío, el botón abre un mail a soporte. No hace falta tocar nada más.
+var IA_EXTRA_WHATSAPP = '';
+var IA_EXTRA_EMAIL = 'medhistoriaclinicaonline@gmail.com';
+function avisarInteresIAExtra(el){
+  var nivel = (el && el.getAttribute('data-nivel')) || '';
+  var msg = 'Hola, me interesa el add-on IA Extra (nivel ' + nivel + '). Quiero que me avisen cuando esté disponible.';
+  var wa = String(IA_EXTRA_WHATSAPP).replace(/[^0-9]/g, '');
+  var url = wa
+    ? 'https://wa.me/' + wa + '?text=' + encodeURIComponent(msg)
+    : 'mailto:' + IA_EXTRA_EMAIL + '?subject=' + encodeURIComponent('Interés en IA Extra (nivel ' + nivel + ')') + '&body=' + encodeURIComponent(msg);
+  // Se abre con un enlace y no con window.open: el interceptor global de wa.me bloquea cualquier número que no sea el de soporte.
+  var a = document.createElement('a');
+  a.href = url; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  return false;
 }
 
 function abrirPago(plan, precio){
@@ -1103,7 +1124,7 @@ function mhcdRechazarCookies(){
     <div class="sec-head">
       <div class="sec-tag">Planes y precios</div>
       <h2 class="sec-title">Para cada médico, el plan ideal</h2>
-      <p class="sec-sub"><strong>Todos los planes incluyen Inteligencia Artificial — incluida la Prueba Gratuita.</strong> Precios claros, sin sorpresas: los módulos opcionales se muestran siempre con su costo antes de contratarlos.</p>
+      <p class="sec-sub"><strong>Todos los planes incluyen IA (cupos disponibles en noviembre).</strong> Precios claros, sin sorpresas: los módulos opcionales se muestran siempre con su costo antes de contratarlos.</p>
       <div class="laws-strip">
         <span class="law-badge">Ley 27.706</span>
         <span class="law-badge">Decreto 393/2023</span>
@@ -1136,6 +1157,7 @@ function mhcdRechazarCookies(){
         <ul class="pfeats">
           <li>Hasta 20 recetas/mes</li><li>50 imágenes y archivos</li>
           <li>Sin tarjeta de crédito</li>
+          <li><span>10 consultas de IA/mes <span class="prox-tag">🔜 Lanzamiento en noviembre</span></span></li>
         </ul>
         <button class="pbtn" onclick="abrirRegistro('free')">Empezar gratis</button>
       </div>
@@ -1148,6 +1170,7 @@ function mhcdRechazarCookies(){
         <hr class="pline">
         <ul class="pfeats">
           <li>1.500 imágenes y archivos</li>
+          <li><span>150 consultas de IA/mes <span class="prox-tag">🔜 Lanzamiento en noviembre</span></span></li>
         </ul>
         <button class="pbtn" onclick="abrirPago('Starter','29')">Elegir Starter</button>
       </div>
@@ -1161,6 +1184,7 @@ function mhcdRechazarCookies(){
         <ul class="pfeats">
           <li>5.000 imágenes y archivos</li>
           <li>Analítica avanzada</li>
+          <li><span>400 consultas de IA/mes <span class="prox-tag">🔜 Lanzamiento en noviembre</span></span></li>
         </ul>
         <button class="pbtn" onclick="abrirPago('Pro','41')">Elegir Pro</button>
       </div>
@@ -1173,6 +1197,7 @@ function mhcdRechazarCookies(){
         <hr class="pline">
         <ul class="pfeats">
           <li>15.000 imágenes y archivos</li>
+          <li><span>900 consultas de IA/mes <span class="prox-tag">🔜 Lanzamiento en noviembre</span></span></li>
         </ul>
         <button class="pbtn" onclick="abrirPago('Premium','71')">Elegir Premium</button>
       </div>
@@ -1209,6 +1234,43 @@ function mhcdRechazarCookies(){
         </div>
       </div><!-- /add-on grid -->
     </div><!-- /add-on panel -->
+
+    <!-- ADD-ON IA EXTRA (PRÓXIMAMENTE — todavía no se puede contratar) -->
+    <div style="max-width:900px;margin:40px auto 0;background:linear-gradient(135deg,#f0fdf4,#eef2ff);border:1.5px solid var(--g8);border-left:6px solid var(--g4);border-radius:18px;padding:34px 36px;box-shadow:0 16px 40px rgba(20,90,50,.14);">
+      <div class="sec-head">
+        <div class="sec-tag">Add-on opcional</div>
+        <h2 class="sec-title" style="font-size:clamp(1.5rem,3vw,2rem);">IA Extra <span class="prox-tag" style="font-size:.7rem;vertical-align:middle;">🔜 Lanzamiento en noviembre</span></h2>
+        <p class="sec-sub">Si las consultas de IA de tu plan se te quedan cortas en el mes, vas a poder sumar consultas extra. Todavía <strong>no se puede contratar</strong>: dejanos tu interés y te avisamos apenas esté disponible.</p>
+      </div>
+      <div class="planes-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+        <div class="plan" style="border-left:4px solid var(--g4);">
+          <span class="plan-icon">🤖</span>
+          <div class="pname">Chica</div>
+          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">4</span><span class="pprice-p">/mes</span></div>
+          <hr class="pline">
+          <ul class="pfeats"><li>+200 consultas de IA/mes</li></ul>
+          <a class="pbtn" href="#" data-nivel="Chica" onclick="return avisarInteresIAExtra(this)">Avisame cuando salga</a>
+        </div>
+        <div class="plan" style="border-left:4px solid var(--g4);">
+          <span class="plan-icon">🤖</span>
+          <div class="pname">Mediana</div>
+          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">12</span><span class="pprice-p">/mes</span></div>
+          <hr class="pline">
+          <ul class="pfeats"><li>+500 consultas de IA/mes</li></ul>
+          <a class="pbtn" href="#" data-nivel="Mediana" onclick="return avisarInteresIAExtra(this)">Avisame cuando salga</a>
+        </div>
+        <div class="plan" style="border-left:4px solid var(--g4);">
+          <span class="plan-icon">🤖</span>
+          <div class="pname">Grande</div>
+          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">32</span><span class="pprice-p">/mes</span></div>
+          <hr class="pline">
+          <ul class="pfeats"><li>+1.500 consultas de IA/mes</li></ul>
+          <a class="pbtn" href="#" data-nivel="Grande" onclick="return avisarInteresIAExtra(this)">Avisame cuando salga</a>
+        </div>
+      </div><!-- /add-on IA Extra grid -->
+      <p style="font-size:.78rem;color:var(--muted);text-align:center;margin:16px 0 0;">Las consultas extra no se acumulan al mes siguiente. No están disponibles desde la Prueba Gratuita. En un Centro Médico se comparten entre todos los médicos del centro.</p>
+    </div><!-- /add-on IA Extra -->
+
 
     <!-- TU CENTRO MÉDICO -->
     <details id="sec-centro-medico" style="max-width:760px;margin:72px auto 0;background:linear-gradient(135deg,#f0fdf4,#eef2ff);border:1.5px solid var(--g8);border-left:6px solid var(--g4);border-radius:18px;padding:34px 36px;box-shadow:0 16px 40px rgba(20,90,50,.14);scroll-margin-top:90px;">
