@@ -168,7 +168,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;
 /* ══ CENTRO MÉDICO — instructivo con pasos numerados (landing) ══ */
 .ctr-notice{display:flex;gap:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;font-size:.85rem;color:#7a5b12;line-height:1.6;margin-bottom:22px;}
 .ctr-mono{display:block;margin-top:4px;font-family:'JetBrains Mono','SFMono-Regular',Consolas,monospace;font-weight:600;font-size:.82em;}
-.ctr-step{display:grid;grid-template-columns:44px 1fr;gap:16px;position:relative;padding-bottom:32px;}
+.ctr-step{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;position:relative;padding-bottom:32px;}
 .ctr-step:last-child{padding-bottom:0;}
 .ctr-rail{display:flex;flex-direction:column;align-items:center;}
 .ctr-num{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.25rem;width:38px;height:38px;border-radius:50%;background:var(--g9);color:var(--g4);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1.5px solid var(--g5);}
@@ -186,6 +186,11 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;
 .ctr-step li{margin-bottom:6px;}
 .ctr-step li::marker{color:var(--g5);font-weight:700;}
 .ctr-ui{display:inline-block;background:#fff;border:1.5px solid var(--g8);border-radius:6px;padding:1px 8px;font-weight:600;font-size:.9em;color:var(--g2);white-space:nowrap;}
+.consultorio-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;margin-top:40px;align-items:center;padding:0 24px;}
+@media(max-width:700px){.consultorio-grid{grid-template-columns:minmax(0,1fr);gap:40px;}}
+.ctr-step>div{min-width:0;}
+.ctr-code,.ctr-mono,.ctr-step,.ctr-notice{overflow-wrap:anywhere;}
+@media(max-width:600px){.ctr-ui{white-space:normal;max-width:100%;}}
 .ctr-code{display:inline-block;font-family:'JetBrains Mono','SFMono-Regular',Consolas,monospace;font-weight:600;font-size:.85em;background:var(--g9);color:var(--g2);border-radius:5px;padding:2px 7px;}
 .ctr-tip{display:flex;gap:8px;background:var(--g9);border:1px solid var(--g8);border-radius:9px;padding:10px 12px;font-size:.83rem;color:var(--text);margin:0 0 12px;}
 .ctr-warn{display:flex;gap:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:10px 12px;font-size:.83rem;color:#7a5b12;margin:0 0 12px;}
@@ -276,7 +281,7 @@ a.pbtn{display:block;text-align:center;text-decoration:none;box-sizing:border-bo
 .legal-intro{background:linear-gradient(135deg,var(--g2),var(--g1));border-radius:14px;padding:32px 36px;margin-bottom:36px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;}
 .legal-intro-text h3{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:#fff;margin-bottom:6px;}
 .legal-intro-text p{font-size:.86rem;color:var(--g8);line-height:1.7;}
-.legal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px;}
+.legal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(290px,100%),1fr));gap:18px;}
 .legal-card{background:#fff;border-radius:12px;padding:24px;border:1.5px solid var(--g9);border-left:4px solid var(--g5);transition:all .25s;}
 .legal-card:hover{box-shadow:0 8px 28px rgba(4,43,16,.1);}
 .legal-num{background:linear-gradient(135deg,var(--g4),var(--g3));color:#fff;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:10px;}
@@ -1534,7 +1539,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       <p class="sec-sub">Recordatorios automáticos y videoconsultas integradas para que nunca pierdas un paciente.</p>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:40px;align-items:center;">
+    <div class="consultorio-grid">
 
       <!-- WHATSAPP -->
       <div>
