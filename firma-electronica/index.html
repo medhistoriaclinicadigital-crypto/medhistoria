@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Firma Electrónica de Recetas: instructivo para médicos | MedHistoriaClínicaOnline</title>
+<meta name="description" content="Cómo firma MedHistoriaClinicaOnline tus recetas con firma electrónica: activación automática, qué queda registrado, cómo verificar una receta con el QR y qué es la Licencia Sanitaria Federal (REFEPS).">
+<meta name="author" content="MedHistoriaClínicaOnline">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://medhistoriaclinicaonline.com/firma-electronica/">
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="Firma Electrónica de Recetas: instructivo para médicos">
+<meta property="og:description" content="Cómo firma MedHistoriaClinicaOnline tus recetas con firma electrónica: activación automática, qué queda registrado, cómo verificar una receta con el QR y qué es la Licencia Sanitaria Federal (REFEPS).">
+<meta property="og:locale" content="es_AR">
+<meta property="og:site_name" content="MedHistoriaClínicaOnline">
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--g1:#042b10;--g2:#0a3d1f;--g3:#145a32;--g4:#1a7a42;--g5:#22a050;--g6:#34c464;--g8:#b2f0cb;--g9:#e3fbed;--cream:#f6fcf8;--text:#1a2e1e;--muted:#5a7362;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--text);line-height:1.7;}
+.fe-header{background:linear-gradient(135deg,var(--g1),var(--g2));padding:18px 24px;}
+.fe-header-inner{max-width:760px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.fe-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:#fff;text-decoration:none;white-space:nowrap;}
+.fe-logo em{color:var(--g6);font-style:normal;}
+.fe-back{color:var(--g8);font-size:.85rem;text-decoration:none;font-weight:600;white-space:nowrap;}
+.fe-back:hover{color:#fff;}
+.fe-main{max-width:760px;margin:0 auto;padding:48px 24px 64px;}
+.fe-kicker{color:var(--g4);font-size:.78rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.fe-main h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.9rem,4vw,2.6rem);color:var(--g2);line-height:1.2;margin-bottom:14px;}
+.fe-main h2{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--g2);margin:40px 0 14px;scroll-margin-top:16px;}
+.fe-main p{margin-bottom:16px;font-size:1rem;color:var(--text);}
+.fe-main ul,.fe-main ol{margin:0 0 16px 22px;}
+.fe-main li{margin-bottom:8px;}
+.fe-main strong{color:var(--g2);}
+.fe-main a{color:var(--g4);font-weight:600;text-decoration:underline;text-decoration-color:var(--g8);}
+.fe-main a:hover{color:var(--g3);}
+.fe-main code{font-family:'JetBrains Mono','SFMono-Regular',Consolas,monospace;font-size:.86em;background:var(--g9);color:var(--g2);border-radius:5px;padding:2px 7px;overflow-wrap:anywhere;}
+.fe-main hr{border:0;border-top:1px solid var(--g8);margin:22px 0;}
+.fe-toc{background:#fff;border:1px solid var(--g9);border-radius:14px;padding:16px 20px;margin:0 0 8px;box-shadow:0 8px 24px rgba(4,43,16,.05);}
+.fe-toc-t{font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--g4);margin-bottom:8px;}
+.fe-toc ol{margin:0 0 0 20px;columns:2;column-gap:28px;font-size:.92rem;}
+.fe-toc li{margin-bottom:5px;break-inside:avoid;}
+.fe-footer{max-width:760px;margin:0 auto;padding:24px;text-align:center;color:var(--muted);font-size:.8rem;}
+.fe-footer a{color:var(--muted);text-decoration:underline;}
+@media(max-width:600px){.fe-main{padding:32px 18px 48px;}.fe-toc ol{columns:1;}}
+</style>
+</head>
+<body>
+
+<header class="fe-header">
+  <div class="fe-header-inner">
+    <a href="../" class="fe-logo">Med<em>Historia</em>Clinica<em>Online</em></a>
+    <a href="../" class="fe-back">← Volver al inicio</a>
+  </div>
+</header>
+
+<main class="fe-main">
+  <div class="fe-kicker">Recursos para médicos</div>
+  <h1>Instructivo: Firma Electrónica de Recetas para Médicos</h1>
+<p>Este instructivo explica cómo firma MedHistoriaClinicaOnline tus recetas. <strong>No tenés que hacer ningún trámite</strong>: la firma electrónica se activa sola y se usa con el mismo flujo de siempre, sin códigos OTP ni pasos extra.</p>
+<hr><nav class="fe-toc" aria-label="Contenido"><div class="fe-toc-t">En esta página</div><ol><li><a href="#1-que-es-y-en-que-se-apoya">¿Qué es y en qué se apoya?</a></li><li><a href="#2-activacion">Activación</a></li><li><a href="#3-como-se-firma-cada-receta">Cómo se firma cada receta</a></li><li><a href="#4-que-queda-registrado-de-cada-firma">Qué queda registrado de cada firma</a></li><li><a href="#5-como-verificar-una-receta">Cómo verificar una receta</a></li><li><a href="#6-imagen-de-tu-firma-manuscrita-opcional">Imagen de tu firma manuscrita (opcional)</a></li><li><a href="#7-cuir-y-renapdis">CUIR y ReNaPDiS</a></li><li><a href="#8-licencia-sanitaria-federal-refeps-que-es-y-como-obtenerla">Licencia Sanitaria Federal (REFEPS): qué es y cómo obtenerla</a></li><li><a href="#9-si-tenes-problemas">Si tenés problemas</a></li></ol></nav>
+<h2 id="1-que-es-y-en-que-se-apoya">1. ¿Qué es y en qué se apoya?</h2>
+<p>Cada receta que emitís queda firmada con una <strong>firma electrónica</strong>, en los términos del art. 5 de la Ley 25.506: datos electrónicos asociados al documento, que vos usás como medio de identificación. La receta electrónica o digital como documento de prescripción está prevista en la <strong>Ley 27.553</strong>, y su validez proviene de esa ley, con independencia del CUIR y del registro ReNaPDiS (ver punto 7).</p>
+<p><strong>Importante — qué es y qué no es:</strong></p>
+<ul>
+<li>Es una firma <strong>electrónica</strong>, no una firma <strong>digital</strong> con certificado de una Autoridad Certificante. Por eso <strong>no requiere ningún trámite</strong> ante el Estado.</li>
+<li>Por ser electrónica, no cuenta con las presunciones de autoría e integridad que la Ley 25.506 le da a la firma digital (arts. 7 y 8). Si alguien la desconociera, corresponde a quien la invoca acreditar su validez (art. 5). Para eso MedHistoriaClinicaOnline <strong>guarda la evidencia técnica de cada firma</strong> (ver punto 4).</li>
+</ul>
+<h2 id="2-activacion">2. Activación</h2>
+<ul>
+<li><strong>Automática:</strong> se activa sola cuando emitís tu primera receta. Esa primera vez puede tardar unos segundos más, porque se genera tu clave personal.</li>
+<li><strong>Manual (opcional):</strong> menú <strong>Mi Firma Electrónica</strong> → botón <strong>Activar firma electrónica</strong>. En esa misma pantalla ves el estado ("Activa · clave creada el …") y la huella de tu clave.</li>
+<li>No necesitás DNI, turnos, certificados, app de códigos ni contraseñas adicionales.</li>
+</ul>
+<h2 id="3-como-se-firma-cada-receta">3. Cómo se firma cada receta</h2>
+<ol>
+<li>Completás la receta como siempre y elegís <strong>Generar</strong>, <strong>Descargar PDF</strong>, <strong>Imprimir</strong> o <strong>Enviar</strong> (WhatsApp / email).</li>
+<li>La plataforma genera el PDF, calcula su huella (SHA-256) y lo firma con tu clave personal, en segundo plano. Vas a ver el aviso "Firmando la receta…" (unos segundos).</li>
+<li>Listo: la receta sale con un <strong>código QR</strong> y un <strong>código de verificación</strong> (formato <code>XXXXX-XXXXX-XXXXX-XXXXX-XXXXX</code>).</li>
+</ol>
+<p>Para tener en cuenta:</p>
+<ul>
+<li><strong>Cada receta lleva un solo medicamento</strong>, que se carga por campos (nombre genérico, forma farmacéutica, presentación, cantidad y posología). Si tenés que recetar otro, emitís otra receta. Si te equivocaste, tocá <strong>Quitar medicamento</strong> y cargalo de nuevo.</li>
+<li>La primera vez, la receta te pide también el domicilio del consultorio, la jurisdicción de tu matrícula y la <strong>Licencia Sanitaria Federal (código REFEPS)</strong>. Se completan una sola vez y quedan guardados en tu perfil. La Licencia Sanitaria Federal <strong>no es tu número de matrícula</strong>: ver punto 8.</li>
+<li>Todas las copias de la misma receta (descargar, imprimir, WhatsApp, email) son <strong>el mismo archivo firmado</strong>.</li>
+<li>Si cambiás cualquier dato de la receta, es una receta nueva: se firma de nuevo y tiene otro código.</li>
+<li>Si no se puede firmar (por ejemplo, sin conexión), la receta <strong>no se entrega</strong>. Reintentá: sale con el mismo código, sin duplicarse.</li>
+</ul>
+<h2 id="4-que-queda-registrado-de-cada-firma">4. Qué queda registrado de cada firma</h2>
+<ul>
+<li>Fecha y hora exactas (del reloj de los servidores de la plataforma).</li>
+<li>Dirección IP, datos del navegador e identificador de la sesión desde la que emitiste la receta.</li>
+<li>Huella (hash SHA-256) del PDF y la firma resultante.</li>
+<li>Tu nombre y matrícula, y los identificadores internos de la receta y del paciente.</li>
+</ul>
+<p>Todo esto se guarda en un registro de solo incorporación: los datos ya registrados no se pueden modificar ni borrar desde la plataforma. <strong>No se guarda una copia del PDF</strong> para la firma, ni el nombre o DNI del paciente.</p>
+<p><strong>Una receta ya firmada queda bloqueada.</strong> Además del registro de la firma, la propia receta guardada en la plataforma queda protegida: una vez firmada, <strong>ni vos ni nadie con acceso a tu cuenta puede editarla ni borrarla</strong>, ni desde la aplicación ni por una conexión directa a la base de datos (API). Así, los datos guardados de la receta coinciden siempre con lo que dice el documento firmado. Lo que sí podés hacer es corregir una receta <strong>antes</strong> de firmarla (por ejemplo con <strong>Quitar medicamento</strong>), y eliminar una que nunca llegó a firmarse. Una vez firmada, si hay un error, se emite una receta nueva, que se firma de nuevo y tiene otro código (ver punto 3).</p>
+<p>Tu clave privada se guarda <strong>cifrada</strong> en el servidor: no se puede ver ni descargar. Toda receta emitida desde tu cuenta se firma con tu clave, así que cuidá tus credenciales de acceso.</p>
+<h2 id="5-como-verificar-una-receta">5. Cómo verificar una receta</h2>
+<ul>
+<li><strong>Con el QR:</strong> escanealo con el celular. Se abre una página pública (sin login) que confirma que la receta fue firmada por vos, en qué fecha y hora.</li>
+<li><strong>Sin QR:</strong> entrá a <a href="/verificar/">medhistoriaclinicaonline.com/verificar</a> y escribí el código de verificación.</li>
+<li><strong>Que el archivo no fue alterado:</strong> en esa página soltá el PDF. La comparación se hace en tu navegador (el archivo no se sube a ningún servidor). Si el archivo cambió aunque sea un carácter, dice que <strong>no coincide</strong>.</li>
+<li>La página <strong>no muestra datos del paciente ni de la medicación</strong>: solo tu nombre y matrícula, la fecha y hora y la huella del documento.</li>
+<li>Una receta <strong>impresa en papel</strong> no se puede comparar por huella: para eso hay que usar el archivo PDF original.</li>
+</ul>
+<h2 id="6-imagen-de-tu-firma-manuscrita-opcional">6. Imagen de tu firma manuscrita (opcional)</h2>
+<p>En <strong>Mi Firma Electrónica</strong> también podés dibujar tu firma a mano. Es solo una imagen que se estampa en el pie de tus documentos, junto con tu nombre y matrícula. <strong>No es la firma electrónica de la receta</strong> ni agrega o quita validez: la firma electrónica es la del punto 3.</p>
+<h2 id="7-cuir-y-renapdis">7. CUIR y ReNaPDiS</h2>
+<p>La inscripción de la plataforma ante el Ministerio de Salud (ReNaPDiS) y la asignación del CUIR son un <strong>trámite aparte, todavía en curso</strong>. Cuando esté completo, cada receta va a sumar el CUIR y los códigos de identificación oficiales. Mientras tanto, si el Ministerio te asigna un número de legajo, cargalo una sola vez en <strong>Mi Firma Electrónica → N° de Legajo (ReNaPDiS)</strong>.</p>
+<h2 id="8-licencia-sanitaria-federal-refeps-que-es-y-como-obtenerla">8. Licencia Sanitaria Federal (REFEPS): qué es y cómo obtenerla</h2>
+<p>La primera vez que emitís una receta, el formulario te pide la <strong>Licencia Sanitaria Federal (código REFEPS)</strong>. Es un dato <strong>distinto de tu número de matrícula</strong> y suele generar confusión. Se completa una sola vez: queda guardado en tu perfil para las próximas recetas.</p>
+<p><strong>Qué es.</strong> Es un identificador único creado por el <strong>Decreto 98/2023</strong> (reglamentario de la Ley 27.553), que reúne todas tus matrículas habilitantes bajo una <strong>"Clave Única de Identificación de Profesional Sanitario"</strong>. <strong>No es lo mismo que el número de matrícula</strong>: la matrícula la otorga tu jurisdicción o tu colegio profesional, mientras que la Licencia Sanitaria Federal es la identificación única que agrupa todas tus matrículas.</p>
+<p><strong>Cómo se obtiene.</strong> <strong>No se tramita aparte.</strong> Se genera automáticamente si tu matrícula ya está cargada en la <strong>REFEPS</strong> (Red Federal de Registros de Profesionales de la Salud) por tu jurisdicción o colegio profesional. Alcanza con tener al menos una matrícula registrada ahí.</p>
+<p>Para ver el código, entrá a la app <strong>Mi Argentina</strong> → Matrículas profesional de la salud → Licencia Sanitaria Federal. Esa credencial solo aparece si tu jurisdicción y tu profesión están adheridas a la matrícula digital; si no la ves, podés confirmar tu inscripción como se explica a continuación.</p>
+<p><strong>Cómo verificarla.</strong> Podés consultar tu propia inscripción en la REFEPS:</p>
+<ol>
+<li>Entrá a <strong><a href="https://sisa.msal.gov.ar" target="_blank" rel="noopener">sisa.msal.gov.ar</a></strong>.</li>
+<li>En el carrusel de abajo, hacé clic en <strong>Buscador de Establecimientos y profesionales</strong>.</li>
+<li>Abrí la solapa <strong>REFEPS</strong>.</li>
+<li>Buscá por tu <strong>DNI</strong> o por tu <strong>matrícula</strong>.</li>
+<li>Abrí tu ficha personal (flecha verde) y comprobá que figurás como profesional matriculado y habilitado para ejercer.</li>
+</ol>
+<p><strong>Si no aparece.</strong> Si tu matrícula no figura en la REFEPS, el problema se resuelve con el <strong>colegio o la jurisdicción que te otorgó la matrícula</strong>: son quienes la informan a la REFEPS. La plataforma no puede cargarla ni corregirla.</p>
+<h2 id="9-si-tenes-problemas">9. Si tenés problemas</h2>
+<ul>
+<li><strong>"No se pudo firmar la receta":</strong> revisá tu conexión y volvé a intentar. Sale con el mismo código.</li>
+<li><strong>No se puede consultar el estado de tu firma:</strong> esperá unos minutos y recargá la página.</li>
+<li><strong>Sospechás que alguien usó tu cuenta:</strong> avisá de inmediato a <a href="mailto:medhistoriaclinicaonline@gmail.com">medhistoriaclinicaonline@gmail.com</a> para que se pueda revocar tu clave.</li>
+<li><strong>Otras consultas:</strong> <a href="mailto:medhistoriaclinicaonline@gmail.com">medhistoriaclinicaonline@gmail.com</a>.</li>
+</ul>
+
+</main>
+
+<footer class="fe-footer">
+  <p>MedHistoriaClínicaOnline · <a href="../">medhistoriaclinicaonline.com</a></p>
+</footer>
+
+</body>
+</html>
