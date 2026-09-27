@@ -589,7 +589,7 @@ function _limpiarFormPago(){
 // Número de WhatsApp al que llegan los avisos de interés en IA Extra (solo dígitos, con código de país).
 // Si se deja vacío, el botón abre un mail a soporte en su lugar.
 var IA_EXTRA_WHATSAPP = '5491133471724';
-var IA_EXTRA_EMAIL = 'medhistoriaclinicaonline@gmail.com';
+var IA_EXTRA_EMAIL = 'consultas@medhistoriaclinicaonline.com';
 function avisarInteresIAExtra(el){
   var nivel = (el && el.getAttribute('data-nivel')) || '';
   var msg = 'Hola, me interesa el add-on IA Extra (nivel ' + nivel + '). Quiero que me avisen cuando esté disponible.';
@@ -15177,7 +15177,7 @@ function enviarAutoEmail(tipo){
         +'en tu carpeta de Descargas. Adjuntalo a este email antes de enviarlo.\n'
         +'====================================\n'
        +_firmaLeyMsg('Firma Electrónica - Ley 27.553\n')
-        +'MedHistoriaClinicaOnline\nmedhistoriaclinicaonline@gmail.com';
+        +'MedHistoriaClinicaOnline\nconsultas@medhistoriaclinicaonline.com';
       window.location.href='mailto:'+email+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
     }, 800);
   });
