@@ -6623,7 +6623,7 @@ function cargarMensajesZoho(forzar){
     var actualizaciones = [];
     (r.data.resultados||[]).forEach(function(res){
       if(res.error) actualizaciones.push(res.casilla+': error ('+res.error+')');
-      if(res.actualizado_en) actualizaciones.push(res.casilla+' actualizado '+new Date(res.actualizado_en).toLocaleTimeString('es-AR')+(res.deCache?' (caché)':''));
+      if(res.actualizado_en) actualizaciones.push(res.casilla+' actualizado '+new Date(res.actualizado_en).toLocaleTimeString('es-AR',{hour12:false})+(res.deCache?' (caché)':''));
       (res.mensajes||[]).forEach(function(m){ todos.push(m); });
     });
     todos.sort(function(a,b){ return b.receivedTime - a.receivedTime; });
