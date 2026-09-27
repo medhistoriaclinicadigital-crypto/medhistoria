@@ -6619,7 +6619,7 @@ function renderMensajesZoho(){
   if(!lista.length){ cont.innerHTML = '<div style="color:rgba(109,222,150,.4);padding:14px;">Sin mensajes.</div>'; return; }
   cont.innerHTML = lista.map(function(m){
     var visto = !!vistos[m.messageId];
-    var fecha = m.receivedTime ? new Date(m.receivedTime).toLocaleString('es-AR') : '-';
+    var fecha = m.receivedTime ? new Date(m.receivedTime).toLocaleString('es-AR',{hour12:false}) : '-';
     var badgeColor = m.casilla === 'soporte' ? '#ffd54a' : '#6dde96';
     var mailtoHref = 'mailto:'+encodeURIComponent(m.fromAddress||'')+'?subject='+encodeURIComponent('Re: '+(m.subject||''));
     return '<div onclick="marcarMensajeZohoVisto(\''+escJs(m.messageId)+'\')" style="background:'+(visto?'rgba(255,255,255,.03)':'rgba(52,196,100,.06)')+';border:1px solid '+(visto?'rgba(255,255,255,.08)':'rgba(52,196,100,.2)')+';border-radius:10px;padding:12px 14px;cursor:pointer;">'
