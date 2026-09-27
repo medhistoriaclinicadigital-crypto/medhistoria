@@ -1758,7 +1758,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
     </div>
 
     <div style="text-align:center;margin-top:28px;padding:16px;background:var(--g9);border-radius:12px;">
-      <p style="font-size:.85rem;color:var(--muted);margin:0;">¿Tu país no está en la lista? <a href="mailto:medhistoriaclinicaonline@gmail.com" style="color:var(--g4);font-weight:600;">Contactanos</a> y lo evaluamos.</p>
+      <p style="font-size:.85rem;color:var(--muted);margin:0;">¿Tu país no está en la lista? <a href="mailto:consultas@medhistoriaclinicaonline.com" style="color:var(--g4);font-weight:600;">Contactanos</a> y lo evaluamos.</p>
     </div>
   </div>
 </section>
@@ -2215,7 +2215,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
     </div>
 
     <div style="text-align:center;margin-top:20px;color:var(--g8);font-size:.83rem;">
-      📧 <strong style="color:var(--g6);">medhistoriaclinicaonline@gmail.com</strong> · Respondemos en menos de 24hs hábiles
+      📧 <strong style="color:var(--g6);">consultas@medhistoriaclinicaonline.com</strong> · Respondemos en menos de 24hs hábiles
     </div>
 
   </div>
@@ -4445,7 +4445,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <p style="margin:0 0 10px;"><strong>2. Agregar a los demás médicos.</strong> Escribís el mail de cada médico y tocás "Agregar". <strong>Importante:</strong> el médico tiene que haber completado su propio registro completo en la app antes (nombre, matrícula, etc.) — no alcanza con que exista solo el mail. Si te dice "no encontramos ningún médico registrado", pedile que primero termine de crear su cuenta y complete su perfil en la app, y después lo agregás.</p>
             <p style="margin:0 0 10px;"><strong>3. Pacientes compartidos.</strong> Cuando un médico del centro carga un paciente nuevo, automáticamente queda visible para todos los médicos del centro — no hace falta que cada uno lo cargue por separado. Vas a ver un cartelito 🏥 azul en esos pacientes, para diferenciarlos de los que sean solo tuyos.</p>
             <p style="margin:0 0 10px;"><strong>4. Cada médico firma lo suyo.</strong> Aunque el paciente sea compartido, cada médico usa su propia firma y su propio usuario — nunca se mezclan ni se pierde quién hizo cada cambio.</p>
-            <p style="margin:0;color:#b45309;"><strong>⚠️ Nota:</strong> por ahora, esta función es nueva. Si algún médico del centro tiene problemas para guardar cambios en secciones puntuales de la Historia Clínica de un paciente compartido (Antecedentes, Examen físico, Diagnóstico), escribinos a <a href="mailto:medhistoriaclinicaonline@gmail.com" style="color:#b45309;">medhistoriaclinicaonline@gmail.com</a> para revisarlo — todavía estamos terminando de ajustar esas partes.</p>
+            <p style="margin:0;color:#b45309;"><strong>⚠️ Nota:</strong> por ahora, esta función es nueva. Si algún médico del centro tiene problemas para guardar cambios en secciones puntuales de la Historia Clínica de un paciente compartido (Antecedentes, Examen físico, Diagnóstico), escribinos a <a href="mailto:consultas@medhistoriaclinicaonline.com" style="color:#b45309;">consultas@medhistoriaclinicaonline.com</a> para revisarlo — todavía estamos terminando de ajustar esas partes.</p>
           </div>
         </details>
 
@@ -7081,7 +7081,7 @@ function _centroRegistroBloqueado(){
 }
 
 function _avisoCentroEnPreparacion(){
-  alert('🏥 Estamos terminando de habilitar la inscripción de Centros Médicos — va a estar disponible en muy poco.\n\nEscribinos a medhistoriaclinicaonline@gmail.com y te avisamos apenas esté.');
+  alert('🏥 Estamos terminando de habilitar la inscripción de Centros Médicos — va a estar disponible en muy poco.\n\nEscribinos a consultas@medhistoriaclinicaonline.com y te avisamos apenas esté.');
 }
 
 // El formulario de pago quedó como transferencia únicamente (input hidden
@@ -7678,11 +7678,11 @@ var firmaInfo = {
     flag: '🌎', pais: 'Tu país',
     pasos: [
       {n:'1', t:'Buscá el organismo oficial', d:'En la mayoría de los países existe un organismo estatal que emite firmas digitales certificadas.'},
-      {n:'2', t:'Contactanos', d:'Escribinos a <strong>medhistoriaclinicaonline@gmail.com</strong> y te ayudamos a encontrar la opción correcta para tu país.'},
+      {n:'2', t:'Contactanos', d:'Escribinos a <strong>consultas@medhistoriaclinicaonline.com</strong> y te ayudamos a encontrar la opción correcta para tu país.'},
     ],
     costo: 'Variable según país',
     tiempo: 'Variable',
-    link: 'mailto:medhistoriaclinicaonline@gmail.com',
+    link: 'mailto:consultas@medhistoriaclinicaonline.com',
     ley: 'Normativa local'
   }
 };
@@ -13122,7 +13122,7 @@ function solicitarFactura(){
       msg.style.background='rgba(220,50,50,.1)';
       msg.style.border='1px solid rgba(220,50,50,.3)';
       msg.style.color='#c0392b';
-      msg.textContent='Hubo un error al enviar. Por favor escribinos a medhistoriaclinicaonline@gmail.com';
+      msg.textContent='Hubo un error al enviar. Por favor escribinos a consultas@medhistoriaclinicaonline.com';
     }
     if(btn){ btn.disabled=false; btn.textContent='Enviar solicitud'; }
   });
@@ -16708,7 +16708,7 @@ function contactarPor(asunto){
   if(modal) modal.style.display = 'flex';
 }
 function copiarEmail(){
-  var email = 'medhistoriaclinicaonline@gmail.com';
+  var email = 'consultas@medhistoriaclinicaonline.com';
   if(navigator.clipboard){
     navigator.clipboard.writeText(email).then(function(){
       var btn = document.getElementById('btn-copiar-email');
@@ -16722,7 +16722,7 @@ function copiarEmail(){
   }
 }
 function abrirEmailDirecto(){
-  window.open('mailto:medhistoriaclinicaonline@gmail.com?subject='+encodeURIComponent(_asuntoContacto+' - MedHistoriaClinicaOnline'));
+  window.open('mailto:consultas@medhistoriaclinicaonline.com?subject='+encodeURIComponent(_asuntoContacto+' - MedHistoriaClinicaOnline'));
 }
 
 // ── TÉRMINOS Y CONDICIONES — NAVEGACIÓN INTERNA ──
@@ -17361,7 +17361,7 @@ function mlIngresar(){
     sb.rpc('verificar_dispositivo', { p_device_token: _deviceToken(), p_descripcion: _descripcionDispositivo() }).then(function(rDisp){
       if(rDisp.error){
         console.error('Error verificando dispositivo:', rDisp.error);
-        alert('No pudimos verificar el acceso desde este dispositivo. Probá de nuevo en unos segundos, o escribinos a medhistoriaclinicaonline@gmail.com si el problema persiste.');
+        alert('No pudimos verificar el acceso desde este dispositivo. Probá de nuevo en unos segundos, o escribinos a consultas@medhistoriaclinicaonline.com si el problema persiste.');
         sb.auth.signOut();
         return;
       }
@@ -17373,7 +17373,7 @@ function mlIngresar(){
         } else if(estadoDisp.estado === 'rechazado'){
           alert('🔒 El acceso desde este dispositivo fue bloqueado por el dueño del Centro Médico.\n\nSi creés que es un error, contactalo directamente.');
         } else {
-          alert('🔒 No se pudo verificar el acceso desde este dispositivo. Escribinos a medhistoriaclinicaonline@gmail.com si el problema persiste.');
+          alert('🔒 No se pudo verificar el acceso desde este dispositivo. Escribinos a consultas@medhistoriaclinicaonline.com si el problema persiste.');
         }
         return;
       }
