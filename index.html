@@ -290,6 +290,7 @@ a.pbtn{display:block;text-align:center;text-decoration:none;box-sizing:border-bo
 .legal-card p{font-size:.81rem;color:var(--muted);line-height:1.65;}
 .legal-ci{display:flex;align-items:center;gap:6px;margin-top:9px;font-size:.76rem;font-weight:600;color:var(--g4);}
 .legal-ci::before{content:'✔';color:var(--g5);}
+.legal-mas{display:inline-block;margin-top:10px;font-size:.78rem;font-weight:700;color:var(--g4);text-decoration:underline;text-decoration-color:var(--g8);}
 
 /* ══ RX ══ */
 .rx-sec{background:var(--g1);}
@@ -1636,7 +1637,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       <div class="legal-card"><span class="legal-num">Ley 26.529</span><span class="legal-ok">✔ Cumplida</span><h3>Derechos del Paciente</h3><p>El paciente es titular de sus datos y tiene derecho a que el profesional le entregue su historia clínica cuando la solicite (Ley 26.529, art. 14).</p><div class="legal-ci">El profesional está obligado a entregarla — el paciente no accede directo a la plataforma</div></div>
       <div class="legal-card"><span class="legal-num">Ley 25.326</span><span class="legal-ok">✔ Cumplida</span><h3>Protección de Datos Personales</h3><p>Datos sensibles de salud con cifrado AES-256. Sin cesión a terceros bajo ninguna circunstancia.</p><div class="legal-ci">Cifrado AES-256 · Sin cesión a terceros</div></div>
      
-      <div class="legal-card"><span class="legal-num">Ley 25.506 · art. 5</span><span class="legal-ok">✔ Disponible</span><h3>Firma Electrónica</h3><p>Cada receta se firma electrónicamente con una clave personal del médico, sin trámites ni códigos adicionales. Queda registrada con fecha y hora exactas, IP y huella (hash) del documento, y un QR permite verificar en una página pública que la firmó ese médico y que el archivo no se alteró. Es firma electrónica, no firma digital con certificado oficial.</p><div class="legal-ci">Evidencia técnica resguardada por la plataforma · Verificación pública por QR</div></div>
+      <div class="legal-card"><span class="legal-num">Ley 25.506 · art. 5</span><span class="legal-ok">✔ Disponible</span><h3>Firma Electrónica</h3><p>Cada receta se firma electrónicamente con una clave personal del médico, sin trámites ni códigos adicionales. Queda registrada con fecha y hora exactas, IP y huella (hash) del documento, y un QR permite verificar en una página pública que la firmó ese médico y que el archivo no se alteró. Es firma electrónica, no firma digital con certificado oficial.</p><div class="legal-ci">Evidencia técnica resguardada por la plataforma · Verificación pública por QR</div><a class="legal-mas" href="/firma-electronica/">Leer el instructivo completo →</a></div>
       <div class="legal-card"><span class="legal-num">Res. 648/2013 MS</span><span class="legal-ok">✔ Cumplida</span><h3>HC Electrónica como documento legal</h3><p>La HCE es auténtica, inalterable, perdurable e inviolable. Trazabilidad completa de cada registro.</p><div class="legal-ci">Trazabilidad completa garantizada</div></div>
       <div class="legal-card"><span class="legal-num">Ley 17.132</span><span class="legal-ok">✔ Considerada</span><h3>Ejercicio de la Medicina</h3><p>La confidencialidad médica que exige esta ley depende en parte de la conducta del profesional (por ejemplo, no ingresar datos del paciente en la IA). La plataforma aporta cifrado, acceso restringido y advertencias, pero no puede garantizar por sí sola el cumplimiento total de una obligación que es, ante todo, del médico.</p><div class="legal-ci">Resguardo técnico + advertencias — responsabilidad final del profesional</div></div>
     </div>
@@ -4331,6 +4332,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               <li>El PDF lleva un <strong>QR de verificación pública</strong>: cualquiera puede comprobar que la firmaste vos y que el archivo no se alteró, sin ver datos del paciente.</li>
             </ul>
             <p style="font-size:.75rem;color:#075985;line-height:1.6;margin-bottom:10px;">Es una firma electrónica (Ley 25.506, art. 5), distinta de la firma digital con certificado oficial: por eso no requiere ningún trámite. Tu clave privada se guarda cifrada en el servidor y no se puede descargar.</p>
+            <p style="font-size:.78rem;margin:0 0 12px;"><a href="/firma-electronica/" target="_blank" rel="noopener" style="color:#0369a1;font-weight:700;">📄 Leer el instructivo completo de la firma electrónica →</a></p>
           </div>
           <div id="fe-estado" style="font-size:.8rem;color:#075985;margin-bottom:10px;">Consultando estado…</div>
           <button id="fe-btn" onclick="activarFirmaElectronica()" style="display:none;padding:8px 16px;background:linear-gradient(135deg,#0284c7,#0c4a6e);color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Activar firma electrónica</button>
