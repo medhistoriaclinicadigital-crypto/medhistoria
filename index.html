@@ -14131,304 +14131,475 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   doc.line(margin,37,W-margin,37);
 
   var y = 42;
-  // El CUIR y el QR/código de identificación reservados son del ReNaPDiS (Argentina): fuera de Argentina no se dibujan
-  // y el recuadro del paciente ocupa todo el ancho.
-  var colIzqW = _esArg ? 122 : (W-margin*2), colDerX = margin+colIzqW+6, colDerW = W-margin-colDerX;
 
-  // ── CUIR (barcode) + QR reservado (columna derecha) ──
-  var cuirH=20, qrY = y+cuirH+4, qrH=20;
   if(_esArg){
-  doc.setDrawColor(160,160,160); doc.setLineWidth(0.3);
-  doc.roundedRect(colDerX, y, colDerW, cuirH, 2.5, 2.5, 'S');
-  doc.setTextColor(130,130,130); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
-  doc.text('CUIR (VALOR DE PRUEBA)', colDerX+colDerW/2, y+3.6, {align:'center'});
-  // Barcode real (JsBarcode) con valor de PRUEBA — reemplazar por el CUIR
-  // que asigne ReNaPDiS cuando el trámite de inscripción esté aprobado.
-  try {
-    var _cuirCanvas = document.createElement('canvas');
-    JsBarcode(_cuirCanvas, 'CUIR-PRUEBA-0000000000', { format:'CODE128', displayValue:true, fontSize:12, height:36, margin:2 });
-    var _cuirImg = _cuirCanvas.toDataURL('image/png');
-    var _cuirImgH = cuirH-5, _cuirImgW = _cuirImgH * (_cuirCanvas.width/_cuirCanvas.height);
-    if(_cuirImgW > colDerW-4){ _cuirImgW = colDerW-4; _cuirImgH = _cuirImgW * (_cuirCanvas.height/_cuirCanvas.width); }
-    doc.addImage(_cuirImg, 'PNG', colDerX+(colDerW-_cuirImgW)/2, y+4.5, _cuirImgW, _cuirImgH);
-  } catch(eCuir) { console.warn('[catch]', eCuir); }
+    // ══════════════════════════════════════════════════════════════════
+    // MODELO ARGENTINA — orden según el Anexo del Decreto 63/2024
+    // (IF-2024-05619409-APN-MS): código de barras + datos del profesional
+    // arriba, paciente, Rp/medicación, marca comercial (opcional),
+    // diagnóstico, y al pie fecha (izquierda) + firma (derecha).
+    // ══════════════════════════════════════════════════════════════════
+    var _prefijoDrPdf = (usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ');
+    var matTxt = [d.matriculaMN?('M.N. '+d.matriculaMN):'', d.matriculaMP?('M.P. '+d.matriculaMP):''].filter(Boolean).join(' · ');
+    // Nombre propio prolijo en el PDF — la carga de perfil puede venir en minúsculas/mayúsculas mezcladas.
+    function _capitalizarNombrePropio(str){
+      if(!str) return str;
+      return str.split(' ').map(function(p){ return p ? p.charAt(0).toUpperCase()+p.slice(1).toLowerCase() : p; }).join(' ');
+    }
 
-  doc.setDrawColor(160,160,160); doc.setLineWidth(0.3); doc.setLineDashPattern([1.3,1],0);
-  doc.roundedRect(colDerX, qrY, colDerW, qrH, 2.5, 2.5, 'S');
-  doc.setLineDashPattern([],0);
-  doc.setTextColor(130,130,130); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
-  doc.text('QR / CÓDIGO DE', colDerX+colDerW/2, qrY+7, {align:'center'});
-  doc.text('IDENTIFICACIÓN', colDerX+colDerW/2, qrY+10.5, {align:'center'});
-  doc.setFontSize(5.5); doc.setFont('helvetica','normal');
-  doc.text('ESPACIO RESERVADO', colDerX+colDerW/2, qrY+15, {align:'center'});
-  }
+    // ── Código de barras (CUIR, valor de prueba) arriba a la derecha ──
+    var bcW=52, bcH=18, bcX=W-margin-bcW, bcY=y;
+    doc.setDrawColor(160,160,160); doc.setLineWidth(0.3);
+    doc.roundedRect(bcX, bcY, bcW, bcH, 2, 2, 'S');
+    doc.setTextColor(130,130,130); doc.setFontSize(6.3); doc.setFont('helvetica','bold');
+    doc.text('CÓDIGO DE BARRAS (VALOR DE PRUEBA)', bcX+bcW/2, bcY+3.6, {align:'center', maxWidth:bcW-4});
+    // Barcode real (JsBarcode) con valor de PRUEBA — reemplazar por el CUIR
+    // que asigne ReNaPDiS cuando el trámite de inscripción esté aprobado.
+    try {
+      var _cuirCanvas = document.createElement('canvas');
+      JsBarcode(_cuirCanvas, 'CUIR-PRUEBA-0000000000', { format:'CODE128', displayValue:true, fontSize:11, height:34, margin:2 });
+      var _cuirImg = _cuirCanvas.toDataURL('image/png');
+      var _cuirImgH = bcH-8, _cuirImgW = _cuirImgH * (_cuirCanvas.width/_cuirCanvas.height);
+      if(_cuirImgW > bcW-4){ _cuirImgW = bcW-4; _cuirImgH = _cuirImgW * (_cuirCanvas.height/_cuirCanvas.width); }
+      doc.addImage(_cuirImg, 'PNG', bcX+(bcW-_cuirImgW)/2, bcY+7, _cuirImgW, _cuirImgH);
+    } catch(eCuir) { console.warn('[catch]', eCuir); }
 
-  // ── DATOS DEL PACIENTE (columna izquierda, junto a CUIR/QR) ──
-  var pacBoxY = y;
-  doc.setDrawColor(180,210,190); doc.setLineWidth(0.3);
-  doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
-  doc.text('PACIENTE', margin+3, y+6);
-  doc.setTextColor(10,10,10); doc.setFontSize(12); doc.setFont('helvetica','normal');
-  var pacNombreLines = doc.splitTextToSize(d.pac||'(no indicado)', colIzqW-6);
-  doc.text(pacNombreLines, margin+3, y+11.5);
-  y += 11.5 + (pacNombreLines.length>1 ? (pacNombreLines.length-1)*5 : 0) + 4.5;
-  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,60);
-  var lineaPac1 = [];
-  if(d.dni) lineaPac1.push('DNI: '+d.dni);
-  if(_esArg && d.cuil) lineaPac1.push('CUIL: '+d.cuil);
-  if(d.fnac){ var fn=d.fnac.split('-'); if(fn.length===3) lineaPac1.push('F. Nac.: '+fn[2]+'/'+fn[1]+'/'+fn[0]); }
-  if(d.sexo) lineaPac1.push('Sexo: '+d.sexo);
-  if(lineaPac1.length){
-    var l1 = doc.splitTextToSize(lineaPac1.join('   ·   '), colIzqW-6);
-    doc.text(l1, margin+3, y); y += l1.length*4.2;
-  }
-  var lineaPac2 = [];
-  if(d.os) lineaPac2.push('Obra Social / Cobertura: '+d.os);
-  if(d.plan) lineaPac2.push('Plan: '+d.plan);
-  if(d.afiliado) lineaPac2.push('N° Afiliado: '+d.afiliado);
-  if(lineaPac2.length){
-    var l2 = doc.splitTextToSize(lineaPac2.join('   ·   '), colIzqW-6);
-    doc.text(l2, margin+3, y); y += l2.length*4.2;
-  }
-  var pacBoxH = (y - pacBoxY) + 3;
-  doc.roundedRect(margin, pacBoxY, colIzqW, pacBoxH, 2.5, 2.5, 'S');
-  y = (_esArg ? Math.max(pacBoxH+pacBoxY, qrY+qrH) : (pacBoxH+pacBoxY)) + 6;
-
-  // ── Fecha de inicio de vigencia (si corresponde) — la fecha de confección
-  // se muestra más abajo, junto al bloque de firma. ──
-  if(d.fechaInicioVigencia){
-    var fiv = d.fechaInicioVigencia.split('-');
-    doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
-    doc.text('VÁLIDA DESDE', x, y);
-    doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
-    if(fiv.length===3) doc.text(fiv[2]+'/'+fiv[1]+'/'+fiv[0], x, y+4.2);
-    y += 11;
-  }
-
-  // ── Diagnóstico ──
-  if(d.diag){
-    doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
-    doc.text('DIAGNÓSTICO', x, y);
-    doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
-    y += 4.2; doc.text(d.diag, x, y);
-    y += 6;
-  }
-
-  // ── DATOS DEL PROFESIONAL (a todo el ancho, justo antes de la firma) ──
-  var profLineas = [];
-  profLineas.push(['NOMBRE Y APELLIDO', (usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ')+d.nombreProfesional]);
-  var profEsp = d.profesion + (d.especialidad ? ' — '+d.especialidad : '');
-  profLineas.push(['PROFESIÓN / ESPECIALIDAD', profEsp]);
-  var matTxt = [d.matriculaMN?('M.N. '+d.matriculaMN):'', d.matriculaMP?('M.P. '+d.matriculaMP):''].filter(Boolean).join(' · ');
-  profLineas.push(['MATRÍCULA', matTxt||'(no indicada)']);
-  if(medicoEsArgentina()) profLineas.push(['LICENCIA SANITARIA FEDERAL (REFEPS)', d.refeps||'(no indicada)']);
-  profLineas.push(['JURISDICCIÓN / ENTIDAD EMISORA', d.jurisdiccion||'(no indicada)']);
-  profLineas.push(['DOMICILIO PROFESIONAL (LUGAR DEL ACTO MÉDICO)', d.domicilio||'(no indicado)']);
-  var contactoOpc = [d.telefonoProfesional?('Tel: '+d.telefonoProfesional):'', d.emailProfesional?('Email: '+d.emailProfesional):''].filter(Boolean).join('   ·   ');
-  if(contactoOpc) profLineas.push(['CONTACTO (OPCIONAL)', contactoOpc]);
-
-  // Dos columnas para no desperdiciar el ancho completo con una sola lista
-  // larga apilada — identidad profesional a la izquierda, jurisdicción/
-  // domicilio/contacto a la derecha.
-  var profBoxW = W-margin*2;
-  var profColGap = 8;
-  var profColW = (profBoxW - profColGap) / 2;
-  var profColIzq = profLineas.slice(0, Math.ceil(profLineas.length/2));
-  var profColDer = profLineas.slice(Math.ceil(profLineas.length/2));
-
-  function _alturaColumnaProf(items, docM){
-    var suma = 0, dm = docM || doc;   // docM: documento descartable para medir sin tocar el estado del PDF real
-    items.forEach(function(par){
-      var vLines = dm.splitTextToSize(par[1], profColW-6);
-      suma += 8.6 + (vLines.length>1 ? (vLines.length-1)*4 : 0);
+    // ── Datos del profesional, centrados, debajo del código de barras ──
+    var yP = bcY + bcH + 6;
+    doc.setTextColor(15,15,15); doc.setFontSize(12); doc.setFont('times','bold');
+    doc.text(_prefijoDrPdf+_capitalizarNombrePropio(d.nombreProfesional), W/2, yP, {align:'center'});
+    yP += 5.5;
+    doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor(40,40,40);
+    var profEsp = d.profesion + (d.especialidad ? ' — '+d.especialidad : '');
+    var _profCentradoLineas = [
+      profEsp,
+      'Matrícula: '+(matTxt||'(no indicada)'),
+      'Domicilio (lugar del acto médico): '+(d.domicilio||'(no indicado)'),
+      'Jurisdicción: '+(d.jurisdiccion||'(no indicada)'),
+      'Licencia Sanitaria Federal (REFEPS): '+(d.refeps||'(no indicada)')
+    ];
+    _profCentradoLineas.forEach(function(linea){
+      var ls = doc.splitTextToSize(linea, W-margin*2-30);
+      doc.text(ls, W/2, yP, {align:'center'});
+      yP += ls.length*4.2;
     });
-    return 7.5 + suma;
-  }
+    yP += 2;
+    doc.setDrawColor(20,90,50); doc.setLineWidth(0.3);
+    doc.line(margin, yP, W-margin, yP);
+    y = yP + 6;
 
-  // ── MEDICAMENTOS: principio activo con más peso visual que la marca ──
-  doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
-  doc.text('Rp./ MEDICACIÓN PRESCRIPTA', x, y);
-  y += 4;
-  var medBoxY = y, medW = W-margin*2-6;
-  var medItems = (d.medicamentos && d.medicamentos.length) ? d.medicamentos : null;
+    // ── PACIENTE: izquierda nombre/fecha nac./DNI-CUIL, derecha obra social-plan/afiliado/sexo ──
+    var patColGap=8, patColW=(W-margin*2-patColGap)/2;
+    var patIzq = [['NOMBRE Y APELLIDO', d.pac||'(no indicado)']];
+    if(d.fnac){ var fnP=d.fnac.split('-'); patIzq.push(['FECHA DE NACIMIENTO', fnP.length===3?(fnP[2]+'/'+fnP[1]+'/'+fnP[0]):d.fnac]); }
+    var dniCuilTxt = [d.dni?('DNI: '+d.dni):'', d.cuil?('CUIL: '+d.cuil):''].filter(Boolean).join('   ·   ');
+    if(dniCuilTxt) patIzq.push(['DNI / CUIL', dniCuilTxt]);
+    var patDer = [];
+    var osPlanTxt = [d.os?d.os:'', d.plan?('Plan: '+d.plan):''].filter(Boolean).join('   ·   ');
+    if(osPlanTxt) patDer.push(['OBRA SOCIAL / PLAN', osPlanTxt]);
+    if(d.afiliado) patDer.push(['N° AFILIADO', d.afiliado]);
+    if(d.sexo) patDer.push(['SEXO', d.sexo]);
 
-  // Precalcula la altura necesaria antes de dibujar el recuadro
-  var alturaEstimadaLineas = [];
-  if(medItems){
-    medItems.forEach(function(m){
-      var det = [m.forma,m.presentacion,m.cantidad?('Cant.: '+m.cantidad):'',m.posologia].filter(Boolean).join(' — ');
-      var dl = det ? doc.splitTextToSize(det, medW-6) : [];
-      alturaEstimadaLineas.push(dl.length);
-    });
-  }
-  var medBoxH;
-  if(medItems){
-    medBoxH = 8;
-    alturaEstimadaLineas.forEach(function(nLineas){ medBoxH += 7 + nLineas*4.2 + 6; });
-    medBoxH = Math.max(medBoxH, 32);
-  } else {
-    var contenidoLines = doc.splitTextToSize(d.contenido||'', medW-6);
-    medBoxH = Math.max(32, contenidoLines.length*5+12);
-  }
+    function _alturaCol(items, colWp, docM){
+      var suma=0, dm=docM||doc;
+      items.forEach(function(par){ var vl=dm.splitTextToSize(par[1], colWp-6); suma += 8.6+(vl.length>1?(vl.length-1)*4:0); });
+      return 7.5+suma;
+    }
+    function _dibujarCol(items, colX, colWp, startY){
+      var yp2=startY+5.5;
+      items.forEach(function(par){
+        doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
+        doc.text(par[0], colX+3, yp2);
+        doc.setTextColor(25,25,25); doc.setFontSize(8.3); doc.setFont('helvetica','normal');
+        var vl=doc.splitTextToSize(par[1], colWp-6);
+        doc.text(vl, colX+3, yp2+4);
+        yp2 += 8.6+(vl.length>1?(vl.length-1)*4:0);
+      });
+    }
+    var patBoxY = y;
+    var patBoxH = Math.max(_alturaCol(patIzq,patColW), _alturaCol(patDer.length?patDer:[['','']],patColW));
+    doc.setDrawColor(180,210,190); doc.setLineWidth(0.3);
+    doc.roundedRect(margin, patBoxY, W-margin*2, patBoxH, 2.5, 2.5, 'S');
+    _dibujarCol(patIzq, margin, patColW, patBoxY);
+    _dibujarCol(patDer, margin+patColW+patColGap, patColW, patBoxY);
+    doc.setDrawColor(210,225,218); doc.setLineWidth(0.2);
+    doc.line(margin+patColW+patColGap/2, patBoxY+3, margin+patColW+patColGap/2, patBoxY+patBoxH-3);
+    y = patBoxY+patBoxH+6;
 
-  // ── Que la línea de firma, el QR de verificación y el pie no se salgan de la hoja ──
-  // El recuadro de la medicación deja 40 mm de aire fijo (pedido explícito) y el pie se ancla debajo del contenido: con diagnóstico +
-  // indicaciones + fecha de vigencia la firma caía fuera de la hoja A4 (297 mm) en Argentina. Si el pie no entra, se achica ese aire
-  // (hasta un mínimo) para que la firma vuelva a su lugar de siempre. Lo que hoy entra queda exactamente igual.
-  var _FOOTER_STD = 268, _FOOTER_MAX = 272, _PAD_STD = 40, _PAD_MIN = 6, _pieFirma = 26;
-  var _padMed = _PAD_STD;
-  var _medidor = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' }); // documento descartable: mide sin tocar el PDF real
-  var _hInd = 0;
-  if(d.ind){ _medidor.setFont('helvetica','bold'); _medidor.setFontSize(7.2); _hInd = 4 + Math.max(14, _medidor.splitTextToSize(d.ind, W-margin*2-8).length*4.6+6) + 6; }
-  _medidor.setFont('helvetica','normal'); _medidor.setFontSize(8.3);
-  var _hProf = Math.max(_alturaColumnaProf(profColIzq, _medidor), _alturaColumnaProf(profColDer, _medidor));
-  // dónde caería la línea de firma con el aire de siempre: base del recuadro + aire + separación + Buscador + indicaciones + separación + datos del profesional + aire de la firma
-  var _footerNat = medBoxY + medBoxH + _PAD_STD + 6 + (_esArg ? 6 : 0) + _hInd + 6 + _hProf + _pieFirma;
-  if(_footerNat > _FOOTER_MAX){ _padMed = Math.max(_PAD_MIN, _PAD_STD - (_footerNat - _FOOTER_STD)); }
-  medBoxH += _padMed; // +3cm pedido explícito, +1cm extra para que quede más estético (solo se achica si no entra la firma)
-
-  doc.setFillColor(240,253,244); doc.setDrawColor(134,239,172); doc.setLineWidth(0.4);
-  doc.roundedRect(x, medBoxY, medW, medBoxH, 2.5, 2.5, 'FD');
-
-  var yMed = medBoxY+8;
-  if(medItems){
-    medItems.forEach(function(m, i){
-      doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(12,60,30);
-      var ifaTxt = (i+1)+'. '+(m.ifa||'(sin nombre genérico)');
-      doc.text(ifaTxt, x+3, yMed);
-      if(m.comercial){
-        var ifaW = doc.getTextWidth(ifaTxt);
-        doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(95,120,95);
-        doc.text('  ('+m.comercial+')', x+3+ifaW, yMed);
-      }
-      yMed += 6;
-      var det = [m.forma,m.presentacion,m.cantidad?('Cant.: '+m.cantidad):'',m.posologia].filter(Boolean).join(' — ');
-      if(det){
-        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(50,70,50);
-        var dl = doc.splitTextToSize(det, medW-6);
-        doc.text(dl, x+3, yMed);
-        yMed += dl.length*4.2;
-      }
-      yMed += 6;
-    });
-  } else {
-    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(15,60,30);
-    doc.text(doc.splitTextToSize(d.contenido||'', medW-6), x+3, yMed);
-  }
-
-  y = medBoxY + medBoxH + 6;
-
-  // ── Buscador Nacional de Medicamentos — recurso oficial (argentina.gob.ar)
-  // para que el paciente pueda comparar precios y elegir la opción más
-  // conveniente entre las presentaciones disponibles del medicamento.
-  // Es un recurso de Argentina: solo se incluye en recetas de médicos de Argentina. ──
-  if(_esArg){
-  doc.setTextColor(70,70,70); doc.setFontSize(7); doc.setFont('helvetica','normal');
-  doc.text('Para comparar precios y elegir la opción más conveniente, consultá el ', x, y);
-  var _buscadorPre = doc.getTextWidth('Para comparar precios y elegir la opción más conveniente, consultá el ');
-  doc.setTextColor(20,90,160); doc.setFont('helvetica','bold');
-  doc.textWithLink('Buscador Nacional de Medicamentos', x+_buscadorPre, y, { url: 'https://www.argentina.gob.ar/buscador-de-precios-de-medicamentos' });
-  y += 6;
-  }
-
-  // ── Indicaciones al paciente ──
-  if(d.ind){
+    // ── Rp / MEDICACIÓN (genérico, presentación, forma, cantidad, posología — sin la marca comercial) ──
     doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
-    doc.text('INDICACIONES AL PACIENTE', x, y);
+    doc.text('Rp./ MEDICACIÓN PRESCRIPTA', x, y);
     y += 4;
-    var indLines = doc.splitTextToSize(d.ind, W-margin*2-8);
-    var indH = Math.max(14, indLines.length*4.6+6);
-    doc.setFillColor(255,251,235); doc.setDrawColor(253,230,138);
-    doc.roundedRect(x, y, W-margin*2, indH, 2.5, 2.5, 'FD');
-    doc.setTextColor(80,50,10); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
-    doc.text(indLines, x+3, y+5);
-    y += indH+6;
-  }
+    var medItems = (d.medicamentos && d.medicamentos.length) ? d.medicamentos : null;
+    var medW = W-margin*2-6, medBoxY = y, medBoxH;
+    if(medItems){
+      medBoxH = 8;
+      medItems.forEach(function(m){
+        var det = [m.forma,m.presentacion,m.cantidad?('Cant.: '+m.cantidad):'',m.posologia].filter(Boolean).join(' — ');
+        var dl = det ? doc.splitTextToSize(det, medW-6) : [];
+        medBoxH += 7 + dl.length*4.2 + 6;
+      });
+      medBoxH = Math.max(medBoxH, 26);
+    } else {
+      var contenidoLines = doc.splitTextToSize(d.contenido||'', medW-6);
+      medBoxH = Math.max(26, contenidoLines.length*5+12);
+    }
+    doc.setFillColor(240,253,244); doc.setDrawColor(134,239,172); doc.setLineWidth(0.4);
+    doc.roundedRect(x, medBoxY, medW, medBoxH, 2.5, 2.5, 'FD');
+    var yMed = medBoxY+8;
+    if(medItems){
+      medItems.forEach(function(m, i){
+        doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(12,60,30);
+        doc.text((i+1)+'. '+(m.ifa||'(sin nombre genérico)'), x+3, yMed);
+        yMed += 6;
+        var det = [m.forma,m.presentacion,m.cantidad?('Cant.: '+m.cantidad):'',m.posologia].filter(Boolean).join(' — ');
+        if(det){
+          doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(50,70,50);
+          var dl = doc.splitTextToSize(det, medW-6);
+          doc.text(dl, x+3, yMed);
+          yMed += dl.length*4.2;
+        }
+        yMed += 6;
+      });
+    } else {
+      doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(15,60,30);
+      doc.text(doc.splitTextToSize(d.contenido||'', medW-6), x+3, yMed);
+    }
+    y = medBoxY+medBoxH+6;
 
-  // (Los datos del profesional se arman más arriba, antes de la medicación, porque su altura decide dónde entra el pie.)
-  // Altura del recuadro calculada primero (en seco, sin dibujar todavía),
-  // para poder anclarlo cerca de la firma sin que quede un espacio en
-  // blanco de más cada vez que la receta tiene poco contenido arriba —
-  // pero dejando los 26mm que la firma necesita arriba de su línea (ahí
-  // van la imagen de la firma y el nombre del profesional).
-  var profBoxH = Math.max(_alturaColumnaProf(profColIzq), _alturaColumnaProf(profColDer));
+    // ── Sugerencia de marca comercial (OPCIONAL) — recuadro aparte, punteado; no aparece si no hay marca ──
+    var _comercialVal = medItems ? medItems.map(function(m){return m.comercial;}).filter(Boolean).join('   ·   ') : '';
+    if(_comercialVal){
+      var comLines = doc.splitTextToSize(_comercialVal, W-margin*2-8);
+      var comH = Math.max(12, comLines.length*4.2+8);
+      doc.setDrawColor(160,160,160); doc.setLineWidth(0.3); doc.setLineDashPattern([1.3,1],0);
+      doc.roundedRect(x, y, W-margin*2, comH, 2.5, 2.5, 'S');
+      doc.setLineDashPattern([],0);
+      doc.setTextColor(110,110,110); doc.setFontSize(6.8); doc.setFont('helvetica','bold');
+      doc.text('Sugerencia de marca comercial (OPCIONAL)', x+3, y+4.5);
+      doc.setTextColor(60,60,60); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+      doc.text(comLines, x+3, y+9);
+      y += comH+6;
+    }
 
-  var espacioParaFirma = 26; // clearance mínimo real, no tocar: es lo que necesita la firma arriba de su línea
-  var footerY = Math.max(268, y + 6 + profBoxH + espacioParaFirma);
-  var yProf = footerY - (espacioParaFirma + 10) - profBoxH; // +10mm: sube el recuadro 1cm, la firma queda anclada igual que antes
+    // ── Buscador Nacional de Medicamentos — recurso oficial (argentina.gob.ar) ──
+    doc.setTextColor(70,70,70); doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.text('Para comparar precios y elegir la opción más conveniente, consultá el ', x, y);
+    var _buscadorPre = doc.getTextWidth('Para comparar precios y elegir la opción más conveniente, consultá el ');
+    doc.setTextColor(20,90,160); doc.setFont('helvetica','bold');
+    doc.textWithLink('Buscador Nacional de Medicamentos', x+_buscadorPre, y, { url: 'https://www.argentina.gob.ar/buscador-de-precios-de-medicamentos' });
+    y += 7;
 
-  function _dibujarColumnaProf(items, colX){
-    var yp = yProf+5.5;
-    items.forEach(function(par){
+    // ── DIAGNÓSTICO — en su propio recuadro, debajo de la medicación ──
+    if(d.diag){
+      var diagLines = doc.splitTextToSize(d.diag, W-margin*2-8);
+      var diagH = Math.max(14, diagLines.length*4.6+8);
+      doc.setDrawColor(180,210,190); doc.setLineWidth(0.3);
+      doc.roundedRect(x, y, W-margin*2, diagH, 2.5, 2.5, 'S');
       doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
-      doc.text(par[0], colX+3, yp);
-      doc.setTextColor(25,25,25); doc.setFontSize(8.3); doc.setFont('helvetica','normal');
-      var vLines = doc.splitTextToSize(par[1], profColW-6);
-      doc.text(vLines, colX+3, yp+4);
-      yp += 8.6 + (vLines.length>1 ? (vLines.length-1)*4 : 0);
-    });
-  }
-  doc.setDrawColor(180,210,190); doc.setLineWidth(0.3);
-  _dibujarColumnaProf(profColIzq, margin);
-  _dibujarColumnaProf(profColDer, margin+profColW+profColGap);
-  doc.roundedRect(margin, yProf, profBoxW, profBoxH, 2.5, 2.5, 'S');
-  // Línea divisoria sutil entre las dos columnas
-  doc.setDrawColor(210,225,218); doc.setLineWidth(0.2);
-  doc.line(margin+profColW+profColGap/2, yProf+3, margin+profColW+profColGap/2, yProf+profBoxH-3);
+      doc.text('DIAGNÓSTICO', x+3, y+4.5);
+      doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
+      doc.text(diagLines, x+3, y+9.5);
+      y += diagH+6;
+    }
 
-  // ── FIRMA — pegada justo debajo del recuadro del médico ──
-  doc.setDrawColor(20,90,50); doc.setLineWidth(0.4);
-  doc.line(x, footerY, W-margin, footerY);
-  // La firma manuscrita/digital se estampa si el médico dibujó una — ya no
-  // depende de ningún add-on pago (tieneAddonFirma() es gratis para todos).
-  var _firmaImg = (usuarioActual && tieneAddonFirma()) ? usuarioActual.firma_imagen : null;
-  if(_firmaImg){ try{ doc.addImage(_firmaImg,'PNG',x,footerY-22,42,17); }catch(e){ console.warn('[catch]', e); } }
-  doc.setTextColor(20,20,20); doc.setFontSize(13); doc.setFont('times','bold');
-  doc.text((usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ')+d.nombreProfesional, x, footerY-4);
-  doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
-  doc.text('FECHA DE CONFECCIÓN', W-margin, footerY-9, {align:'right'});
-  doc.setTextColor(20,20,20); doc.setFontSize(9); doc.setFont('helvetica','normal');
-  doc.text(d.fecha.toUpperCase(), W-margin, footerY-4, {align:'right'});
-  doc.setTextColor(20,90,50); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
-  // Argentina: la receta se firma electrónicamente (ver emitirRecetaFirmada). Para otros países se deja la leyenda de siempre.
-  var _esArgPdf = (_paisMedico === 'ar');
-  doc.text((_esArgPdf ? 'FIRMA ELECTRÓNICA DEL PROFESIONAL — ' : 'FIRMA ELECTRÓNICA / DIGITAL DEL PROFESIONAL — ')+(matTxt||'MATRÍCULA NO INDICADA'), x, footerY+5);
+    // ── Indicaciones al paciente ──
+    if(d.ind){
+      doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
+      doc.text('INDICACIONES AL PACIENTE', x, y);
+      y += 4;
+      var indLines = doc.splitTextToSize(d.ind, W-margin*2-8);
+      var indH = Math.max(14, indLines.length*4.6+6);
+      doc.setFillColor(255,251,235); doc.setDrawColor(253,230,138);
+      doc.roundedRect(x, y, W-margin*2, indH, 2.5, 2.5, 'FD');
+      doc.setTextColor(80,50,10); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+      doc.text(indLines, x+3, y+5);
+      y += indH+6;
+    }
 
-  doc.setTextColor(90,90,90); doc.setFontSize(6.29); doc.setFont('helvetica','italic'); // tamaño distinto a propósito: es texto legal de letra chica, no una etiqueta de sección
-  var _prefijoDrPdf = (usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ');
-  // Leyendas exigidas TEXTUAL por el Ministerio (rechazo de subsanación del trámite CUIR,
-  // Decreto 63/2024) — en Argentina van letra por letra, "Dr." literal sin variante de
-  // género, y "RL XXX" como placeholder hasta tener el legajo real.
-  var _leyendaFirma = _esArgPdf
-    ? ('Este documento ha sido firmado -electrónica o digitalmente según corresponda- por Dr. '+d.nombreProfesional)
-    : ('Este documento ha sido firmado -electrónica o digitalmente según corresponda- por '+_prefijoDrPdf+d.nombreProfesional+'.');
-  var _legajoTxt = d.legajoRL ? d.legajoRL : 'RL XXX';
-  // El Registro de Recetarios Electrónicos (ReNaPDiS) y su legajo son de Argentina: fuera de Argentina la leyenda no los cita.
-  var _leyendaInscripcion = _esArg
-    ? ('Esta receta fue creada por un emisor inscripto y validado en el Registro de Recetarios Electrónicos del Ministerio de Salud de la Nación - '+_legajoTxt)
-    : 'Receta emitida bajo '+_leyFirmaPais+' · Válido conforme normativa vigente en '+_paisNombreMedico+'.';
-  var _lf = doc.splitTextToSize(_leyendaFirma, W-margin*2);
-  doc.text(_lf, x, footerY+11);
-  var _li = doc.splitTextToSize(_leyendaInscripcion, W-margin*2);
-  doc.text(_li, x, footerY+11+(_lf.length*3.1)+2);
-  doc.setFont('helvetica','bold'); doc.setTextColor(20,90,50); doc.setFontSize(6.5);
-  doc.text('MedHistoriaClinicaOnline · medhistoriaclinicaonline@gmail.com', W-margin, footerY+5, {align:'right'});
+    // ── Fecha de inicio de vigencia (si corresponde) ──
+    if(d.fechaInicioVigencia){
+      var fiv = d.fechaInicioVigencia.split('-');
+      doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
+      doc.text('VÁLIDA DESDE', x, y);
+      doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
+      if(fiv.length===3) doc.text(fiv[2]+'/'+fiv[1]+'/'+fiv[0], x, y+4.2);
+      y += 10;
+    }
 
-  // ── QR de verificación de la firma electrónica (se dibuja solo cuando la
-  // receta se emite firmada: ver emitirRecetaFirmada). NO usa la caja
-  // reservada del CUIR/QR oficial del ReNaPDiS de arriba. Va a la derecha del
-  // bloque de firma, arriba de la fecha de confección. ──
-  if(d.firmaToken && d.firmaUrl){
-    var _qrImg = _qrDataUrl(d.firmaUrl);
-    if(!_qrImg) throw new Error('No se pudo generar el QR de verificación');
-    var _qrSize = 20, _qrX = W-margin-_qrSize, _qrY = footerY-33;
-    doc.addImage(_qrImg, 'PNG', _qrX, _qrY, _qrSize, _qrSize);
+    // ── FECHA (izquierda) + FIRMA ELECTRÓNICA DEL PROFESIONAL (derecha), QR cerca de la firma ──
+    var footerY = Math.min(278, Math.max(240, y + 52));
+    doc.setDrawColor(20,90,50); doc.setLineWidth(0.4);
+    doc.line(x, footerY, W-margin, footerY);
+
+    var _firmaImg = (usuarioActual && tieneAddonFirma()) ? usuarioActual.firma_imagen : null;
+    if(_firmaImg){ try{ doc.addImage(_firmaImg,'PNG',W-margin-42,footerY-22,42,17); }catch(e){ console.warn('[catch]', e); } }
+    doc.setTextColor(20,20,20); doc.setFontSize(13); doc.setFont('times','bold');
+    doc.text(_prefijoDrPdf+_capitalizarNombrePropio(d.nombreProfesional), W-margin, footerY-4, {align:'right'});
+
+    doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
+    doc.text('FECHA DE CONFECCIÓN', x, footerY-9);
+    doc.setTextColor(20,20,20); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text(d.fecha.toUpperCase(), x, footerY-4);
+
     doc.setTextColor(20,90,50); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
-    doc.text('VERIFICACIÓN DE FIRMA ELECTRÓNICA', _qrX-3, _qrY+4, {align:'right'});
-    doc.setTextColor(70,70,70); doc.setFontSize(6.3); doc.setFont('helvetica','normal');
-    doc.text('Escaneá el QR o ingresá en '+location.host+'/verificar', _qrX-3, _qrY+8, {align:'right'});
-    doc.text('Código: '+_firmaRxTokenFmt(d.firmaToken), _qrX-3, _qrY+11.5, {align:'right'});
-    doc.setProperties({ title:'Receta médica electrónica', subject:'Receta firmada electrónicamente', keywords:d.firmaToken, creator:'MedHistoriaClinicaOnline' });
+    doc.text('FIRMA ELECTRÓNICA DEL PROFESIONAL — '+(matTxt||'MATRÍCULA NO INDICADA'), x, footerY+5);
+
+    doc.setTextColor(90,90,90); doc.setFontSize(6.29); doc.setFont('helvetica','italic'); // tamaño distinto a propósito: es texto legal de letra chica, no una etiqueta de sección
+    // Leyendas exigidas TEXTUAL por el Ministerio (rechazo de subsanación del trámite CUIR,
+    // Decreto 63/2024) — "Dr." literal sin variante de género, y "RL XXX" como placeholder
+    // hasta tener el legajo real.
+    var _leyendaFirma = 'Este documento ha sido firmado -electrónica o digitalmente según corresponda- por Dr. '+d.nombreProfesional;
+    var _legajoTxt = d.legajoRL ? d.legajoRL : 'RL XXX';
+    var _leyendaInscripcion = 'Esta receta fue creada por un emisor inscripto y validado en el Registro de Recetarios Electrónicos del Ministerio de Salud de la Nación - '+_legajoTxt;
+    var _lf = doc.splitTextToSize(_leyendaFirma, W-margin*2);
+    doc.text(_lf, x, footerY+11);
+    var _li = doc.splitTextToSize(_leyendaInscripcion, W-margin*2);
+    doc.text(_li, x, footerY+11+(_lf.length*3.1)+2);
+    doc.setFont('helvetica','bold'); doc.setTextColor(20,90,50); doc.setFontSize(6.5);
+    doc.text('MedHistoriaClinicaOnline · medhistoriaclinicaonline@gmail.com', W-margin, footerY+5, {align:'right'});
+
+    // ── QR de verificación de la firma electrónica — cerca de la firma, centrado arriba de la imagen de firma ──
+    if(d.firmaToken && d.firmaUrl){
+      var _qrImg = _qrDataUrl(d.firmaUrl);
+      if(!_qrImg) throw new Error('No se pudo generar el QR de verificación');
+      var _qrSize = 20;
+      var _qrX = W-margin-42+(42-_qrSize)/2;
+      var _qrY = footerY-22-_qrSize-4;
+      doc.addImage(_qrImg, 'PNG', _qrX, _qrY, _qrSize, _qrSize);
+      doc.setTextColor(20,90,50); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+      doc.text('VERIFICACIÓN DE FIRMA ELECTRÓNICA', _qrX-3, _qrY+4, {align:'right'});
+      doc.setTextColor(70,70,70); doc.setFontSize(6.3); doc.setFont('helvetica','normal');
+      doc.text('Escaneá el QR o ingresá en '+location.host+'/verificar', _qrX-3, _qrY+8, {align:'right'});
+      doc.text('Código: '+_firmaRxTokenFmt(d.firmaToken), _qrX-3, _qrY+11.5, {align:'right'});
+      doc.setProperties({ title:'Receta médica electrónica', subject:'Receta firmada electrónicamente', keywords:d.firmaToken, creator:'MedHistoriaClinicaOnline' });
+    }
+
+  } else {
+    // ══════════════════════════════════════════════════════════════════
+    // MODELO NO ARGENTINA — sin cambios: mismo armado que había antes del
+    // reordenamiento pedido para el modelo ReNaPDiS (que es solo Argentina).
+    // ══════════════════════════════════════════════════════════════════
+    var colIzqW = W-margin*2, colDerX = margin+colIzqW+6, colDerW = W-margin-colDerX;
+
+    // ── DATOS DEL PACIENTE ──
+    var pacBoxY = y;
+    doc.setDrawColor(180,210,190); doc.setLineWidth(0.3);
+    doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
+    doc.text('PACIENTE', margin+3, y+6);
+    doc.setTextColor(10,10,10); doc.setFontSize(12); doc.setFont('helvetica','normal');
+    var pacNombreLines = doc.splitTextToSize(d.pac||'(no indicado)', colIzqW-6);
+    doc.text(pacNombreLines, margin+3, y+11.5);
+    y += 11.5 + (pacNombreLines.length>1 ? (pacNombreLines.length-1)*5 : 0) + 4.5;
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,60);
+    var lineaPac1 = [];
+    if(d.dni) lineaPac1.push('DNI: '+d.dni);
+    if(d.fnac){ var fn=d.fnac.split('-'); if(fn.length===3) lineaPac1.push('F. Nac.: '+fn[2]+'/'+fn[1]+'/'+fn[0]); }
+    if(d.sexo) lineaPac1.push('Sexo: '+d.sexo);
+    if(lineaPac1.length){
+      var l1 = doc.splitTextToSize(lineaPac1.join('   ·   '), colIzqW-6);
+      doc.text(l1, margin+3, y); y += l1.length*4.2;
+    }
+    var lineaPac2 = [];
+    if(d.os) lineaPac2.push('Obra Social / Cobertura: '+d.os);
+    if(d.plan) lineaPac2.push('Plan: '+d.plan);
+    if(d.afiliado) lineaPac2.push('N° Afiliado: '+d.afiliado);
+    if(lineaPac2.length){
+      var l2 = doc.splitTextToSize(lineaPac2.join('   ·   '), colIzqW-6);
+      doc.text(l2, margin+3, y); y += l2.length*4.2;
+    }
+    var pacBoxH = (y - pacBoxY) + 3;
+    doc.roundedRect(margin, pacBoxY, colIzqW, pacBoxH, 2.5, 2.5, 'S');
+    y = pacBoxH+pacBoxY + 6;
+
+    // ── Fecha de inicio de vigencia (si corresponde) ──
+    if(d.fechaInicioVigencia){
+      var fiv = d.fechaInicioVigencia.split('-');
+      doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
+      doc.text('VÁLIDA DESDE', x, y);
+      doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
+      if(fiv.length===3) doc.text(fiv[2]+'/'+fiv[1]+'/'+fiv[0], x, y+4.2);
+      y += 11;
+    }
+
+    // ── Diagnóstico ──
+    if(d.diag){
+      doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
+      doc.text('DIAGNÓSTICO', x, y);
+      doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
+      y += 4.2; doc.text(d.diag, x, y);
+      y += 6;
+    }
+
+    // ── DATOS DEL PROFESIONAL (a todo el ancho, justo antes de la firma) ──
+    var profLineas = [];
+    profLineas.push(['NOMBRE Y APELLIDO', (usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ')+d.nombreProfesional]);
+    var profEsp = d.profesion + (d.especialidad ? ' — '+d.especialidad : '');
+    profLineas.push(['PROFESIÓN / ESPECIALIDAD', profEsp]);
+    var matTxt = [d.matriculaMN?('M.N. '+d.matriculaMN):'', d.matriculaMP?('M.P. '+d.matriculaMP):''].filter(Boolean).join(' · ');
+    profLineas.push(['MATRÍCULA', matTxt||'(no indicada)']);
+    profLineas.push(['JURISDICCIÓN / ENTIDAD EMISORA', d.jurisdiccion||'(no indicada)']);
+    profLineas.push(['DOMICILIO PROFESIONAL (LUGAR DEL ACTO MÉDICO)', d.domicilio||'(no indicado)']);
+    var contactoOpc = [d.telefonoProfesional?('Tel: '+d.telefonoProfesional):'', d.emailProfesional?('Email: '+d.emailProfesional):''].filter(Boolean).join('   ·   ');
+    if(contactoOpc) profLineas.push(['CONTACTO (OPCIONAL)', contactoOpc]);
+
+    var profBoxW = W-margin*2;
+    var profColGap = 8;
+    var profColW = (profBoxW - profColGap) / 2;
+    var profColIzq = profLineas.slice(0, Math.ceil(profLineas.length/2));
+    var profColDer = profLineas.slice(Math.ceil(profLineas.length/2));
+
+    function _alturaColumnaProf(items, docM){
+      var suma = 0, dm = docM || doc;
+      items.forEach(function(par){
+        var vLines = dm.splitTextToSize(par[1], profColW-6);
+        suma += 8.6 + (vLines.length>1 ? (vLines.length-1)*4 : 0);
+      });
+      return 7.5 + suma;
+    }
+
+    // ── MEDICAMENTOS ──
+    doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
+    doc.text('Rp./ MEDICACIÓN PRESCRIPTA', x, y);
+    y += 4;
+    var medBoxY = y, medW = W-margin*2-6;
+    var medItems = (d.medicamentos && d.medicamentos.length) ? d.medicamentos : null;
+
+    var alturaEstimadaLineas = [];
+    if(medItems){
+      medItems.forEach(function(m){
+        var det = [m.forma,m.presentacion,m.cantidad?('Cant.: '+m.cantidad):'',m.posologia].filter(Boolean).join(' — ');
+        var dl = det ? doc.splitTextToSize(det, medW-6) : [];
+        alturaEstimadaLineas.push(dl.length);
+      });
+    }
+    var medBoxH;
+    if(medItems){
+      medBoxH = 8;
+      alturaEstimadaLineas.forEach(function(nLineas){ medBoxH += 7 + nLineas*4.2 + 6; });
+      medBoxH = Math.max(medBoxH, 32);
+    } else {
+      var contenidoLines = doc.splitTextToSize(d.contenido||'', medW-6);
+      medBoxH = Math.max(32, contenidoLines.length*5+12);
+    }
+
+    var _FOOTER_STD = 268, _FOOTER_MAX = 272, _PAD_STD = 40, _PAD_MIN = 6, _pieFirma = 26;
+    var _padMed = _PAD_STD;
+    var _medidor = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    var _hInd = 0;
+    if(d.ind){ _medidor.setFont('helvetica','bold'); _medidor.setFontSize(7.2); _hInd = 4 + Math.max(14, _medidor.splitTextToSize(d.ind, W-margin*2-8).length*4.6+6) + 6; }
+    _medidor.setFont('helvetica','normal'); _medidor.setFontSize(8.3);
+    var _hProf = Math.max(_alturaColumnaProf(profColIzq, _medidor), _alturaColumnaProf(profColDer, _medidor));
+    var _footerNat = medBoxY + medBoxH + _PAD_STD + 6 + _hInd + 6 + _hProf + _pieFirma;
+    if(_footerNat > _FOOTER_MAX){ _padMed = Math.max(_PAD_MIN, _PAD_STD - (_footerNat - _FOOTER_STD)); }
+    medBoxH += _padMed;
+
+    doc.setFillColor(240,253,244); doc.setDrawColor(134,239,172); doc.setLineWidth(0.4);
+    doc.roundedRect(x, medBoxY, medW, medBoxH, 2.5, 2.5, 'FD');
+
+    var yMed = medBoxY+8;
+    if(medItems){
+      medItems.forEach(function(m, i){
+        doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(12,60,30);
+        var ifaTxt = (i+1)+'. '+(m.ifa||'(sin nombre genérico)');
+        doc.text(ifaTxt, x+3, yMed);
+        if(m.comercial){
+          var ifaW = doc.getTextWidth(ifaTxt);
+          doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(95,120,95);
+          doc.text('  ('+m.comercial+')', x+3+ifaW, yMed);
+        }
+        yMed += 6;
+        var det = [m.forma,m.presentacion,m.cantidad?('Cant.: '+m.cantidad):'',m.posologia].filter(Boolean).join(' — ');
+        if(det){
+          doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(50,70,50);
+          var dl = doc.splitTextToSize(det, medW-6);
+          doc.text(dl, x+3, yMed);
+          yMed += dl.length*4.2;
+        }
+        yMed += 6;
+      });
+    } else {
+      doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(15,60,30);
+      doc.text(doc.splitTextToSize(d.contenido||'', medW-6), x+3, yMed);
+    }
+
+    y = medBoxY + medBoxH + 6;
+
+    // ── Indicaciones al paciente ──
+    if(d.ind){
+      doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
+      doc.text('INDICACIONES AL PACIENTE', x, y);
+      y += 4;
+      var indLines = doc.splitTextToSize(d.ind, W-margin*2-8);
+      var indH = Math.max(14, indLines.length*4.6+6);
+      doc.setFillColor(255,251,235); doc.setDrawColor(253,230,138);
+      doc.roundedRect(x, y, W-margin*2, indH, 2.5, 2.5, 'FD');
+      doc.setTextColor(80,50,10); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+      doc.text(indLines, x+3, y+5);
+      y += indH+6;
+    }
+
+    var profBoxH = Math.max(_alturaColumnaProf(profColIzq), _alturaColumnaProf(profColDer));
+
+    var espacioParaFirma = 26;
+    var footerY = Math.max(268, y + 6 + profBoxH + espacioParaFirma);
+    var yProf = footerY - (espacioParaFirma + 10) - profBoxH;
+
+    function _dibujarColumnaProf(items, colX){
+      var yp = yProf+5.5;
+      items.forEach(function(par){
+        doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
+        doc.text(par[0], colX+3, yp);
+        doc.setTextColor(25,25,25); doc.setFontSize(8.3); doc.setFont('helvetica','normal');
+        var vLines = doc.splitTextToSize(par[1], profColW-6);
+        doc.text(vLines, colX+3, yp+4);
+        yp += 8.6 + (vLines.length>1 ? (vLines.length-1)*4 : 0);
+      });
+    }
+    doc.setDrawColor(180,210,190); doc.setLineWidth(0.3);
+    _dibujarColumnaProf(profColIzq, margin);
+    _dibujarColumnaProf(profColDer, margin+profColW+profColGap);
+    doc.roundedRect(margin, yProf, profBoxW, profBoxH, 2.5, 2.5, 'S');
+    doc.setDrawColor(210,225,218); doc.setLineWidth(0.2);
+    doc.line(margin+profColW+profColGap/2, yProf+3, margin+profColW+profColGap/2, yProf+profBoxH-3);
+
+    // ── FIRMA — pegada justo debajo del recuadro del médico ──
+    doc.setDrawColor(20,90,50); doc.setLineWidth(0.4);
+    doc.line(x, footerY, W-margin, footerY);
+    var _firmaImg = (usuarioActual && tieneAddonFirma()) ? usuarioActual.firma_imagen : null;
+    if(_firmaImg){ try{ doc.addImage(_firmaImg,'PNG',x,footerY-22,42,17); }catch(e){ console.warn('[catch]', e); } }
+    doc.setTextColor(20,20,20); doc.setFontSize(13); doc.setFont('times','bold');
+    doc.text((usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ')+d.nombreProfesional, x, footerY-4);
+    doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
+    doc.text('FECHA DE CONFECCIÓN', W-margin, footerY-9, {align:'right'});
+    doc.setTextColor(20,20,20); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text(d.fecha.toUpperCase(), W-margin, footerY-4, {align:'right'});
+    doc.setTextColor(20,90,50); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+    doc.text('FIRMA ELECTRÓNICA / DIGITAL DEL PROFESIONAL — '+(matTxt||'MATRÍCULA NO INDICADA'), x, footerY+5);
+
+    doc.setTextColor(90,90,90); doc.setFontSize(6.29); doc.setFont('helvetica','italic');
+    var _prefijoDrPdf = (usuarioActual&&usuarioActual.sexo==='F'?'Dra. ':'Dr. ');
+    var _leyendaFirma = 'Este documento ha sido firmado -electrónica o digitalmente según corresponda- por '+_prefijoDrPdf+d.nombreProfesional+'.';
+    var _leyendaInscripcion = 'Receta emitida bajo '+_leyFirmaPais+' · Válido conforme normativa vigente en '+_paisNombreMedico+'.';
+    var _lf = doc.splitTextToSize(_leyendaFirma, W-margin*2);
+    doc.text(_lf, x, footerY+11);
+    var _li = doc.splitTextToSize(_leyendaInscripcion, W-margin*2);
+    doc.text(_li, x, footerY+11+(_lf.length*3.1)+2);
+    doc.setFont('helvetica','bold'); doc.setTextColor(20,90,50); doc.setFontSize(6.5);
+    doc.text('MedHistoriaClinicaOnline · medhistoriaclinicaonline@gmail.com', W-margin, footerY+5, {align:'right'});
+
+    if(d.firmaToken && d.firmaUrl){
+      var _qrImg = _qrDataUrl(d.firmaUrl);
+      if(!_qrImg) throw new Error('No se pudo generar el QR de verificación');
+      var _qrSize = 20, _qrX = W-margin-_qrSize, _qrY = footerY-33;
+      doc.addImage(_qrImg, 'PNG', _qrX, _qrY, _qrSize, _qrSize);
+      doc.setTextColor(20,90,50); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+      doc.text('VERIFICACIÓN DE FIRMA ELECTRÓNICA', _qrX-3, _qrY+4, {align:'right'});
+      doc.setTextColor(70,70,70); doc.setFontSize(6.3); doc.setFont('helvetica','normal');
+      doc.text('Escaneá el QR o ingresá en '+location.host+'/verificar', _qrX-3, _qrY+8, {align:'right'});
+      doc.text('Código: '+_firmaRxTokenFmt(d.firmaToken), _qrX-3, _qrY+11.5, {align:'right'});
+      doc.setProperties({ title:'Receta médica electrónica', subject:'Receta firmada electrónicamente', keywords:d.firmaToken, creator:'MedHistoriaClinicaOnline' });
+    }
   }
 
   callback(doc, d);
