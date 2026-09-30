@@ -6,7 +6,7 @@ Instrucciones de proyecto para trabajar acá de forma segura y eficiente. Esto c
 
 PWA de historia clínica digital para médicos (recetas, agenda, facturación, centros médicos). Todo el frontend vive en un único archivo, **`index.html`** (~15.600 líneas) — sin build, sin framework, sin bundler. Vanilla JS + Supabase (auth/DB) + jsPDF + JsBarcode + EmailJS, todo cargado por CDN directo en el `<head>`.
 
-No hay `package.json` ni test suite automatizado. "Probar" un cambio significa verificarlo a mano en el navegador (ver sección 3), no correr un comando de tests.
+No hay `package.json` ni test suite automatizado. "Probar" un cambio significa verificarlo a mano en el navegador (ver sección 4), no correr un comando de tests.
 
 Archivo grande: para ubicar código, usar Grep por nombre de función/variable en vez de leer el archivo entero de punta a punta.
 
@@ -28,7 +28,16 @@ Flujo de cambios: la lógica arranca siempre en `staging`, se prueba ahí, y rec
 
 Los scripts `.sql` de las migraciones no viven en este repo — están en una carpeta local separada, hermana a este repositorio (su nombre menciona "staging" pero ahí van los scripts para los dos entornos, no solo staging).
 
-## 3. Cómo probar en local
+## 3. Créditos de Netlify — regla fija, no negociable
+
+Plan gratis de Netlify: 300 créditos/mes, tope duro — si se acaban, Netlify pausa **todos** los sitios, incluida producción. Cada push a `staging` o a `main` cuesta 15 créditos.
+
+1. **Nunca pushear a `staging` ni a `main` sin el OK explícito de la usuaria en ese momento** — commitear localmente está bien, pushear no.
+2. Juntar varios cambios/commits y pushear **una sola vez** — nada de un push por cada arreglo chico.
+3. Probar localmente (ver sección 4) antes de pedir el OK para publicar.
+4. **Antes de cada push, decirle a la usuaria cuántos deploys van en el mes** (contar pushes reales a `staging`+`main`, no commits — varios commits en un mismo push cuentan como uno solo).
+
+## 4. Cómo probar en local
 
 Netlify de staging (https://medhistoria-staging-v2.netlify.app) puede estar caído/pausado por créditos — no asumir que ya volvió sin confirmarlo con la usuaria. Alternativa: levantar `serve.ps1` (servidor estático nativo de PowerShell, sin dependencias) — ya está configurado en `.claude/launch.json` como `medhistoria-local`, puerto 8080.
 
@@ -38,7 +47,7 @@ Netlify de staging (https://medhistoria-staging-v2.netlify.app) puede estar caí
 
 No commitear `scratch_output.pdf` ni otros archivos de prueba generados durante el testing — borrarlos apenas se terminan de revisar.
 
-## 4. Seguridad en Supabase — errores ya cometidos, no repetir
+## 5. Seguridad en Supabase — errores ya cometidos, no repetir
 
 - Supabase le da permisos a `anon`/`authenticated` **automáticamente** en cada tabla/función nueva, de forma directa (no vía `PUBLIC`). Un `REVOKE ... FROM PUBLIC` **no alcanza** para sacar ese acceso — hay que revocar explícito de los tres: `REVOKE ... FROM anon, authenticated, PUBLIC;`.
 - Nunca asumir que un `.sql` local o un esquema recordado de una sesión anterior refleja la base real — confirmar en vivo (`information_schema.columns`, `information_schema.column_privileges`, `pg_proc`) antes de escribir SQL nuevo.
@@ -47,23 +56,23 @@ No commitear `scratch_output.pdf` ni otros archivos de prueba generados durante 
 - Después de correr SQL y que diga "Success", **confirmar explícitamente con la usuaria la URL exacta** donde lo corrió antes de dar el cambio por aplicado — no confiar ciegamente en el mensaje.
 - **Nunca ejecutar `DELETE`, `DROP`, `TRUNCATE` o `UPDATE` sin `WHERE` en la base de producción sin pedir confirmación explícita de la usuaria antes de correrlo** — hay datos reales de pacientes de por medio.
 
-## 5. Cómo pedirle SQL a la usuaria
+## 6. Cómo pedirle SQL a la usuaria
 
 Siempre con el **link directo y clicable** a la pestaña correcta (ver sección 2) **en el mismo mensaje** que el código SQL — nunca en un mensaje aparte, nunca asumiendo que ya sabe cuál pestaña usar. Esto es una instrucción a seguir siempre, no algo para reconfirmar cada vez.
 
-## 6. Datos sensibles / IA
+## 7. Datos sensibles / IA
 
 Es una app de historia clínica real, con datos de pacientes. Tiene funciones de IA (consulta clínica, chat asistente, dictado por voz) que mandan el texto ingresado a un servicio de terceros — por política propia de la app, el profesional no debe ingresar ahí nombre, apellido, DNI, domicilio u otro dato identificatorio del paciente. Si se toca esa parte del código, preservar esa regla.
 
 Las claves embebidas en el HTML (Supabase *publishable key*, EmailJS *public key*) son públicas por diseño, pensadas para vivir en el cliente — no son un hallazgo de seguridad por sí solas. La protección real de los datos es Row Level Security (RLS) del lado de Supabase.
 
-## 7. Pendientes conocidos — no resolver sin avisar primero
+## 8. Pendientes conocidos — no resolver sin avisar primero
 
 - **EmailJS:** posible envío de mail a destinatario arbitrario sin login, vía la función de "Solicitar Factura". Depende de que la usuaria revise una restricción de dominio en su panel de EmailJS — todavía no lo hizo.
 - **Clave de API de IA en `localStorage`:** cada médico guarda su propia clave ahí. Pausado hasta que la usuaria contrate ese servicio.
 - **Firma Digital Remota (PFDR):** integración investigada (documentación oficial de Argentina) pero no implementada. Falta trámite oficial + dominio propio + endpoint de callback. No arrancar a programar esto sin confirmar que esos pasos previos ya se hicieron.
 
-## 8. Cómo prefiere trabajar la usuaria
+## 9. Cómo prefiere trabajar la usuaria
 
 - Respuestas cortas y directas.
 - Probar los cambios de verdad (navegador/PDF real) antes de decir "ya está" — la revisión de código sola no alcanza; ya pasó que algo parecía aplicado y nunca había llegado a producción.
