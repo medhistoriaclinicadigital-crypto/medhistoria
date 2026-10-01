@@ -6685,24 +6685,6 @@ function cargarAlertaBackups(){
   });
 }
 
-// TEMPORAL — botón de rotación de FIRMA_MASTER_KEY en staging (sacar junto con el próximo lote de cambios).
-function rotarFirmaMasterKeyStaging(){
-  var btn = document.getElementById('rotar-fmk-btn');
-  var out = document.getElementById('rotar-fmk-resultado');
-  if(!confirm('¿Ejecutar la migración de FIRMA_MASTER_KEY ahora?')) return;
-  if(btn){ btn.disabled = true; btn.textContent = 'Migrando…'; }
-  sb.functions.invoke('rotar-firma-master-key', { body:{} }).then(function(r){
-    if(btn){ btn.disabled = false; btn.textContent = 'Ejecutar migración'; }
-    if(out){
-      out.style.display = 'block';
-      out.textContent = JSON.stringify(r.data || r.error, null, 2);
-    }
-  }, function(e){
-    if(btn){ btn.disabled = false; btn.textContent = 'Ejecutar migración'; }
-    if(out){ out.style.display = 'block'; out.textContent = 'Error de red: ' + String(e); }
-  });
-}
-
 function renderAdmin(){
   cargarAlertaBackups();
   iniciarPagos2FA(); // pestaña "Pagos" (visible por defecto)
@@ -17155,13 +17137,6 @@ window.addEventListener('beforeunload', guardarLocal);
 
     <!-- Alerta de backups automáticos fallidos -->
     <div id="admin-backup-alerta" style="display:none;"></div>
-
-    <!-- TEMPORAL — rotación de FIRMA_MASTER_KEY en staging (sacar junto con el próximo lote de cambios) -->
-    <div style="background:#1a0a0a;border:1px solid rgba(255,150,80,.3);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
-      <div style="color:#ffb380;font-weight:700;font-size:.85rem;margin-bottom:8px;">🔁 Rotar FIRMA_MASTER_KEY (staging, temporal)</div>
-      <button onclick="rotarFirmaMasterKeyStaging()" id="rotar-fmk-btn" style="padding:9px 16px;background:linear-gradient(135deg,#f59e0b,#b45309);color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Ejecutar migración</button>
-      <pre id="rotar-fmk-resultado" style="margin-top:10px;background:#0f0f0f;border-radius:8px;padding:10px;color:#6dde96;font-size:.78rem;white-space:pre-wrap;display:none;"></pre>
-    </div>
 
     <!-- Tabs -->
     <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
