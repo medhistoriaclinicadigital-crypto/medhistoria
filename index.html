@@ -787,7 +787,7 @@ document.addEventListener('DOMContentLoaded', function(){
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   // Subir a mano cada vez que cambie el texto de Términos/Privacidad/Cookies
   // (ver registrarAceptacionLegal) — queda guardado junto a cada consentimiento.
-  const TERMINOS_VERSION = "2026-09-18";
+  const TERMINOS_VERSION = "2026-10-02";
   function registrarAceptacionLegal(){
     try{
       sb.functions.invoke('registrar-consentimiento', { body: { version: TERMINOS_VERSION } })
@@ -1808,7 +1808,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
     <div id="seccion-tyc">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
         <h2 style="font-size:1.15rem;color:#042b10;margin:0;">Términos y Condiciones de Uso</h2>
-        <span style="background:#e3fbed;color:#145a32;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">Versión 2.3 · Septiembre 2026</span>
+        <span style="background:#e3fbed;color:#145a32;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">Versión 2.4 · Octubre 2026</span>
       </div>
       <p style="font-size:.78rem;color:#5a7362;margin:0 0 24px;">Estos Términos y Condiciones regulan el acceso y uso de la plataforma MedHistoriaClinicaOnline. Al registrarse o utilizar la plataforma, el usuario acepta íntegramente las presentes condiciones.</p>
 
@@ -1816,7 +1816,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
 
         <div style="border-bottom:1px solid #e3fbed;padding:16px 0;">
           <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">1</span> IDENTIFICACIÓN DEL PRESTADOR</div>
-          <p style="margin:0;">La plataforma <strong>MedHistoriaClinicaOnline</strong> es desarrollada y operada como servicio de software en la nube (SaaS) para profesionales de la salud, por <strong>Graciela Lujan Batageli</strong>, monotributista, CUIT 27264277774. Contacto: <a href="mailto:medhistoriaclinicaonline@gmail.com" style="color:#145a32;font-weight:600;">medhistoriaclinicaonline@gmail.com</a>. La plataforma opera conforme a la normativa vigente de la República Argentina y los países latinoamericanos donde se ofrece el servicio.</p>
+          <p style="margin:0;">La plataforma <strong>MedHistoriaClinicaOnline</strong> es desarrollada y operada como servicio de software en la nube (SaaS) para profesionales de la salud, por <strong>Graciela Lujan Batageli</strong>, monotributista, CUIT 27264277774. Contacto: <a href="mailto:admin@medhistoriaclinicaonline.com" style="color:#145a32;font-weight:600;">admin@medhistoriaclinicaonline.com</a>. La plataforma opera conforme a la normativa vigente de la República Argentina y los países latinoamericanos donde se ofrece el servicio.</p>
         </div>
 
         <div style="border-bottom:1px solid #e3fbed;padding:16px 0;">
@@ -1945,8 +1945,15 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <p style="margin:0;">MedHistoriaClinicaOnline podrá modificar los presentes Términos y Condiciones en cualquier momento, notificando a los usuarios mediante correo electrónico y/o aviso en la plataforma con <strong>30 días de anticipación</strong>. El uso continuado de la plataforma tras la entrada en vigencia de las modificaciones implica la aceptación de los nuevos términos.</p>
         </div>
 
+        <div style="border-bottom:1px solid #e3fbed;padding:16px 0;">
+          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">13</span> USUARIOS CON DOMICILIO O EJERCICIO PROFESIONAL FUERA DE LA REPÚBLICA ARGENTINA</div>
+          <p style="margin:0 0 10px;">La Plataforma ha sido diseñada conforme a la normativa vigente en la República Argentina, incluidas las Leyes N.º 25.326, 26.529 y 27.553 y sus normas reglamentarias y complementarias. El Prestador no declara ni garantiza que la Plataforma, sus funcionalidades o los documentos que permite emitir (incluidas recetas, derivaciones y órdenes) cumplan con los requisitos legales, regulatorios, sanitarios, de protección de datos o de ejercicio profesional de otros países o jurisdicciones.</p>
+          <p style="margin:0 0 10px;">El Usuario que tenga domicilio, ejerza su profesión o atienda pacientes fuera de la República Argentina deberá, con carácter previo a su registro, comunicarse con el Prestador a través de <a href="mailto:admin@medhistoriaclinicaonline.com" style="color:#145a32;font-weight:600;">admin@medhistoriaclinicaonline.com</a>, a fin de evaluar la compatibilidad de la Plataforma con la normativa aplicable en su jurisdicción.</p>
+          <p style="margin:0;">Si dicho Usuario optara por registrarse y utilizar la Plataforma sin realizar la consulta previa indicada, o sin aguardar la respuesta del Prestador, lo hará bajo su exclusiva cuenta, cargo y responsabilidad, asumiendo íntegramente la obligación de verificar y cumplir la legislación de su país, y deberá mantener indemne al Prestador frente a cualquier reclamo, sanción, multa, daño o perjuicio derivado del incumplimiento de dicha normativa. La respuesta que eventualmente brinde el Prestador tendrá carácter meramente orientativo y no constituirá asesoramiento legal.</p>
+        </div>
+
         <div style="padding:16px 0 0;">
-          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">13</span> JURISDICCIÓN Y LEY APLICABLE</div>
+          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span style="background:#042b10;color:#34c464;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;">14</span> JURISDICCIÓN Y LEY APLICABLE</div>
           <p style="margin:0 0 10px;">MedHistoriaClinicaOnline opera formalmente en la <strong>República Argentina</strong>, país donde tiene su sede y se rigen los presentes Términos:</p>
           <div style="display:flex;flex-direction:column;gap:6px;font-size:.82rem;">
             <div style="background:#e3fbed;border-radius:8px;padding:10px 14px;border-left:3px solid #22a050;">
@@ -1974,6 +1981,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
         <h2 style="font-size:1.15rem;color:#042b10;margin:0;">🔒 Política de Privacidad y Protección de Datos</h2>
         <span style="background:#e3fbed;color:#145a32;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">Ley 25.326 (Argentina)</span>
+        <span style="background:#e3fbed;color:#145a32;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">Versión 1.0 · Octubre 2026</span>
       </div>
       <p style="font-size:.78rem;color:#5a7362;margin:0 0 24px;">Esta política describe cómo MedHistoriaClinicaOnline recopila, usa, almacena y protege los datos personales y datos de salud de los pacientes registrados por los profesionales usuarios.</p>
 
@@ -2059,12 +2067,12 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
 
         <div style="padding:16px 0 0;">
           <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:8px;">🔵 9. CONTACTO Y RECLAMOS</div>
-          <p style="margin:0;">Para ejercer derechos sobre datos personales, reportar incidentes de seguridad o realizar consultas sobre esta política, contactar a: <a href="mailto:medhistoriaclinicaonline@gmail.com" style="color:#145a32;font-weight:600;">medhistoriaclinicaonline@gmail.com</a>. Respondemos dentro de las 72 horas hábiles. Los usuarios en Argentina tienen derecho a realizar reclamaciones ante la <strong>Agencia de Acceso a la Información Pública (AAIP)</strong> — aaip.gob.ar, autoridad ante la cual MedHistoriaClinicaOnline se encuentra <strong>formalmente registrada</strong> en el Registro Nacional de Bases de Datos Personales — Legajo N° RL-2026-72563285-APN-DNPDP#AAIP (notificación oficial del 28/07/2026). Para el resto de los países mencionados en el punto 13 (expansión planeada), la plataforma todavía no opera formalmente ni tiene usuarios reales: cualquier consulta o reclamo se procesa igualmente a través del contacto indicado arriba, y se rige por la legislación argentina.</p>
+          <p style="margin:0;">Para ejercer derechos sobre datos personales, reportar incidentes de seguridad o realizar consultas sobre esta política, contactar a: <a href="mailto:admin@medhistoriaclinicaonline.com" style="color:#145a32;font-weight:600;">admin@medhistoriaclinicaonline.com</a>. Respondemos dentro de las 72 horas hábiles. Los usuarios en Argentina tienen derecho a realizar reclamaciones ante la <strong>Agencia de Acceso a la Información Pública (AAIP)</strong> — aaip.gob.ar, autoridad ante la cual MedHistoriaClinicaOnline se encuentra <strong>formalmente registrada</strong> en el Registro Nacional de Bases de Datos Personales — Legajo N° RL-2026-72563285-APN-DNPDP#AAIP (notificación oficial del 28/07/2026). Para el resto de los países mencionados en el punto 13 (expansión planeada), la plataforma todavía no opera formalmente ni tiene usuarios reales: cualquier consulta o reclamo se procesa igualmente a través del contacto indicado arriba, y se rige por la legislación argentina.</p>
         </div>
 
         <div style="border-bottom:1px solid #e3fbed;padding:16px 0;">
           <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:8px;">🔵 10. RESPONSABLE DE PROTECCIÓN DE DATOS (DPO)</div>
-          <p style="margin:0;">MedHistoriaClinicaOnline designa como punto de contacto para todas las cuestiones relativas a protección de datos a: <a href="mailto:medhistoriaclinicaonline@gmail.com" style="color:#145a32;font-weight:600;">medhistoriaclinicaonline@gmail.com</a>, en cumplimiento de la Ley 25.326 (Argentina). Este mismo contacto asumirá las funciones equivalentes que exijan el RGPD (art. 37) y demás normativas locales cuando la expansión planeada a otros países (ver punto 13) se concrete formalmente.</p>
+          <p style="margin:0;">MedHistoriaClinicaOnline designa como punto de contacto para todas las cuestiones relativas a protección de datos a: <a href="mailto:admin@medhistoriaclinicaonline.com" style="color:#145a32;font-weight:600;">admin@medhistoriaclinicaonline.com</a>, en cumplimiento de la Ley 25.326 (Argentina). Este mismo contacto asumirá las funciones equivalentes que exijan el RGPD (art. 37) y demás normativas locales cuando la expansión planeada a otros países (ver punto 13) se concrete formalmente.</p>
         </div>
 
         <div style="border-bottom:1px solid #e3fbed;padding:16px 0;">
@@ -2110,6 +2118,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
     <div id="seccion-cookies" style="display:none;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
         <h2 style="font-size:1.15rem;color:#042b10;margin:0;">🍪 Política de Cookies y Almacenamiento Local</h2>
+        <span style="background:#e3fbed;color:#145a32;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">Versión 1.0 · Octubre 2026</span>
       </div>
       <p style="font-size:.78rem;color:#5a7362;margin:0 0 24px;">Esta política describe el uso de cookies y almacenamiento local en MedHistoriaClinicaOnline.</p>
 
