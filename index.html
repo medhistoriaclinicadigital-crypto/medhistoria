@@ -14093,6 +14093,11 @@ function _alertarFaltantesReceta(faltantes){
   alert('Faltan estos datos obligatorios para emitir la receta:\n\n— '+faltantes.join('\n— ')+'\n\n'+_datosUnaVez);
 }
 
+// ID de software de MedHistoriaClinicaOnline ante el ReNaPDiS (aprobado junto con el legajo
+// RL-2026-95597873-APN-SSVEIYES#MS). Dato de referencia para armar el CUIR real más adelante —
+// no se muestra en ningún lado de la receta todavía (sigue con el código de barras de prueba).
+var RENAPDIS_ID_SOFTWARE = '0341';
+
 function _generarPDFRecetaReNaPDiS(d, callback){
   // ── Validación de campos obligatorios — no se genera nada (ni descarga,
   // ni impresión, ni envío) si falta algo exigido ──
@@ -14352,10 +14357,11 @@ function _generarPDFRecetaReNaPDiS(d, callback){
 
     doc.setTextColor(90,90,90); doc.setFontSize(6.29); doc.setFont('helvetica','italic'); // tamaño distinto a propósito: es texto legal de letra chica, no una etiqueta de sección
     // Leyendas exigidas TEXTUAL por el Ministerio (rechazo de subsanación del trámite CUIR,
-    // Decreto 63/2024) — "Dr." literal sin variante de género, y "RL XXX" como placeholder
-    // hasta tener el legajo real.
+    // Decreto 63/2024) — "Dr." literal sin variante de género. Legajo RL-2026-95597873-APN-SSVEIYES#MS
+    // ya aprobado por el Ministerio (ID de software ReNaPDiS 0341, ver RENAPDIS_ID_SOFTWARE más abajo
+    // — no se muestra en la receta, queda para cuando se arme el CUIR real).
     var _leyendaFirma = 'Este documento ha sido firmado -electrónica o digitalmente según corresponda- por Dr. '+d.nombreProfesional;
-    var _legajoTxt = d.legajoRL ? d.legajoRL : 'RL XXX';
+    var _legajoTxt = d.legajoRL ? d.legajoRL : 'RL-2026-95597873-APN-SSVEIYES#MS';
     var _leyendaInscripcion = 'Esta receta fue creada por un emisor inscripto y validado en el Registro de Recetarios Electrónicos del Ministerio de Salud de la Nación - '+_legajoTxt;
     var _lf = doc.splitTextToSize(_leyendaFirma, W-margin*2);
     doc.text(_lf, x, footerY+11);
