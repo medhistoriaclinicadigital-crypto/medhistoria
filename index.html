@@ -14246,7 +14246,6 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   doc.setFontSize(13); doc.setFont('times','bold');
   doc.text('RECETA MÉDICA ELECTRÓNICA', W/2, 27, {align:'center'});
   doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(90,90,90);
-  if(_esArg) doc.text('Modelo preparado para la Inscripción al Registro Nacional de Prescripción Digital y Recetas Electrónicas (ReNaPDiS)', W/2, 32, {align:'center', maxWidth:W-margin*2-10});
   doc.setDrawColor(20,90,50); doc.setLineWidth(0.8);
   doc.line(margin,37,W-margin,37);
 
