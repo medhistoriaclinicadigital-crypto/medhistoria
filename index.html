@@ -2738,7 +2738,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               <textarea id="rx2-ind" autocomplete="off" style="width:100%;min-height:64px;box-sizing:border-box;" placeholder="Indicaciones al paciente..."></textarea>
             </div>
             <div class="fl"><label>Validez<select id="rx2-validez"><option>30 días</option><option>60 días</option><option>90 días</option></select></div>
-            <div class="fl"><label>Fecha de inicio de vigencia (opcional, si es distinta a hoy)<input type="date" id="rx2-fecha-inicio-vigencia"></label></div>
+            <div class="fl"><label>Fecha de inicio de vigencia (opcional, si es distinta a hoy)<input type="date" id="rx2-fecha-inicio-vigencia" autocomplete="off"></label></div>
             <div class="fl"><label>Médico prescriptor<input type="text" id="rx2-medico" placeholder="Dr. Apellido · Especialidad · Matrícula 00000"></div>
             <div class="fl"><label>Domicilio del consultorio (acto médico)<input type="text" id="rx2-domicilio" placeholder="Calle, número, ciudad"></label></div>
             <div class="fl"><label>Jurisdicción / entidad que emitió la matrícula<input type="text" id="rx2-jurisdiccion" placeholder="Ej: Colegio de Médicos de la Pcia. de Buenos Aires" data-ph-solo-ar></label></div>
@@ -4998,13 +4998,14 @@ function guardarPaciente(){
     cuil: ga('pac-cuil') || pExistente.cuil || '',
     fnac: ga('pac-fnac') || pExistente.fnac || '',
     sexo: ga('pac-sexo') || pExistente.sexo || '',
-    tel: ga('pac-tel') || pExistente.tel || '',
-    email: ga('pac-email') || pExistente.email || '',
-    os: ga('pac-os') || pExistente.os || '',
-    afiliado: ga('pac-afiliado') || pExistente.afiliado || '',
-    plan: ga('pac-plan') || pExistente.plan || '',
-    domicilio: ga('pac-domicilio') || pExistente.domicilio || '',
-    localidad: ga('pac-localidad') || pExistente.localidad || '',
+    tel: ga('pac-tel'),
+    email: ga('pac-email'),
+    // Campos opcionales: el formulario siempre se carga con el valor actual, así que vacío = el médico lo borró
+    os: ga('pac-os'),
+    afiliado: ga('pac-afiliado'),
+    plan: ga('pac-plan'),
+    domicilio: ga('pac-domicilio'),
+    localidad: ga('pac-localidad'),
     nacionalidad: ga('pac-nacionalidad') || pExistente.nacionalidad || 'Argentina',
     ultimaConsulta: hoy(),
     ultima: hoy()
@@ -5067,6 +5068,15 @@ function guardarPaciente(){
   localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(reales));
   pacientes = reales;
   _editandoPacienteIdx = -1;
+  // Si este paciente está abierto en la HC, se refrescan ahí sus datos de cobertura y contacto: Nueva Receta los toma de esos campos
+  try{
+    var _hcDniAbierto = ((document.getElementById('hc-dni')||{}).value||'').trim();
+    if(pac.dni && _hcDniAbierto === pac.dni.trim()){
+      [['hc-os',pac.os],['hc-afiliado',pac.afiliado],['hc-tel',pac.tel],['hc-email',pac.email],['hc-domicilio',pac.domicilio],['hc-localidad',pac.localidad]].forEach(function(par){
+        var el = document.getElementById(par[0]); if(el) el.value = par[1] || '';
+      });
+    }
+  }catch(eHc){ console.warn('[catch]', eHc); }
 
   // Refrescar lista ordenada
   renderPacientes();
@@ -5784,6 +5794,7 @@ function showPanel(id){
   }
 
   if(id === 'centro-medico') renderCentroMedico();
+  if(id === 'dash'){ try{ actualizarStatsDashboard(); }catch(eDs){ console.warn('[catch]', eDs); } }
 
   // Mostrar SOLO el panel seleccionado
   var panel = document.getElementById('panel-'+id);
@@ -13579,7 +13590,21 @@ function cambiarTabPacientes(tab){
   renderPacientes();
 }
 
+// Panel de control: pacientes y recetas del mes reales (antes los números quedaban fijos en 0).
+function actualizarStatsDashboard(){
+  var elPac = document.getElementById('dash-stat-pacientes');
+  if(elPac) elPac.textContent = (typeof pacientes !== 'undefined' && pacientes) ? pacientes.length : 0;
+  var elRec = document.getElementById('dash-stat-recetas');
+  if(!elRec || typeof sb === 'undefined' || !usuarioActual || !usuarioActual.id) return;
+  var h = new Date(), inicioMes = new Date(h.getFullYear(), h.getMonth(), 1);
+  sb.from('recetas').select('id', { count:'exact', head:true }).eq('medico_id', usuarioActual.id).gte('created_at', inicioMes.toISOString()).then(function(r){
+    if(r && !r.error && typeof r.count === 'number') elRec.textContent = r.count;
+    else if(r && r.error) console.warn('[dashboard] no se pudo contar las recetas del mes:', r.error.message);
+  });
+}
+
 function renderPacientes(lista){
+  try{ actualizarStatsDashboard(); }catch(eDs){ console.warn('[catch]', eDs); }
   if(!lista) lista = pacientes;
   var grid = document.getElementById('lista-pacientes');
   if(!grid) return;
@@ -14376,7 +14401,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
     var _li = doc.splitTextToSize(_leyendaInscripcion, W-margin*2);
     doc.text(_li, x, footerY+11+(_lf.length*3.1)+2);
     doc.setFont('helvetica','bold'); doc.setTextColor(20,90,50); doc.setFontSize(6.5);
-    doc.text('MedHistoriaClinicaOnline · medhistoriaclinicaonline@gmail.com', W-margin, footerY+5, {align:'right'});
+    doc.text('MedHistoriaClinicaOnline · admin@medhistoriaclinicaonline.com', W-margin, footerY+5, {align:'right'});
 
     // ── QR de verificación de la firma electrónica — cerca de la firma, centrado arriba de la imagen de firma ──
     if(d.firmaToken && d.firmaUrl){
@@ -14605,7 +14630,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
     var _li = doc.splitTextToSize(_leyendaInscripcion, W-margin*2);
     doc.text(_li, x, footerY+11+(_lf.length*3.1)+2);
     doc.setFont('helvetica','bold'); doc.setTextColor(20,90,50); doc.setFontSize(6.5);
-    doc.text('MedHistoriaClinicaOnline · medhistoriaclinicaonline@gmail.com', W-margin, footerY+5, {align:'right'});
+    doc.text('MedHistoriaClinicaOnline · admin@medhistoriaclinicaonline.com', W-margin, footerY+5, {align:'right'});
 
     if(d.firmaToken && d.firmaUrl){
       var _qrImg = _qrDataUrl(d.firmaUrl);
@@ -14915,7 +14940,7 @@ function generarPDFbase64(tipo, callback, soloVerificar, extra){
    doc.text('Emitido con firma electrónica conforme '+_leyFirmaPais+'.', legalX, footerY - 16, {align:'right'});
     doc.text('Válido conforme a la normativa vigente en '+_paisNombreMedico+'.', legalX, footerY - 11, {align:'right'});
   doc.setFont('helvetica','bold'); doc.setTextColor(20,90,50);
-  doc.text('MedHistoriaClinicaOnline · medhistoriaclinicaonline@gmail.com', legalX, footerY - 6, {align:'right'});
+  doc.text('MedHistoriaClinicaOnline · admin@medhistoriaclinicaonline.com', legalX, footerY - 6, {align:'right'});
 
   // Nombre + matrícula ENCIMA de la línea
   doc.setTextColor(20,20,20); doc.setFontSize(10); doc.setFont('helvetica','bold');
@@ -15068,6 +15093,14 @@ function emitirRecetaFirmada(onOk, onFail){
   if(_recetaFirmadaCache && _recetaFirmadaCache.key === key){ onOk(_recetaFirmadaCache); return; }
   if(_recetaEmisionEnCurso && _recetaEmisionEnCurso.key === key){ _recetaEmisionEnCurso.esperando.push({ ok:onOk, fail:onFail }); return; }
 
+  // Aviso si "Válida desde" es anterior a hoy: una fecha vieja en ese campo invalida la receta para quien la dispensa.
+  var _hoyIso = (function(){ var h=new Date(); return h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0'); })();
+  if(d.fechaInicioVigencia && d.fechaInicioVigencia < _hoyIso){
+    console.warn('[receta] "Válida desde" anterior a hoy:', d.fechaInicioVigencia);
+    var _fp = d.fechaInicioVigencia.split('-');
+    if(!confirm('⚠️ La fecha "Válida desde" es '+_fp[2]+'/'+_fp[1]+'/'+_fp[0]+', anterior a hoy.'+"\n\n¿Querés generar la receta con esa fecha?\n\nAceptar = generar así · Cancelar = volver y corregirla (si dejás el campo vacío, rige desde hoy).")) { onFail(); return; }
+  }
+
   var en = { key:key, esperando:[{ ok:onOk, fail:onFail }] };
   _recetaEmisionEnCurso = en;
   _toastFirma('⏳ Firmando la receta…');
@@ -15114,6 +15147,7 @@ function emitirRecetaFirmada(onOk, onFail){
       if(r.error && /l[ií]mite de recetas/i.test(r.error.message||'')){ terminar(null, '⚠️ ' + r.error.message + '\n\nActualizá tu plan para emitir más recetas.'); return; }
       if(r.error || !r.data || !r.data[0]){ terminar(null, 'No se pudo registrar la receta. Revisá tu conexión e intentá de nuevo.'); return; }
       var idReceta = r.data[0].id;
+      try{ actualizarStatsDashboard(); }catch(eDs){ console.warn('[catch]', eDs); }
       var token = _firmaRxToken(), url = _firmaRxUrl(token);
       var d2 = Object.assign({}, d, { firmaToken:token, firmaUrl:url });
       var bytes = null;
@@ -15493,7 +15527,8 @@ function getDatosDocumento(tipo){
     var _incluirContacto = (document.getElementById('rx2-incluir-contacto')||{}).checked;
     datos.telefonoProfesional = _incluirContacto ? ((usuarioActual && usuarioActual.telefono) || '') : '';
     datos.emailProfesional = _incluirContacto ? ((usuarioActual && usuarioActual.email) || '') : '';
-    datos.fechaInicioVigencia=(document.getElementById('rx2-fecha-inicio-vigencia')||{}).value||'';
+    // Si el campo queda vacío, la receta rige desde hoy (fecha local, formato AAAA-MM-DD)
+    datos.fechaInicioVigencia=(document.getElementById('rx2-fecha-inicio-vigencia')||{}).value||(function(){ var h=new Date(); return h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0'); })();
     datos.legajoRL=localStorage.getItem('medhistoria_legajo_renapdis')||'';
     datos.labelContenido='MEDICACIÓN PRESCRIPTA';
   } else if(tipo==='derivacion'){
