@@ -6615,7 +6615,7 @@ function buscarConsentimientosLegales(){
     });
 }
 
-// ══ MENSAJES (Zoho Mail: soporte@ / consultas@) ══════════════════════════
+// ══ MENSAJES (Zoho Mail: soporte@ / consultas@ / admin@) ══════════════════════════
 var _mensajesZohoData = [];
 var _mensajesZohoFiltro = 'todas';
 
@@ -6672,7 +6672,7 @@ function renderMensajesZoho(){
   cont.innerHTML = lista.map(function(m){
     var visto = !!vistos[m.messageId];
     var fecha = m.receivedTime ? new Date(m.receivedTime).toLocaleString('es-AR',{hour12:false}) : '-';
-    var badgeColor = m.casilla === 'soporte' ? '#ffd54a' : '#6dde96';
+    var badgeColor = m.casilla === 'soporte' ? '#ffd54a' : m.casilla === 'admin' ? '#7dd3fc' : '#6dde96';
     var mailtoHref = 'mailto:'+encodeURIComponent(m.fromAddress||'')+'?subject='+encodeURIComponent('Re: '+(m.subject||''));
     return '<div onclick="marcarMensajeZohoVisto(\''+escJs(m.messageId)+'\')" style="background:'+(visto?'rgba(255,255,255,.03)':'rgba(52,196,100,.06)')+';border:1px solid '+(visto?'rgba(255,255,255,.08)':'rgba(52,196,100,.2)')+';border-radius:10px;padding:12px 14px;cursor:pointer;">'
       +'<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;">'
@@ -17408,18 +17408,19 @@ window.addEventListener('beforeunload', guardarLocal);
       </div>
     </div>
 
-    <!-- TAB: MENSAJES (Zoho Mail: soporte@ / consultas@) -->
+    <!-- TAB: MENSAJES (Zoho Mail: soporte@ / consultas@ / admin@) -->
     <div id="at-mensajes" style="display:none;">
       <div style="background:#0a1a0f;border:1px solid rgba(52,196,100,.2);border-radius:14px;padding:20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:6px;">
           <div style="color:#fff;font-weight:700;">📧 Mensajes recibidos</div>
           <button onclick="cargarMensajesZoho(true)" style="background:rgba(255,255,255,.08);border:1px solid rgba(109,222,150,.2);color:rgba(109,222,150,.8);padding:7px 16px;border-radius:8px;font-size:.8rem;cursor:pointer;font-family:'Outfit',sans-serif;">🔄 Actualizar</button>
         </div>
-        <div style="color:rgba(109,222,150,.6);font-size:.82rem;margin-bottom:16px;max-width:640px;">Mails de soporte@ y consultas@medhistoriaclinicaonline.com, sin salir del panel. Solo lectura — para responder, se abre tu programa de mail. Se actualiza cada 3 minutos como máximo.</div>
+        <div style="color:rgba(109,222,150,.6);font-size:.82rem;margin-bottom:16px;max-width:640px;">Mails de soporte@, consultas@ y admin@medhistoriaclinicaonline.com, sin salir del panel. Solo lectura — para responder, se abre tu programa de mail. Se actualiza cada 3 minutos como máximo.</div>
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;" id="msj-filtros">
           <button class="msj-filtro on" onclick="filtrarMensajesZoho('todas', this)" style="padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;border:1px solid rgba(52,196,100,.3);background:rgba(52,196,100,.15);color:#6dde96;cursor:pointer;font-family:'Outfit',sans-serif;">Todas</button>
           <button class="msj-filtro" onclick="filtrarMensajesZoho('consultas', this)" style="padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.6);cursor:pointer;font-family:'Outfit',sans-serif;">consultas@</button>
           <button class="msj-filtro" onclick="filtrarMensajesZoho('soporte', this)" style="padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.6);cursor:pointer;font-family:'Outfit',sans-serif;">soporte@</button>
+          <button class="msj-filtro" onclick="filtrarMensajesZoho('admin', this)" style="padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.6);cursor:pointer;font-family:'Outfit',sans-serif;">admin@</button>
         </div>
         <div id="msj-actualizado" style="color:rgba(109,222,150,.4);font-size:.75rem;margin-bottom:10px;"></div>
         <div id="msj-lista" style="display:flex;flex-direction:column;gap:8px;">Cargando...</div>

@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Edge Function: zoho-mail-inbox
-// Trae los mails de las casillas soporte@/consultas@ (Zoho Mail) para mostrarlos
+// Trae los mails de las casillas soporte@/consultas@/admin@ (Zoho Mail) para mostrarlos
 // en la pestaña "📧 Mensajes" del Panel Admin, sin que el admin tenga que
 // loguearse en Zoho aparte.
 //
@@ -15,7 +15,7 @@
 // evita pegarle a Zoho en cada apertura del panel — límite real del plan
 // gratis: 30 llamadas/min. TTL acá: 3 minutos.
 //
-// consultas@ y soporte@ son cuentas Zoho separadas (misma organización, pero
+// consultas@, soporte@ y admin@ son cuentas Zoho separadas (misma organización, pero
 // cada una con su propio Self Client en la API Console) — por eso cada una
 // tiene su propio trío client_id/client_secret/refresh_token, no comparten
 // credenciales de OAuth.
@@ -24,6 +24,8 @@
 // Secretos: ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET, ZOHO_REFRESH_TOKEN (consultas@),
 //           ZOHO_CLIENT_ID_SOPORTE, ZOHO_CLIENT_SECRET_SOPORTE,
 //           ZOHO_REFRESH_TOKEN_SOPORTE (soporte@) — ya cargados, no viven acá.
+//           ZOHO_CLIENT_ID_ADMIN, ZOHO_CLIENT_SECRET_ADMIN, ZOHO_REFRESH_TOKEN_ADMIN (admin@) —
+//           ya cargados en staging y producción (ver _DEPLOY-zoho.md).
 // ─────────────────────────────────────────────────────────────────────────────
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -48,6 +50,13 @@ const CASILLAS = [
     clientSecretVar: "ZOHO_CLIENT_SECRET_SOPORTE",
     refreshTokenVar: "ZOHO_REFRESH_TOKEN_SOPORTE",
     accountId: "8141534000000008002",
+  },
+  {
+    casilla: "admin",
+    clientIdVar: "ZOHO_CLIENT_ID_ADMIN",
+    clientSecretVar: "ZOHO_CLIENT_SECRET_ADMIN",
+    refreshTokenVar: "ZOHO_REFRESH_TOKEN_ADMIN",
+    accountId: "7453360000000008002",
   },
 ] as const;
 
