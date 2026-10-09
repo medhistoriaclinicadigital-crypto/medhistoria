@@ -6663,14 +6663,167 @@ function filtrarMensajesZoho(casilla, btn){
   renderMensajesZoho();
 }
 
+// ── Responder desde el panel (admin@, consultas@ y soporte@) ──────────────
+// El remitente y el destinatario NO se eligen acá: los fija el servidor (función
+// zoho-mail-enviar) según la casilla y según quién escribió el mail original.
+function _respondidosZoho(){
+  try{ return JSON.parse(localStorage.getItem('mhcd_mensajes_zoho_respondidos')||'{}'); }catch(e){ return {}; }
+}
+function _marcarRespondidoZoho(messageId){
+  var r = _respondidosZoho(); r[messageId] = true;
+  try{ localStorage.setItem('mhcd_mensajes_zoho_respondidos', JSON.stringify(r)); }catch(e){ console.warn('[catch]', e); }
+}
+
+var _respZoho = null; // { m, destinatario, citado, enviando }
+
+function abrirResponderZoho(messageId){
+  var m = _mensajesZohoData.find(function(x){ return String(x.messageId) === String(messageId); });
+  if(!m) return;
+  var mm = String(m.fromAddress||'').match(/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i);
+  if(!mm){ alert('Este mail no tiene una dirección de remitente a la que responder.'); return; }
+  var asunto = m.subject || '(sin asunto)';
+  if(!/^re:/i.test(asunto)) asunto = 'RE: ' + asunto;
+  _respZoho = { m: m, destinatario: mm[0].toLowerCase(), citado: m.summary || '', enviando: false };
+  cerrarResponderZoho(true);
+  var de = m.casilla + '@medhistoriaclinicaonline.com';
+  var ov = document.createElement('div');
+  ov.id = 'rz-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99998;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px;';
+  var inp = 'width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(109,222,150,.25);border-radius:8px;color:#fff;padding:9px 12px;font-size:.88rem;font-family:\'Outfit\',sans-serif;';
+  var lab = 'display:block;color:rgba(109,222,150,.7);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin:12px 0 4px;';
+  ov.innerHTML =
+    '<div style="background:#0a1a0f;border:1px solid rgba(52,196,100,.3);border-radius:14px;padding:22px;width:100%;max-width:640px;">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><div style="color:#fff;font-weight:700;font-size:1.05rem;">↩️ Responder desde '+escHtml(de)+'</div>'
+    +'<button type="button" onclick="cerrarResponderZoho()" aria-label="Cerrar" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:1.3rem;cursor:pointer;">✕</button></div>'
+    +'<div id="rz-paso1">'
+    +'<label style="'+lab+'">De</label><div style="'+inp+'opacity:.7;">'+escHtml(de)+'</div>'
+    +'<label style="'+lab+'">Para (quien escribió el mail)</label><div style="'+inp+'opacity:.7;">'+escHtml(_respZoho.destinatario)+'</div>'
+    +'<label style="'+lab+'" for="rz-asunto">Asunto</label><input id="rz-asunto" type="text" maxlength="200" value="'+escHtml(asunto)+'" style="'+inp+'">'
+    +'<label style="'+lab+'" for="rz-texto">Tu respuesta</label><textarea id="rz-texto" rows="7" maxlength="5000" placeholder="Escribí tu respuesta…" style="'+inp+'resize:vertical;"></textarea>'
+    +'<label style="'+lab+'">Mensaje original (se cita al final)</label>'
+    +'<div id="rz-citado" style="'+inp+'max-height:160px;overflow:auto;white-space:pre-wrap;opacity:.75;font-size:.8rem;">'+escHtml(_respZoho.citado)+'</div>'
+    +'<div id="rz-msg1" style="color:#ff8080;font-size:.82rem;margin-top:10px;"></div>'
+    +'<div style="display:flex;gap:10px;margin-top:14px;justify-content:flex-end;">'
+    +'<button type="button" onclick="cerrarResponderZoho()" style="background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);padding:9px 18px;border-radius:8px;cursor:pointer;font-family:\'Outfit\',sans-serif;">Cancelar</button>'
+    +'<button type="button" onclick="_pasoConfirmarRespuestaZoho()" style="background:#22a050;border:none;color:#fff;padding:9px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">Continuar</button>'
+    +'</div></div>'
+    +'<div id="rz-paso2" style="display:none;">'
+    +'<div style="background:rgba(255,213,74,.08);border:1px solid rgba(255,213,74,.35);border-radius:10px;padding:14px;margin-top:14px;color:#fff;font-size:.88rem;line-height:1.7;">'
+    +'<strong style="color:#ffd54a;">Confirmá antes de enviar</strong><br>'
+    +'Se va a enviar un mail <strong>desde '+escHtml(de)+'</strong><br>'
+    +'a <strong>'+escHtml(_respZoho.destinatario)+'</strong><br>'
+    +'Asunto: <strong id="rz-conf-asunto"></strong><br>'
+    +'<span style="color:rgba(255,255,255,.6);font-size:.8rem;">El envío queda registrado. Un mail enviado no se puede deshacer.</span></div>'
+    +'<div id="rz-msg2" style="color:#ff8080;font-size:.82rem;margin-top:10px;"></div>'
+    +'<div style="display:flex;gap:10px;margin-top:14px;justify-content:flex-end;">'
+    +'<button type="button" id="rz-volver" onclick="_pasoEditarRespuestaZoho()" style="background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);padding:9px 18px;border-radius:8px;cursor:pointer;font-family:\'Outfit\',sans-serif;">← Volver</button>'
+    +'<button type="button" id="rz-enviar" onclick="enviarRespuestaZoho()" style="background:#22a050;border:none;color:#fff;padding:9px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">✉️ Confirmar y enviar</button>'
+    +'</div></div>'
+    +'</div>';
+  document.body.appendChild(ov);
+  var ta = document.getElementById('rz-texto'); if(ta) ta.focus();
+  // Texto completo del mail original, para citarlo (si falla, queda el resumen).
+  if(m.folderId){
+    var idPedido = String(m.messageId);
+    sb.functions.invoke('zoho-mail-inbox', { body: { accion: 'contenido', casilla: m.casilla, messageId: idPedido, folderId: m.folderId } }).then(function(r){
+      if(!_respZoho || String(_respZoho.m.messageId) !== idPedido) return;
+      if(r && r.data && r.data.ok && r.data.contenido){
+        _respZoho.citado = r.data.contenido;
+        var el = document.getElementById('rz-citado'); if(el) el.textContent = r.data.contenido;
+      }
+    });
+  }
+}
+
+function cerrarResponderZoho(silencioso){
+  var ov = document.getElementById('rz-overlay');
+  if(ov){
+    if(_respZoho && _respZoho.enviando && !silencioso) return; // no cerrar mientras se envía
+    ov.remove();
+  }
+  if(!silencioso) _respZoho = null;
+}
+
+function _pasoConfirmarRespuestaZoho(){
+  var asunto = ((document.getElementById('rz-asunto')||{}).value||'').trim();
+  var texto = ((document.getElementById('rz-texto')||{}).value||'').trim();
+  var msg = document.getElementById('rz-msg1');
+  if(!asunto){ if(msg) msg.textContent = 'Falta el asunto.'; return; }
+  if(!texto){ if(msg) msg.textContent = 'Escribí tu respuesta antes de continuar.'; return; }
+  if(msg) msg.textContent = '';
+  var ca = document.getElementById('rz-conf-asunto'); if(ca) ca.textContent = asunto;
+  document.getElementById('rz-paso1').style.display = 'none';
+  document.getElementById('rz-paso2').style.display = 'block';
+}
+
+function _pasoEditarRespuestaZoho(){
+  if(_respZoho && _respZoho.enviando) return;
+  document.getElementById('rz-paso2').style.display = 'none';
+  document.getElementById('rz-paso1').style.display = 'block';
+}
+
+function _textoConCitaZoho(respuesta){
+  var m = _respZoho.m;
+  var cuando = m.receivedTime ? new Date(m.receivedTime).toLocaleString('es-AR',{hour12:false}) : '';
+  var cab = (cuando ? 'El ' + cuando + ', ' : '') + (m.sender || _respZoho.destinatario) + ' <' + _respZoho.destinatario + '> escribió:';
+  var cita = (_respZoho.citado || '').split('\n').map(function(l){ return '> ' + l; }).join('\n');
+  return respuesta + '\n\n' + cab + '\n' + cita;
+}
+
+function enviarRespuestaZoho(){
+  if(!_respZoho || _respZoho.enviando) return;
+  var m = _respZoho.m;
+  var asunto = ((document.getElementById('rz-asunto')||{}).value||'').trim();
+  var respuesta = ((document.getElementById('rz-texto')||{}).value||'').trim();
+  var msg = document.getElementById('rz-msg2');
+  var btn = document.getElementById('rz-enviar');
+  var volver = document.getElementById('rz-volver');
+  _respZoho.enviando = true;
+  if(btn){ btn.disabled = true; btn.textContent = 'Enviando…'; }
+  if(volver) volver.disabled = true;
+  if(msg) msg.textContent = '';
+  var terminarConError = function(texto){
+    _respZoho.enviando = false;
+    if(btn){ btn.disabled = false; btn.textContent = '✉️ Confirmar y enviar'; }
+    if(volver) volver.disabled = false;
+    if(msg) msg.textContent = texto;
+  };
+  sb.functions.invoke('zoho-mail-enviar', { body: {
+    casilla: m.casilla,
+    messageId: String(m.messageId),
+    destinatario: _respZoho.destinatario,
+    asunto: asunto,
+    texto: _textoConCitaZoho(respuesta)
+  } }).then(function(r){
+    if(r.error){
+      terminarConError('No se pudo enviar (sin conexión, sesión vencida o sin permiso). Antes de reintentar, revisá la carpeta Enviados de ' + m.casilla + '@ por si salió igual.');
+      return;
+    }
+    if(!r.data || !r.data.ok){
+      terminarConError((r.data && r.data.error) || 'No se pudo enviar.');
+      return;
+    }
+    _marcarRespondidoZoho(m.messageId);
+    var dest = _respZoho.destinatario;
+    _respZoho.enviando = false;
+    cerrarResponderZoho();
+    renderMensajesZoho();
+    alert('✅ Respuesta enviada desde ' + m.casilla + '@medhistoriaclinicaonline.com a ' + dest + '.');
+  }, function(){
+    terminarConError('No se pudo enviar (sin conexión). Antes de reintentar, revisá la carpeta Enviados de ' + m.casilla + '@ por si salió igual.');
+  });
+}
+
 function renderMensajesZoho(){
   var cont = document.getElementById('msj-lista');
   if(!cont) return;
   var vistos = _mensajesVistosZoho();
+  var respondidos = _respondidosZoho();
   var lista = _mensajesZohoData.filter(function(m){ return _mensajesZohoFiltro === 'todas' || m.casilla === _mensajesZohoFiltro; });
   if(!lista.length){ cont.innerHTML = '<div style="color:rgba(109,222,150,.4);padding:14px;">Sin mensajes.</div>'; return; }
   cont.innerHTML = lista.map(function(m){
     var visto = !!vistos[m.messageId];
+    var respondido = !!respondidos[m.messageId];
     var fecha = m.receivedTime ? new Date(m.receivedTime).toLocaleString('es-AR',{hour12:false}) : '-';
     var badgeColor = m.casilla === 'soporte' ? '#ffd54a' : m.casilla === 'admin' ? '#7dd3fc' : '#6dde96';
     var mailtoHref = 'mailto:'+encodeURIComponent(m.fromAddress||'')+'?subject='+encodeURIComponent('Re: '+(m.subject||''));
@@ -6685,7 +6838,11 @@ function renderMensajesZoho(){
       +'</div>'
       +'<div style="color:rgba(255,255,255,.5);font-size:.8rem;margin:6px 0;">De: '+escHtml(m.sender||m.fromAddress||'')+' ('+escHtml(m.fromAddress||'')+')</div>'
       +'<div style="color:rgba(255,255,255,.45);font-size:.8rem;line-height:1.5;">'+escHtml((m.summary||'').slice(0,220))+(m.summary && m.summary.length>220?'…':'')+'</div>'
-      +'<a href="'+mailtoHref+'" onclick="event.stopPropagation()" style="display:inline-block;margin-top:8px;color:#6dde96;font-size:.78rem;font-weight:600;text-decoration:none;">↩️ Responder por mail</a>'
+      +'<div style="display:flex;gap:14px;align-items:center;margin-top:8px;flex-wrap:wrap;">'
+      +'<button type="button" onclick="event.stopPropagation();abrirResponderZoho(\''+escJs(m.messageId)+'\')" style="background:rgba(52,196,100,.15);border:1px solid rgba(52,196,100,.35);color:#6dde96;padding:5px 14px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">↩️ Responder</button>'
+      +(respondido?'<span style="color:#6dde96;font-size:.75rem;font-weight:600;">✔ Respondido</span>':'')
+      +'<a href="'+mailtoHref+'" onclick="event.stopPropagation()" style="color:rgba(255,255,255,.4);font-size:.72rem;text-decoration:none;">o abrir en tu programa de mail</a>'
+      +'</div>'
       +'</div>';
   }).join('');
 }
@@ -17415,7 +17572,7 @@ window.addEventListener('beforeunload', guardarLocal);
           <div style="color:#fff;font-weight:700;">📧 Mensajes recibidos</div>
           <button onclick="cargarMensajesZoho(true)" style="background:rgba(255,255,255,.08);border:1px solid rgba(109,222,150,.2);color:rgba(109,222,150,.8);padding:7px 16px;border-radius:8px;font-size:.8rem;cursor:pointer;font-family:'Outfit',sans-serif;">🔄 Actualizar</button>
         </div>
-        <div style="color:rgba(109,222,150,.6);font-size:.82rem;margin-bottom:16px;max-width:640px;">Mails de soporte@, consultas@ y admin@medhistoriaclinicaonline.com, sin salir del panel. Solo lectura — para responder, se abre tu programa de mail. Se actualiza cada 3 minutos como máximo.</div>
+        <div style="color:rgba(109,222,150,.6);font-size:.82rem;margin-bottom:16px;max-width:640px;">Mails de soporte@, consultas@ y admin@medhistoriaclinicaonline.com, sin salir del panel. Podés responder desde acá con el botón «Responder» (sale desde la misma casilla y queda registrado). Se actualiza cada 3 minutos como máximo.</div>
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;" id="msj-filtros">
           <button class="msj-filtro on" onclick="filtrarMensajesZoho('todas', this)" style="padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;border:1px solid rgba(52,196,100,.3);background:rgba(52,196,100,.15);color:#6dde96;cursor:pointer;font-family:'Outfit',sans-serif;">Todas</button>
           <button class="msj-filtro" onclick="filtrarMensajesZoho('consultas', this)" style="padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.6);cursor:pointer;font-family:'Outfit',sans-serif;">consultas@</button>
