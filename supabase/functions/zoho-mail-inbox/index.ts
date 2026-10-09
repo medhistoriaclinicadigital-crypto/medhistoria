@@ -80,15 +80,26 @@ function aalDelToken(jwt: string): string | null {
   }
 }
 
+// Largo y primeros 8 caracteres del SHA-256 de un valor: sirven para diagnosticar
+// qué secreto está viendo la función sin exponer el valor (no se puede revertir).
+async function huellaCorta(v: string): Promise<string> {
+  const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(v));
+  const hex = [...new Uint8Array(h)].map((x) => x.toString(16).padStart(2, "0")).join("");
+  return `largo ${v.length}, huella ${hex.slice(0, 8)}`;
+}
+
 async function obtenerAccessToken(
   clientIdVar: string,
   clientSecretVar: string,
   refreshTokenVar: string,
 ): Promise<string> {
+  const refreshToken = (Deno.env.get(refreshTokenVar) ?? "").trim();
+  const clientId = (Deno.env.get(clientIdVar) ?? "").trim();
+  const clientSecret = (Deno.env.get(clientSecretVar) ?? "").trim();
   const params = new URLSearchParams({
-    refresh_token: (Deno.env.get(refreshTokenVar) ?? "").trim(),
-    client_id: (Deno.env.get(clientIdVar) ?? "").trim(),
-    client_secret: (Deno.env.get(clientSecretVar) ?? "").trim(),
+    refresh_token: refreshToken,
+    client_id: clientId,
+    client_secret: clientSecret,
     grant_type: "refresh_token",
   });
   const res = await fetch("https://accounts.zoho.com/oauth/v2/token", {
@@ -98,7 +109,13 @@ async function obtenerAccessToken(
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || !data.access_token) {
-    throw new Error("Zoho OAuth falló: " + JSON.stringify(data));
+    // El error incluye el código HTTP y la huella de lo que la función leyó (sin exponer
+    // valores): ayudó a descartar secretos mal cargados. Un solo intento por llamada.
+    throw new Error(
+      `Zoho OAuth falló (HTTP ${res.status}): ` + JSON.stringify(data) +
+        ` [${clientIdVar}: ${await huellaCorta(clientId)}; ${clientSecretVar}: ${await huellaCorta(clientSecret)}; ` +
+        `${refreshTokenVar}: ${await huellaCorta(refreshToken)}]`,
+    );
   }
   return data.access_token;
 }
@@ -113,7 +130,38 @@ function mapearMensaje(m: any, casilla: string) {
     subject: m.subject || "(sin asunto)",
     summary: m.summary || "",
     receivedTime: Number(m.receivedTime || m.sentDateInGMT || 0),
+    // Hace falta para pedir el contenido completo al responder (ver accion "contenido").
+    folderId: m.folderId ? String(m.folderId) : "",
   };
+}
+
+// Pasa el HTML de un mail a texto plano corto, para citarlo en una respuesta.
+function htmlATexto(html: string): string {
+  return html
+    .replace(/<(style|script)[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|tr|li|h[1-6])>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+async function traerContenido(
+  clientIdVar: string,
+  clientSecretVar: string,
+  refreshTokenVar: string,
+  accountId: string,
+  folderId: string,
+  messageId: string,
+): Promise<string> {
+  const accessToken = await obtenerAccessToken(clientIdVar, clientSecretVar, refreshTokenVar);
+  const url = `https://mail.zoho.com/api/accounts/${accountId}/folders/${folderId}/messages/${messageId}/content`;
+  const res = await fetch(url, { headers: { "Authorization": "Zoho-oauthtoken " + accessToken } });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error("Zoho /content falló: " + JSON.stringify(body).slice(0, 200));
+  return htmlATexto(String(body?.data?.content ?? "")).slice(0, 4000);
 }
 
 async function traerMensajes(
@@ -170,6 +218,26 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({} as Record<string, unknown>));
     const forzarActualizacion = body.forzar === true;
+
+    // Acción "contenido": texto completo de UN mail (para citarlo al responder).
+    // Misma verificación de admin + AAL2 de arriba; solo lectura.
+    if (body.accion === "contenido") {
+      const cfg = CASILLAS.find((c) => c.casilla === body.casilla);
+      const messageId = String(body.messageId ?? "");
+      const folderId = String(body.folderId ?? "");
+      const idOk = /^[A-Za-z0-9_\-]{1,64}$/;
+      if (!cfg || !idOk.test(messageId) || !idOk.test(folderId)) {
+        return json({ ok: false, error: "Datos inválidos." });
+      }
+      try {
+        const contenido = await traerContenido(
+          cfg.clientIdVar, cfg.clientSecretVar, cfg.refreshTokenVar, cfg.accountId, folderId, messageId,
+        );
+        return json({ ok: true, contenido });
+      } catch (e) {
+        return json({ ok: false, error: String(e).slice(0, 200) });
+      }
+    }
 
     const resultados = await Promise.all(CASILLAS.map(async ({ casilla, clientIdVar, clientSecretVar, refreshTokenVar, accountId }) => {
       try {
