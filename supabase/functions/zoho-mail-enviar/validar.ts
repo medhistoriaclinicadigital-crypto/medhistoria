@@ -17,6 +17,20 @@ export function extraerEmail(s: unknown): string | null {
   return m ? m[0].toLowerCase() : null;
 }
 
+// Direcciones automáticas que no leen respuestas (noreply@, no-reply@, donotreply@,
+// mailer-daemon@...): se les puede escribir pero nadie las lee. La misma regla está
+// repetida en index.html (Panel Admin → Mensajes) para avisar antes de abrir el formulario.
+const AUTOMATICA_RE = /^(no[-_.]?reply|do[-_.]?not[-_.]?reply|mailer[-_.]?daemon)([-_.+].*)?$/i;
+
+export const MENSAJE_AUTOMATICA =
+  "Esa dirección es automática (noreply) y no lee respuestas. Si necesitás contestar, escribí a la persona o empresa por otro medio.";
+
+export function esDireccionAutomatica(email: unknown): boolean {
+  const e = extraerEmail(email);
+  if (!e) return false;
+  return AUTOMATICA_RE.test(e.split("@")[0]);
+}
+
 export interface Entrada {
   casilla: string;
   messageId: string;
@@ -39,6 +53,7 @@ export function validarEntrada(
 
   const destinatario = extraerEmail(body.destinatario);
   if (!destinatario) return { ok: false, error: "Destinatario inválido." };
+  if (esDireccionAutomatica(destinatario)) return { ok: false, error: MENSAJE_AUTOMATICA };
 
   // Sin saltos de línea en el asunto: evita inyectar encabezados de mail.
   const asunto = (typeof body.asunto === "string" ? body.asunto : "")
@@ -77,3 +92,10 @@ export function limiteDesdeEntorno(valor: string | undefined | null): number {
   const n = Number.parseInt((valor ?? "").trim(), 10);
   return Number.isFinite(n) && n > 0 && n <= 200 ? n : LIMITE_POR_HORA_DEFECTO;
 }
+
+// Ventana en la que un segundo envío de la MISMA casilla para el MISMO mensaje se
+// considera un duplicado (doble clic, reintento apurado).
+export const VENTANA_DUPLICADO_SEG = 120;
+
+export const MENSAJE_DUPLICADO =
+  "Ya se envió una respuesta a este mensaje hace instantes. Esperá un par de minutos antes de enviar otra, para no mandarla dos veces.";

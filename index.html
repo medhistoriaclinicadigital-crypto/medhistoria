@@ -2190,6 +2190,24 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
   </div>
 </div>
 
+<!-- BLOG -->
+<section class="sec" id="sec-blog" style="background:var(--cream);padding:60px 24px;">
+  <div class="container">
+    <div class="sec-head">
+      <div class="sec-tag">Blog</div>
+      <h2 class="sec-title">Recursos para médicos</h2>
+      <p class="sec-sub">Guías sobre historia clínica electrónica, digitalización del consultorio y firma electrónica de recetas.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;max-width:980px;margin:0 auto;">
+      <a href="/blog/que-es-la-historia-clinica-electronica.html" style="display:block;background:#fff;border:1px solid var(--g9);border-radius:14px;padding:20px 22px;text-decoration:none;box-shadow:0 8px 24px rgba(4,43,16,.06);color:inherit;"><span style="display:block;color:var(--g2);font-weight:700;font-size:1.02rem;margin-bottom:6px;">Qué es la Historia Clínica Electrónica y Cómo Funciona</span><span style="display:block;color:var(--muted);font-size:.86rem;line-height:1.6;">Qué información contiene una historia clínica electrónica y cómo funciona en el día a día de un consultorio.</span></a>
+      <a href="/blog/por-que-migrar-del-papel-a-la-historia-clinica-electronica.html" style="display:block;background:#fff;border:1px solid var(--g9);border-radius:14px;padding:20px 22px;text-decoration:none;box-shadow:0 8px 24px rgba(4,43,16,.06);color:inherit;"><span style="display:block;color:var(--g2);font-weight:700;font-size:1.02rem;margin-bottom:6px;">Por Qué Migrar del Papel a la Historia Clínica Electrónica</span><span style="display:block;color:var(--muted);font-size:.86rem;line-height:1.6;">Los problemas reales del papel en la consulta y qué gana tu consultorio al digitalizar.</span></a>
+      <a href="/blog/ventajas-de-la-firma-digital-en-recetas-medicas.html" style="display:block;background:#fff;border:1px solid var(--g9);border-radius:14px;padding:20px 22px;text-decoration:none;box-shadow:0 8px 24px rgba(4,43,16,.06);color:inherit;"><span style="display:block;color:var(--g2);font-weight:700;font-size:1.02rem;margin-bottom:6px;">Ventajas de la Firma Electrónica en Recetas Médicas</span><span style="display:block;color:var(--muted);font-size:.86rem;line-height:1.6;">Cómo se firma y se verifica con QR una receta electrónica, y qué alcance tiene en Argentina.</span></a>
+      <a href="/firma-electronica/" style="display:block;background:#fff;border:1px solid var(--g9);border-radius:14px;padding:20px 22px;text-decoration:none;box-shadow:0 8px 24px rgba(4,43,16,.06);color:inherit;"><span style="display:block;color:var(--g2);font-weight:700;font-size:1.02rem;margin-bottom:6px;">Instructivo: Firma Electrónica de Recetas para Médicos</span><span style="display:block;color:var(--muted);font-size:.86rem;line-height:1.6;">Paso a paso: cómo se activa la firma, qué queda registrado y cómo verificar una receta.</span></a>
+    </div>
+    <p style="text-align:center;margin-top:26px;"><a href="/blog/" style="color:var(--g4);font-weight:700;text-decoration:none;">Ver todos los artículos →</a></p>
+  </div>
+</section>
+
 <!-- CONTACTO Y CANCELACIÓN -->
 <section class="sec" id="sec-contacto" style="background:var(--g1);padding:60px 24px;">
   <div class="container">
@@ -2268,6 +2286,13 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
     <a href="#" onclick="document.getElementById('terminosOverlay').style.display='block'; document.getElementById('seccion-tyc').style.display='none'; document.getElementById('seccion-privacidad').style.display='block'; document.getElementById('seccion-cookies').style.display='none'; document.getElementById('btn-privacidad').style.background='rgba(255,255,255,.95)'; document.getElementById('btn-privacidad').style.color='#042b10'; document.getElementById('btn-tyc').style.background='rgba(255,255,255,.2)'; document.getElementById('btn-tyc').style.color='#fff'; return false;" class="footer-link">Política de Privacidad</a>
     <a href="#" onclick="document.getElementById('terminosOverlay').style.display='block'; document.getElementById('seccion-tyc').style.display='none'; document.getElementById('seccion-privacidad').style.display='none'; document.getElementById('seccion-cookies').style.display='block'; document.getElementById('btn-cookies').style.display='block'; document.getElementById('btn-cookies').style.background='rgba(255,255,255,.95)'; document.getElementById('btn-cookies').style.color='#042b10'; document.getElementById('btn-tyc').style.background='rgba(255,255,255,.2)'; document.getElementById('btn-tyc').style.color='#fff'; document.getElementById('btn-privacidad').style.background='rgba(255,255,255,.2)'; document.getElementById('btn-privacidad').style.color='#fff'; return false;" class="footer-link">Política de Cookies</a>
 
+  </div>
+  <div class="footer-links" aria-label="Recursos">
+    <a href="/blog/">Blog</a>
+    <a href="/firma-electronica/">Firma electrónica de recetas</a>
+    <a href="/blog/que-es-la-historia-clinica-electronica.html">Qué es la historia clínica electrónica</a>
+    <a href="/blog/por-que-migrar-del-papel-a-la-historia-clinica-electronica.html">Por qué migrar del papel</a>
+    <a href="/blog/ventajas-de-la-firma-digital-en-recetas-medicas.html">Ventajas de la firma electrónica en recetas</a>
   </div>
   <div class="footer-laws">
     <span class="footer-law">Ley 27.706</span><span class="footer-law">Dec. 393/2023</span>
@@ -4902,11 +4927,24 @@ function _autocompletarCuilRx(){
   if(calculado) cuilEl.value = calculado;
 }
 
+var _pacTocado = false;
+(function(){
+  var ov = document.getElementById('pacienteOverlay');
+  if(ov) ov.addEventListener('input', function(e){ if(e.target === document.activeElement) _pacTocado = true; });
+})();
 function abrirNuevoPaciente(){
   _editandoPacienteIdx = -1;
   // Limpiar formulario
-  var campos = ['pac-apellido','pac-nombre','pac-dni','pac-fnac','pac-tel','pac-email','pac-os','pac-afiliado','pac-plan','pac-domicilio','pac-localidad','pac-motivo'];
-  campos.forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  var campos = ['pac-apellido','pac-nombre','pac-dni','pac-cuil','pac-fnac','pac-tel','pac-email','pac-os','pac-afiliado','pac-plan','pac-domicilio','pac-localidad','pac-motivo'];
+  campos.forEach(function(id){ var el=document.getElementById(id); if(el){ el.value=''; el.setAttribute('autocomplete','off'); } });
+  // El autocompletado del navegador puede rellenar campos DESPUÉS de abrir el formulario (por ejemplo un DNI viejo):
+  // si el usuario todavía no escribió nada, se vuelve a limpiar un instante después.
+  _pacTocado = false;
+  var _dniInp = document.getElementById('pac-dni'); if(_dniInp) _dniInp.setAttribute('inputmode', medicoEsArgentina() ? 'numeric' : 'text');
+  setTimeout(function(){
+    if(_editandoPacienteIdx !== -1 || _pacTocado) return;
+    campos.forEach(function(id){ var el=document.getElementById(id); if(el && el !== document.activeElement && el.value) el.value=''; });
+  }, 400);
   var sexo = document.getElementById('pac-sexo'); if(sexo) sexo.value='';
   var titulo = document.getElementById('pac-modal-titulo');
   if(titulo) titulo.textContent = 'Nuevo Paciente';
@@ -4987,7 +5025,20 @@ function guardarPaciente(){
   var ga = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
   var apellido = ga('pac-apellido');
   var nombre = ga('pac-nombre');
-  if(!apellido && !nombre){ alert('Ingresá al menos el apellido y nombre del paciente.'); return; }
+  if(!apellido){ alert('Ingresá el apellido del paciente.'); return; }
+  // DNI (médicos de Argentina): solo números. Se aceptan puntos, espacios o guiones al escribirlo y se guardan sin ellos
+  // ("30.123.456" → "30123456"). Fuera de Argentina el documento puede llevar letras (pasaporte, NIE, RUT), no se restringe.
+  // Si el paciente no tiene DNI argentino, el campo puede quedar vacío.
+  var dniIngresado = ga('pac-dni');
+  if(dniIngresado && medicoEsArgentina()){
+    var dniLimpio = dniIngresado.replace(/[.\s-]/g, '');
+    if(!/^\d+$/.test(dniLimpio)){
+      alert('El DNI debe tener solo números (sin letras ni símbolos). Ejemplo: 30123456\n\nSi el paciente no tiene DNI argentino, dejá el campo vacío.');
+      return;
+    }
+    dniIngresado = dniLimpio;
+    var dniEl = document.getElementById('pac-dni'); if(dniEl) dniEl.value = dniLimpio;
+  }
 
   // Obtener datos existentes si estamos editando
   var pExistente = (_editandoPacienteIdx >= 0 && pacientes[_editandoPacienteIdx]) ? pacientes[_editandoPacienteIdx] : {};
@@ -4995,7 +5046,7 @@ function guardarPaciente(){
   var pac = Object.assign({}, pExistente, {
     apellido: apellido,
     nombre: apellido + ', ' + nombre,
-    dni: ga('pac-dni') || pExistente.dni || '',
+    dni: dniIngresado || pExistente.dni || '',
     cuil: ga('pac-cuil') || pExistente.cuil || '',
     fnac: ga('pac-fnac') || pExistente.fnac || '',
     sexo: ga('pac-sexo') || pExistente.sexo || '',
@@ -5421,6 +5472,39 @@ function entrarDirecto(){
 }
 
 
+// ── MATRÍCULA / CUIL DEL PERFIL ──
+// Cómo se guardan en usuarios (es lo que esperan la receta y las Edge Functions de firma, firma-receta/armarMatricula):
+//   matricula    = "M.N. 123"   (o "M.P. 456" si solo tiene la provincial)
+//   matricula_mp = "456"        (solo cuando tiene LAS DOS: así se guardan por separado)
+//   cuil_cuit    = CUIL / CUIT
+// Al ingresar, usuarioActual es la fila cruda de usuarios; el formulario y otras pantallas leen mn / mp / cuil, que se
+// derivan acá (_normalizarPerfilCargado). Antes quedaban vacíos y «Editar perfil» pisaba el CUIL con un texto vacío.
+function _limpiarMat(v, tipo){
+  return String(v == null ? '' : v).replace(tipo === 'P' ? /^\s*M\.?\s*P\.?\s*/i : /^\s*M\.?\s*N\.?\s*/i, '').trim();
+}
+function _matriculasDePerfil(u){
+  u = u || {};
+  var mp = _limpiarMat(u.matricula_mp, 'P');
+  var mat = String(u.matricula || '').trim();
+  var mn = '';
+  if(mat.indexOf('M.P.') !== -1){ if(!mp) mp = _limpiarMat(mat, 'P'); }   // solo tiene la provincial
+  else { mn = _limpiarMat(mat, 'N'); }
+  return { mn: mn, mp: mp };
+}
+function _matriculaParaGuardar(mn, mp){
+  mn = _limpiarMat(mn, 'N'); mp = _limpiarMat(mp, 'P');
+  if(mn) return { matricula: 'M.N. ' + mn, matricula_mp: mp || null };
+  if(mp) return { matricula: 'M.P. ' + mp, matricula_mp: null };
+  return { matricula: '', matricula_mp: null };
+}
+function _normalizarPerfilCargado(p){
+  var m = _matriculasDePerfil(p);
+  if(!p.mn) p.mn = m.mn;
+  if(!p.mp) p.mp = m.mp;
+  if(!p.cuil) p.cuil = p.cuil_cuit || '';
+  return p;
+}
+
 // ── EDITAR PERFIL ──
 function cambiarNombreUsuario(){
   if(!usuarioActual){ alert('No hay sesión activa.'); return; }
@@ -5457,26 +5541,40 @@ function guardarPerfil(){
   var nombre = (document.getElementById('ep-nombre').value||'').trim();
   var sexo = document.getElementById('ep-sexo').value;
   var cuil = (document.getElementById('ep-cuil').value||'').trim();
-  var mn = (document.getElementById('ep-mn').value||'').trim();
-  var mp = (document.getElementById('ep-mp').value||'').trim();
+  var mn = _limpiarMat(document.getElementById('ep-mn').value, 'N');
+  var mp = _limpiarMat(document.getElementById('ep-mp').value, 'P');
   var telefono = (document.getElementById('ep-telefono').value||'').trim();
   if(!nombre){ alert('Ingresá tu nombre.'); return; }
+  var matNueva = _matriculaParaGuardar(mn, mp);
+  if(!matNueva.matricula){ alert('Ingresá al menos una matrícula (M.N. o M.P.).'); return; }
+  var matAntes = _matriculasDePerfil(usuarioActual);
+  var matCambio = (matAntes.mn !== mn) || (matAntes.mp !== mp);
+
   usuarioActual.nombre = nombre;
   usuarioActual.sexo = sexo;
-  usuarioActual.cuil = cuil;
+  usuarioActual.telefono = telefono;
   usuarioActual.mn = mn;
   usuarioActual.mp = mp;
-  usuarioActual.telefono = telefono;
-  // nombre, sexo, telefono y CUIL (columna real: cuil_cuit) persisten acá.
-  // La matrícula (M.N./M.P.) queda afuera a propósito: hoy se guarda como
-  // un solo texto combinado en la columna "matricula" (la columna
-  // "matricula_mp" existe pero nunca se llega a usar) — cambiar eso es un
-  // tema de diseño aparte, no algo para tocar de paso acá.
+  // Solo se escribe lo que corresponde: el CUIL no se envía si el campo está vacío (así nunca se pisa uno ya cargado) y la
+  // matrícula solo si cambió (en el formato de arriba, que es el que leen la receta y la firma).
+  var cambios = { nombre: nombre, sexo: sexo, telefono: telefono };
+  if(cuil){
+    cambios.cuil_cuit = cuil;
+    usuarioActual.cuil = cuil;
+    usuarioActual.cuil_cuit = cuil;
+  }
+  if(matCambio){
+    cambios.matricula = matNueva.matricula;
+    cambios.matricula_mp = matNueva.matricula_mp;
+    usuarioActual.matricula = matNueva.matricula;
+    usuarioActual.matricula_mp = matNueva.matricula_mp;
+  }
   if(usuarioActual.id){
-    sb.from('usuarios').update({
-      nombre: nombre, sexo: sexo, cuil_cuit: cuil, telefono: telefono
-    }).eq('id', usuarioActual.id).then(function(r){
-      if(r.error) console.error('Error guardando perfil:', r.error);
+    sb.from('usuarios').update(cambios).eq('id', usuarioActual.id).then(function(r){
+      if(r.error){
+        console.error('Error guardando perfil:', r.error);
+        alert('⚠️ No se pudo guardar el perfil en el servidor. Probá de nuevo en un momento.');
+      }
     });
   }
   document.getElementById('app-user-name').textContent = nombreConTitulo(usuarioActual||{nombre:nombre}) + ' ✏️';
@@ -5756,6 +5854,7 @@ function generarDocumento(tipo){
   }, 400);
 }
 function showPanelMob(id, btn){
+  try{ var _pa = document.querySelector('.app-panel.act'); if(_pa && _pa.id === 'panel-recetas' && id !== 'recetas') _salirDeRecetas(); }catch(eSr){ console.warn('[catch]', eSr); }
   document.querySelectorAll('.app-panel').forEach(p=>p.classList.remove('act'));
   document.getElementById('panel-'+id).classList.add('act');
   if(id==='recetas'){ try{ _iniciarRecetaSiHaceFalta(); _sincronizarMedicamentoReceta(); }catch(eIr){ console.warn('[catch]', eIr); } }
@@ -5771,6 +5870,7 @@ function toggleMore(){
 
 // ── APP PANELS (sidebar) ──
 function showPanel(id){
+  try{ var _pa = document.querySelector('.app-panel.act'); if(_pa && _pa.id === 'panel-recetas' && id !== 'recetas') _salirDeRecetas(); }catch(eSr){ console.warn('[catch]', eSr); }
   try{ aplicarTextosFirmaPorPais(); }catch(eFp){ console.warn('[catch]', eFp); }
   if(id==='recetas'){ try{ _iniciarRecetaSiHaceFalta(); }catch(eIr){ console.warn('[catch]', eIr); } }
   // Ocultar TODOS los paneles primero
@@ -6676,11 +6776,22 @@ function _marcarRespondidoZoho(messageId){
 
 var _respZoho = null; // { m, destinatario, citado, enviando }
 
+// Direcciones automáticas que no leen respuestas. Misma regla que zoho-mail-enviar/validar.ts
+// (el servidor la vuelve a aplicar: esto es solo para avisar antes).
+var _MSJ_AUTOMATICA_ZOHO = 'Esa dirección es automática (noreply) y no lee respuestas. Si necesitás contestar, escribí a la persona o empresa por otro medio.';
+function _esAutomaticaZoho(email){
+  var mm = String(email||'').match(/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i);
+  if(!mm) return false;
+  return /^(no[-_.]?reply|do[-_.]?not[-_.]?reply|mailer[-_.]?daemon)([-_.+].*)?$/i.test(mm[0].split('@')[0]);
+}
+
 function abrirResponderZoho(messageId){
   var m = _mensajesZohoData.find(function(x){ return String(x.messageId) === String(messageId); });
   if(!m) return;
   var mm = String(m.fromAddress||'').match(/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i);
   if(!mm){ alert('Este mail no tiene una dirección de remitente a la que responder.'); return; }
+  if(_esAutomaticaZoho(mm[0])){ alert(_MSJ_AUTOMATICA_ZOHO); return; }
+  if(_respondidosZoho()[String(m.messageId)] && !confirm('Ya respondiste este mail desde este navegador. ¿Querés enviar otra respuesta?')) return;
   var asunto = m.subject || '(sin asunto)';
   if(!/^re:/i.test(asunto)) asunto = 'RE: ' + asunto;
   _respZoho = { m: m, destinatario: mm[0].toLowerCase(), citado: m.summary || '', enviando: false };
@@ -6781,11 +6892,13 @@ function enviarRespuestaZoho(){
   _respZoho.enviando = true;
   if(btn){ btn.disabled = true; btn.textContent = 'Enviando…'; }
   if(volver) volver.disabled = true;
+  ['rz-asunto','rz-texto'].forEach(function(id){ var el = document.getElementById(id); if(el) el.disabled = true; });
   if(msg) msg.textContent = '';
   var terminarConError = function(texto){
     _respZoho.enviando = false;
     if(btn){ btn.disabled = false; btn.textContent = '✉️ Confirmar y enviar'; }
     if(volver) volver.disabled = false;
+    ['rz-asunto','rz-texto'].forEach(function(id){ var el = document.getElementById(id); if(el) el.disabled = false; });
     if(msg) msg.textContent = texto;
   };
   sb.functions.invoke('zoho-mail-enviar', { body: {
@@ -6824,6 +6937,7 @@ function renderMensajesZoho(){
   cont.innerHTML = lista.map(function(m){
     var visto = !!vistos[m.messageId];
     var respondido = !!respondidos[m.messageId];
+    var automatica = _esAutomaticaZoho(m.fromAddress);
     var fecha = m.receivedTime ? new Date(m.receivedTime).toLocaleString('es-AR',{hour12:false}) : '-';
     var badgeColor = m.casilla === 'soporte' ? '#ffd54a' : m.casilla === 'admin' ? '#7dd3fc' : '#6dde96';
     var mailtoHref = 'mailto:'+encodeURIComponent(m.fromAddress||'')+'?subject='+encodeURIComponent('Re: '+(m.subject||''));
@@ -6839,7 +6953,7 @@ function renderMensajesZoho(){
       +'<div style="color:rgba(255,255,255,.5);font-size:.8rem;margin:6px 0;">De: '+escHtml(m.sender||m.fromAddress||'')+' ('+escHtml(m.fromAddress||'')+')</div>'
       +'<div style="color:rgba(255,255,255,.45);font-size:.8rem;line-height:1.5;">'+escHtml((m.summary||'').slice(0,220))+(m.summary && m.summary.length>220?'…':'')+'</div>'
       +'<div style="display:flex;gap:14px;align-items:center;margin-top:8px;flex-wrap:wrap;">'
-      +'<button type="button" onclick="event.stopPropagation();abrirResponderZoho(\''+escJs(m.messageId)+'\')" style="background:rgba(52,196,100,.15);border:1px solid rgba(52,196,100,.35);color:#6dde96;padding:5px 14px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">↩️ Responder</button>'
+      +(automatica?'<span style="color:rgba(255,255,255,.45);font-size:.75rem;">🚫 No se puede responder: es una dirección automática (noreply)</span>':'<button type="button" onclick="event.stopPropagation();abrirResponderZoho(\''+escJs(m.messageId)+'\')" style="background:rgba(52,196,100,.15);border:1px solid rgba(52,196,100,.35);color:#6dde96;padding:5px 14px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">↩️ Responder</button>')
       +(respondido?'<span style="color:#6dde96;font-size:.75rem;font-weight:600;">✔ Respondido</span>':'')
       +'<a href="'+mailtoHref+'" onclick="event.stopPropagation()" style="color:rgba(255,255,255,.4);font-size:.72rem;text-decoration:none;">o abrir en tu programa de mail</a>'
       +'</div>'
@@ -13070,6 +13184,7 @@ async function generarVideollamada(){
   if(!fecha){ alert('Seleccioná la fecha.'); return; }
   if(!hora){ alert('Ingresá la hora.'); return; }
   if(!tel && !email){ alert('Ingresá teléfono o email del paciente.'); return; }
+  if(_esFechaHoraPasada(fecha, hora) && !confirm('⚠️ La fecha y hora de la videoconsulta ('+fecha.split('-').reverse().join('/')+' '+hora+') ya pasó.\n\nLa sala se crea para ese horario y se cierra 24 h después. ¿Querés crearla igual?')) return;
 
   // Sala de videollamada en Daily.co (Edge Function daily-room). Sala pública
   // con nombre imposible de adivinar; se autodestruye 24 h después del turno.
@@ -13374,8 +13489,22 @@ function solicitarFactura(){
   var btn = document.querySelector('#fact-suscripcion .form-submit');
   if(btn){ btn.disabled=true; btn.textContent='Enviando...'; }
 
-  sb.from('solicitudes_factura').insert({
-    medico_id: (usuarioActual && usuarioActual.id) ? usuarioActual.id : null,
+  // El aviso al administrador y el guardado los hace el SERVIDOR (función solicitar-factura):
+  // exige sesión y fija él mismo el destinatario. Antes el mail se mandaba desde acá con
+  // EmailJS, cuyas credenciales son públicas: cualquiera podía usarlas con otro destinatario.
+  var mostrarMsg = function(ok, texto){
+    if(!msg) return;
+    msg.style.display='block';
+    msg.style.background = ok ? 'rgba(34,160,80,.12)' : 'rgba(220,50,50,.1)';
+    msg.style.border = ok ? '1px solid rgba(34,160,80,.3)' : '1px solid rgba(220,50,50,.3)';
+    msg.style.color = ok ? 'var(--g3)' : '#c0392b';
+    msg.textContent = texto;
+    if(ok) setTimeout(function(){ msg.style.display='none'; }, 4000);
+  };
+  var rehabilitar = function(){ if(btn){ btn.disabled=false; btn.textContent='Enviar solicitud'; } };
+  var errorGenerico = 'Hubo un error al enviar. Por favor escribinos a consultas@medhistoriaclinicaonline.com';
+
+  sb.functions.invoke('solicitar-factura', { body: {
     nombre: nombre,
     cuit: cuit,
     email: email,
@@ -13383,24 +13512,16 @@ function solicitarFactura(){
     plan: plan,
     periodo: periodo,
     observaciones: obs,
-    domicilio: domicilio,
-    estado: 'pendiente'
-  }).then(function(){}, function(errSB){ console.error('Error guardando solicitud en Supabase:', JSON.stringify(errSB)); });
-
-  emailjs.send('service_3cprmeh', 'template_fdrpmfe', {
-    name: '🔔 NUEVA SOLICITUD DE FACTURA — ' + nombre,
-    email: 'medhistoriaclinicaonline@gmail.com',
-    message: 'SOLICITUD DE FACTURA DE SUSCRIPCIÓN\n\nNombre / Razón Social: '+nombre+'\nCUIT: '+cuit+'\nEmail de facturación: '+email+'\nCondición IVA: '+iva+'\nPlan contratado: '+plan+'\nPeríodo: '+periodo+'\nDomicilio Comercial: '+domicilio+(obs?'\nObservaciones: '+obs:'')
-  }).then(function(){
-    if(msg){
-      msg.style.display='block';
-      msg.style.background='rgba(34,160,80,.12)';
-      msg.style.border='1px solid rgba(34,160,80,.3)';
-      msg.style.color='var(--g3)';
-      msg.textContent='Solicitud enviada. Te enviamos la factura a '+email+' en menos de 48hs habiles.';
-      setTimeout(function(){ msg.style.display='none'; }, 4000);
+    domicilio: domicilio
+  } }).then(function(r){
+    if(r.error || !r.data || !r.data.ok){
+      console.error('Solicitud de factura:', r.error ? r.error.message : (r.data && r.data.error));
+      mostrarMsg(false, (r.data && r.data.error) || errorGenerico);
+      rehabilitar();
+      return;
     }
-    if(btn){ btn.disabled=false; btn.textContent='Enviar solicitud'; }
+    mostrarMsg(true, 'Solicitud enviada. Te enviamos la factura a '+email+' en menos de 48hs habiles.');
+    rehabilitar();
     document.getElementById('fs-nombre').value='';
     document.getElementById('fs-cuit').value='';
     document.getElementById('fs-email').value='';
@@ -13408,15 +13529,9 @@ function solicitarFactura(){
     document.getElementById('fs-periodo').value='';
     document.getElementById('fs-domicilio').value='';
   }, function(err){
-    console.error('EmailJS error:', JSON.stringify(err));
-    if(msg){
-      msg.style.display='block';
-      msg.style.background='rgba(220,50,50,.1)';
-      msg.style.border='1px solid rgba(220,50,50,.3)';
-      msg.style.color='#c0392b';
-      msg.textContent='Hubo un error al enviar. Por favor escribinos a consultas@medhistoriaclinicaonline.com';
-    }
-    if(btn){ btn.disabled=false; btn.textContent='Enviar solicitud'; }
+    console.error('Solicitud de factura:', err);
+    mostrarMsg(false, errorGenerico);
+    rehabilitar();
   });
 }
 function agregarPrestacion(prefix){
@@ -14163,17 +14278,35 @@ function filtrarTurnos(){
   renderTurnos(filtrados);
 }
 
+// ¿Ya pasó esa fecha y hora? (fecha 'AAAA-MM-DD', hora 'HH:MM', en hora local del dispositivo)
+function _esFechaHoraPasada(fechaISO, hora){
+  var p = String(fechaISO||'').split('-'), h = String(hora||'00:00').split(':');
+  if(p.length !== 3) return false;
+  var d = new Date(+p[0], +p[1]-1, +p[2], +(h[0]||0), +(h[1]||0), 0, 0);
+  return d.getTime() < Date.now();
+}
+// Fecha local 'AAAA-MM-DD' (toISOString da la fecha UTC: después de las 21 h en Argentina ya sería "mañana").
+function _fechaLocalISO(d){
+  d = d || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
 function abrirNuevoTurno(){
   document.getElementById('turnoOverlay').style.display='block';
   // Limpiar campos del formulario
   ['turno-pac','turno-motivo','turno-wa','turno-email','turno-os'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value='';
   });
-  try{ document.getElementById('turno-hora').value='09:00'; }catch(e){ console.warn('[catch]', e); }
   try{ var pr=document.getElementById('turno-prioridad'); if(pr) pr.value='Normal'; }catch(e){ console.warn('[catch]', e); }
-  // Poner fecha de hoy por defecto
-  var hoyISO = new Date().toISOString().split('T')[0];
-  document.getElementById('turno-fecha').value = hoyISO;
+  // Fecha de hoy (local) y hora por defecto: las 9:00, o la próxima hora en punto si las 9:00 de hoy ya pasaron
+  // (pasadas las 23 h, mañana a las 9:00).
+  var ahora = new Date();
+  var fechaDef = _fechaLocalISO(ahora), horaDef = '09:00';
+  if(_esFechaHoraPasada(fechaDef, horaDef)){
+    if(ahora.getHours() >= 23){ fechaDef = _fechaLocalISO(new Date(ahora.getTime() + 86400000)); }
+    else { horaDef = String(ahora.getHours() + 1).padStart(2,'0') + ':00'; }
+  }
+  try{ document.getElementById('turno-hora').value = horaDef; }catch(e){ console.warn('[catch]', e); }
+  document.getElementById('turno-fecha').value = fechaDef;
 }
 function cerrarNuevoTurno(){
   document.getElementById('turnoOverlay').style.display='none';
@@ -14236,6 +14369,7 @@ function guardarTurno(){
   if(!hora){ alert('Ingresá la hora del turno.'); return; }
   var partes = fecha.split('-');
   var fechaDisplay = partes[2]+'/'+partes[1]+'/'+partes[0];
+  if(_esFechaHoraPasada(fecha, hora) && !confirm('⚠️ La fecha y hora del turno ('+fechaDisplay+' '+hora+') ya pasó.\n\n¿Querés cargarlo igual?')) return;
   turnos.push({pac:pac, fecha:fecha, fechaDisplay:fechaDisplay, hora:hora, motivo:motivo||'Consulta', os:os, estado:prio, wa:wa});
   // Guardar también en Supabase
   if(usuarioActual && usuarioActual.id){
@@ -15273,7 +15407,68 @@ function generarPDFbase64(tipo, callback, soloVerificar, extra){
 // o envían (regenerar el PDF cambiaría su hash). Mientras el contenido de la
 // receta no cambie, todas las copias reutilizan la misma emisión firmada.
 // Si la firma falla, la receta NO se entrega (se puede reintentar).
-var _recetaFirmadaCache = null;    // { key, d, bytes, token, url, idReceta, hash, firmadoEn }
+var _recetaFirmadaCache = null;    // { key, d, bytes, token, url, idReceta, hash, firmadoEn, _ts }
+
+// ── Receta ya emitida, todavía en pantalla ──
+// Una vez firmada, la receta se entrega con Descargar / Imprimir / Enviar, que leen los datos del formulario (paciente, WhatsApp,
+// email): por eso el formulario NO se vacía en el mismo instante de generar. Se vacía solo cuando el médico termina con ella: al salir
+// de la pantalla de Recetas (o con «Nueva Receta»). Mientras tanto, un aviso lo deja claro. La emisión queda en memoria: repetir
+// exactamente la misma receta devuelve la misma (mismo código), no una nueva.
+function _mostrarAvisoRecetaEmitida(em){
+  var form = document.querySelector('#panel-recetas .hc-form');
+  if(!form || !form.parentNode) return;
+  var av = document.getElementById('rx-aviso-emitida');
+  if(!av){
+    av = document.createElement('div');
+    av.id = 'rx-aviso-emitida';
+    av.setAttribute('role', 'status');
+    av.style.cssText = 'background:#e8f8ee;border:1.5px solid #22a050;border-radius:12px;padding:12px 16px;margin:0 0 14px;color:#0a3d1f;font-size:.86rem;line-height:1.5;';
+    form.parentNode.insertBefore(av, form);
+  }
+  av.innerHTML = '<strong>✅ Receta emitida y firmada</strong> · código ' + escHtml(_firmaRxTokenFmt(em.token)) + '<br>'
+    + 'Entregala con <strong>Descargar PDF</strong>, <strong>Imprimir</strong> o <strong>Enviar al paciente</strong>. Cuando termines, tocá '
+    + '<a href="#" onclick="nuevaOrden(\'receta\');return false;" style="color:#145a32;font-weight:700;">✚ Nueva Receta</a> '
+    + 'o salí de esta pantalla: el formulario se limpia solo (así no queda cargado para el próximo paciente).';
+  av.style.display = 'block';
+}
+function _ocultarAvisoRecetaEmitida(){
+  var av = document.getElementById('rx-aviso-emitida');
+  if(av) av.style.display = 'none';
+}
+// ¿Lo que hay en el formulario es exactamente la receta emitida? (si el médico ya empezó otra, NO se toca)
+function _recetaEnPantallaEsLaEmitida(){
+  try{ return !!_recetaFirmadaCache && _firmaRxClave(getDatosDocumento('receta')) === _recetaFirmadaCache.key; }
+  catch(eEm){ return false; }
+}
+// Vacía el formulario de la receta (sin preguntar ni cambiar de pantalla). No borra la emisión de la memoria: repetir la misma receta
+// devuelve la misma, sin duplicarla.
+function _limpiarRecetaEmitida(){
+  ['rx2-paciente','rx2-dni','rx2-cuil','rx2-fnac','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind','rx2-wa','rx2-email'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = '';
+  });
+  var sx = document.getElementById('rx2-sexo'); if(sx) sx.selectedIndex = 0;
+  try{ _reiniciarContenidoReceta(); }catch(eRi){ console.warn('[catch]', eRi); }
+  _ocultarAvisoRecetaEmitida();
+}
+// Se llama al salir de la pantalla de Recetas.
+function _salirDeRecetas(){
+  try{
+    if(_recetaEnPantallaEsLaEmitida()) _limpiarRecetaEmitida();
+    else _ocultarAvisoRecetaEmitida();
+  }catch(eSr){ console.warn('[catch]', eSr); }
+}
+// Anti-duplicado: si hace poco se emitió una receta de este paciente y ahora el contenido es otro, se emite una receta NUEVA (otro código)
+// y las dos quedan vigentes: se pide confirmación. Devuelve true para seguir.
+function _confirmarOtraRecetaMismoPaciente(prev, d){
+  try{
+    if(!prev || !prev._ts || (Date.now() - prev._ts) > 30*60*1000) return true;
+    var n = function(v){ return String(v == null ? '' : v).trim().toLowerCase(); };
+    if(n(prev.d && prev.d.pac) !== n(d.pac) || n(prev.d && prev.d.dni) !== n(d.dni)) return true;
+    return confirm('⚠️ Hace unos minutos ya emitiste una receta para ' + String(d.pac||'').trim() + ' (código ' + _firmaRxTokenFmt(prev.token) + ').\n\n'
+      + 'Esta tiene otro contenido: se emite como receta NUEVA, con otro código, y las dos quedan vigentes.\n\n'
+      + '¿Es otra receta (por ejemplo, otro medicamento)?\nAceptar = emitir otra · Cancelar = volver');
+  }catch(eCo){ return true; }
+}
 var _recetaFirmaPendiente = null;  // { key, idReceta, token, url, bytes, d } — reintento sin duplicar la receta
 var _recetaEmisionEnCurso = null;  // { key, esperando:[{ok,fail}] } — evita emisiones dobles por clicks seguidos
 
@@ -15365,6 +15560,9 @@ function emitirRecetaFirmada(onOk, onFail){
   if(_recetaFirmadaCache && _recetaFirmadaCache.key === key){ onOk(_recetaFirmadaCache); return; }
   if(_recetaEmisionEnCurso && _recetaEmisionEnCurso.key === key){ _recetaEmisionEnCurso.esperando.push({ ok:onOk, fail:onFail }); return; }
 
+  // Otra receta del mismo paciente, con otro contenido, a los pocos minutos de la anterior: confirmar (no se duplica sin querer).
+  if(_recetaFirmadaCache && _recetaFirmadaCache.key !== key && !_confirmarOtraRecetaMismoPaciente(_recetaFirmadaCache, d)){ onFail(); return; }
+
   // Aviso si "Válida desde" es anterior a hoy: una fecha vieja en ese campo invalida la receta para quien la dispensa.
   var _hoyIso = (function(){ var h=new Date(); return h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0'); })();
   if(d.fechaInicioVigencia && d.fechaInicioVigencia < _hoyIso){
@@ -15386,7 +15584,9 @@ function emitirRecetaFirmada(onOk, onFail){
   var firmar = function(p){
     _firmarRecetaServidor(p, function(res){
       var em = { key:p.key, d:p.d, bytes:p.bytes, token:p.token, url:p.url, idReceta:p.idReceta, hash:res.hash_pdf, firmadoEn:res.firmado_en };
+      em._ts = Date.now();
       _recetaFirmadaCache = em; _recetaFirmaPendiente = null;
+      try{ _mostrarAvisoRecetaEmitida(em); }catch(eAv){ console.warn('[catch]', eAv); }
       terminar(em);
     }, function(msg){ terminar(null, msg); });
   };
@@ -16239,7 +16439,8 @@ function imprimirDoc(tipo){
 }
 
 function nuevaOrden(tipo){
-  if(!confirm('¿Limpiar el formulario para una nueva '+
+  var _yaEmitida = (tipo === 'receta') && _recetaEnPantallaEsLaEmitida();   // lo que hay en pantalla ya está emitido y firmado: no se pierde nada
+  if(!_yaEmitida && !confirm('¿Limpiar el formulario para una nueva '+
     (tipo==='receta'?'receta':tipo==='derivacion'?'derivación':'orden de estudios')+'?')) return;
   var campos = {
     receta: ['rx2-paciente','rx2-dni','rx2-cuil','rx2-fnac','rx2-sexo','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind','rx2-wa','rx2-email'],
@@ -16254,6 +16455,7 @@ derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afilia
   if(tipo==='receta'){
     _recetaMedicamentosData = []; try{ _sincronizarMedicamentoReceta(); }catch(eSm){ console.warn('[catch]', eSm); }
     _recetaFirmadaCache = null; // receta nueva = emisión nueva (otro PDF, otro código, otra firma)
+    _ocultarAvisoRecetaEmitida();
     var chkContacto = document.getElementById('rx2-incluir-contacto');
     if(chkContacto) chkContacto.checked = false;
   }
@@ -17921,6 +18123,7 @@ function continuarLoginTrasDispositivo(authId, emailFallback){
     sb.from('usuarios').select('*').eq('auth_id', authId).then(function(rPerfil){
     var perfil = (rPerfil.data && rPerfil.data[0]) || { nombre: emailFallback, email: emailFallback };
    perfil.auth_id = authId;
+      _normalizarPerfilCargado(perfil);
 
       usuarioActual = perfil;
       document.getElementById('miLoginModal').style.display='none';
@@ -18177,14 +18380,15 @@ function mlRegistrar(){
     }
     var authId = r.data && r.data.user ? r.data.user.id : null;
 
+    var matReg = _matriculaParaGuardar(mn, mp);
     var nuevoUser = {
       id: authId, auth_id: authId,
       usuario: email, email: email,
       nombre: nombre, sexo: sexo, dni: dni, cuil: cuil, telefono: tel,
-      mn: mn, mp: mp, especialidad: esp,
+      mn: _limpiarMat(mn, 'N'), mp: _limpiarMat(mp, 'P'), cuil_cuit: cuil, especialidad: esp,
       // Mismo texto que se guarda en usuarios.matricula (abajo): la receta (getDatosDocumento) lee la matrícula de acá,
       // y sin esto la PRIMERA sesión de una cuenta nueva no podía emitir recetas hasta salir y volver a entrar.
-      matricula: (mn?'M.N. '+mn:(mp?'M.P. '+mp:'')),
+      matricula: matReg.matricula, matricula_mp: matReg.matricula_mp,
       subespecialidad: subesp, institucion: inst,
       pais: pais, region: prov, ciudad: ciudad,
       plan: planElegido
@@ -18194,8 +18398,8 @@ function mlRegistrar(){
     sb.from('usuarios').insert([{
       auth_id: authId,
       nombre: nombre, email: email,
-      especialidad: esp, matricula: (mn?'M.N. '+mn:(mp?'M.P. '+mp:'')),
-     telefono: tel, dni: dni, rol: 'medico', pais: pais, sexo: sexo
+      especialidad: esp, matricula: matReg.matricula, matricula_mp: matReg.matricula_mp,
+     telefono: tel, dni: dni, cuil_cuit: (cuil || null), rol: 'medico', pais: pais, sexo: sexo
     }]).select().then(function(r2){
       if(r2.error) console.error('Error guardando en Supabase:', r2.error);
       registrarAceptacionLegal();
