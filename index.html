@@ -5026,6 +5026,8 @@ function guardarPaciente(){
   var apellido = ga('pac-apellido');
   var nombre = ga('pac-nombre');
   if(!apellido){ alert('Ingresá el apellido del paciente.'); return; }
+  var _fnacIng = ga('pac-fnac');
+  if(_fnacIng && _fnacIng > _fechaLocalISO()){ alert('La fecha de nacimiento no puede ser posterior a hoy.'); return; }
   // DNI (médicos de Argentina): solo números. Se aceptan puntos, espacios o guiones al escribirlo y se guardan sin ellos
   // ("30.123.456" → "30123456"). Fuera de Argentina el documento puede llevar letras (pasaporte, NIE, RUT), no se restringe.
   // Si el paciente no tiene DNI argentino, el campo puede quedar vacío.
@@ -5870,6 +5872,7 @@ function toggleMore(){
 
 // ── APP PANELS (sidebar) ──
 function showPanel(id){
+  try{ _aplicarMaxFechasNacimiento(); }catch(eMx){ console.warn('[catch]', eMx); }
   try{ var _pa = document.querySelector('.app-panel.act'); if(_pa && _pa.id === 'panel-recetas' && id !== 'recetas') _salirDeRecetas(); }catch(eSr){ console.warn('[catch]', eSr); }
   try{ aplicarTextosFirmaPorPais(); }catch(eFp){ console.warn('[catch]', eFp); }
   if(id==='recetas'){ try{ _iniciarRecetaSiHaceFalta(); }catch(eIr){ console.warn('[catch]', eIr); } }
@@ -5933,7 +5936,7 @@ function showPanel(id){
     // apenas esté disponible, sin bloquear la navegación mientras tanto.
     try{ _sincronizarAddonsServidor(); }catch(e){ console.warn('[catch]', e); }
   }
-  if(id==='telemed') { try{ var tf=document.getElementById('tele-fecha'); if(tf&&!tf.value){ tf.value=new Date().toISOString().split('T')[0]; } }catch(e){ console.warn('[catch]', e); } }
+  if(id==='telemed') { try{ var tf=document.getElementById('tele-fecha'); if(tf&&!tf.value){ tf.value=_fechaLocalISO(); } }catch(e){ console.warn('[catch]', e); } }
   if(id==='pacientes'){
     try{ 
       cargarLocal();
@@ -5961,7 +5964,7 @@ function showPanel(id){
         fillField('fp-paciente', hcPac); fillField('fp-dni', hcDni);
         fillField('fo-paciente', hcPac); fillField('fo-dni', hcDni);
         fillField('fo-os', hcOs); fillField('fo-afiliado', hcAfil);
-        var hoyFact = new Date().toISOString().split('T')[0];
+        var hoyFact = _fechaLocalISO();
         var fpFecha = document.getElementById('fp-fecha'); if(fpFecha && !fpFecha.value) fpFecha.value = hoyFact;
         var foFecha = document.getElementById('fo-fecha'); if(foFecha && !foFecha.value) foFecha.value = hoyFact;
         if(hcPac && panel){ var sub=panel.querySelector('.app-page-sub'); if(sub) sub.textContent='Paciente: '+hcPac+(hcDni?' · DNI '+hcDni:''); }
@@ -7335,7 +7338,7 @@ function enviarLandingWA(tipo){
   if(!tel) return;
   var labels = {receta:'Receta Médica Online', derivacion:'Derivación Médica', estudios:'Pedido de Estudios'};
   var txt = '🏥 *MedHistoriaClinicaOnline · '+labels[tipo]+'*\n\nFirmado electrónicamente · Ley 27.553\n\n_medhistoriaclinicaonline.com_';
-  window.open('https://wa.me/'+_waNumero(tel)+'?text='+encodeURIComponent(txt),'_blank');
+  window.open('https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(txt),'_blank');
 }
 
 function enviarLandingEmail(tipo){
@@ -8874,7 +8877,7 @@ function enviarCodigoWhatsApp(){
     + linkDirecto + '\n\n'
     + 'Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automáticamente al centro, con tu propio usuario y contraseña.';
   _wappBypassAddon = true;
-  window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg), '_blank');
+  window.open('https://api.whatsapp.com/send?phone='+tel+'&text='+encodeURIComponent(msg), '_blank');
 }
 
 function actualizarPaisFirma(pais){
@@ -9059,7 +9062,7 @@ var _wappBypassAddon = false;
       return _open.call(window, url, target, features);
     }
     // Bloquear wa.me excepto el número de soporte
-    if(url && url.indexOf('wa.me') !== -1 && url.indexOf('5491158671622') === -1){
+    if(url && (url.indexOf('wa.me') !== -1 || url.indexOf('api.whatsapp.com/send') !== -1) && url.indexOf('5491158671622') === -1){
       if(!tieneAddonComunicacion()){
         checkAddonComunicacion();
         return null;
@@ -13235,7 +13238,7 @@ async function generarVideollamada(){
     +'</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px;">'
       +'<button onclick="window.open(\''+escJs(linkVideollamada)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">🎥 Entrar a la videollamada ahora</button>'
-      +(tel?'<button onclick="window.open(\'https://wa.me/'+_waNumero(tel)+'?text='+encodeURIComponent(msg)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">📱 Enviar link al paciente por WhatsApp</button>':'')
+      +(tel?'<button onclick="window.open(\'https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(msg)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">📱 Enviar link al paciente por WhatsApp</button>':'')
       +(email?'<button onclick="window.location.href=\'mailto:'+escJs(email)+'?subject='+encodeURIComponent('Videoconsulta · '+fechaDisplay)+'&body='+encodeURIComponent(msg.replace(/\*/g,'').replace(/_/g,''))+'\';" style="padding:12px;background:linear-gradient(135deg,#1a6aab,#0e4d8a);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">✉️ Enviar link por Email</button>':'')
       +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+escJs(linkVideollamada)+'\');this.textContent=\'✅ Copiado!\';" style="padding:12px;background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;color:#145a32;">📋 Copiar link</button>'
       +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:10px;background:none;border:1.5px solid #e5e7eb;border-radius:9px;font-size:.88rem;cursor:pointer;color:#6b7280;">Cerrar</button>'
@@ -13285,10 +13288,17 @@ function getDatosTele(){
   return {pac, fechaInput, hora, duracion, tel, email, motivo, fechaDisplay};
 }
 
+// Videoconsulta en fecha/hora pasada: se pide confirmar (Cancelar = no se guarda). Devuelve true para seguir.
+function _confirmarVideoconsultaPasada(fechaISO, hora, fechaDisplay){
+  if(!_esFechaHoraPasada(fechaISO, hora)) return true;
+  return confirm('⚠️ La fecha y hora de la videoconsulta ('+fechaDisplay+' '+hora+') ya pasó.\n\n¿Querés cargarla igual?');
+}
+
 function iniciarVideollamadaWA(){
   var d = getDatosTele();
   if(!d.pac){ alert('Ingresá el nombre del paciente.'); return; }
   if(!d.tel){ alert('Ingresá el número de WhatsApp del paciente.'); return; }
+  if(!_confirmarVideoconsultaPasada(d.fechaInput, d.hora, d.fechaDisplay)) return;
 
   var nuevaVC = {pac:d.pac, fecha:d.fechaInput, fechaDisplay:d.fechaDisplay, hora:d.hora, duracion:d.duracion, motivo:d.motivo, plataforma:'WhatsApp', link:'whatsapp', telefono:d.tel};
     videoconsultas.unshift(nuevaVC);
@@ -13332,6 +13342,7 @@ function enviarLinkExterno(nombre){
   if(!d.pac){ alert('Ingresá el nombre del paciente.'); return; }
   if(!d.tel && !d.email){ alert('Ingresá el teléfono o email del paciente.'); return; }
   if(!linkExt){ alert('Pegá el link de '+nombre+' en el campo de arriba.'); return; }
+  if(!_confirmarVideoconsultaPasada(d.fechaInput, d.hora, d.fechaDisplay)) return;
 
   var msg = '🏥 *MedHistoriaClinicaOnline*\n\nHola '+d.pac+', le confirmamos su videoconsulta por *'+nombre+'*:\n\n📅 Fecha: '+d.fechaDisplay+'\n🕐 Hora: '+d.hora+' hs\n⏱ Duración: '+d.duracion+'\n📋 Motivo: '+d.motivo+'\n\n🎥 *Link para entrar:*\n'+linkExt+'\n\nHacé clic en el link a la hora acordada.\n\n_MedHistoriaClinicaOnline_';
 
@@ -13347,7 +13358,7 @@ function enviarLinkExterno(nombre){
     +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;font-weight:700;color:#042b10;margin-bottom:12px;">📤 Enviar al paciente</div>'
     +'<div style="background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:.82rem;word-break:break-all;color:#145a32;"><strong>Link:</strong> '+escHtml(linkExt)+'</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px;">'
-      +(d.tel?'<button onclick="window.open(\'https://wa.me/'+_waNumero(d.tel)+'?text='+encodeURIComponent(msg)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">📱 Enviar por WhatsApp</button>':'')
+      +(d.tel?'<button onclick="window.open(\'https://api.whatsapp.com/send?phone='+_waNumero(d.tel)+'&text='+encodeURIComponent(msg)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">📱 Enviar por WhatsApp</button>':'')
       +(d.email?'<button onclick="window.location.href=\'mailto:'+escJs(d.email)+'?subject='+encodeURIComponent('Videoconsulta '+nombre+' · '+d.fechaDisplay)+'&body='+encodeURIComponent(msg.replace(/\*/g,'').replace(/_/g,''))+'\';" style="padding:12px;background:linear-gradient(135deg,#1a6aab,#0e4d8a);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">✉️ Enviar por Email</button>':'')
       +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+escJs(linkExt)+'\');this.textContent=\'✅ Copiado!\';" style="padding:12px;background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;color:#145a32;">📋 Copiar link</button>'
       +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:10px;background:none;border:1.5px solid #e5e7eb;border-radius:9px;font-size:.88rem;cursor:pointer;color:#6b7280;">Cerrar</button>'
@@ -13816,7 +13827,7 @@ function imprimirFacturaHistorial(idx){
   var tel = prompt('N° de WhatsApp ('+_waFormato().corto+'):');
   if(!tel) return;
   var txt = '🏥 *MedHistoriaClinicaOnline - '+(f.tipo==='particular'?'Recibo Particular':'Factura Obra Social')+'*\n\nPaciente: '+f.nombrePac+'\nTotal: '+totalTxt+'\n\n_MedHistoriaClinicaOnline · medhistoriaclinicaonline.com_';
-  window.open('https://wa.me/'+_waNumero(tel)+'?text='+encodeURIComponent(txt),'_blank');
+  window.open('https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(txt),'_blank');
 }
 
 function enviarFacturaHistorialEmail(idx){
@@ -13921,7 +13932,7 @@ function enviarFacturaWA(tipo){
   var tel = prompt('N° de WhatsApp ('+_waFormato().corto+'):');
   if(!tel) return;
   var txt = '🏥 *MedHistoriaClinicaOnline - '+(tipo==='os'?'Factura Obra Social':'Recibo Particular')+'*\n\nPaciente: '+pac+'\nTotal: '+total+'\n\n_MedHistoriaClinicaOnline · medhistoriaclinicaonline.com_';
-  window.open('https://wa.me/'+_waNumero(tel)+'?text='+encodeURIComponent(txt),'_blank');
+  window.open('https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(txt),'_blank');
 }
 
 function enviarFacturaEmail(tipo){
@@ -14084,7 +14095,7 @@ function renderPacientes(lista){
 // ── AGENDA ──
 var turnos = (function(){
   var hoy = new Date();
-  var fmt = function(d){ return d.toISOString().split('T')[0]; };
+  var fmt = function(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
   var fmtDisplay = function(d){ var p=fmt(d).split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
   var manana = new Date(hoy); manana.setDate(hoy.getDate()+1);
   var pasado = new Date(hoy); pasado.setDate(hoy.getDate()+2);
@@ -14120,8 +14131,8 @@ function tagTxt(t){
 function renderTurnos(lista){
   if(!lista) lista = turnos;
 
-  var hoyISO = new Date().toISOString().split('T')[0];
-  var mananaISO = new Date(new Date().setDate(new Date().getDate()+1)).toISOString().split('T')[0];
+  var hoyISO = _fechaLocalISO();
+  var mananaISO = _fechaLocalISO(new Date(new Date().setDate(new Date().getDate()+1)));
   var deHoy = lista.filter(function(t){ return !t.fecha || t.fecha === hoyISO; });
   var proximos = lista.filter(function(t){ return t.fecha && t.fecha > hoyISO; });
   var manana = lista.filter(function(t){ return t.fecha === mananaISO; });
@@ -14290,6 +14301,19 @@ function _fechaLocalISO(d){
   d = d || new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
+// Fechas de nacimiento: no pueden ser posteriores a hoy. Se fija max = hoy (hora local) en todos los campos *-fnac y, si igual se escribe
+// una fecha futura, se avisa y se borra.
+function _aplicarMaxFechasNacimiento(){
+  var hoyL = _fechaLocalISO();
+  document.querySelectorAll('input[type="date"][id$="fnac"]').forEach(function(el){ el.setAttribute('max', hoyL); });
+}
+document.addEventListener('change', function(e){
+  var el = e.target;
+  if(el && el.tagName === 'INPUT' && el.type === 'date' && /fnac$/.test(el.id || '') && el.value && el.value > _fechaLocalISO()){
+    alert('La fecha de nacimiento no puede ser posterior a hoy.');
+    el.value = '';
+  }
+});
 function abrirNuevoTurno(){
   document.getElementById('turnoOverlay').style.display='block';
   // Limpiar campos del formulario
@@ -14353,7 +14377,7 @@ function enviarRecordatorioWANuevoTurno(diasAntes){
     +(emailMedico ? '📧 O puede responder por email a:\n'+emailMedico+'\n\n' : '')
     +'_MedHistoriaClinicaOnline_';
 
-  window.open('https://wa.me/'+_waNumero(wa)+'?text='+encodeURIComponent(msg),'_blank');
+  window.open('https://api.whatsapp.com/send?phone='+_waNumero(wa)+'&text='+encodeURIComponent(msg),'_blank');
 }
 
 function guardarTurno(){
@@ -14436,8 +14460,9 @@ try {
   try{
     if(window._sesionInicialLlegoAntes){ _procesarReingresoAutomatico(window._sesionInicial); }
   }catch(e){ console.warn('[catch]', e); }
-  // Auto-fill fecha actual en campos type="date" (formato YYYY-MM-DD)
-  var hoyISO = new Date().toISOString().split('T')[0];
+  // Auto-fill fecha actual en campos type="date" (formato YYYY-MM-DD), en hora local
+  var hoyISO = _fechaLocalISO();
+  try{ _aplicarMaxFechasNacimiento(); }catch(eMx){ console.warn('[catch]', eMx); }
   var eaFecha = document.getElementById('hc-ea-fecha');
   if(eaFecha && !eaFecha.value) eaFecha.value = hoyISO;
   var hcFecha = document.getElementById('hc-fecha');
@@ -14523,6 +14548,7 @@ function _faltantesRecetaReNaPDiS(d){
   if(!d.jurisdiccion || !d.jurisdiccion.trim()) faltantes.push('jurisdicción/entidad que emitió la matrícula');
   if(!d.domicilio || !d.domicilio.trim()) faltantes.push('domicilio del consultorio');
   if(!d.pac || !d.pac.trim()) faltantes.push('nombre del paciente');
+  if(d.fnac && d.fnac > _fechaLocalISO()) faltantes.push('fecha de nacimiento del paciente (no puede ser posterior a hoy)');
   if((!d.medicamentos || !d.medicamentos.length) && (!d.contenido || !d.contenido.trim())) faltantes.push('medicación prescripta (completá los datos del medicamento y tocá "Agregar a la receta")');
   return faltantes;
 }
@@ -15845,7 +15871,7 @@ function enviarAutoWA(tipo){
         +'_Adjuntá el archivo PDF a este mensaje para enviarlo al paciente._\n\n'
       +'_'+_firmaLeyMsg('Firma Electrónica · Ley 27.553 · ')+'MedHistoriaClinicaOnline_'; 
       var numLimpio = _waNumero(tel);
-      window.open('https://wa.me/'+numLimpio+'?text='+encodeURIComponent(msg),'_blank');
+      window.open('https://api.whatsapp.com/send?phone='+numLimpio+'&text='+encodeURIComponent(msg),'_blank');
     }, 800);
   });
 }
@@ -15956,7 +15982,7 @@ function _enviarWhatsAppDoc(d, tel){
     +'Adjuntalo a este mensaje desde el clip 📎\n\n'
     +'_'+_firmaLeyMsg('Firma Electrónica · Ley 27.553 · ')+'MedHistoriaClinicaOnline_';
 
-  window.open('https://wa.me/'+_waNumero(tel)+'?text='+encodeURIComponent(msg),'_blank');
+  window.open('https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(msg),'_blank');
 }
 
 function getDatosDocumento(tipo){
@@ -16116,7 +16142,7 @@ function enviarWhatsApp(tipo){
       +'\n\n👨‍⚕️ '+medico
       +'\n\n_'+_firmaLeyMsg('Emitido con firma electrónica · Ley 27.553 · ')+'medhistoriaclinicaonline.com_';
   }
-  var url = 'https://wa.me/'+_waNumero(tel)+'?text='+encodeURIComponent(texto);
+  var url = 'https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(texto);
   window.open(url, '_blank');
 }
 
@@ -16195,7 +16221,7 @@ setTimeout(ocultarSplash, 2000);
 
 // Auto-fill fecha en enfermedad actual al cargar
 window.addEventListener('load', function(){
-  var hoyISO = new Date().toISOString().split('T')[0];
+  var hoyISO = _fechaLocalISO();
   var eaFecha = document.getElementById('hc-ea-fecha');
   if(eaFecha && !eaFecha.value) eaFecha.value = hoyISO;
   var hcFecha = document.getElementById('hc-fecha');
@@ -16502,7 +16528,7 @@ function _enviarRecordatorioTurno(t, tel){
     +'❌ Para *CANCELAR* su turno escriba:\n*CANCELO*\n\n'
     +'_Gracias · MedHistoriaClinicaOnline_';
 
-  window.open('https://wa.me/'+_waNumero(tel)+'?text='+encodeURIComponent(msg), '_blank');
+  window.open('https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(msg), '_blank');
 }
 
 // ══ ESTRUCTURA DE PRECIOS (2026-09-24) — planes individuales, Centro Médico y
@@ -16779,7 +16805,7 @@ function exportarPacientes(){
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = 'backup-pacientes-' + new Date().toISOString().slice(0,10) + '.json';
+    a.download = 'backup-pacientes-' + _fechaLocalISO() + '.json';
     a.click();
     URL.revokeObjectURL(url);
   } catch(e) {
