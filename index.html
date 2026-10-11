@@ -5838,6 +5838,7 @@ function showPanel(id){
   try{ var _pa = document.querySelector('.app-panel.act'); if(_pa && _pa.id === 'panel-recetas' && id !== 'recetas') _salirDeRecetas(); }catch(eSr){ console.warn('[catch]', eSr); }
   try{ aplicarTextosFirmaPorPais(); }catch(eFp){ console.warn('[catch]', eFp); }
   if(id==='recetas'){ try{ _iniciarRecetaSiHaceFalta(); }catch(eIr){ console.warn('[catch]', eIr); } }
+  if(id==='telemed'){ try{ _valoresPorDefectoTelemedicina(); }catch(eTd){ console.warn('[catch]', eTd); } }
   // Ocultar TODOS los paneles primero
   document.querySelectorAll('.app-panel').forEach(function(p){
     p.classList.remove('act');
@@ -13149,7 +13150,7 @@ async function generarVideollamada(){
   if(!fecha){ alert('Seleccioná la fecha.'); return; }
   if(!hora){ alert('Ingresá la hora.'); return; }
   if(!tel && !email){ alert('Ingresá teléfono o email del paciente.'); return; }
-  if(_esFechaHoraPasada(fecha, hora) && !confirm('⚠️ La fecha y hora de la videoconsulta ('+fecha.split('-').reverse().join('/')+' '+hora+') ya pasó.\n\nLa sala se crea para ese horario y se cierra 24 h después. ¿Querés crearla igual?')) return;
+  if(!_confirmarVideoconsultaPasada(fecha, hora, fecha.split('-').reverse().join('/'))) return;
 
   // Sala de videollamada en Daily.co (Edge Function daily-room). Sala pública
   // con nombre imposible de adivinar; se autodestruye 24 h después del turno.
@@ -13243,9 +13244,30 @@ function getDatosTele(){
 }
 
 // Videoconsulta en fecha/hora pasada: se pide confirmar (Cancelar = no se guarda). Devuelve true para seguir.
+// Aviso único (un solo botón Aceptar) cuando la fecha y hora elegidas ya pasaron: Telemedicina (las dos pestañas) y Nuevo turno.
+function _avisoFechaHoraPasada(fechaDisplay, hora){
+  alert('La fecha y hora elegidas ('+fechaDisplay+' '+hora+') ya pasaron. Elegí una fecha y hora futura.');
+}
+// Devuelve true si se puede seguir; si la fecha y hora ya pasaron avisa y devuelve false (no se guarda).
 function _confirmarVideoconsultaPasada(fechaISO, hora, fechaDisplay){
   if(!_esFechaHoraPasada(fechaISO, hora)) return true;
-  return confirm('⚠️ La fecha y hora de la videoconsulta ('+fechaDisplay+' '+hora+') ya pasó.\n\n¿Querés cargarla igual?');
+  _avisoFechaHoraPasada(fechaDisplay, hora);
+  return false;
+}
+// Fecha y hora por defecto (misma regla que Nuevo turno): hoy a las 9:00, o la próxima hora en punto si las 9:00 ya pasaron; pasadas las 23 h, mañana a las 9:00.
+function _fechaHoraPorDefecto(){
+  var ahora = new Date();
+  var fecha = _fechaLocalISO(ahora), hora = '09:00';
+  if(_esFechaHoraPasada(fecha, hora)){
+    if(ahora.getHours() >= 23){ fecha = _fechaLocalISO(new Date(ahora.getTime() + 86400000)); }
+    else { hora = String(ahora.getHours() + 1).padStart(2,'0') + ':00'; }
+  }
+  return { fecha: fecha, hora: hora };
+}
+function _valoresPorDefectoTelemedicina(){
+  var f = document.getElementById('tele-fecha'), h = document.getElementById('tele-hora');
+  if(!f || !h) return;
+  if(!f.value || _esFechaHoraPasada(f.value, h.value || '00:00')){ var d = _fechaHoraPorDefecto(); f.value = d.fecha; h.value = d.hora; }
 }
 
 function iniciarVideollamadaWA(){
@@ -14260,6 +14282,8 @@ function _fechaLocalISO(d){
 function _aplicarMaxFechasNacimiento(){
   var hoyL = _fechaLocalISO();
   document.querySelectorAll('input[type="date"][id$="fnac"]').forEach(function(el){ el.setAttribute('max', hoyL); });
+  // Videoconsulta y Nuevo turno: la fecha no puede ser anterior a hoy (la hora se valida al guardar).
+  ['tele-fecha','turno-fecha'].forEach(function(id){ var el = document.getElementById(id); if(el) el.setAttribute('min', hoyL); });
 }
 document.addEventListener('change', function(e){
   var el = e.target;
@@ -14302,7 +14326,7 @@ function guardarTurno(){
   if(!hora){ alert('Ingresá la hora del turno.'); return; }
   var partes = fecha.split('-');
   var fechaDisplay = partes[2]+'/'+partes[1]+'/'+partes[0];
-  if(_esFechaHoraPasada(fecha, hora) && !confirm('⚠️ La fecha y hora del turno ('+fechaDisplay+' '+hora+') ya pasó.\n\n¿Querés cargarlo igual?')) return;
+  if(_esFechaHoraPasada(fecha, hora)){ _avisoFechaHoraPasada(fechaDisplay, hora); return; }
   turnos.push({pac:pac, fecha:fecha, fechaDisplay:fechaDisplay, hora:hora, motivo:motivo||'Consulta', os:os, estado:prio, wa:wa});
   // Guardar también en Supabase
   if(usuarioActual && usuarioActual.id){
