@@ -246,9 +246,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;
 .pbtn{width:100%;padding:8px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;border:1.5px solid var(--g5);background:transparent;color:var(--g3);transition:all .2s;}
 .pbtn:hover{background:var(--g5);color:#fff;}
 a.pbtn{display:block;text-align:center;text-decoration:none;box-sizing:border-box;}
-/* Cinta "Lanzamiento en noviembre" en la portada (hero): esquina superior IZQUIERDA, debajo de la barra fija de 64px. Oro metálico con brillos y sombras. */
+/* Cinta "Lanzamiento en diciembre" en la portada (hero): esquina superior IZQUIERDA, debajo de la barra fija de 64px. Oro metálico con brillos y sombras. */
 .hero-cinta-wrap{position:absolute;top:64px;left:0;width:320px;height:320px;overflow:hidden;pointer-events:none;z-index:6;}
-.hero-cinta{position:absolute;top:91px;left:-100px;width:470px;transform:rotate(-45deg);text-align:center;padding:14px 0;
+.hero-cinta{position:absolute;top:91px;left:-100px;width:470px;transform:rotate(-45deg);text-align:center;padding:14px 24px 14px 0;
   font-family:'Outfit',sans-serif;font-weight:800;font-size:1.08rem;letter-spacing:.1em;text-transform:uppercase;color:#3a2200;
   background:
     linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.6) 16%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 58%,rgba(255,255,255,.4) 72%,rgba(255,255,255,0) 86%),
@@ -261,7 +261,7 @@ a.pbtn{display:block;text-align:center;text-decoration:none;box-sizing:border-bo
 .hero-cinta::after{bottom:5px;}
 @media(max-width:600px){
   .hero-cinta-wrap{width:250px;height:240px;}
-  .hero-cinta{top:77px;left:-64px;width:300px;font-size:.78rem;letter-spacing:.06em;padding:8px 0;}
+  .hero-cinta{top:77px;left:-64px;width:300px;font-size:.78rem;letter-spacing:.06em;padding:8px 0 8px 12px;}
   .hero{padding-top:270px;}
 }
 .hl .pbtn{background:var(--g5);color:#fff;border-color:var(--g5);}
@@ -585,7 +585,7 @@ function _limpiarFormPago(){
   if(term) term.checked = false;
 }
 
-// ── IA Extra (PRÓXIMAMENTE, lanzamiento previsto en noviembre): el botón NO contrata ni cobra nada, solo abre un contacto para avisar interés. ──
+// ── IA Extra (PRÓXIMAMENTE, lanzamiento previsto en diciembre): el botón NO contrata ni cobra nada, solo abre un contacto para avisar interés. ──
 // Número de WhatsApp al que llegan los avisos de interés en IA Extra (solo dígitos, con código de país).
 // Si se deja vacío, el botón abre un mail a soporte en su lugar.
 var IA_EXTRA_WHATSAPP = '5491133471724';
@@ -1099,7 +1099,7 @@ function mhcdRechazarCookies(){
 <section class="hero">
   <div class="orb orb1"></div>
   <div class="orb orb2"></div>
-  <div class="hero-cinta-wrap"><div class="hero-cinta">Lanzamiento en noviembre</div></div>
+  <div class="hero-cinta-wrap"><div class="hero-cinta">Lanzamiento en diciembre</div></div>
   <div class="hero-inner">
     <div class="hero-pill"><span></span>Multipaís · Cumplimiento Legal por País</div>
     <div class="hero-kicker">Hecho por médicos, para médicos</div>
@@ -1230,31 +1230,31 @@ function mhcdRechazarCookies(){
     <!-- ADD-ON RECORDATORIOS AUTOMÁTICOS -->
     <div style="max-width:900px;margin:56px auto 0;background:linear-gradient(135deg,#f0fdf4,#eef2ff);border:1.5px solid var(--g8);border-left:6px solid var(--g4);border-radius:18px;padding:34px 36px;box-shadow:0 16px 40px rgba(20,90,50,.14);">
       <div class="sec-head">
-        <div class="sec-tag">Add-on opcional · Próximamente</div>
+        <div class="sec-tag">Add-on opcional</div>
         <h2 class="sec-title" style="font-size:clamp(1.5rem,3vw,2rem);">Recordatorios Automáticos</h2>
-        <p class="sec-sub">El envío manual de WhatsApp y mail (tocando un botón vos) es <strong>gratis en todos los planes</strong>. Este add-on, que <strong>estará disponible próximamente</strong>, será solo para el envío <strong>automático</strong>, sin que tengas que tocar nada.</p>
+        <p class="sec-sub">Los recordatorios de turno por WhatsApp y mail están disponibles <strong>solo con este add-on</strong>. El envío de recetas, derivaciones y estudios al paciente es <strong>gratis en todos los planes</strong> y no usa este cupo.</p>
       </div>
       <div class="planes-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
         <div class="plan" style="border-left:4px solid var(--g4);">
           <span class="plan-icon">💬</span>
           <div class="pname">Chico</div>
-          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">11</span><span class="pprice-p">/mes</span></div>
+          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">18</span><span class="pprice-p">/mes</span></div>
           <hr class="pline">
-          <ul class="pfeats"><li>150 WhatsApp automáticos/mes</li><li>300 emails automáticos/mes</li></ul>
+          <ul class="pfeats"><li>150 mensajes de turno por WhatsApp/mes</li><li>300 mensajes de turno por email/mes</li></ul>
         </div>
         <div class="plan" style="border-left:4px solid var(--g4);">
           <span class="plan-icon">💬</span>
           <div class="pname">Mediano</div>
-          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">18</span><span class="pprice-p">/mes</span></div>
+          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">25</span><span class="pprice-p">/mes</span></div>
           <hr class="pline">
-          <ul class="pfeats"><li>300 WhatsApp automáticos/mes</li><li>800 emails automáticos/mes</li></ul>
+          <ul class="pfeats"><li>300 mensajes de turno por WhatsApp/mes</li><li>800 mensajes de turno por email/mes</li></ul>
         </div>
         <div class="plan" style="border-left:4px solid var(--g4);">
           <span class="plan-icon">💬</span>
           <div class="pname">Grande</div>
-          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">30</span><span class="pprice-p">/mes</span></div>
+          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">37</span><span class="pprice-p">/mes</span></div>
           <hr class="pline">
-          <ul class="pfeats"><li>600 WhatsApp automáticos/mes</li><li>2.000 emails automáticos/mes</li></ul>
+          <ul class="pfeats"><li>600 mensajes de turno por WhatsApp/mes</li><li>2.000 mensajes de turno por email/mes</li></ul>
         </div>
       </div><!-- /add-on grid -->
     </div><!-- /add-on panel -->
@@ -2743,7 +2743,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             </div>
             <div class="fl" style="grid-column:1/-1;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;"><input type="checkbox" id="rx2-incluir-contacto" style="accent-color:#22a050;width:15px;height:15px;">Incluir mi teléfono y email de contacto en esta receta (destildado por defecto — vos decidís cada vez)</label></div>
             <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 14px;grid-column:1/-1;margin-top:4px;">
-              <div style="font-size:.72rem;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:8px;">📤 Envío automático — completá para enviar sin pasos adicionales</div>
+              <div style="font-size:.72rem;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:8px;">📤 Contacto del paciente — completá su WhatsApp y/o su email para enviarle el documento con el botón «Enviar al paciente»</div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;">
                 <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">📱 WhatsApp del paciente<input class="mi" id="rx2-wa" type="tel" placeholder="11 1234-5678" data-wa-ph="{ej}" style="margin-top:4px;"></div>
                 <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">✉️ Email del paciente<input class="mi" id="rx2-email" type="email" placeholder="paciente@email.com" style="margin-top:4px;"></div>
@@ -2883,7 +2883,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div class="fl"><label>Urgencia<select id="der-urgencia"><option>Programada</option><option>Preferencial</option><option>Urgente</option></select></div>
             <div class="fl full"><label>Médico solicitante<input type="text" id="der-medico" placeholder="Dr. Apellido · Especialidad · Matrícula 00000"></div>
             <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 14px;grid-column:1/-1;margin-top:4px;">
-              <div style="font-size:.72rem;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:8px;">📤 Envío automático — completá para enviar sin pasos adicionales</div>
+              <div style="font-size:.72rem;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:8px;">📤 Contacto del paciente — completá su WhatsApp y/o su email para enviarle el documento con el botón «Enviar al paciente»</div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;">
                 <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">📱 WhatsApp del paciente<input class="mi" id="der-wa" type="tel" placeholder="11 1234-5678" data-wa-ph="{ej}" style="margin-top:4px;"></div>
                 <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">✉️ Email del paciente<input class="mi" id="der-email" type="email" placeholder="paciente@email.com" style="margin-top:4px;"></div>
@@ -2938,7 +2938,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div class="fl"><label>Urgencia<select><option>Programada</option><option>Preferencial</option><option>Urgente</option></select></div>
             <div class="fl"><label>Médico solicitante<input type="text" id="est-medico" placeholder="Dr. Apellido · Matrícula 00000"></div>
             <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 14px;grid-column:1/-1;margin-top:4px;">
-              <div style="font-size:.72rem;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:8px;">📤 Envío automático — completá para enviar sin pasos adicionales</div>
+              <div style="font-size:.72rem;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:8px;">📤 Contacto del paciente — completá su WhatsApp y/o su email para enviarle el documento con el botón «Enviar al paciente»</div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;">
                 <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">📱 WhatsApp del paciente<input class="mi" id="est-wa" type="tel" placeholder="11 1234-5678" data-wa-ph="{ej}" style="margin-top:4px;"></div>
                 <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">✉️ Email del paciente<input class="mi" id="est-email" type="email" placeholder="paciente@email.com" style="margin-top:4px;"></div>
@@ -2974,8 +2974,13 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           </div>
           <div style="display:flex;flex-direction:column;gap:12px;">
             <button onclick="enviarDesdeOverlay('wa')" style="padding:16px 20px;border-radius:14px;border:none;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 14px rgba(37,211,102,.3);">
-              <span style="font-size:1.3rem;">📱</span> Enviar por WhatsApp
+              <span style="font-size:1.3rem;">📱</span> Abrir chat con el número
             </button>
+            <div id="envioOverlay-wa" style="font-size:.78rem;color:#555;margin-top:-6px;"></div>
+            <button id="envio-btn-compartir" onclick="enviarDesdeOverlay('compartir')" style="display:none;padding:16px 20px;border-radius:14px;border:none;background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;align-items:center;justify-content:center;gap:10px;">
+              <span style="font-size:1.3rem;">📤</span> Compartir con el PDF
+            </button>
+            <div id="envioOverlay-compartir-info" style="display:none;font-size:.78rem;color:#134e4a;background:#f0fdfa;border:1px solid #99f6e4;border-radius:10px;padding:8px 12px;margin-top:-4px;"></div>
             <button onclick="enviarDesdeOverlay('email')" style="padding:16px 20px;border-radius:14px;border:none;background:linear-gradient(135deg,#1a6aab,#0e4d8a);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 14px rgba(14,77,138,.3);">
               <span style="font-size:1.3rem;">✉️</span> Enviar por Email
             </button>
@@ -3138,12 +3143,12 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div class="app-page-title" style="margin-bottom:2px;">Agenda</div>
             <div class="app-page-sub" style="margin-bottom:14px;">Turnos de hoy y próximos días</div>
 
-            <!-- RECORDATORIOS INFO -->
-            <div style="background:linear-gradient(135deg,#075e54,#128c7e);border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-              <div style="font-size:1.8rem;">📱</div>
-              <div style="flex:1;">
-                <div style="color:#fff;font-weight:700;font-size:.88rem;margin-bottom:3px;">Recordatorios por WhatsApp</div>
-                <div style="color:rgba(255,255,255,.8);font-size:.76rem;line-height:1.5;">Hacé clic en <strong>📱 Recordatorio</strong> en cada turno para enviar el mensaje directo al paciente.</div>
+            <!-- RECORDATORIOS DE TURNO — servicio adicional (add-on Recordatorios Automáticos) -->
+            <div id="agenda-recordatorios-info" style="background:#f3f4f6;border:1.5px solid #d1d5db;border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+              <div style="font-size:1.8rem;">🔔</div>
+              <div style="flex:1;min-width:200px;">
+                <div style="color:#374151;font-weight:700;font-size:.88rem;margin-bottom:3px;">Recordatorios de turno</div>
+                <div style="color:#6b7280;font-size:.76rem;line-height:1.5;">Los recordatorios de turno son un servicio adicional. Para usarlos, adquirí el add-on Recordatorios Automáticos.</div>
               </div>
             </div>
             <div class="app-page-sub" style="margin:0;">Gestión de turnos y citas</div>
@@ -3240,13 +3245,10 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div>
               <label style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">📋 Motivo de consulta
               <input class="mi" id="turno-motivo" type="text" placeholder="Ej: Control HTA, Primera consulta...">
-              <label style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">WhatsApp del paciente
+              <label style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">WhatsApp del paciente <span style="font-weight:400;text-transform:none;">(se usa solo con el add-on Recordatorios Automáticos)</span>
               <input class="mi" id="turno-wa" type="text" placeholder="11 1234-5678" data-wa-ph="{ej}" style="margin-bottom:8px;">
-              <label style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Email del paciente <span style="font-weight:400;text-transform:none;">(para recibir confirmaciones)</span>
+              <label style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Email del paciente <span style="font-weight:400;text-transform:none;">(se usa solo con el add-on Recordatorios Automáticos)</span>
               <input class="mi" id="turno-email" type="email" placeholder="paciente@email.com" style="margin-bottom:8px;">
-              <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button onclick="enviarRecordatorioWANuevoTurno(1)" style="flex:1;background:linear-gradient(135deg,#128c7e,#25d366);color:#fff;border:none;border-radius:9px;padding:10px 12px;font-size:.78rem;font-weight:600;cursor:pointer;">📱 Recordatorio 1 día antes</button>
-              </div>
             </div>
 
             <!-- OS y Prioridad -->
@@ -13176,15 +13178,7 @@ async function generarVideollamada(){
   videoconsultas.unshift(nuevaVC);
   guardarVideoconsultaSupabase(nuevaVC);
 
-  var msg = '🏥 *MedHistoriaClinicaOnline · Videoconsulta*\n\n'
-    +'Hola '+pac+', tu videoconsulta está confirmada.\n\n'
-    +'📅 Fecha: '+fechaDisplay+'\n'
-    +'🕐 Hora: '+hora+' hs\n'
-    +'⏱ Duración: '+duracion+'\n'
-    +'📋 Motivo: '+motivo+'\n\n'
-    +'🎥 *Tu link para entrar:*\n'+linkVideollamada+'\n\n'
-    +'Hacé clic al momento del turno. *No necesitás instalar nada*, funciona directo desde tu celular o computadora.\n\n'
-    +'_MedHistoriaClinicaOnline_';
+  var msg = 'Hola '+pac+', '+_medicoMensaje()+' le confirma su videoconsulta el '+fechaDisplay+' a las '+hora+' hs (duración: '+duracion+'). Para entrar use este enlace: '+linkVideollamada;
 
   // Mostrar modal con link y opciones
   var modal = document.createElement('div');
@@ -14106,7 +14100,7 @@ function renderTurnos(lista){
     var idx = turnos.indexOf(t);
     var fecha = (mostrarFecha && t.fechaDisplay)?'<span style="font-size:.76rem;color:var(--g4);font-weight:600;"> '+escHtml(t.fechaDisplay)+'</span>':'';
     var op = t.estado==='ok'?'opacity:.65;':'';
-    var waBtn = '<button onclick="enviarRecordatorioWA('+idx+')" title="Enviar recordatorio por WhatsApp" style="background:none;border:none;color:#25D366;cursor:pointer;font-size:1rem;padding:0 4px;">📱</button>';
+    var waBtn = '<button onclick="avisoRecordatoriosTurno('+idx+')" title="Recordatorios de turno (servicio adicional)" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:1rem;padding:0 4px;opacity:.7;">📱</button>';
     return '<div class="agenda-item" style="'+op+'">'
       +'<div class="agenda-hora">'+escHtml(t.hora)+'</div>'
       +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(t.pac)+fecha+'</div><div class="agenda-mot">'+escHtml(t.motivo||'Consulta')+(t.os?' · '+escHtml(t.os):'')+'</div></div>'
@@ -14295,51 +14289,6 @@ function abrirNuevoTurno(){
 function cerrarNuevoTurno(){
   document.getElementById('turnoOverlay').style.display='none';
 }
-function enviarRecordatorioWANuevoTurno(diasAntes){
-  diasAntes = diasAntes || 1;
-  var pac = (document.getElementById('turno-pac')||{}).value||'';
-  var fecha = (document.getElementById('turno-fecha')||{}).value||'';
-  var hora = (document.getElementById('turno-hora')||{}).value||'';
-  var wa = (document.getElementById('turno-wa')||{}).value||'';
-  var emailPac = (document.getElementById('turno-email')||{}).value||'';
-  var motivo = (document.getElementById('turno-motivo')||{}).value||'';
-  if(!wa){ alert('Ingresá el número de WhatsApp del paciente.'); return; }
-  if(!fecha||!hora){ alert('Ingresá fecha y hora del turno primero.'); return; }
-  var partes = fecha.split('-');
-  var fechaDisplay = partes[2]+'/'+partes[1]+'/'+partes[0];
-
-  // Nombre del médico — tomar del campo de usuario (sin ✏️)
-  var medicoEl = document.getElementById('app-user-name');
-  var medico = medicoEl ? medicoEl.textContent.replace(/✏️/g,'').trim() : 'Su médico';
-  if(!medico || medico === 'Dr. Usuario') medico = 'Su médico';
-
-  // Email del médico que emite el turno: a ese mail le llegan las respuestas del paciente (si no hubiera ninguno, la línea no se agrega)
-  var emailMedico = (usuarioActual && usuarioActual.email) ? String(usuarioActual.email).trim() : '';
-
-  var cuando = diasAntes === 2 ? 'RECORDATORIO — faltan 2 días para su turno' : 'RECORDATORIO — mañana es su turno';
-  var pacMayus = pac.toUpperCase();
-
-  // Links de confirmación por email
-  var asuntoConfirma = encodeURIComponent('CONFIRMO turno '+fechaDisplay+' '+hora+'hs - '+pac);
-  var asuntoCancela = encodeURIComponent('CANCELO turno '+fechaDisplay+' '+hora+'hs - '+pac);
-  var linkConfirma = 'mailto:'+emailMedico+'?subject='+asuntoConfirma+'&body='+encodeURIComponent('Confirmo mi turno del '+fechaDisplay+' a las '+hora+' hs.\n\nPaciente: '+pac);
-  var linkCancela = 'mailto:'+emailMedico+'?subject='+asuntoCancela+'&body='+encodeURIComponent('Necesito cancelar mi turno del '+fechaDisplay+' a las '+hora+' hs.\n\nPaciente: '+pac);
-
-  var msg = '🏥 *MedHistoriaClinicaOnline*\n\n'
-    +'📅 '+cuando+'\n\n'
-    +'Hola *'+pacMayus+'*, le recordamos su turno médico:\n\n'
-    +'📆 Fecha: *'+fechaDisplay+'*\n'
-    +'🕐 Hora: *'+hora+' hs*\n'
-    +(motivo ? '📋 Motivo: '+motivo+'\n' : '')
-    +'👨‍⚕️ Médico: *'+medico+'*\n\n'
-    +'✅ Para *CONFIRMAR* su turno responda este mensaje con la palabra:\n*CONFIRMO*\n\n'
-    +'❌ Para *CANCELAR* responda con:\n*CANCELO*\n\n'
-    +(emailMedico ? '📧 O puede responder por email a:\n'+emailMedico+'\n\n' : '')
-    +'_MedHistoriaClinicaOnline_';
-
-  window.open('https://api.whatsapp.com/send?phone='+_waNumero(wa)+'&text='+encodeURIComponent(msg),'_blank');
-}
-
 function guardarTurno(){
   var pac = document.getElementById('turno-pac').value.trim();
   var fecha = document.getElementById('turno-fecha').value;
@@ -14371,12 +14320,6 @@ function guardarTurno(){
       };
       sb.from('turnos').insert(turnoSB).then(function(){});
     });
-  }
-  
-  // Ofrecer enviar recordatorio por WA
-  if(wa){
-    var enviar = confirm('✅ Turno guardado.\n\n¿Querés enviarle un recordatorio por WhatsApp a '+pac+'?');
-    if(enviar) enviarRecordatorioWANuevoTurno();
   }
   
   cerrarNuevoTurno();
@@ -15853,24 +15796,10 @@ function enviarAutoEmail(tipo){
 
     // Abrir cliente de email
     setTimeout(function(){
-      var asunto = d.titulo+' — '+d.pac+' — '+new Date().toLocaleDateString('es-AR');
-      var cuerpo = d.titulo+'\n====================================\n'
-        +'Fecha: '+d.fecha+' · '+d.hora+' hs\n'
-        +'Paciente: '+d.pac+'\n'
-        +(d.dni?'DNI: '+d.dni+'\n':'')
-        +(d.os?'Obra Social: '+d.os+'\n':'')
-        +(d.esp?'Especialidad: '+d.esp+'\n':'')
-        +(d.diag?'Diagnóstico: '+d.diag+'\n':'')
-        +'\n'+d.labelContenido+':\n'+(d.contenido||'')
-        +(d.ind?'\n\nIndicaciones:\n'+d.ind:'')
-        +'\n\n'+d.medico
-        +'\n\n====================================\n'
-        +'ADJUNTO PDF: El archivo PDF "'+ nombre +'" se descargó automáticamente\n'
-        +'en tu carpeta de Descargas. Adjuntalo a este email antes de enviarlo.\n'
-        +'====================================\n'
-       +_firmaLeyMsg('Firma Electrónica - Ley 27.553\n')
-        +'MedHistoriaClinicaOnline\nconsultas@medhistoriaclinicaonline.com';
+      var asunto = 'Hola, '+_medicoMensaje()+' le envía '+_queSeEnvia(tipo);
+      var cuerpo = 'Hola,\n\n'+_medicoMensaje()+' le envía '+_queSeEnvia(tipo)+' (archivo PDF adjunto).\n\nSaludos.';
       window.location.href='mailto:'+email+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
+      _toastAviso('📎 El PDF se descargó: adjuntalo en tu correo antes de enviarlo', 20000);
     }, 800);
   });
 }
@@ -15885,6 +15814,7 @@ function mostrarOpcionesEnvio(tipo){
   document.body.appendChild(overlay); // evita que quede oculto si terminó anidado dentro de otro panel
   var nom = document.getElementById('envioOverlay-nombre');
   if(nom) nom.textContent = d.pac;
+  try{ _actualizarOpcionesCompartir(tipo); }catch(eCmp){ console.warn('[catch]', eCmp); }
   overlay.style.display = 'flex';
 }
 function enviarDesdeOverlay(canal){
@@ -15896,6 +15826,10 @@ function enviarDesdeOverlay(canal){
   //  pasan por ahí. Registrar la derivación también acá la guardaba dos veces, y una vez aunque después el envío se frenara por el add-on.)
   if(canal === 'pdf'){
     descargarPDF(tipo);
+    return;
+  }
+  if(canal === 'compartir'){
+    compartirPDFNativo(tipo);
     return;
   }
   // Chequear addon para WhatsApp y Email
@@ -15918,31 +15852,116 @@ function compartirWhatsApp(tipo){
   if(!tel){ 
     pedirTelefono('WhatsApp del paciente ' + d.pac, function(telIngresado){
       if(!telIngresado) return;
-      _enviarWhatsAppDoc(d, telIngresado);
+      _enviarWhatsAppDoc(d, telIngresado, tipo);
     });
     return;
   }
-  _enviarWhatsAppDoc(d, tel);
+  _enviarWhatsAppDoc(d, tel, tipo);
 }
 
-function _enviarWhatsAppDoc(d, tel){
-  var msg = '🏥 *MedHistoriaClinicaOnline*\n\n'
-    +'📋 *'+d.titulo+'*\n'
-    +'📅 '+d.fecha+' · '+d.hora+' hs\n\n'
-    +'👤 *PACIENTE: '+d.pac+'*\n'
-    +(d.dni ? '🪪 DNI: '+d.dni+'\n' : '')
-    +(d.os ? '🏥 Obra Social: '+d.os+'\n' : '')
-    +(d.esp ? '🔗 Especialidad: '+d.esp+'\n' : '')
-    +(d.diag ? '🩺 Diagnóstico: '+d.diag+'\n' : '')
-    +'\n*'+d.labelContenido+':*\n'
-    +(d.contenido||'(no indicado)')
-    +(d.ind ? '\n\n📋 *Indicaciones:*\n'+d.ind : '')
-    +'\n\n👨‍⚕️ *'+d.medico+'*\n\n'
-    +'📎 *El PDF ya se descargó en tu dispositivo.*\n'
-    +'Adjuntalo a este mensaje desde el clip 📎\n\n'
-    +'_'+_firmaLeyMsg('Firma Electrónica · Ley 27.553 · ')+'MedHistoriaClinicaOnline_';
+// ── Mensajes manuales de documentos: sin marca, sin datos clínicos, sin CONFIRMO/CANCELO ──
+function _medicoMensaje(){
+  return nombreConTitulo(usuarioActual);   // «Dr. / Dra. + nombre», igual que en los PDF
+}
+function _queSeEnvia(tipo){
+  return ({ receta:'su receta', derivacion:'su derivación', pedido:'su pedido de estudios', ord:'su orden médica' })[tipo] || 'su documento';
+}
+function _textoWhatsAppDoc(tipo){
+  return 'Hola, '+_medicoMensaje()+' le envía '+_queSeEnvia(tipo)+'.';
+}
+// Aviso discreto (aparte del mensaje) para el médico; se cierra solo o al tocarlo.
+function _toastAviso(msg, ms){
+  var el = document.getElementById('toast-aviso-envio');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'toast-aviso-envio';
+    el.setAttribute('role', 'status');
+    el.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#0a3d1f;color:#fff;padding:12px 20px;border-radius:24px;font-size:.85rem;font-weight:600;font-family:Outfit,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.35);z-index:100001;max-width:calc(100% - 32px);text-align:center;cursor:pointer;';
+    el.onclick = function(){ el.style.display = 'none'; };
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.style.display = 'none'; }, ms || 15000);
+}
+function _enviarWhatsAppDoc(d, tel, tipo){
+  window.open('https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(_textoWhatsAppDoc(tipo)),'_blank');
+  _toastAviso('📎 El PDF se descargó: adjuntalo en el chat de WhatsApp con el clip', 20000);
+}
 
-  window.open('https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(msg),'_blank');
+// ── «Compartir con el PDF» (Web Share API con archivo): solo en celulares que lo soportan ──
+function _esCelular(){
+  try{
+    var ua = navigator.userAgent || '';
+    return /Android|iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && (navigator.maxTouchPoints||0) > 1);
+  }catch(e){ return false; }
+}
+function _puedeCompartirArchivos(){
+  try{
+    if(typeof navigator.share !== 'function' || typeof navigator.canShare !== 'function' || typeof File === 'undefined') return false;
+    var f = new File([new Blob(['%PDF-1.4'], {type:'application/pdf'})], 'prueba.pdf', {type:'application/pdf'});
+    return !!navigator.canShare({ files:[f] });
+  }catch(e){ return false; }
+}
+function _datosContactoEnvio(tipo){
+  var d = getDatosDocumento(tipo);
+  var waId = tipo==='receta' ? 'rx2-wa' : tipo==='derivacion' ? 'der-wa' : 'est-wa';
+  return { pac: d.pac || '', tel: ((document.getElementById(waId)||{}).value||'').trim() };
+}
+function _actualizarOpcionesCompartir(tipo){
+  var c = _datosContactoEnvio(tipo);
+  var lineaWa = document.getElementById('envioOverlay-wa');
+  if(lineaWa) lineaWa.textContent = c.tel ? ('WhatsApp cargado: '+c.tel) : 'No hay WhatsApp cargado: se te va a pedir al abrir el chat.';
+  var puede = _esCelular() && _puedeCompartirArchivos();
+  var btn = document.getElementById('envio-btn-compartir');
+  var info = document.getElementById('envioOverlay-compartir-info');
+  if(btn) btn.style.display = puede ? 'flex' : 'none';
+  if(info){
+    info.style.display = puede ? 'block' : 'none';
+    info.textContent = 'Se abre «Compartir»: elegí el chat de '+c.pac+(c.tel ? (' · '+c.tel) : ' (sin número cargado)')+'.';
+  }
+}
+function _nombreArchivoNeutro(tipo){
+  var base = ({ receta:'Receta', derivacion:'Derivacion', pedido:'Pedido_de_estudios', ord:'Orden' })[tipo] || 'Documento';
+  return base+'_'+_fechaLocalISO()+'.pdf';   // sin el nombre del paciente
+}
+function compartirPDFNativo(tipo){
+  var c = _datosContactoEnvio(tipo);
+  if(!c.pac){ alert('Completá el nombre del paciente primero.'); return; }
+  _generarParaEntregar(tipo, function(doc){
+    var blob = null;
+    try{ blob = doc.output('blob'); }catch(e){ console.error(e); }
+    if(!blob){ alert('No se pudo preparar el PDF para compartir. Probá con «Abrir chat con el número».'); return; }
+    var datos = { files:[ new File([blob], _nombreArchivoNeutro(tipo), {type:'application/pdf'}) ], text:_textoWhatsAppDoc(tipo) };
+    _compartirArchivo(datos, c);
+  });
+}
+function _compartirArchivo(datos, c){
+  var fallo = function(err){
+    var n = err && err.name;
+    if(n === 'AbortError') return;                                   // canceló la hoja de Compartir: no es un error
+    if(n === 'NotAllowedError'){ _ofrecerCompartirManual(datos, c); return; }   // pasó mucho tiempo desde el toque: se pide otro toque
+    console.error('compartir:', err);
+    _toastAviso('No se pudo abrir «Compartir». Usá «Abrir chat con el número».', 9000);
+  };
+  try{ navigator.share(datos).catch(fallo); }catch(e){ fallo(e); }
+}
+function _ofrecerCompartirManual(datos, c){
+  var viejo = document.getElementById('compartir-manual-bar');
+  if(viejo) viejo.remove();
+  var bar = document.createElement('div');
+  bar.id = 'compartir-manual-bar';
+  bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:16px;z-index:100002;background:#fff;border:2px solid #14b8a6;border-radius:16px;padding:14px;box-shadow:0 10px 40px rgba(0,0,0,.35);font-family:Outfit,sans-serif;text-align:center;';
+  bar.innerHTML = '<div style="font-size:.85rem;color:#134e4a;margin-bottom:10px;">El PDF está listo. Elegí el chat de <strong>'+escHtml(c.pac)+'</strong>'+(c.tel ? (' · '+escHtml(c.tel)) : '')+'.</div>'
+    + '<div style="display:flex;gap:8px;"><button id="compartir-manual-ok" style="flex:2;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff;font-weight:700;font-size:.95rem;cursor:pointer;">📤 Compartir ahora</button>'
+    + '<button id="compartir-manual-no" style="flex:1;padding:12px;border:1px solid #ddd;border-radius:10px;background:#f5f5f5;color:#666;font-size:.9rem;cursor:pointer;">Cancelar</button></div>';
+  document.body.appendChild(bar);
+  document.getElementById('compartir-manual-ok').onclick = function(){
+    bar.remove();
+    navigator.share(datos).catch(function(err){ if(!(err && err.name === 'AbortError')) _toastAviso('No se pudo abrir «Compartir». Usá «Abrir chat con el número».', 9000); });
+  };
+  document.getElementById('compartir-manual-no').onclick = function(){ bar.remove(); };
 }
 
 function getDatosDocumento(tipo){
@@ -16457,38 +16476,18 @@ derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afilia
       }
 }
 
-function enviarRecordatorioWA(idx){
-  var t = turnos[idx];
-  if(!t) return;
-  var tel = t.wa || '';
-  if(!tel){
-    pedirTelefono('WhatsApp del paciente ' + t.pac, function(telIngresado){
-      if(!telIngresado) return;
-      turnos[idx].wa = telIngresado;
-      guardarLocal();
-      _enviarRecordatorioTurno(t, telIngresado);
-    });
+// Recordatorios de turno: servicio adicional (add-on «Recordatorios Automáticos»). NO existe ningún recordatorio manual, ni gratis ni pago.
+// Con el add-on activo, el botón 📱 solo MUESTRA el estado del recordatorio de ese turno (Programado / Enviado); no reenvía nada.
+// Mientras el motor de recordatorios no exista, nadie tiene el add-on: tieneAddonRecordatoriosTurno() devuelve falso.
+function tieneAddonRecordatoriosTurno(){
+  return false;
+}
+function avisoRecordatoriosTurno(idx){
+  if(!tieneAddonRecordatoriosTurno()){
+    alert('Los recordatorios de turno son un servicio adicional. Para usarlos, adquirí el add-on Recordatorios Automáticos.');
     return;
   }
-  _enviarRecordatorioTurno(t, tel);
-}
-
-function _enviarRecordatorioTurno(t, tel){
-  var medicoNombre = usuarioActual ? (usuarioActual.nombre || 'Su médico') : 'Su médico';
-  var msg = '🏥 *MedHistoriaClinicaOnline*\n\n'
-    +'📋 *RECORDATORIO DE TURNO*\n\n'
-    +'Hola *'+t.pac+'*, le recordamos su turno médico:\n\n'
-    +'📅 *Fecha:* '+t.fechaDisplay+'\n'
-    +'⏰ *Hora:* '+t.hora+' hs\n'
-    +(t.motivo ? '📝 *Motivo:* '+t.motivo+'\n' : '')
-    +(t.os ? '🏥 *Obra Social:* '+t.os+'\n' : '')
-    +'👨‍⚕️ *Médico:* '+medicoNombre+'\n\n'
-    +'Por favor responda este mensaje con:\n\n'
-    +'✅ Para *CONFIRMAR* su turno escriba:\n*CONFIRMO*\n\n'
-    +'❌ Para *CANCELAR* su turno escriba:\n*CANCELO*\n\n'
-    +'_Gracias · MedHistoriaClinicaOnline_';
-
-  window.open('https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(msg), '_blank');
+  // Con el add-on activo: panel con el estado del recordatorio de este turno (se construye con el motor de recordatorios).
 }
 
 // ══ ESTRUCTURA DE PRECIOS (2026-09-24) — planes individuales, Centro Médico y
