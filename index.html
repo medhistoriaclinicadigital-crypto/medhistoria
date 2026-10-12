@@ -2753,9 +2753,9 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
  <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('receta')">✦ Generar Receta<span class="firma-solo-ar"> (Ley 27.553)</span></button>
           </div>
           <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
-            <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#dc2626,#991b1b);" onclick="descargarPDF('receta')">📄 Descargar PDF</button>
-            <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#374151,#1f2937);" onclick="imprimirDoc('receta')">🖨️ Imprimir</button>
-            <button class="form-submit" style="flex:2;background:linear-gradient(135deg,#16a34a,#15803d);font-size:1rem;" onclick="mostrarOpcionesEnvio('receta')">📤 Enviar al paciente</button>
+            <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#dc2626,#991b1b);" id="rx2-btn-descargar" onclick="descargarPDF('receta')">📄 Descargar PDF</button>
+            <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#374151,#1f2937);" id="rx2-btn-imprimir" onclick="imprimirDoc('receta')">🖨️ Imprimir</button>
+            <button class="form-submit" style="flex:2;background:linear-gradient(135deg,#16a34a,#15803d);font-size:1rem;" id="rx2-btn-enviar" onclick="mostrarOpcionesEnvio('receta')">📤 Enviar al paciente</button>
           </div>
           <div style="margin-top:12px;">
             <button onclick="nuevaOrden('receta')" style="width:100%;padding:14px;border-radius:12px;border:2px dashed #d1d5db;background:#f9fafb;color:#374151;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='#f0fdf4';this.style.borderColor='var(--g5)'" onmouseout="this.style.background='#f9fafb';this.style.borderColor='#d1d5db'">
@@ -4867,6 +4867,50 @@ function calcularCUIL(dni, sexo){
   return prefijo+'-'+d+'-'+verificador;
 }
 
+// CUIL guardado del paciente que está abierto en la Historia Clínica (por índice; si no, por DNI o por nombre).
+function _cuilDePaciente(dni, nombre){
+  var p = (typeof pacienteHCActualIdx === 'number' && pacienteHCActualIdx >= 0) ? pacientes[pacienteHCActualIdx] : null;
+  if(!p && dni){ p = pacientes.find(function(x){ return (x.dni||'').trim() === String(dni).trim(); }); }
+  if(!p && nombre){ p = pacientes.find(function(x){ return x.nombre === nombre; }); }
+  return p ? (p.cuil || p.cuil_cuit || '') : '';
+}
+// 11 dígitos → XX-XXXXXXXX-X; cualquier otra cosa se deja como está escrita.
+function _formatearCuil(c){
+  var d = String(c||'').replace(/D/g,'');
+  return d.length === 11 ? (d.slice(0,2)+'-'+d.slice(2,10)+'-'+d.slice(10)) : String(c||'').trim();
+}
+var _rxCuilClavePaciente = '';
+function _cargarCuilPacienteEnReceta(dni, nombre){
+  if(!medicoEsArgentina()) return; // el CUIL es solo de Argentina
+  var el = document.getElementById('rx2-cuil');
+  if(!el) return;
+  var clave = String(dni||'').trim() + '|' + String(nombre||'').trim();
+  var guardado = _formatearCuil(_cuilDePaciente(dni, nombre));
+  if(clave !== _rxCuilClavePaciente){ _rxCuilClavePaciente = clave; el.value = guardado; }   // otro paciente: no se arrastra el CUIL del anterior
+  else if(!el.value.trim() && guardado){ el.value = guardado; }                              // mismo paciente: no se pisa lo escrito a mano
+}
+// Paciente abierto en la Historia Clínica (por índice; si no, por DNI o por nombre).
+function _pacienteDeHC(dni, nombre){
+  var p = (typeof pacienteHCActualIdx === 'number' && pacienteHCActualIdx >= 0) ? pacientes[pacienteHCActualIdx] : null;
+  if(!p && dni){ p = pacientes.find(function(x){ return (x.dni||'').trim() === String(dni).trim(); }); }
+  if(!p && nombre){ p = pacientes.find(function(x){ return x.nombre === nombre; }); }
+  return p || null;
+}
+var _contactoClavePaciente = {};
+// pre: 'rx2' (receta), 'der' (derivación) o 'est' (estudios).
+function _cargarContactoPacienteEnDoc(pre, dni, nombre){
+  var wa = document.getElementById(pre+'-wa'), em = document.getElementById(pre+'-email');
+  if(!wa && !em) return;
+  var clave = String(dni||'').trim() + '|' + String(nombre||'').trim();
+  if(clave === '|') return;   // sin paciente abierto no se toca nada
+  var p = _pacienteDeHC(dni, nombre);
+  var tel = ((document.getElementById('hc-tel')||{}).value||'').trim() || (p && p.tel) || '';
+  var mail = ((document.getElementById('hc-email')||{}).value||'').trim() || (p && p.email) || '';
+  var cambio = (_contactoClavePaciente[pre] !== clave);
+  _contactoClavePaciente[pre] = clave;
+  if(wa){ if(cambio) wa.value = tel; else if(!wa.value.trim() && tel) wa.value = tel; }
+  if(em){ if(cambio) em.value = mail; else if(!em.value.trim() && mail) em.value = mail; }
+}
 function _autocompletarCuilReceta(){
   if(!medicoEsArgentina()) return; // el CUIL es solo de Argentina
   var cuilEl = document.getElementById('rx2-cuil');
@@ -5778,18 +5822,20 @@ function generarDocumento(tipo){
       pedido:     { firmando:'⏳ Firmando pedido de estudios…', hecho:'✅ Pedido de Estudios generado y firmado', msg:'✅ Pedido de Estudios generado y firmado electrónicamente.', imp:'imprimirlo' }
     }[tipo];
     var emitirGen = tipo === 'receta' ? emitirRecetaFirmada : function(ok, fail){ emitirDocumentoFirmado(tipo, ok, fail); };
+    if(tipo === 'receta'){ var _yaEm = _recetaIdenticaYaEmitida(); if(_yaEm){ _avisoRecetaIdentica(_yaEm); return; } }   // receta idéntica a la última emitida: no se emite otra
     var btnRx = event.currentTarget;
     var originalRx = btnRx.innerHTML;
     btnRx.disabled = true;
     btnRx.innerHTML = etq.firmando;
     emitirGen(function(em){
       registrarAudDoc();
+      if(tipo === 'receta'){ _limpiarFormularioTrasEmitir(); }   // el formulario queda listo para otra receta del mismo paciente
       btnRx.innerHTML = etq.hecho;
       btnRx.style.background = 'linear-gradient(135deg,#145a32,#0a3d1f)';
       setTimeout(function(){ btnRx.innerHTML = originalRx; btnRx.style.background = ''; btnRx.disabled = false; }, 3000);
       setTimeout(function(){
         if(confirm(etq.msg + '\n\n' + (ley ? ley + '\n\n' : '') + 'Código de verificación: ' + _firmaRxTokenFmt(em.token) + '\n\n¿Querés ' + etq.imp + ' ahora?')){
-          imprimirDoc(tipo);
+          if(tipo === 'receta'){ _imprimirRecetaEmitida(em); } else { imprimirDoc(tipo); }
         }
       }, 400);
     }, function(){
@@ -5940,10 +5986,14 @@ function showPanel(id){
         var hcPlan = (document.getElementById('hc-plan')||{}).value||'';
         if(!hcPlan && hcDni){ var pPlan = pacientes.find(function(p){ return (p.dni||'').trim()===hcDni.trim(); }); if(pPlan) hcPlan=pPlan.plan||''; }
         fillField(pre+'-plan', hcPlan);
+        try{ _cargarContactoPacienteEnDoc(pre, hcDni, hcPac); }catch(eCt){ console.warn('[catch]', eCt); }
         // fillField asigna .value directo, sin disparar "change" — el
         // autocompletado del CUIL de la receta depende de ese evento, así
         // que hay que llamarlo a mano acá también.
-        if(id==='recetas'){ try{ _autocompletarCuilReceta(); }catch(e){ console.warn('[catch]', e); } }
+        if(id==='recetas'){
+          try{ _cargarCuilPacienteEnReceta(hcDni, hcPac); }catch(eCp){ console.warn('[catch]', eCp); }
+          try{ _autocompletarCuilReceta(); }catch(e){ console.warn('[catch]', e); }
+        }
         if(hcPac && panel){ var sub=panel.querySelector('.app-page-sub'); if(sub) sub.textContent='Paciente: '+hcPac+(hcDni?' · DNI '+hcDni:''); }
       }
     }catch(e){ console.warn('[catch]', e); }
@@ -8736,6 +8786,7 @@ function _sincronizarMedicamentoReceta(){
   if(nota) nota.style.display = 'none';
   var capa = document.getElementById('rx2-med-capa');
   if(capa) capa.style.display = cargado ? 'block' : 'none';
+  try{ _actualizarBotonesInferioresReceta(); }catch(eBt){ console.warn('[catch]', eBt); }
 }
 
 // El aviso de "un solo medicamento" solo aparece cuando el médico intenta cargar otro (toca los campos bloqueados o "Agregar").
@@ -15367,7 +15418,18 @@ var _recetaFirmadaCache = null;    // { key, d, bytes, token, url, idReceta, has
 // email): por eso el formulario NO se vacía en el mismo instante de generar. Se vacía solo cuando el médico termina con ella: al salir
 // de la pantalla de Recetas (o con «Nueva Receta»). Mientras tanto, un aviso lo deja claro. La emisión queda en memoria: repetir
 // exactamente la misma receta devuelve la misma (mismo código), no una nueva.
-function _mostrarAvisoRecetaEmitida(em){
+var _recetasEmitidas = [];     // últimas 3 recetas emitidas en esta sesión (la más nueva primero), con su copia firmada
+var _envioDesdeEmitida = null;  // receta emitida desde la que se abrió «Enviar al paciente» (null = el formulario)
+function _registrarRecetaEmitida(em){
+  if(!em) return;
+  // El WhatsApp y el email que había al emitir se guardan con la copia: «Enviar al paciente» del cuadro verde los usa aunque el formulario ya esté vacío.
+  em.contacto = { wa: ((document.getElementById('rx2-wa')||{}).value||'').trim(), email: ((document.getElementById('rx2-email')||{}).value||'').trim() };
+  em.emitidaEn = Date.now();
+  _recetasEmitidas = _recetasEmitidas.filter(function(x){ return x.token !== em.token; });
+  _recetasEmitidas.unshift(em);
+  if(_recetasEmitidas.length > 3) _recetasEmitidas.length = 3;
+}
+function _mostrarAvisoRecetaEmitida(){
   var form = document.querySelector('#panel-recetas .hc-form');
   if(!form || !form.parentNode) return;
   var av = document.getElementById('rx-aviso-emitida');
@@ -15378,11 +15440,100 @@ function _mostrarAvisoRecetaEmitida(em){
     av.style.cssText = 'background:#e8f8ee;border:1.5px solid #22a050;border-radius:12px;padding:12px 16px;margin:0 0 14px;color:#0a3d1f;font-size:.86rem;line-height:1.5;';
     form.parentNode.insertBefore(av, form);
   }
-  av.innerHTML = '<strong>✅ Receta emitida y firmada</strong> · código ' + escHtml(_firmaRxTokenFmt(em.token)) + '<br>'
-    + 'Entregala con <strong>Descargar PDF</strong>, <strong>Imprimir</strong> o <strong>Enviar al paciente</strong>. Cuando termines, tocá '
-    + '<a href="#" onclick="nuevaOrden(\'receta\');return false;" style="color:#145a32;font-weight:700;">✚ Nueva Receta</a> '
-    + 'o salí de esta pantalla: el formulario se limpia solo (así no queda cargado para el próximo paciente).';
+  if(!_recetasEmitidas.length){ av.style.display = 'none'; return; }
+  var estiloBtn = 'padding:9px 14px;border:none;border-radius:9px;font-weight:700;font-size:.85rem;cursor:pointer;color:#fff;';
+  var filas = _recetasEmitidas.map(function(em, i){
+    var d = em.d || {};
+    var t = escHtml(em.token);
+    return '<div style="' + (i ? 'margin-top:12px;padding-top:10px;border-top:1px solid #b7e4c7;' : '') + '">'
+      + '<div><strong>' + (i === 0 ? '✅ Receta emitida y firmada' : 'Receta emitida antes') + '</strong> · ' + escHtml(d.pac || '') + (d.dni ? (' · DNI ' + escHtml(d.dni)) : '') + ' · código ' + escHtml(_firmaRxTokenFmt(em.token)) + '</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'
+      + '<button type="button" onclick="_entregarRecetaEmitida(\'descargar\',\'' + t + '\')" style="' + estiloBtn + 'background:linear-gradient(135deg,#dc2626,#991b1b);">📄 Descargar PDF</button>'
+      + '<button type="button" onclick="_entregarRecetaEmitida(\'imprimir\',\'' + t + '\')" style="' + estiloBtn + 'background:linear-gradient(135deg,#374151,#1f2937);">🖨️ Imprimir</button>'
+      + '<button type="button" onclick="_entregarRecetaEmitida(\'enviar\',\'' + t + '\')" style="' + estiloBtn + 'background:linear-gradient(135deg,#16a34a,#15803d);">📤 Enviar al paciente</button>'
+      + '</div></div>';
+  }).join('');
+  var ult = (_recetasEmitidas[0] && _recetasEmitidas[0].d) || {};
+  av.innerHTML = filas
+    + '<div style="margin-top:12px;">Estos botones entregan la receta ya emitida. El formulario quedó listo para otra receta de <strong>' + escHtml(ult.pac || 'este paciente') + '</strong>: '
+    + 'se conservaron sus datos y se vació lo demás. Para otro paciente, tocá '
+    + '<a href="#" onclick="nuevaOrden(\'receta\');return false;" style="color:#145a32;font-weight:700;">✚ Nueva Receta</a>. '
+    + '<a href="#" onclick="_ocultarAvisoRecetaEmitida();return false;" style="color:#6b7280;margin-left:6px;">✕ Ocultar</a></div>';
   av.style.display = 'block';
+}
+function _emitidaPorToken(token){
+  for(var i = 0; i < _recetasEmitidas.length; i++){ if(_recetasEmitidas[i].token === token) return _recetasEmitidas[i]; }
+  return null;
+}
+function _entregarRecetaEmitida(accion, token){
+  var em = _emitidaPorToken(token);
+  if(!em){ alert('No se encontró esa receta en esta sesión. Si recargaste la página, buscala en el historial del paciente.'); return; }
+  if(accion === 'descargar') _descargarEmitida(em);
+  else if(accion === 'imprimir') _imprimirRecetaEmitida(em);
+  else if(accion === 'enviar') mostrarOpcionesEnvio('receta', em);
+}
+function _descargarEmitida(em){
+  var d = em.d || {};
+  var nombre = String(d.titulo||'RECETA').replace(/ /g,'_')+'_'+String(d.pac||'').replace(/ /g,'_')+'_'+new Date().toLocaleDateString('es-AR').replace(/\//g,'-')+'.pdf';
+  _descargarBytesPDF(em.bytes, nombre);
+}
+function _imprimirRecetaEmitida(em){
+  var previa = null;
+  try{ previa = window.open('', '_blank'); }catch(ePop){ previa = null; }
+  var url = URL.createObjectURL(new Blob([em.bytes], {type:'application/pdf'}));
+  var ventana = previa || window.open(url, '_blank');
+  if(previa){ previa.location.href = url; }
+  if(ventana){
+    ventana.onload = function(){ setTimeout(function(){ ventana.print(); }, 500); };
+  } else {
+    var a = document.createElement('a'); a.href = url; a.download = 'documento.pdf'; a.click();
+  }
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+}
+// De dónde salen el paciente, el WhatsApp y el email al enviar: de la receta ya emitida (emi) o del formulario.
+function _fuenteEnvio(tipo, emi){
+  if(emi){ return { d: emi.d || {}, tel: (emi.contacto && emi.contacto.wa) || '', email: (emi.contacto && emi.contacto.email) || '' }; }
+  var d = getDatosDocumento(tipo);
+  var pre = tipo==='receta' ? 'rx2' : tipo==='derivacion' ? 'der' : 'est';
+  return { d: d, tel: ((document.getElementById(pre+'-wa')||{}).value||'').trim(), email: ((document.getElementById(pre+'-email')||{}).value||'').trim() };
+}
+// ¿Lo que hay en el formulario es exactamente la última receta emitida? Devuelve esa emisión (o null).
+function _recetaIdenticaYaEmitida(){
+  try{
+    if(!_recetaFirmadaCache) return null;
+    return (_firmaRxClave(getDatosDocumento('receta')) === _recetaFirmadaCache.key) ? _recetaFirmadaCache : null;
+  }catch(eId){ return null; }
+}
+function _avisoRecetaIdentica(em){
+  alert('Esta receta ya fue emitida (código ' + _firmaRxTokenFmt(em.token) + '). No se emitió otra igual: entregala con los botones del cuadro verde.');
+  try{ _mostrarAvisoRecetaEmitida(); var av = document.getElementById('rx-aviso-emitida'); if(av && av.scrollIntoView) av.scrollIntoView({ block:'center' }); }catch(eSc){ console.warn('[catch]', eSc); }
+}
+// Vacía el contenido de la receta y deja los datos del paciente (y su contacto) para poder seguir con otra receta al mismo paciente.
+function _vaciarContenidoRecetaConservandoPaciente(){
+  ['rx2-med-ifa','rx2-med-comercial','rx2-med-forma','rx2-med-presentacion','rx2-med-cantidad','rx2-med-posologia','rx2-med',
+   'rx2-diag','rx2-ind','rx2-fecha-inicio-vigencia','rx-med','rx-diag','rx-ind'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = '';
+  });
+  var validez = document.getElementById('rx2-validez'); if(validez) validez.selectedIndex = 0;
+  var contacto = document.getElementById('rx2-incluir-contacto'); if(contacto) contacto.checked = false;
+  _recetaMedicamentosData = [];
+  try{ actualizarPreviaMedicamento(); }catch(eP){ console.warn('[catch]', eP); }
+  try{ _sincronizarMedicamentoReceta(); }catch(eS){ console.warn('[catch]', eS); }
+}
+// Se llama cuando termina la entrega de la receta recién emitida. Si el médico ya empezó otra (el formulario ya no es la emitida), no se toca.
+function _limpiarFormularioTrasEmitir(){
+  try{ if(_recetaEnPantallaEsLaEmitida()) _vaciarContenidoRecetaConservandoPaciente(); }catch(eLm){ console.warn('[catch]', eLm); }
+}
+// Descargar, Imprimir y Enviar de abajo: apagados hasta que la receta nueva tenga un medicamento cargado.
+function _actualizarBotonesInferioresReceta(){
+  var cargado = (typeof _recetaMedicamentosData !== 'undefined') && _recetaMedicamentosData.length >= 1;
+  ['rx2-btn-descargar','rx2-btn-imprimir','rx2-btn-enviar'].forEach(function(id){
+    var b = document.getElementById(id); if(!b) return;
+    b.disabled = !cargado;
+    b.style.opacity = cargado ? '' : '.45';
+    b.style.cursor = cargado ? '' : 'not-allowed';
+    b.title = cargado ? '' : 'Cargá un medicamento para habilitar este botón';
+  });
 }
 function _ocultarAvisoRecetaEmitida(){
   var av = document.getElementById('rx-aviso-emitida');
@@ -15401,13 +15552,11 @@ function _limpiarRecetaEmitida(){
   });
   var sx = document.getElementById('rx2-sexo'); if(sx) sx.selectedIndex = 0;
   try{ _reiniciarContenidoReceta(); }catch(eRi){ console.warn('[catch]', eRi); }
-  _ocultarAvisoRecetaEmitida();
 }
 // Se llama al salir de la pantalla de Recetas.
 function _salirDeRecetas(){
   try{
     if(_recetaEnPantallaEsLaEmitida()) _limpiarRecetaEmitida();
-    else _ocultarAvisoRecetaEmitida();
   }catch(eSr){ console.warn('[catch]', eSr); }
 }
 // Anti-duplicado: si hace poco se emitió una receta de este paciente y ahora el contenido es otro, se emite una receta NUEVA (otro código)
@@ -15513,8 +15662,8 @@ function emitirRecetaFirmada(onOk, onFail){
   if(_recetaFirmadaCache && _recetaFirmadaCache.key === key){ onOk(_recetaFirmadaCache); return; }
   if(_recetaEmisionEnCurso && _recetaEmisionEnCurso.key === key){ _recetaEmisionEnCurso.esperando.push({ ok:onOk, fail:onFail }); return; }
 
-  // Otra receta del mismo paciente, con otro contenido, a los pocos minutos de la anterior: confirmar (no se duplica sin querer).
-  if(_recetaFirmadaCache && _recetaFirmadaCache.key !== key && !_confirmarOtraRecetaMismoPaciente(_recetaFirmadaCache, d)){ onFail(); return; }
+  // (Se sacó el aviso «Hace unos minutos ya emitiste una receta…»: con el formulario vaciado tras emitir, hacer otra receta es una decisión del médico.
+  //  Una receta IDÉNTICA a la última ya no se emite de nuevo: lo avisan los botones, ver _recetaIdenticaYaEmitida.)
 
   // Aviso si "Válida desde" es anterior a hoy: una fecha vieja en ese campo invalida la receta para quien la dispensa.
   var _hoyIso = (function(){ var h=new Date(); return h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0'); })();
@@ -15539,6 +15688,7 @@ function emitirRecetaFirmada(onOk, onFail){
       var em = { key:p.key, d:p.d, bytes:p.bytes, token:p.token, url:p.url, idReceta:p.idReceta, hash:res.hash_pdf, firmadoEn:res.firmado_en };
       em._ts = Date.now();
       _recetaFirmadaCache = em; _recetaFirmaPendiente = null;
+      try{ _registrarRecetaEmitida(em); }catch(eRg){ console.warn('[catch]', eRg); }
       try{ _mostrarAvisoRecetaEmitida(em); }catch(eAv){ console.warn('[catch]', eAv); }
       terminar(em);
     }, function(msg){ terminar(null, msg); });
@@ -15715,7 +15865,14 @@ function emitirDocumentoFirmado(tipo, onOk, onFail){
 
 // Devuelve un objeto "tipo jsPDF" (save / output) para que los flujos de entrega existentes sigan igual: para la receta, la derivación,
 // el pedido de estudios y la orden entrega los bytes ya firmados; para el resto de los documentos (resumen de HC), el PDF de siempre.
-function _generarParaEntregar(tipo, onOk, onFail){
+function _generarParaEntregar(tipo, onOk, onFail, emi){
+  if(tipo === 'receta' && emi){   // receta ya emitida: se entrega su copia firmada, sin leer el formulario
+    onOk({
+      save: function(nombre){ _descargarBytesPDF(emi.bytes, nombre); },
+      output: function(kind){ return kind === 'blob' ? new Blob([emi.bytes], {type:'application/pdf'}) : emi.bytes; }
+    }, emi.d);
+    return;
+  }
   if(tipo === 'receta'){
     emitirRecetaFirmada(function(em){
       onOk({
@@ -15737,11 +15894,12 @@ function _generarParaEntregar(tipo, onOk, onFail){
   generarPDFbase64(tipo, function(doc, d){ onOk(doc, d); });
 }
 
-function _descargarRecetaFirmada(){
+function _descargarRecetaFirmada(opts){
   emitirRecetaFirmada(function(em){
     var d = em.d;
     var nombre = d.titulo.replace(/ /g,'_')+'_'+d.pac.replace(/ /g,'_')+'_'+new Date().toLocaleDateString('es-AR').replace(/\//g,'-')+'.pdf';
     _descargarBytesPDF(em.bytes, nombre);
+    if(!(opts && opts.sinLimpiar)) _limpiarFormularioTrasEmitir();
   });
 }
 
@@ -15754,10 +15912,12 @@ function _descargarDocumentoFirmado(tipo){
   });
 }
 
-function descargarPDF(tipo){
+function descargarPDF(tipo, opts){
+  if(tipo === 'receta' && opts && opts.emitida){ _descargarEmitida(opts.emitida); return; }   // receta ya emitida: se entrega su copia firmada
   var d = getDatosDocumento(tipo);
   if(!d.pac){ alert('Completá el nombre del paciente primero.'); return; }
-  if(tipo === 'receta'){ _descargarRecetaFirmada(); return; }
+  if(tipo === 'receta' && !(opts && opts.sinLimpiar)){ var _yaEmD = _recetaIdenticaYaEmitida(); if(_yaEmD){ _avisoRecetaIdentica(_yaEmD); return; } }
+  if(tipo === 'receta'){ _descargarRecetaFirmada(opts); return; }
   // Derivación, pedido de estudios y orden: se registran y se firman en el servidor antes de entregarse, una sola vez por emisión
   // (emitirDocumentoFirmado avisa si el texto no entra en una hoja antes de registrar nada).
   if(tipo === 'derivacion' || tipo === 'pedido' || tipo === 'ord'){ _descargarDocumentoFirmado(tipo); return; }
@@ -15803,11 +15963,11 @@ function enviarAutoWA(tipo){
   });
 }
 
-function enviarAutoEmail(tipo){
-  var d = getDatosDocumento(tipo);
+function enviarAutoEmail(tipo, emi){
+  var fuente = _fuenteEnvio(tipo, emi);
+  var d = fuente.d;
   if(!d.pac){ alert('Completá el nombre del paciente primero.'); return; }
-  var emailId = tipo==='receta' ? 'rx2-email' : tipo==='derivacion' ? 'der-email' : 'est-email';
-  var email = (document.getElementById(emailId)||{}).value||'';
+  var email = fuente.email;
   if(!email){ 
     email = prompt('Ingresá el email del paciente:');
     if(!email) return;
@@ -15824,14 +15984,17 @@ function enviarAutoEmail(tipo){
       var cuerpo = 'Hola,\n\n'+_medicoMensaje()+' le envía '+_queSeEnvia(tipo)+' (archivo PDF adjunto).\n\nSaludos.';
       window.location.href='mailto:'+email+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
       _toastAviso('📎 El PDF se descargó: adjuntalo en tu correo antes de enviarlo', 20000);
+      if(tipo === 'receta' && !emi) _limpiarFormularioTrasEmitir();
     }, 800);
-  });
+  }, null, emi);
 }
 
 
 var _tipoEnvioActual = null;
-function mostrarOpcionesEnvio(tipo){
-  var d = getDatosDocumento(tipo);
+function mostrarOpcionesEnvio(tipo, desdeEmitida){
+  _envioDesdeEmitida = desdeEmitida || null;   // si viene de una receta ya emitida, se envía su copia y su contacto guardados
+  var d = _envioDesdeEmitida ? (_envioDesdeEmitida.d || {}) : getDatosDocumento(tipo);
+  if(!_envioDesdeEmitida && tipo === 'receta'){ var _yaEmE = _recetaIdenticaYaEmitida(); if(_yaEmE){ _avisoRecetaIdentica(_yaEmE); return; } }
   if(!d.pac){ alert('Completá el nombre del paciente primero.'); return; }
   _tipoEnvioActual = tipo;
   var overlay = document.getElementById('envioOverlay');
@@ -15843,44 +16006,45 @@ function mostrarOpcionesEnvio(tipo){
 }
 function enviarDesdeOverlay(canal){
   // Si el documento no entra en una hoja se avisa ANTES de registrar o enviar nada (el cuadro de envío queda abierto).
-  if(_tipoEnvioActual && !_docEntraEnUnaHoja(_tipoEnvioActual)) return;
+  var emi = _envioDesdeEmitida;   // receta ya emitida (o null: formulario)
+  if(!emi && _tipoEnvioActual && !_docEntraEnUnaHoja(_tipoEnvioActual)) return;
   document.getElementById('envioOverlay').style.display = 'none';
   var tipo = _tipoEnvioActual;
   // (La derivación y el pedido de estudios se registran y se firman una sola vez por emisión, en emitirDocumentoFirmado: todos los canales
   //  pasan por ahí. Registrar la derivación también acá la guardaba dos veces, y una vez aunque después el envío se frenara por el add-on.)
   if(canal === 'pdf'){
-    descargarPDF(tipo);
+    descargarPDF(tipo, { emitida: emi });
     return;
   }
   if(canal === 'compartir'){
-    compartirPDFNativo(tipo);
+    compartirPDFNativo(tipo, emi);
     return;
   }
   // Chequear addon para WhatsApp y Email
   if(!checkAddonComunicacion()) return;
-  // Primero descargar PDF
-  descargarPDF(tipo);
+  // Primero descargar PDF (sin vaciar el formulario todavía: el envío lo lee unos instantes después)
+  descargarPDF(tipo, { emitida: emi, sinLimpiar: true });
   // Luego abrir canal con pequeño delay para que el PDF se genere
   setTimeout(function(){
-    if(canal === 'wa') compartirWhatsApp(tipo);
-    if(canal === 'email') enviarAutoEmail(tipo);
+    if(canal === 'wa') compartirWhatsApp(tipo, emi);
+    if(canal === 'email') enviarAutoEmail(tipo, emi);
   }, 800);
 }
 
-function compartirWhatsApp(tipo){
-  var d = getDatosDocumento(tipo);
+function compartirWhatsApp(tipo, emi){
+  var fuente = _fuenteEnvio(tipo, emi);
+  var d = fuente.d;
   if(!d.pac){ alert('Completá el nombre del paciente primero.'); return; }
 
-  var waId = tipo==='receta' ? 'rx2-wa' : tipo==='derivacion' ? 'der-wa' : 'est-wa';
-  var tel = (document.getElementById(waId)||{}).value||'';
+  var tel = fuente.tel;
   if(!tel){ 
     pedirTelefono('WhatsApp del paciente ' + d.pac, function(telIngresado){
       if(!telIngresado) return;
-      _enviarWhatsAppDoc(d, telIngresado, tipo);
+      _enviarWhatsAppDoc(d, telIngresado, tipo, emi);
     });
     return;
   }
-  _enviarWhatsAppDoc(d, tel, tipo);
+  _enviarWhatsAppDoc(d, tel, tipo, emi);
 }
 
 // ── Mensajes manuales de documentos: sin marca, sin datos clínicos, sin CONFIRMO/CANCELO ──
@@ -15909,9 +16073,10 @@ function _toastAviso(msg, ms){
   clearTimeout(el._t);
   el._t = setTimeout(function(){ el.style.display = 'none'; }, ms || 15000);
 }
-function _enviarWhatsAppDoc(d, tel, tipo){
+function _enviarWhatsAppDoc(d, tel, tipo, emi){
   window.open('https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(_textoWhatsAppDoc(tipo)),'_blank');
   _toastAviso('📎 El PDF se descargó: adjuntalo en el chat de WhatsApp con el clip', 20000);
+  if(tipo === 'receta' && !emi) _limpiarFormularioTrasEmitir();
 }
 
 // ── «Compartir con el PDF» (Web Share API con archivo): solo en celulares que lo soportan ──
@@ -15928,13 +16093,12 @@ function _puedeCompartirArchivos(){
     return !!navigator.canShare({ files:[f] });
   }catch(e){ return false; }
 }
-function _datosContactoEnvio(tipo){
-  var d = getDatosDocumento(tipo);
-  var waId = tipo==='receta' ? 'rx2-wa' : tipo==='derivacion' ? 'der-wa' : 'est-wa';
-  return { pac: d.pac || '', tel: ((document.getElementById(waId)||{}).value||'').trim() };
+function _datosContactoEnvio(tipo, emi){
+  var f = _fuenteEnvio(tipo, emi);
+  return { pac: (f.d && f.d.pac) || '', tel: f.tel };
 }
 function _actualizarOpcionesCompartir(tipo){
-  var c = _datosContactoEnvio(tipo);
+  var c = _datosContactoEnvio(tipo, _envioDesdeEmitida);
   var lineaWa = document.getElementById('envioOverlay-wa');
   if(lineaWa) lineaWa.textContent = c.tel ? ('WhatsApp cargado: '+c.tel) : 'No hay WhatsApp cargado: se te va a pedir al abrir el chat.';
   var puede = _esCelular() && _puedeCompartirArchivos();
@@ -15950,8 +16114,8 @@ function _nombreArchivoNeutro(tipo){
   var base = ({ receta:'Receta', derivacion:'Derivacion', pedido:'Pedido_de_estudios', ord:'Orden' })[tipo] || 'Documento';
   return base+'_'+_fechaLocalISO()+'.pdf';   // sin el nombre del paciente
 }
-function compartirPDFNativo(tipo){
-  var c = _datosContactoEnvio(tipo);
+function compartirPDFNativo(tipo, emi){
+  var c = _datosContactoEnvio(tipo, emi);
   if(!c.pac){ alert('Completá el nombre del paciente primero.'); return; }
   _generarParaEntregar(tipo, function(doc){
     var blob = null;
@@ -15959,7 +16123,8 @@ function compartirPDFNativo(tipo){
     if(!blob){ alert('No se pudo preparar el PDF para compartir. Probá con «Abrir chat con el número».'); return; }
     var datos = { files:[ new File([blob], _nombreArchivoNeutro(tipo), {type:'application/pdf'}) ], text:_textoWhatsAppDoc(tipo) };
     _compartirArchivo(datos, c);
-  });
+    if(tipo === 'receta' && !emi) _limpiarFormularioTrasEmitir();
+  }, null, emi);
 }
 function _compartirArchivo(datos, c){
   var fallo = function(err){
@@ -16462,13 +16627,14 @@ function imprimirDoc(tipo){
       a.click();
     }
     setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+    if(tipo === 'receta') _limpiarFormularioTrasEmitir();
   }, function(){
     if(previa){ try{ previa.close(); }catch(eCierre){ console.warn('[catch]', eCierre); } }
   });
 }
 
 function nuevaOrden(tipo){
-  var _yaEmitida = (tipo === 'receta') && _recetaEnPantallaEsLaEmitida();   // lo que hay en pantalla ya está emitido y firmado: no se pierde nada
+  var _yaEmitida = (tipo === 'receta') && (_recetaEnPantallaEsLaEmitida() || (_recetaMedicamentosData.length === 0 && !((document.getElementById('rx2-diag')||{}).value||'').trim() && !((document.getElementById('rx2-ind')||{}).value||'').trim()));   // lo que hay en pantalla ya está emitido y firmado: no se pierde nada
   if(!_yaEmitida && !confirm('¿Limpiar el formulario para una nueva '+
     (tipo==='receta'?'receta':tipo==='derivacion'?'derivación':'orden de estudios')+'?')) return;
   var campos = {
@@ -16484,7 +16650,7 @@ derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afilia
   if(tipo==='receta'){
     _recetaMedicamentosData = []; try{ _sincronizarMedicamentoReceta(); }catch(eSm){ console.warn('[catch]', eSm); }
     _recetaFirmadaCache = null; // receta nueva = emisión nueva (otro PDF, otro código, otra firma)
-    _ocultarAvisoRecetaEmitida();
+    try{ _rxCuilClavePaciente = ''; _contactoClavePaciente['rx2'] = ''; }catch(eCl){ console.warn('[catch]', eCl); }   // la próxima vez que se abra Recetas con un paciente, se vuelve a completar
     var chkContacto = document.getElementById('rx2-incluir-contacto');
     if(chkContacto) chkContacto.checked = false;
   }
@@ -16494,7 +16660,7 @@ derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afilia
   if(panel) panel.scrollTop = 0;
   window.scrollTo(0,0);
   // Volver a autocompletar los datos del paciente en atención
-      if(pacienteHCActualIdx !== -1){
+      if(pacienteHCActualIdx !== -1 && tipo !== 'receta'){
         var idPanel = (tipo==='pedido'?'estudios':tipo==='receta'?'recetas':'derivaciones');
         showPanel(idPanel);
       }
