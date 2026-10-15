@@ -17148,6 +17148,14 @@ function guardarDesdeHC(){
   } else {
     pacientes.unshift(pac);
   }
+  // El paciente guardado queda como el ABIERTO en la Historia Clínica (examen físico, evolución y estudios guardan en él sin volver a abrirlo desde la lista).
+  pacienteHCActualIdx = (existente >= 0) ? existente : 0;
+  // Título y subtítulo de la pantalla, como al abrir el paciente desde la lista (con un paciente NUEVO decía «Historia Clínica Online»).
+  try{
+    var _pT = pacientes[pacienteHCActualIdx], _tit = document.querySelector('#panel-hc .app-page-title'), _sub = document.querySelector('#panel-hc .app-page-sub');
+    if(_pT && _tit) _tit.textContent = '📋 HC — ' + _pT.nombre;
+    if(_pT && _sub) _sub.textContent = 'DNI ' + (_pT.dni||'—') + (_pT.edad?' · '+_pT.edad+' años':'') + (_pT.os?' · '+_pT.os:'');
+  }catch(eTit){ console.warn('[catch]', eTit); }
 
   guardarLocal();
   renderPacientes();
@@ -17175,8 +17183,7 @@ function guardarDesdeHC(){
         }
       });
     }
-  alert('✅ Anamnesis guardada. El paciente aparece en el listado de Pacientes.');
-  showPanel('pacientes');
+  alert('✅ Anamnesis guardada.');   // se queda en la pantalla del paciente (antes: showPanel('pacientes'))
 }
 
 // ══ CLAVES DE STORAGE POR USUARIO ══
