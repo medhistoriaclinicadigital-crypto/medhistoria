@@ -2463,7 +2463,10 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
 
 
 
-            <button class="form-submit" onclick="guardarDesdeHC();" style="width:100%;padding:14px;font-size:1rem;font-weight:700;background:linear-gradient(135deg,#145a32,#22a050);">💾 Guardar anamnesis</button>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button class="form-submit" onclick="guardarDesdeHC();" style="flex:1;min-width:200px;padding:14px;font-size:1rem;font-weight:700;background:linear-gradient(135deg,#145a32,#22a050);">💾 Guardar anamnesis</button>
+            <button class="form-submit" onclick="imprimirAnamnesis()" style="flex:1;min-width:200px;padding:14px;font-size:1rem;font-weight:700;background:linear-gradient(135deg,var(--g4),var(--g3));">🖨️ Imprimir anamnesis</button>
+            </div>
           </div>
         </div>
 
@@ -13304,6 +13307,129 @@ function imprimirEvolucion(){
   setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
 }
 
+// ── IMPRIMIR ANAMNESIS: PDF como el de la evolución, con lo escrito en la pantalla de la anamnesis (sin firma ni registro; no imprime ni descarga nada solo) ──
+// Arma el PDF con lo que está escrito en pantalla. Devuelve { doc, paginas } o null (con aviso) si la anamnesis está totalmente vacía. No hace ningún pedido a la red.
+function _generarPDFAnamnesis(){
+  var jsPDF = window.jspdf ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if(!jsPDF){ alert('Librería PDF no cargada. Verificá tu conexión a internet.'); return null; }
+  var ga = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
+  var limpiar = function(t){ return String(t==null?'':t).replace(/\r/g,'').replace(/\t/g,' ').replace(/≥/g,'>=').replace(/≤/g,'<=').replace(/→/g,'->').replace(/←/g,'<-').trim(); };
+  var ids = ['hc-paciente','hc-dni','hc-fnac','hc-edad','hc-nacionalidad','hc-sexo','hc-domicilio','hc-localidad','hc-tel','hc-email','hc-os','hc-afiliado',
+             'hc-ant-personal','hc-ant-familiar','hc-ant-quirurgico','hc-medicacion','hc-alergias'];
+  if(!ids.some(function(id){ return !!ga(id); })){ _toastAviso('La anamnesis está vacía: no hay nada para imprimir. Completá los datos y volvé a imprimir.', 9000); return null; }
+  var nombre = ga('hc-paciente'), dni = ga('hc-dni');
+  var u = usuarioActual || {};
+  var medicaNombre = nombreConTitulo(u);
+  var matSrc = u.matricula || '', mn = '', mp = u.matricula_mp || '';
+  if(matSrc.indexOf('M.P.') !== -1){ if(!mp) mp = matSrc.replace(/M\.P\.?/i,'').trim(); } else { mn = matSrc.replace(/^M\.N\.?\s*/i,'').trim(); }
+  var matTxt = [mn ? 'M.N. '+mn : '', mp ? 'M.P. '+mp : ''].filter(Boolean).join(' · ');
+  var profTxt = (u.sexo === 'F' ? 'Médica' : 'Médico') + (u.especialidad ? ' — '+u.especialidad : '');
+  var pacUp = String(nombre || '(sin nombre)').toUpperCase();
+  var cuil = ''; try{ cuil = medicoEsArgentina() ? _cuilDePaciente(dni, nombre) : ''; }catch(eC){ cuil = ''; }
+  var fn = ga('hc-fnac'); if(fn){ var fp = fn.split('-'); if(fp.length === 3) fn = fp[2]+'/'+fp[1]+'/'+fp[0]; }
+  // Datos personales: los 12 campos de la pantalla, en su orden (con el CUIL justo después del DNI si está cargado)
+  var personales = [['APELLIDO Y NOMBRE', nombre], ['DNI', dni]];
+  if(cuil) personales.push(['CUIL', _formatearCuil(cuil)]);
+  personales = personales.concat([['FECHA DE NACIMIENTO', fn], ['EDAD', ga('hc-edad')], ['NACIONALIDAD', ga('hc-nacionalidad')], ['SEXO', ga('hc-sexo')],
+    ['DOMICILIO', ga('hc-domicilio')], ['LOCALIDAD', ga('hc-localidad')], ['TELÉFONO / WHATSAPP', ga('hc-tel')], ['EMAIL', ga('hc-email')],
+    ['OBRA SOCIAL / PREPAGA', ga('hc-os')], ['N° AFILIADO / N° SEG. SOCIAL / N° COLEGIADO', ga('hc-afiliado')]]);
+  var antecedentes = [['Antecedentes personales', ga('hc-ant-personal')], ['Antecedentes familiares', ga('hc-ant-familiar')], ['Antecedentes quirúrgicos', ga('hc-ant-quirurgico')],
+                      ['Medicación habitual', ga('hc-medicacion')], ['Alergias conocidas', ga('hc-alergias')]];
+
+  var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4', compress:true });
+  var W = 210, M = 14, BOTTOM = 272, G = [20,90,50];
+  var lh = 9 * 1.15 / doc.internal.scaleFactor;
+  var y = 0;
+  var encabezado = function(primera){
+    doc.setFillColor(G[0],G[1],G[2]); doc.rect(0,0,W,5,'F');
+    doc.setTextColor(G[0],G[1],G[2]); doc.setFont('times','bold'); doc.setFontSize(primera?20:13);
+    doc.text('MedHistoriaClinicaOnline', W/2, primera?17:13, { align:'center' });
+    doc.setDrawColor(G[0],G[1],G[2]); doc.setLineWidth(0.6); doc.line(M, primera?21:16, W-M, primera?21:16);
+    if(primera){
+      doc.setFont('times','bold'); doc.setFontSize(14); doc.text('ANAMNESIS', W/2, 30, { align:'center' });
+      doc.setTextColor(15,15,15); doc.setFontSize(12); doc.text(medicaNombre, W/2, 38, { align:'center' });
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(40,40,40);
+      doc.text(profTxt + (matTxt ? '   ·   Matrícula: '+matTxt : ''), W/2, 43, { align:'center' });
+      doc.setDrawColor(G[0],G[1],G[2]); doc.setLineWidth(0.3); doc.line(M, 47, W-M, 47);
+      return 51;
+    }
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(90,90,90);
+    doc.text('Anamnesis (continuación) — '+medicaNombre, W/2, 21.5, { align:'center' });
+    return 27;
+  };
+  var pieDeHoja = function(n, total){
+    doc.setDrawColor(G[0],G[1],G[2]); doc.setLineWidth(0.5); doc.line(M, 277, W-M, 277);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(G[0],G[1],G[2]);
+    doc.text(medicaNombre + (matTxt ? ' · '+matTxt : ''), M, 282);
+    doc.text('Página '+n+' de '+total, W-M, 282, { align:'right' });
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(70,70,70);
+    doc.text(doc.splitTextToSize('Paciente: ' + pacUp + (dni ? ' · DNI ' + dni : ''), W-2*M)[0], W/2, 287, { align:'center' });
+    doc.setFontSize(7); doc.setTextColor(110,110,110);
+    doc.text('Emitido desde MedHistoriaClinicaOnline · admin@medhistoriaclinicaonline.com', W/2, 292, { align:'center' });
+  };
+  var caja = function(x, yy, w, h, lineas){
+    doc.setFillColor(246,252,248); doc.setDrawColor(190,225,205); doc.setLineWidth(0.3); doc.roundedRect(x, yy, w, h, 1.6, 1.6, 'FD');
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(26,46,30);
+    if(lineas.length) doc.text(lineas, x+2.6, yy+4.4);
+  };
+  var rotulo = function(t, x, yy){ doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(G[0],G[1],G[2]); doc.text(t, x, yy+2.6); };
+  var lineasDe = function(t, w){ doc.setFont('helvetica','normal'); doc.setFontSize(9); return doc.splitTextToSize(limpiar(t), w - 5.2); };
+  var nuevaHoja = function(){ doc.addPage(); y = encabezado(false); };
+
+  // Hoja 1: el recuadro del paciente ES «Datos personales»
+  y = encabezado(true);
+  var colW = (W - 2*M - 8 - 6) / 2, xs = [M+4, M+4+colW+6];
+  var filas = [];
+  for(var i = 0; i < personales.length; i += 2){ filas.push([personales[i], personales[i+1]].filter(Boolean)); }
+  var hFilas = filas.map(function(par){ return Math.max.apply(null, par.map(function(c){ return Math.max(6.4, lineasDe(c[1], colW).length*lh + 3.4); })) + 4.2 + 1.6; });
+  var hRecuadro = 11 + hFilas.reduce(function(a,b){ return a+b; }, 0) + 1;
+  doc.setDrawColor(180,210,190); doc.setLineWidth(0.3); doc.roundedRect(M, y, W-2*M, hRecuadro, 2.5, 2.5, 'S');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(G[0],G[1],G[2]); doc.text('DATOS PERSONALES', M+4, y+5.2);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(90,90,90); doc.text('Fecha de emisión: ' + new Date().toLocaleDateString('es-AR'), W-M-4, y+5.2, { align:'right' });
+  var yy = y + 8.5;
+  filas.forEach(function(par, k){
+    par.forEach(function(c, j){ rotulo(c[0], xs[j], yy); var l = lineasDe(c[1], colW), hc = Math.max(6.4, l.length*lh + 3.4); caja(xs[j], yy+4.2, colW, hc, l); });
+    yy += hFilas[k];
+  });
+  y += hRecuadro + 5;
+
+  // Antecedentes (cabecera verde como las entradas de la evolución)
+  var cabecera = function(t, cont){
+    doc.setFillColor(240,253,244); doc.setDrawColor(134,239,172); doc.setLineWidth(0.3); doc.rect(M, y, W-2*M, 7, 'FD');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(G[0],G[1],G[2]); doc.text(t + (cont ? '   (continuación)' : ''), M+3, y+4.8); y += 9;
+  };
+  var wA = W - 2*M - 6;
+  if(y + 9 + 4.2 + 8 > BOTTOM) nuevaHoja();
+  cabecera('ANTECEDENTES', false);
+  antecedentes.forEach(function(c){
+    var lineas = lineasDe(c[1], wA), cuerpo = lineas.length ? lineas : [''];
+    if(y + 4.2 + 9 > BOTTOM){ nuevaHoja(); cabecera('ANTECEDENTES', true); }
+    rotulo(c[0].toUpperCase(), M+3, y); y += 4.2;
+    var i = 0;
+    while(i < cuerpo.length){
+      var libre = BOTTOM - y, maxL = Math.max(1, Math.floor((libre - 3.4) / lh)), trozo = cuerpo.slice(i, i + maxL), ultimo = (i + trozo.length >= cuerpo.length);
+      var h = Math.max(6.4 + (cuerpo.length === 1 && cuerpo[0] === '' ? 3.6 : 0), trozo.length*lh + 3.4);
+      caja(M+3, y, wA, h, trozo); y += h; i += trozo.length;
+      if(!ultimo){ nuevaHoja(); cabecera('ANTECEDENTES', true); rotulo(c[0].toUpperCase() + '  (continuación)', M+3, y); y += 4.2; }
+    }
+    y += 2.2;
+  });
+
+  var total = doc.getNumberOfPages();
+  for(var p = 1; p <= total; p++){ doc.setPage(p); pieDeHoja(p, total); }
+  return { doc: doc, paginas: total };
+}
+// Botón «🖨️ Imprimir anamnesis»: abre el PDF en una pestaña nueva (no imprime ni descarga nada solo).
+function imprimirAnamnesis(){
+  var r = _generarPDFAnamnesis();
+  if(!r) return;
+  var url = URL.createObjectURL(r.doc.output('blob'));
+  var ventana = null;
+  try{ ventana = window.open(url, '_blank'); }catch(eV){ ventana = null; }
+  if(!ventana){ _toastAviso('El navegador bloqueó la pestaña del PDF. Permití las ventanas emergentes de este sitio y volvé a tocar «Imprimir anamnesis».', 9000); }
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+}
+
 function imprimirResumenTab(){
   generarResumen();
   var doc = document.getElementById('hc-resumen-doc');
@@ -17094,6 +17220,7 @@ function guardarDesdeHC(){
   var afiliado  = ga('hc-afiliado');
   var sexo      = ga('hc-sexo');
   var nacionalidad = ga('hc-nacionalidad') || 'Argentina';
+  var localidad    = ga('hc-localidad');
   var antPersonal  = ga('hc-ant-personal');
   var antFamiliar  = ga('hc-ant-familiar');
   var antQuirurgico = ga('hc-ant-quirurgico');
@@ -17126,6 +17253,7 @@ function guardarDesdeHC(){
     os: os,
     afiliado: afiliado,
     domicilio: domicilio,
+    localidad: localidad,
     nacionalidad: nacionalidad,
     antPersonal: antPersonal,
     antFamiliar: antFamiliar,
