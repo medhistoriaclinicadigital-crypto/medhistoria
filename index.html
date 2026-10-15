@@ -786,7 +786,7 @@ document.addEventListener('DOMContentLoaded', function(){
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   // Subir a mano cada vez que cambie el texto de Términos/Privacidad/Cookies
   // (ver registrarAceptacionLegal) — queda guardado junto a cada consentimiento.
-  const TERMINOS_VERSION = "2026-10-02";
+  const TERMINOS_VERSION = "2026-10-14";
   function registrarAceptacionLegal(){
     try{
       sb.functions.invoke('registrar-consentimiento', { body: { version: TERMINOS_VERSION } })
@@ -1980,7 +1980,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
         <h2 style="font-size:1.15rem;color:#042b10;margin:0;">🔒 Política de Privacidad y Protección de Datos</h2>
         <span style="background:#e3fbed;color:#145a32;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">Ley 25.326 (Argentina)</span>
-        <span style="background:#e3fbed;color:#145a32;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">Versión 1.0 · Octubre 2026</span>
+        <span style="background:#e3fbed;color:#145a32;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">Versión 1.1 · Octubre 2026</span>
       </div>
       <p style="font-size:.78rem;color:#5a7362;margin:0 0 24px;">Esta política describe cómo MedHistoriaClinicaOnline recopila, usa, almacena y protege los datos personales y datos de salud de los pacientes registrados por los profesionales usuarios.</p>
 
@@ -2005,6 +2005,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <li>Generación de recetas, derivaciones y documentación médica-legal</li>
             <li>Firma electrónica de las recetas y conservación de la evidencia técnica necesaria para acreditar su autoría, su fecha y que no fueron alteradas</li>
             <li>Gestión de turnos y comunicaciones con pacientes</li>
+            <li>Envío por correo electrónico, a pedido del profesional y con el consentimiento del paciente, de recetas, derivaciones y pedidos de estudios</li>
             <li>Facturación y gestión de la suscripción del profesional</li>
             <li>Mejora del servicio mediante análisis estadísticos anonimizados (sin identificar pacientes ni profesionales)</li>
             <li>Cumplimiento de obligaciones legales ante autoridades competentes</li>
@@ -2039,6 +2040,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <ul style="margin:0 0 8px;padding-left:20px;">
             <li>Requerimiento de autoridad judicial o administrativa competente con orden legal</li>
             <li>Subproveedores de infraestructura tecnológica (hosting, base de datos en la nube) que actúan como subencargados del tratamiento bajo acuerdos de confidencialidad</li>
+            <li>Proveedor de servicios de correo electrónico, que actúa como subencargado del tratamiento al enviar al paciente, a pedido del profesional, los documentos indicados en el punto 14, y que puede encontrarse fuera de Argentina</li>
             <li>Consentimiento expreso del profesional usuario para integraciones específicas solicitadas por él</li>
             <li>Servicio de inteligencia artificial de un tercero, únicamente respecto del texto que el propio profesional decida ingresar o dictar al usar las funciones de IA de la plataforma. La plataforma advierte al profesional, en cada punto de ingreso de texto a la IA, que no debe incluir nombre, apellido, DNI ni otro dato que identifique al paciente; el profesional es responsable de la información que voluntariamente decida enviar a este servicio</li>
           </ul>
@@ -2100,6 +2102,13 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               <strong>🌎 Expansión planeada — México, Colombia, Chile, España, Perú y Uruguay:</strong> MedHistoriaClinicaOnline todavía no opera formalmente en estos países ni tiene usuarios reales en ellos. Cuando esa expansión se concrete, la plataforma se adecuará a la normativa local vigente en cada uno: LFPDPPP y NOM-024-SSA3 en México (autoridad: INAI), Ley 1581/2012 y Resolución 839/2017 en Colombia (autoridad: SIC), Ley 19.628 en Chile (autoridad: Consejo para la Transparencia), RGPD y LOPDGDD en España (autoridad: AEPD), Ley 29733 en Perú, y Ley 18.331 en Uruguay. Hasta entonces, el uso de la plataforma desde estos países se rige por la legislación argentina.
             </div>
           </div>
+        </div>
+
+        <div style="border-bottom:1px solid #e3fbed;padding:16px 0;">
+          <div style="font-weight:700;color:#042b10;font-size:.9rem;margin-bottom:8px;">🔵 14. ENVÍO DE DOCUMENTOS POR CORREO ELECTRÓNICO Y RESPUESTAS A LOS CORREOS AUTOMÁTICOS</div>
+          <p style="margin:0 0 8px;"><strong>Envío de documentos.</strong> Cuando el profesional decide enviar por correo electrónico a su paciente una receta, una derivación o un pedido de estudios, la plataforma genera el correo y lo envía desde la dirección automática documentos@medhistoriaclinicaonline.com, con el documento como archivo PDF adjunto. El correo se envía únicamente a la dirección que el profesional cargó en la ficha del paciente y solo si el paciente prestó su consentimiento, que el profesional registra en la plataforma con fecha y hora; si la dirección cambia, el consentimiento se vuelve a pedir. Cada correo incluye un enlace para no recibir más envíos.</p>
+          <p style="margin:0 0 8px;">La plataforma no conserva una copia del PDF enviado: el documento pasa por sus servidores y por los del proveedor de correo solo para realizar el envío. Se guarda únicamente un registro del envío (fecha y hora, destinatario, tipo y código del documento, estado del envío y huella digital del archivo), sin el contenido del documento. Para entregar el correo se utiliza un proveedor de servicios de correo electrónico, que actúa como subencargado del tratamiento, puede encontrarse fuera de Argentina y puede conservar registros técnicos del envío por un plazo limitado.</p>
+          <p style="margin:0;"><strong>Respuestas a los correos automáticos.</strong> Los correos enviados por la plataforma salen de una dirección que no recibe mensajes. Si usted responde, la plataforma no recibe ni lee esa respuesta, y es posible que le aparezca un aviso de que el mensaje no se pudo entregar. Le pedimos que no envíe datos de salud por ese medio. Para cualquier consulta, comuníquese con su médico.</p>
         </div>
 
       </div>
