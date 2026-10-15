@@ -2504,7 +2504,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             </div>
             <div style="display:flex;gap:12px;margin-top:18px;flex-wrap:wrap;">
               <button class="form-submit" style="flex:1;" onclick="guardarEvolucion()">💾 Guardar evolución</button>
-              <button class="form-submit" style="flex:1;background:linear-gradient(135deg,var(--g4),var(--g3));" onclick="abrirPrint()">🖨️ Imprimir evolución</button>
+              <button class="form-submit" style="flex:1;background:linear-gradient(135deg,var(--g4),var(--g3));" onclick="imprimirEvolucion()">🖨️ Imprimir evolución</button>
             </div>
 
             <!-- Evoluciones anteriores -->
@@ -13160,6 +13160,148 @@ function generarResumen(){
   // La firma manuscrita/digital se estampa si el médico dibujó una — ya no
   // depende de ningún add-on pago (tieneAddonFirma() es gratis para todos).
   if(firmaImgEl){ if(firmaGuardadaRes && tieneAddonFirma()){ firmaImgEl.src = firmaGuardadaRes; firmaImgEl.style.display='block'; } else { firmaImgEl.style.display='none'; } }
+}
+
+// ── IMPRIMIR EVOLUCIÓN: PDF con las hojas de evolución del paciente (sin firma ni registro) ──
+// Paciente abierto en la Historia Clínica y sus evoluciones guardadas, de la más antigua a la más nueva.
+function _datosEvolucionParaImprimir(){
+  var ga = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
+  var p = (pacienteHCActualIdx >= 0 && pacientes[pacienteHCActualIdx]) ? pacientes[pacienteHCActualIdx] : {};
+  var evs = (p.evoluciones && p.evoluciones.length) ? p.evoluciones.slice() : (evoluciones || []).slice();
+  evs.sort(function(a,b){ return (a.fechaISO||a.fecha||'').localeCompare(b.fechaISO||b.fecha||''); });
+  var dni = ga('hc-dni') || p.dni || '';
+  var nombre = ga('hc-paciente') || p.nombre || '';
+  var fnac = ga('hc-fnac') || p.fnac || '';
+  var cuil = '';
+  try{ cuil = medicoEsArgentina() ? _cuilDePaciente(dni, nombre) : ''; }catch(eC){ cuil = ''; }
+  var sinGuardar = !!(ga('evol-motivo') || ga('evol-cuadro') || ga('evol-diag'));
+  return { pac: nombre, dni: dni, fnac: fnac, cuil: cuil, os: ga('hc-os') || p.os || '', afiliado: ga('hc-afiliado') || p.afiliado || '', evs: evs, sinGuardar: sinGuardar };
+}
+// Arma el PDF. Devuelve { doc, nombreArchivo } (o null si no hay nada para imprimir). No hace ningún pedido a la red.
+function _generarPDFEvolucion(){
+  var jsPDF = window.jspdf ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if(!jsPDF){ alert('Librería PDF no cargada. Verificá tu conexión a internet.'); return null; }
+  var d = _datosEvolucionParaImprimir();
+  if(!d.evs.length){ _toastAviso('Este paciente no tiene evoluciones guardadas para imprimir.', 8000); return null; }
+  var u = usuarioActual || {};
+  var medicaNombre = nombreConTitulo(u);
+  var matSrc = u.matricula || '', mn = '', mp = u.matricula_mp || '';
+  if(matSrc.indexOf('M.P.') !== -1){ if(!mp) mp = matSrc.replace(/M\.P\.?/i,'').trim(); } else { mn = matSrc.replace(/^M\.N\.?\s*/i,'').trim(); }
+  var matTxt = [mn ? 'M.N. '+mn : '', mp ? 'M.P. '+mp : ''].filter(Boolean).join(' · ');
+  var profTxt = (u.sexo === 'F' ? 'Médica' : 'Médico') + (u.especialidad ? ' — '+u.especialidad : '');
+  var pacUp = String(d.pac || '(sin nombre)').toUpperCase();
+  var limpiar = function(t){ return String(t==null?'':t).replace(/\r/g,'').replace(/\t/g,' ').replace(/≥/g,'>=').replace(/≤/g,'<=').replace(/→/g,'->').replace(/←/g,'<-').trim(); };
+
+  var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4', compress:true });
+  var W = 210, M = 14, BOTTOM = 272, G = [20,90,50];
+  var lh = 9 * 1.15 / doc.internal.scaleFactor;
+  var y = 0;
+  var franja = function(){ doc.setFillColor(G[0],G[1],G[2]); doc.rect(0,0,W,5,'F'); };
+  var encabezado = function(primera){
+    franja();
+    doc.setTextColor(G[0],G[1],G[2]); doc.setFont('times','bold'); doc.setFontSize(primera?20:13);
+    doc.text('MedHistoriaClinicaOnline', W/2, primera?17:13, { align:'center' });
+    doc.setDrawColor(G[0],G[1],G[2]); doc.setLineWidth(0.6); doc.line(M, primera?21:16, W-M, primera?21:16);
+    if(primera){
+      doc.setFont('times','bold'); doc.setFontSize(14); doc.text('EVOLUCIÓN CLÍNICA', W/2, 30, { align:'center' });
+      doc.setTextColor(15,15,15); doc.setFontSize(12); doc.text(medicaNombre, W/2, 38, { align:'center' });
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(40,40,40);
+      doc.text(profTxt + (matTxt ? '   ·   Matrícula: '+matTxt : ''), W/2, 43, { align:'center' });
+      doc.setDrawColor(G[0],G[1],G[2]); doc.setLineWidth(0.3); doc.line(M, 47, W-M, 47);
+      return 51;
+    }
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(90,90,90);
+    doc.text('Evolución clínica (continuación) — '+medicaNombre, W/2, 21.5, { align:'center' });
+    return 27;
+  };
+  var pieDeHoja = function(n, total){
+    doc.setDrawColor(G[0],G[1],G[2]); doc.setLineWidth(0.5); doc.line(M, 277, W-M, 277);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(G[0],G[1],G[2]);
+    doc.text(medicaNombre + (matTxt ? ' · '+matTxt : ''), M, 282);
+    doc.text('Página '+n+' de '+total, W-M, 282, { align:'right' });
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(70,70,70);
+    var lineaPac = 'Paciente: ' + pacUp + (d.dni ? ' · DNI ' + d.dni : '');
+    doc.text(doc.splitTextToSize(lineaPac, W-2*M)[0], W/2, 287, { align:'center' });
+    doc.setFontSize(7); doc.setTextColor(110,110,110);
+    doc.text('Emitido desde MedHistoriaClinicaOnline · admin@medhistoriaclinicaonline.com', W/2, 292, { align:'center' });
+  };
+
+  // Hoja 1: encabezado y recuadro del paciente
+  y = encabezado(true);
+  doc.setDrawColor(180,210,190); doc.setLineWidth(0.3); doc.roundedRect(M, y, W-2*M, 30, 2.5, 2.5, 'S');
+  var fn = ''; if(d.fnac){ var fp = String(d.fnac).split('-'); fn = fp.length === 3 ? fp[2]+'/'+fp[1]+'/'+fp[0] : d.fnac; }
+  var dniCuil = [d.dni ? 'DNI: '+d.dni : '', d.cuil ? 'CUIL: '+_formatearCuil(d.cuil) : ''].filter(Boolean).join('   ·   ');
+  var colIzq = [['NOMBRE Y APELLIDO', pacUp], ['FECHA DE NACIMIENTO', fn || '-'], ['DNI / CUIL', dniCuil || '-']];
+  var colDer = [['OBRA SOCIAL / PLAN', d.os || '-'], ['N° AFILIADO', d.afiliado || '-'], ['FECHA DE EMISIÓN', new Date().toLocaleDateString('es-AR')]];
+  [[M+4, colIzq, 88], [M+100, colDer, W-M-100-M-4]].forEach(function(c){
+    var yy = y + 6;
+    c[1].forEach(function(par){
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(G[0],G[1],G[2]); doc.text(par[0], c[0], yy);
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(25,25,25);
+      doc.text(doc.splitTextToSize(par[1], c[2])[0], c[0], yy+4); yy += 8;
+    });
+  });
+  y += 36;
+
+  var nuevaHoja = function(){ doc.addPage(); y = encabezado(false); };
+  var campos = function(e){
+    var sv = [e.ta && ('TA: '+e.ta), e.fc && ('FC: '+e.fc), e.peso && ('Peso: '+e.peso+' kg'), e.temp && ('Temp: '+e.temp+' °C')].filter(Boolean).join('   ·   ');
+    var otro = (e.medico && limpiar(e.medico) !== limpiar(medicaNombre)) ? limpiar(e.medico) : '';
+    return [['SIGNOS VITALES', sv], ['MOTIVO DE LA CONSULTA', limpiar(e.motivo)], ['EVOLUCIÓN', limpiar(e.cuadro)], ['EXAMEN', limpiar(e.examen)],
+            ['DIAGNÓSTICO', limpiar(e.diag)], ['INDICACIONES Y PLAN', limpiar(e.plan)], ['PRÓXIMA CONSULTA', limpiar(e.proxima)], ['MÉDICO QUE ATENDIÓ', otro]]
+           .filter(function(c){ return c[1]; });
+  };
+  var lineasDe = function(txt){ doc.setFont('helvetica','normal'); doc.setFontSize(9); return doc.splitTextToSize(txt, W-2*M-6); };
+  var alturaEntrada = function(cs){ var h = 9; cs.forEach(function(c){ h += 4 + lineasDe(c[1]).length * lh + 2; }); return h + 6; };
+  var cabeceraEntrada = function(e, cont){
+    doc.setFillColor(240,253,244); doc.setDrawColor(134,239,172); doc.setLineWidth(0.3); doc.rect(M, y, W-2*M, 7, 'FD');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(G[0],G[1],G[2]);
+    var t = limpiar(e.fecha || '') + (e.hora ? '  ·  '+e.hora+' hs' : '') + (cont ? '   (continuación)' : '');
+    doc.text(doc.splitTextToSize(t, W-2*M-6)[0], M+3, y+4.8); y += 9;
+  };
+
+  d.evs.forEach(function(e){
+    var cs = campos(e);
+    if(!cs.length) cs = [['EVOLUCIÓN', '(sin texto)']];
+    var h = alturaEntrada(cs);
+    if(h > BOTTOM - y){
+      if(h <= BOTTOM - 27) nuevaHoja();            // entra completa en una hoja: pasa entera a la siguiente (no se parte)
+      else if(BOTTOM - y < 40) nuevaHoja();        // más larga que una hoja: se corta por renglón, pero no arranca pegada al pie
+    }
+    cabeceraEntrada(e, false);
+    cs.forEach(function(c){
+      if(y + 4 + lh*2 > BOTTOM){ nuevaHoja(); cabeceraEntrada(e, true); }
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(G[0],G[1],G[2]);
+      doc.text(c[0], M+3, y+3); y += 4;
+      lineasDe(c[1]).forEach(function(l){
+        if(y + lh > BOTTOM){ nuevaHoja(); cabeceraEntrada(e, true); }
+        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(30,30,30);
+        doc.text(l, M+3, y+2.6); y += lh;
+      });
+      y += 2;
+    });
+    doc.setDrawColor(210,225,218); doc.setLineWidth(0.2); doc.line(M, y+1, W-M, y+1); y += 6;
+  });
+
+  var total = doc.getNumberOfPages();
+  for(var i = 1; i <= total; i++){ doc.setPage(i); pieDeHoja(i, total); }
+  var hoyArch = new Date().toLocaleDateString('es-AR').replace(/\//g,'-');
+  return { doc: doc, nombreArchivo: 'Evolucion_' + pacUp.replace(/[^A-Z0-9ÁÉÍÓÚÑ]+/g,'_') + '_' + hoyArch + '.pdf', paginas: total, entradas: d.evs.length, sinGuardar: d.sinGuardar };
+}
+// Botón «🖨️ Imprimir evolución»: genera el PDF y lo abre para imprimir (si el navegador bloquea la ventana, se descarga).
+function imprimirEvolucion(){
+  var r = _generarPDFEvolucion();
+  if(!r) return;
+  if(r.sinGuardar) _toastAviso('Tenés una evolución escrita sin guardar: no se imprime. Guardala con «Guardar evolución» y volvé a imprimir.', 9000);
+  var url = URL.createObjectURL(r.doc.output('blob'));
+  var ventana = null;
+  try{ ventana = window.open(url, '_blank'); }catch(eV){ ventana = null; }
+  if(ventana){
+    ventana.onload = function(){ setTimeout(function(){ ventana.print(); }, 500); };
+  } else {
+    var a = document.createElement('a'); a.href = url; a.download = r.nombreArchivo; a.click();
+  }
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
 }
 
 function imprimirResumenTab(){
