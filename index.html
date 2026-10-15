@@ -2725,7 +2725,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
   <button type="button" id="rx2-med-quitar" onclick="quitarMedicamentoReceta()" style="display:none;margin-left:8px;padding:7px 16px;background:#fff;color:#b91c1c;border:1.5px solid #fecaca;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">✖ Quitar medicamento</button>
               </div>
               <textarea id="rx2-med" readonly style="width:100%;min-height:64px;box-sizing:border-box;background:#f3f4f6;cursor:default;" placeholder="El medicamento que cargues arriba va a aparecer acá."></textarea>
-              <div class="firma-solo-ar" style="font-size:.72rem;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:6px 10px;margin-top:6px;">💡 Para cumplir con el Registro de Recetarios Electrónicos, cada medicamento necesita: nombre genérico (IFA), forma farmacéutica, presentación y cantidad de unidades. Usá el formulario de arriba para no olvidarte de ninguno.</div>
+              <div class="firma-solo-ar" style="font-size:.72rem;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:6px 10px;margin-top:6px;">💡 Para cumplir con el Registro de Recetarios Electrónicos, cada medicamento necesita: nombre genérico (IFA), forma farmacéutica, presentación, cantidad de unidades y posología. La receta también necesita el diagnóstico. Solo la marca comercial es opcional.</div>
               <button class="ai-assist" style="margin-top:6px;">🤖 IA: completar medicación según historial</button><div style="font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-top:6px;">⚠️ Este campo puede enviarse a un servicio de IA externo. No escribas el nombre del paciente acá. Vos sos responsable de que los datos que cargues sean correctos y de revisar la respuesta antes de usarla clínicamente. MedHistoriaClinicaOnline no asume responsabilidad legal por las decisiones clínicas que el profesional adopte a partir de esta sugerencia — la decisión y la responsabilidad son siempre del médico tratante.</div>
             </div>
             <div class="fl full" style="grid-column:1/-1;">
@@ -2758,13 +2758,8 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
                 <div style="flex:1;min-width:180px;"><label style="font-size:.72rem;font-weight:700;color:#0369a1;">✉️ Email del paciente<input class="mi" id="rx2-email" type="email" placeholder="paciente@email.com" style="margin-top:4px;"></div>
               </div>
             </div>
-          <div style="margin-top:18px;grid-column:1/-1;">
+          <div id="rx2-fila-generar" style="margin-top:18px;grid-column:1/-1;">
  <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('receta')">✦ Generar Receta<span class="firma-solo-ar"> (Ley 27.553)</span></button>
-          </div>
-          <div id="rx2-fila-botones" style="display:none;gap:10px;margin-top:10px;flex-wrap:wrap;grid-column:1/-1;">
-            <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#dc2626,#991b1b);" id="rx2-btn-descargar" onclick="descargarPDF('receta')">📄 Descargar PDF</button>
-            <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#374151,#1f2937);" id="rx2-btn-imprimir" onclick="imprimirDoc('receta')">🖨️ Imprimir</button>
-            <button class="form-submit" style="flex:2;background:linear-gradient(135deg,#16a34a,#15803d);font-size:1rem;" id="rx2-btn-enviar" onclick="mostrarOpcionesEnvio('receta')">📤 Enviar al paciente</button>
           </div>
           <div style="margin-top:12px;grid-column:1/-1;">
             <button onclick="nuevaOrden('receta')" style="width:100%;padding:14px;border-radius:12px;border:2px dashed #d1d5db;background:#f9fafb;color:#374151;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='#f0fdf4';this.style.borderColor='var(--g5)'" onmouseout="this.style.background='#f9fafb';this.style.borderColor='#d1d5db'">
@@ -2796,7 +2791,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div class="fl"><label>Obra Social / Prepaga<input type="text" id="der-os" placeholder="OSDE / IOMA / Swiss Medical..." data-ph-solo-ar></div>
             <div class="fl"><label>N° Afiliado / N° Seg. Social / N° Colegiado<input type="text" id="der-afiliado" placeholder="N° afiliado / N° seguro social / N° colegiado"></div>
             <div class="fl"><label>Plan<input type="text" id="der-plan" placeholder="Ej: Plan 210 / Plan Básico / Gold"></div>
-            <div class="fl full"><label style="display:block;margin-bottom:6px;">Especialidad</label><select id="der-especialidad" style="width:100%;">
+            <div class="fl full"><label style="display:block;margin-bottom:6px;">Especialidad</label><select id="der-especialidad" style="width:100%;" onchange="_actualizarEspOtra()">
               <option value="">-- Seleccionar especialidad --</option>
               <option>Alergia e Inmunología</option>
               <option>Anestesiología</option>
@@ -2878,6 +2873,11 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               <option>Urología Pediátrica</option>
               <option>Otra</option>
             </select></div>
+            <div class="fl full" id="der-esp-otra-div" style="display:none;"><label style="display:block;margin-bottom:6px;" for="der-esp-otra">¿Cuál?</label><input type="text" id="der-esp-otra" maxlength="200" style="width:100%;box-sizing:border-box;" placeholder="Escribí la especialidad"></div>
+            <div class="fl full" style="grid-column:1/-1;">
+              <label for="der-diag" style="display:block;margin-bottom:4px;">Diagnóstico CIE-10</label>
+              <input type="text" id="der-diag" style="width:100%;box-sizing:border-box;" placeholder="Hipertensión esencial — I10">
+            </div>
             <div class="fl full" style="grid-column:1/-1;">
               <label for="der-motivo" style="display:block;margin-bottom:4px;">Motivo de derivación</label>
               <textarea id="der-motivo" style="width:100%;min-height:100px;box-sizing:border-box;" placeholder="Motivo clínico detallado..."></textarea>
@@ -2900,12 +2900,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             </div>
           </div>
           <div style="margin-top:18px;">
-            <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('derivacion')">✦ Generar Derivación<span class="firma-solo-ar"> (Ley 27.553)</span></button>
-          <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
-            <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#dc2626,#991b1b);" onclick="descargarPDF('derivacion')">📄 Descargar PDF</button>
-            <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#374151,#1f2937);" onclick="imprimirDoc('derivacion')">🖨️ Imprimir</button>
-            <button class="form-submit" style="flex:2;background:linear-gradient(135deg,#16a34a,#15803d);font-size:1rem;" onclick="mostrarOpcionesEnvio('derivacion')">📤 Enviar al paciente</button>
-          </div>
+            <button id="der-btn-generar" class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('derivacion')">✦ Generar Derivación<span class="firma-solo-ar"> (Ley 27.553)</span></button>
           <div style="margin-top:12px;">
             <button onclick="nuevaOrden('derivacion')" style="width:100%;padding:14px;border-radius:12px;border:2px dashed #d1d5db;background:#f9fafb;color:#374151;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='#f0fdf4';this.style.borderColor='var(--g5)'" onmouseout="this.style.background='#f9fafb';this.style.borderColor='#d1d5db'">
               ✚ Nueva Derivación
@@ -2938,6 +2933,10 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div class="fl"><label>N° Afiliado / N° Seg. Social / N° Colegiado<input type="text" id="est-afiliado" placeholder="N° afiliado / N° seguro social / N° colegiado"></div>
             <div class="fl"><label>Plan<input type="text" id="est-plan" placeholder="Ej: Plan 210 / Plan Básico / Gold"></div>
             <div class="fl full" style="grid-column:1/-1;">
+              <label for="est-diag" style="display:block;margin-bottom:4px;">Diagnóstico CIE-10</label>
+              <input type="text" id="est-diag" style="width:100%;box-sizing:border-box;" placeholder="Hipertensión esencial — I10">
+            </div>
+            <div class="fl full" style="grid-column:1/-1;">
               <label for="est-det" style="display:block;margin-bottom:4px;">Estudios solicitados</label>
               <textarea id="est-det" style="width:100%;min-height:200px;box-sizing:border-box;" placeholder="Hemograma completo&#10;Glucemia en ayunas&#10;Perfil lipídico&#10;TSH · Creatinina y urea"></textarea>
               <button class="ai-assist" style="margin-top:6px;">🤖 IA: sugerir estudios según diagnóstico</button><div style="font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-top:6px;">⚠️ Este campo puede enviarse a un servicio de IA externo. No escribas el nombre del paciente acá. Vos sos responsable de que los datos que cargues sean correctos y de revisar la respuesta antes de usarla clínicamente. MedHistoriaClinicaOnline no asume responsabilidad legal por las decisiones clínicas que el profesional adopte a partir de esta sugerencia — la decisión y la responsabilidad son siempre del médico tratante.</div>
@@ -2956,12 +2955,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
 
           </div>
           <div style="margin-top:18px;">
-             <button class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('pedido')">✦ Generar Pedido de Estudios<span class="firma-solo-ar"> (Ley 27.553)</span></button>
-          </div>
-          <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
-            <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#dc2626,#991b1b);" onclick="descargarPDF('pedido')">📄 Descargar PDF</button>
-            <button class="form-submit" style="flex:1;background:linear-gradient(135deg,#374151,#1f2937);" onclick="imprimirDoc('pedido')">🖨️ Imprimir</button>
-            <button class="form-submit" style="flex:2;background:linear-gradient(135deg,#16a34a,#15803d);font-size:1rem;" onclick="mostrarOpcionesEnvio('pedido')">📤 Enviar al paciente</button>
+             <button id="est-btn-generar" class="form-submit" style="width:100%;font-size:1.05rem;padding:16px;" onclick="generarDocumento('pedido')">✦ Generar Pedido de Estudios<span class="firma-solo-ar"> (Ley 27.553)</span></button>
           </div>
           <div style="margin-top:12px;">
             <button onclick="nuevaOrden('pedido')" style="width:100%;padding:14px;border-radius:12px;border:2px dashed #d1d5db;background:#f9fafb;color:#374151;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='#f0fdf4';this.style.borderColor='var(--g5)'" onmouseout="this.style.background='#f9fafb';this.style.borderColor='#d1d5db'">
@@ -5830,8 +5824,16 @@ function generarDocumento(tipo){
       derivacion: { firmando:'⏳ Firmando derivación…',         hecho:'✅ Derivación generada y firmada',         msg:'✅ Derivación generada y firmada electrónicamente.',         imp:'imprimirla' },
       pedido:     { firmando:'⏳ Firmando pedido de estudios…', hecho:'✅ Pedido de Estudios generado y firmado', msg:'✅ Pedido de Estudios generado y firmado electrónicamente.', imp:'imprimirlo' }
     }[tipo];
-    var emitirGen = tipo === 'receta' ? emitirRecetaFirmada : function(ok, fail){ emitirDocumentoFirmado(tipo, ok, fail); };
-    if(tipo === 'receta'){ var _yaEm = _recetaIdenticaYaEmitida(); if(_yaEm){ _avisoRecetaIdentica(_yaEm); return; } }   // receta idéntica a la última emitida: no se emite otra
+    // Cada Generar emite un documento nuevo, con su propio código, aunque sea igual a otro ya emitido (opts.nueva salta la copia en memoria).
+    var emitirGen = tipo === 'receta' ? function(ok, fail){ emitirRecetaFirmada(ok, fail, { nueva:true }); } : function(ok, fail){ emitirDocumentoFirmado(tipo, ok, fail, { nueva:true }); };
+    if(tipo === 'derivacion' || tipo === 'pedido'){
+      if(_avisarFaltanteDoc(tipo)) return;   // especialidad / diagnóstico obligatorios (el primero que falte, en el orden de la pantalla)
+      if(!String(getDatosDocumento(tipo).contenido || '').trim()){
+        _toastAviso(tipo === 'derivacion' ? 'Completá el motivo de la derivación antes de generarla.' : 'Completá los estudios solicitados antes de generar el pedido.', 8000);
+        return;
+      }
+    }
+    if(_esDobleClicGenerar(tipo)) return;   // ÚNICA protección: dos toques en el mismo segundo no crean dos documentos (un documento igual a otro SÍ se emite de nuevo)
     var btnRx = event.currentTarget;
     var originalRx = btnRx.innerHTML;
     btnRx.disabled = true;
@@ -5839,6 +5841,7 @@ function generarDocumento(tipo){
     emitirGen(function(em){
       registrarAudDoc();
       if(tipo === 'receta'){ _limpiarFormularioTrasEmitir(); }   // el formulario queda listo para otra receta del mismo paciente
+      else if(tipo === 'derivacion' || tipo === 'pedido'){ _limpiarDocTrasEmitir(tipo); }   // ídem derivación / pedido: conserva paciente y contacto
       btnRx.innerHTML = etq.hecho;
       btnRx.style.background = 'linear-gradient(135deg,#145a32,#0a3d1f)';
       setTimeout(function(){ btnRx.innerHTML = originalRx; btnRx.style.background = ''; btnRx.disabled = false; }, 3000);
@@ -8741,8 +8744,9 @@ function agregarMedicamentoReceta(){
   if(!forma.trim()) faltantes.push('forma farmacéutica');
   if(!presentacion.trim()) faltantes.push('presentación');
   if(!cantidad.trim()) faltantes.push('cantidad de unidades');
+  if(!posologia.trim()) faltantes.push('posología');   // obligatoria (solo el nombre comercial es opcional)
   if(faltantes.length){
-    alert('Faltan estos datos obligatorios: '+faltantes.join(', ')+'.');
+    _toastAviso('Faltan datos obligatorios para poder emitir esta receta.', 8000);   // aviso flotante de la página (no alert(): el navegador lo puede bloquear)
     return;
   }
 
@@ -8791,7 +8795,6 @@ function _sincronizarMedicamentoReceta(){
   if(nota) nota.style.display = 'none';
   var capa = document.getElementById('rx2-med-capa');
   if(capa) capa.style.display = cargado ? 'block' : 'none';
-  try{ _actualizarBotonesInferioresReceta(); }catch(eBt){ console.warn('[catch]', eBt); }
 }
 
 // El aviso de "un solo medicamento" solo aparece cuando el médico intenta cargar otro (toca los campos bloqueados o "Agregar").
@@ -14462,6 +14465,34 @@ function formatFecha(input){
 }
 
 // ── MOSTRAR CAMPO OTRO ESTUDIO ──
+// Derivación: muestra u oculta el «¿Cuál?» según el desplegable de especialidad (solo con «Otra»).
+function _actualizarEspOtra(){
+  var sel = document.getElementById('der-especialidad'), div = document.getElementById('der-esp-otra-div');
+  if(div) div.style.display = (sel && sel.value === 'Otra') ? 'block' : 'none';
+}
+// Especialidad de la derivación tal como va al PDF / WhatsApp / mail: la elegida, o —con «Otra»— la escrita en «¿Cuál?» (vacía si no la escribió).
+function _especialidadDerivacion(){
+  var v = ((document.getElementById('der-especialidad')||{}).value||'').trim();
+  if(v === 'Otra') return ((document.getElementById('der-esp-otra')||{}).value||'').replace(/\s+/g,' ').trim();
+  return v;
+}
+// Especialidad y diagnóstico obligatorios de la derivación; diagnóstico obligatorio del pedido. Devuelve true (y muestra el aviso flotante) con el PRIMER
+// campo que falte, en el orden de la pantalla. Vacío, solo espacios o solo saltos de línea cuentan como vacío. No toca el motivo ni los estudios.
+function _avisarFaltanteDoc(tipo, d){
+  d = d || getDatosDocumento(tipo);
+  var msg = '';
+  if(tipo === 'derivacion'){
+    var sel = ((document.getElementById('der-especialidad')||{}).value||'').trim();
+    if(!sel) msg = 'Elegí la especialidad antes de generar la derivación.';
+    else if(sel === 'Otra' && !String(d.esp||'').trim()) msg = 'Completá cuál es la especialidad antes de generar la derivación.';
+    else if(!String(d.diag||'').trim()) msg = 'Completá el diagnóstico antes de generar la derivación.';
+  } else if(tipo === 'pedido'){
+    if(!String(d.diag||'').trim()) msg = 'Completá el diagnóstico antes de generar el pedido.';
+  }
+  if(!msg) return false;
+  _toastAviso(msg, 8000);
+  return true;
+}
 function mostrarOtroEstudio(sel){
   var d = document.getElementById('est-otro-div');
   if(d) d.style.display = sel.value === 'Otro' ? 'flex' : 'none';
@@ -14535,6 +14566,12 @@ function _faltantesRecetaReNaPDiS(d){
   if((!d.medicamentos || !d.medicamentos.length) && (!d.contenido || !d.contenido.trim())) faltantes.push('medicación prescripta (completá los datos del medicamento y tocá "Agregar a la receta")');
   return faltantes;
 }
+// Diagnóstico obligatorio: devuelve true (y muestra el aviso flotante, el mismo de la posología) si está vacío o con solo espacios.
+function _avisarDiagnosticoFaltante(d){
+  if(String((d && d.diag) || '').trim()) return false;
+  _toastAviso('Faltan datos obligatorios para poder emitir esta receta.', 8000);
+  return true;
+}
 function _alertarFaltantesReceta(faltantes){
   var _datosUnaVez = medicoEsArgentina()
     ? 'El domicilio, la jurisdicción de la matrícula y el código REFEPS se completan una vez y quedan guardados en tu perfil para las próximas recetas.'
@@ -14547,11 +14584,12 @@ function _alertarFaltantesReceta(faltantes){
 // no se muestra en ningún lado de la receta todavía (sigue con el código de barras de prueba).
 var RENAPDIS_ID_SOFTWARE = '0341';
 
-function _generarPDFRecetaReNaPDiS(d, callback){
+function _generarPDFRecetaReNaPDiS(d, callback, _extraMed){
   // ── Validación de campos obligatorios — no se genera nada (ni descarga,
   // ni impresión, ni envío) si falta algo exigido ──
   var faltantes = _faltantesRecetaReNaPDiS(d);
   if(faltantes.length){ _alertarFaltantesReceta(faltantes); return; }
+  if(_avisarDiagnosticoFaltante(d)) return;
 
   var jsPDF = window.jspdf ? window.jspdf.jsPDF : (window.jsPDF || null);
   if(!jsPDF){ alert('Librería PDF no cargada. Verificá tu conexión a internet.'); return; }
@@ -14559,6 +14597,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   // compress:true — sin esto el PDF pesa ~470 KB (13 veces más): se sube a firmar y se manda al paciente.
   var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4', compress:true });
   var W = 210, margin = 14, x = margin;
+  var _yFinalNatural = 0;   // alto en el que termina el contenido, antes del pie (primera pasada)
   var _paisMedico = (usuarioActual && usuarioActual.pais) ? usuarioActual.pais : (typeof paisActual !== 'undefined' ? paisActual : 'ar');
   var _leyFirmaPais = (firmaInfo[_paisMedico] && firmaInfo[_paisMedico].ley) ? firmaInfo[_paisMedico].ley : firmaInfo.ar.ley;
   var _paisNombreMedico = (firmaInfo[_paisMedico] && firmaInfo[_paisMedico].pais) ? firmaInfo[_paisMedico].pais : 'Argentina';
@@ -14578,12 +14617,13 @@ function _generarPDFRecetaReNaPDiS(d, callback){
   doc.setDrawColor(20,90,50); doc.setLineWidth(0.5);
   doc.line(margin,18,W-margin,18);
   doc.setFontSize(13); doc.setFont('times','bold');
-  doc.text('RECETA MÉDICA ELECTRÓNICA', W/2, 27, {align:'center'});
+  doc.text('RECETA MÉDICA ELECTRÓNICA', _esArg ? W/2-8 : W/2, 27, {align:'center'});   // Argentina: 8 mm a la izquierda para dejar aire al código de barras
   doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(90,90,90);
   doc.setDrawColor(20,90,50); doc.setLineWidth(0.8);
-  doc.line(margin,37,W-margin,37);
+  var _hdrLinea = _esArg ? 39 : 37;
+  doc.line(margin,_hdrLinea,W-margin,_hdrLinea);
 
-  var y = 42;
+  var y = _esArg ? 21 : 42;
 
   if(_esArg){
     // ══════════════════════════════════════════════════════════════════
@@ -14618,7 +14658,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
     } catch(eCuir) { console.warn('[catch]', eCuir); }
 
     // ── Datos del profesional, centrados, debajo del código de barras ──
-    var yP = bcY + bcH + 5;
+    var yP = 39 + 7;
     doc.setTextColor(15,15,15); doc.setFontSize(12); doc.setFont('times','bold');
     doc.text(_prefijoDrPdf+_capitalizarNombrePropio(d.nombreProfesional), W/2, yP, {align:'center'});
     yP += 5;
@@ -14684,27 +14724,32 @@ function _generarPDFRecetaReNaPDiS(d, callback){
     doc.text('Rp./ MEDICACIÓN PRESCRIPTA', x, y);
     y += 4;
     var medItems = (d.medicamentos && d.medicamentos.length) ? d.medicamentos : null;
-    var medW = W-margin*2-6, medBoxY = y, medBoxH;
+    var medW = W-margin*2, medBoxY = y, medBoxH;
     if(medItems){
       medBoxH = 6;
       medItems.forEach(function(m){
         var det = [m.forma,m.presentacion,m.cantidad?('Cant.: '+m.cantidad):'',m.posologia].filter(Boolean).join(' — ');
+        doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
+        var tl = doc.splitTextToSize((medItems.indexOf(m)+1)+'. '+(m.ifa||'(sin nombre genérico)'), medW-6);   // el título también corta renglón
+        doc.setFont('helvetica','normal'); doc.setFontSize(8);
         var dl = det ? doc.splitTextToSize(det, medW-6) : [];
-        medBoxH += 5 + dl.length*4.2 + 4;
+        medBoxH += 5 + (tl.length-1) * 10.5 * 1.15 / doc.internal.scaleFactor + dl.length*4.2 + 4;
       });
       medBoxH = Math.max(medBoxH, 20);
     } else {
       var contenidoLines = doc.splitTextToSize(d.contenido||'', medW-6);
       medBoxH = Math.max(20, contenidoLines.length*5+10);
     }
+    medBoxH += (_extraMed || 0);   // solo el alto del recuadro; la letra no cambia
     doc.setFillColor(240,253,244); doc.setDrawColor(134,239,172); doc.setLineWidth(0.4);
     doc.roundedRect(x, medBoxY, medW, medBoxH, 2.5, 2.5, 'FD');
     var yMed = medBoxY+6;
     if(medItems){
       medItems.forEach(function(m, i){
         doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(12,60,30);
-        doc.text((i+1)+'. '+(m.ifa||'(sin nombre genérico)'), x+3, yMed);
-        yMed += 5;
+        var _tl = doc.splitTextToSize((i+1)+'. '+(m.ifa||'(sin nombre genérico)'), medW-6);
+        doc.text(_tl, x+3, yMed);
+        yMed += 5 + (_tl.length-1) * 10.5 * 1.15 / doc.internal.scaleFactor;
         var det = [m.forma,m.presentacion,m.cantidad?('Cant.: '+m.cantidad):'',m.posologia].filter(Boolean).join(' — ');
         if(det){
           doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(50,70,50);
@@ -14745,6 +14790,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
 
     // ── DIAGNÓSTICO — en su propio recuadro, debajo de la medicación ──
     if(d.diag){
+      doc.setFont('helvetica','normal'); doc.setFontSize(9);   // la letra con la que se dibuja, ANTES de medir (antes se medía con la del renglón anterior)
       var diagLines = doc.splitTextToSize(d.diag, W-margin*2-8);
       var diagH = Math.max(11, diagLines.length*4.2+5);
       doc.setDrawColor(180,210,190); doc.setLineWidth(0.3);
@@ -14771,14 +14817,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
     }
 
     // ── Fecha de inicio de vigencia (si corresponde) ──
-    if(d.fechaInicioVigencia){
-      var fiv = d.fechaInicioVigencia.split('-');
-      doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
-      doc.text('VÁLIDA DESDE', x, y);
-      doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
-      if(fiv.length===3) doc.text(fiv[2]+'/'+fiv[1]+'/'+fiv[0], x, y+4.2);
-      y += 10;
-    }
+    // «Válida desde» va en el pie, a la izquierda, arriba de la fecha de confección (más abajo).
 
     // ── FECHA (izquierda) + FIRMA ELECTRÓNICA DEL PROFESIONAL (derecha), QR cerca de la firma ──
     // Al subir la receta a TAD (GDE), el sistema estampa abajo a la derecha el número de
@@ -14786,6 +14825,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
     // incluidas). 231 es el techo que logra eso; nunca baja de y+46 (lo que necesitan el QR
     // de verificación + la imagen de firma arriba de la línea) para no superponerse con el
     // contenido de arriba, y 260 es un tope de seguridad para que todo siga entrando en la hoja.
+    _yFinalNatural = y;
     var footerY = Math.min(260, Math.max(y + 46, Math.min(231, y + 50)));
     doc.setDrawColor(20,90,50); doc.setLineWidth(0.4);
     doc.line(x, footerY, W-margin, footerY);
@@ -14795,6 +14835,13 @@ function _generarPDFRecetaReNaPDiS(d, callback){
     doc.setTextColor(20,20,20); doc.setFontSize(13); doc.setFont('times','bold');
     doc.text(_prefijoDrPdf+_capitalizarNombrePropio(d.nombreProfesional), W-margin, footerY-4, {align:'right'});
 
+    if(d.fechaInicioVigencia){
+      var fiv = d.fechaInicioVigencia.split('-');
+      doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
+      doc.text('VÁLIDA DESDE', x, footerY-22);
+      doc.setTextColor(20,20,20); doc.setFontSize(9); doc.setFont('helvetica','normal');
+      if(fiv.length===3) doc.text(fiv[2]+'/'+fiv[1]+'/'+fiv[0], x, footerY-17.4);
+    }
     doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
     doc.text('FECHA DE CONFECCIÓN', x, footerY-9);
     doc.setTextColor(20,20,20); doc.setFontSize(9); doc.setFont('helvetica','normal');
@@ -14808,7 +14855,7 @@ function _generarPDFRecetaReNaPDiS(d, callback){
     // Decreto 63/2024) — "Dr." literal sin variante de género. Legajo RL-2026-95597873-APN-SSVEIYES#MS
     // ya aprobado por el Ministerio (ID de software ReNaPDiS 0341, ver RENAPDIS_ID_SOFTWARE más abajo
     // — no se muestra en la receta, queda para cuando se arme el CUIR real).
-    var _leyendaFirma = 'Este documento ha sido firmado -electrónica o digitalmente según corresponda- por Dr. '+d.nombreProfesional;
+    var _leyendaFirma = 'Este documento ha sido firmado -electrónica o digitalmente según corresponda- por '+_prefijoDrPdf+d.nombreProfesional;   // «Dr./Dra.» según el sexo del perfil (antes: «Dr. » fijo)
     var _legajoTxt = d.legajoRL ? d.legajoRL : 'RL-2026-95597873-APN-SSVEIYES#MS';
     var _leyendaInscripcion = 'Esta receta fue creada por un emisor inscripto y validado en el Registro de Recetarios Electrónicos del Ministerio de Salud de la Nación - '+_legajoTxt;
     var _lf = doc.splitTextToSize(_leyendaFirma, W-margin*2);
@@ -14886,7 +14933,9 @@ function _generarPDFRecetaReNaPDiS(d, callback){
       doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
       doc.text('DIAGNÓSTICO', x, y);
       doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
-      y += 4.2; doc.text(d.diag, x, y);
+      var _dlOtros = doc.splitTextToSize(d.diag, W-margin*2);   // con la letra ya fijada arriba (9 pt normal); antes: una sola línea sin cortar
+      y += 4.2; doc.text(_dlOtros, x, y);
+      y += (_dlOtros.length - 1) * 9 * 1.15 / doc.internal.scaleFactor;
       y += 6;
     }
 
@@ -15061,6 +15110,10 @@ function _generarPDFRecetaReNaPDiS(d, callback){
     }
   }
 
+  if(_esArg && _extraMed === undefined){
+    var _sobra = (231 - 46) - _yFinalNatural;   // el pie queda en y=231 cuando el contenido termina en 185
+    if(_sobra > 0.5){ return _generarPDFRecetaReNaPDiS(d, callback, _sobra); }
+  }
   callback(doc, d);
 }
 
@@ -15128,7 +15181,10 @@ function generarPDFbase64(tipo, callback, soloVerificar, extra){
 
   doc.setTextColor(30,30,30);
   doc.setFontSize(10); doc.setFont('helvetica','bold');
-  doc.text(medicoNombreSolo, W/2, 34, {align:'center'});
+  // Lugar previsto (vacío) para un eventual código de barras CUIR: x 144–196, y 21–37. Un nombre muy largo se corre a la izquierda para no invadirlo.
+  var _nomX = W/2;
+  if((tipo === 'derivacion' || tipo === 'pedido') && doc.getTextWidth(medicoNombreSolo) > 2*(140 - W/2)){ _nomX = 140 - doc.getTextWidth(medicoNombreSolo)/2; }
+  doc.text(medicoNombreSolo, _nomX, 34, {align:'center'});
 
   doc.setTextColor(80,80,80);
   doc.setFontSize(8); doc.setFont('helvetica','normal');
@@ -15227,7 +15283,9 @@ function generarPDFbase64(tipo, callback, soloVerificar, extra){
     doc.setTextColor(20,90,50); doc.setFontSize(7); doc.setFont('helvetica','bold');
     doc.text('DIAGNÓSTICO', x, y);
     doc.setTextColor(30,30,30); doc.setFontSize(10); doc.setFont('helvetica','normal');
-    y += 5; doc.text(d.diag, x, y);
+    var _dl = doc.splitTextToSize(d.diag, W - margin*2);   // envuelve renglón (antes: una sola línea que se salía del margen)
+    y += 5; doc.text(_dl, x, y);
+    y += (_dl.length - 1) * 10 * 1.15 / doc.internal.scaleFactor;
   }
 
   // ── Caja contenido ──
@@ -15249,6 +15307,9 @@ function generarPDFbase64(tipo, callback, soloVerificar, extra){
   var _sfDoc = doc.internal.scaleFactor;
   var _armarCaja = function(fs, compacto){
     var fsA = Math.min(9, fs - 1);
+    doc.setFont('helvetica','bold'); doc.setFontSize(12);
+    var _el = _conEsp ? doc.splitTextToSize(d.esp, _anchoTxt) : [];   // especialidad (12 pt, centrada): envuelve renglón
+    var _extraEsp = _conEsp ? (_el.length - 1) * 12 * 1.15 / _sfDoc : 0;
     doc.setFont('helvetica','normal');
     doc.setFontSize(fs);  var _cl = doc.splitTextToSize(d.contenido || '', _anchoTxt);
     doc.setFontSize(fsA); var _al = (tipo==='derivacion' && d.ant) ? doc.splitTextToSize(d.ant, _anchoTxt) : [];
@@ -15270,6 +15331,8 @@ function generarPDFbase64(tipo, callback, soloVerificar, extra){
       g.cajaH = fin + 8;
       g.indH = _il.length ? _il.length * lhA + 8 : 0;
     }
+    if(_extraEsp > 0){ g.yRotulo += _extraEsp; g.yTxt += _extraEsp; g.yAnt += _extraEsp; g.cajaH += _extraEsp; }   // los renglones extra de la especialidad empujan el texto y el recuadro
+    g.el = _el;
     g.fondo = y + g.cajaH + (d.ind ? 6 + 4 + g.indH : 0);   // dónde termina todo lo que va sobre el pie de la hoja
     g.finTxt = (_al.length > 0) ? g.yAnt + 5 + (_al.length - 1) * lhA : g.yTxt + (_cl.length - 1) * lh;   // último renglón de texto (relativo al recuadro)
     return g;
@@ -15284,6 +15347,10 @@ function generarPDFbase64(tipo, callback, soloVerificar, extra){
     }
   }
   if(soloVerificar) return true;
+  if(tipo === 'derivacion' || tipo === 'pedido'){   // el recuadro llega hasta justo sobre las leyendas del pie (y≈250)
+    var _minC = 250 - y - (d.ind ? 6 + 4 + _g.indH : 0);
+    if(_minC > _g.cajaH) _g.cajaH = _minC;
+  }
   var contenidoLines = _g.cl;
   var antLines = _g.al;
   var cajaH = _g.cajaH;
@@ -15297,7 +15364,7 @@ function generarPDFbase64(tipo, callback, soloVerificar, extra){
     doc.text(spTxt, x+3, y+7);
     // Especialidad centrada
     doc.setFontSize(12); doc.setFont('helvetica','bold');
-    doc.text(d.esp, (W)/2, y+16, {align:'center'});
+    doc.text(_g.el, (W)/2, y+16, {align:'center'});
     doc.setTextColor(20,90,50); doc.setFontSize(8); doc.setFont('helvetica','bold');
     doc.text('MOTIVO DE DERIVACIÓN', x+3, y+_g.yRotulo);
     doc.setTextColor(15,60,30); doc.setFontSize(_g.fs); doc.setFont('helvetica','normal');
@@ -15434,52 +15501,126 @@ function _registrarRecetaEmitida(em){
   _recetasEmitidas.unshift(em);
   if(_recetasEmitidas.length > 3) _recetasEmitidas.length = 3;
 }
-function _mostrarAvisoRecetaEmitida(){
-  var fila = document.getElementById('rx2-fila-botones');
-  var ref = fila || document.querySelector('#panel-recetas .hc-form');
+// ── Cuadro verde de documentos emitidos: receta, derivación y pedido de estudios (mismo cuadro, mismos botones, mismos textos) ──
+// Sin bloqueo ni aviso de «documento idéntico»: cada vez que se toca Generar con datos válidos se emite un documento nuevo, con su propio código.
+var _docsEmitidos = { derivacion: [], pedido: [] };   // últimos 3 de cada tipo en esta sesión (el más nuevo primero), con su copia firmada (la receta usa _recetasEmitidas)
+var _CAJA_EMITIDAS = {
+  receta:     { panel:'panel-recetas',      ancla:'rx2-fila-generar', caja:'rx-aviso-emitida',  pre:'rx2', Doc:'Receta',             o:'a', la:'la receta',      esa:'esa receta',      una:'otra receta',     nuevo:'Nueva Receta' },
+  derivacion: { panel:'panel-derivaciones', ancla:'der-btn-generar',  caja:'der-aviso-emitida', pre:'der', Doc:'Derivación',         o:'a', la:'la derivación',  esa:'esa derivación',  una:'otra derivación', nuevo:'Nueva Derivación' },
+  pedido:     { panel:'panel-estudios',     ancla:'est-btn-generar',  caja:'est-aviso-emitido', pre:'est', Doc:'Pedido de estudios', o:'o', la:'el pedido',      esa:'ese pedido',      una:'otro pedido',     nuevo:'Nuevo Pedido de Estudios' }
+};
+function _listaEmitidas(tipo){ return tipo === 'receta' ? _recetasEmitidas : (_docsEmitidos[tipo] || []); }
+// Guarda una derivación o un pedido recién emitido (con el WhatsApp y el email que había: «Enviar al paciente» del cuadro los usa aunque el formulario ya se vacíe).
+function _registrarDocEmitido(tipo, em){
+  if(!em || !_CAJA_EMITIDAS[tipo]) return;
+  var pre = _CAJA_EMITIDAS[tipo].pre;
+  em.contacto = { wa: ((document.getElementById(pre+'-wa')||{}).value||'').trim(), email: ((document.getElementById(pre+'-email')||{}).value||'').trim() };
+  em.emitidaEn = Date.now();
+  var l = (_docsEmitidos[tipo] || []).filter(function(x){ return x.token !== em.token; });
+  l.unshift(em);
+  if(l.length > 3) l.length = 3;
+  _docsEmitidos[tipo] = l;
+}
+function _emitidaPorToken(token, tipo){
+  var l = _listaEmitidas(tipo || 'receta');
+  for(var i = 0; i < l.length; i++){ if(l[i].token === token) return l[i]; }
+  return null;
+}
+// El cuadro va justo debajo del botón «Generar» y antes del botón «Nueva…» (Generar → cuadro de las emitidas → Nueva).
+function _mostrarCajaEmitidas(tipo){
+  var c = _CAJA_EMITIDAS[tipo];
+  if(!c) return;
+  var ancla = document.getElementById(c.ancla);
+  var ref = ancla || document.querySelector('#' + c.panel + ' .hc-form');
   if(!ref || !ref.parentNode) return;
-  var av = document.getElementById('rx-aviso-emitida');
+  var av = document.getElementById(c.caja);
   if(!av){
     av = document.createElement('div');
-    av.id = 'rx-aviso-emitida';
+    av.id = c.caja;
     av.setAttribute('role', 'status');
     av.style.cssText = 'background:#e8f8ee;border:1.5px solid #22a050;border-radius:12px;padding:12px 16px;margin:12px 0 0;grid-column:1/-1;color:#0a3d1f;font-size:.86rem;line-height:1.5;';
   }
-  // Va justo debajo de la fila de los tres botones y antes de «Nueva Receta» (Generar → botones de la receta nueva → caja de las emitidas → Nueva Receta).
-  if(fila){ if(av.previousElementSibling !== fila) fila.parentNode.insertBefore(av, fila.nextSibling); }
+  if(ancla){ if(av.previousElementSibling !== ancla) ancla.parentNode.insertBefore(av, ancla.nextSibling); }
   else if(!av.parentNode){ ref.parentNode.insertBefore(av, ref); }
-  if(!_recetasEmitidas.length){ av.style.display = 'none'; return; }
-  if(!_recetasEmitidas.length){ av.style.display = 'none'; return; }
+  var lista = _listaEmitidas(tipo);
+  if(!lista.length){ av.style.display = 'none'; return; }
+  var t0 = escHtml(tipo);
   var estiloBtn = 'padding:9px 14px;border:none;border-radius:9px;font-weight:700;font-size:.85rem;cursor:pointer;color:#fff;';
-  var filas = _recetasEmitidas.map(function(em, i){
+  var filas = lista.map(function(em, i){
     var d = em.d || {};
     var t = escHtml(em.token);
     return '<div style="' + (i ? 'margin-top:12px;padding-top:10px;border-top:1px solid #b7e4c7;' : '') + '">'
-      + '<div><strong>' + (i === 0 ? '✅ Receta emitida y firmada' : 'Receta emitida antes') + '</strong> · ' + escHtml(d.pac || '') + (d.dni ? (' · DNI ' + escHtml(d.dni)) : '') + ' · código ' + escHtml(_firmaRxTokenFmt(em.token)) + '</div>'
+      + '<div><strong>' + (i === 0 ? ('✅ ' + c.Doc + ' emitid' + c.o + ' y firmad' + c.o) : (c.Doc + ' emitid' + c.o + ' antes')) + '</strong> · ' + escHtml(d.pac || '') + (d.dni ? (' · DNI ' + escHtml(d.dni)) : '') + ' · código ' + escHtml(_firmaRxTokenFmt(em.token)) + '</div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'
-      + '<button type="button" onclick="_entregarRecetaEmitida(\'descargar\',\'' + t + '\')" style="' + estiloBtn + 'background:linear-gradient(135deg,#dc2626,#991b1b);">📄 Descargar PDF</button>'
-      + '<button type="button" onclick="_entregarRecetaEmitida(\'imprimir\',\'' + t + '\')" style="' + estiloBtn + 'background:linear-gradient(135deg,#374151,#1f2937);">🖨️ Imprimir</button>'
-      + '<button type="button" onclick="_entregarRecetaEmitida(\'enviar\',\'' + t + '\')" style="' + estiloBtn + 'background:linear-gradient(135deg,#16a34a,#15803d);">📤 Enviar al paciente</button>'
+      + '<button type="button" onclick="_entregarEmitida(\'' + t0 + '\',\'descargar\',\'' + t + '\')" style="' + estiloBtn + 'background:linear-gradient(135deg,#dc2626,#991b1b);">📄 Descargar PDF</button>'
+      + '<button type="button" onclick="_entregarEmitida(\'' + t0 + '\',\'imprimir\',\'' + t + '\')" style="' + estiloBtn + 'background:linear-gradient(135deg,#374151,#1f2937);">🖨️ Imprimir</button>'
+      + '<button type="button" onclick="_entregarEmitida(\'' + t0 + '\',\'enviar\',\'' + t + '\')" style="' + estiloBtn + 'background:linear-gradient(135deg,#16a34a,#15803d);">📤 Enviar al paciente</button>'
       + '</div></div>';
   }).join('');
-  var ult = (_recetasEmitidas[0] && _recetasEmitidas[0].d) || {};
+  var ult = (lista[0] && lista[0].d) || {};
   av.innerHTML = filas
-    + '<div style="margin-top:12px;">Estos botones entregan la receta ya emitida. El formulario quedó listo para otra receta de <strong>' + escHtml(ult.pac || 'este paciente') + '</strong>: '
+    + '<div style="margin-top:12px;">Estos botones entregan ' + c.la + ' ya emitid' + c.o + '. El formulario quedó listo para ' + c.una + ' de <strong>' + escHtml(ult.pac || 'este paciente') + '</strong>: '
     + 'se conservaron sus datos y se vació lo demás. Para otro paciente, tocá '
-    + '<a href="#" onclick="nuevaOrden(\'receta\');return false;" style="color:#145a32;font-weight:700;">✚ Nueva Receta</a>. '
-    + '<a href="#" onclick="_ocultarAvisoRecetaEmitida();return false;" style="color:#6b7280;margin-left:6px;">✕ Ocultar</a></div>';
+    + '<a href="#" onclick="nuevaOrden(\'' + t0 + '\');return false;" style="color:#145a32;font-weight:700;">✚ ' + c.nuevo + '</a>. '
+    + '<a href="#" onclick="_ocultarCajaEmitidas(\'' + t0 + '\');return false;" style="color:#6b7280;margin-left:6px;">✕ Ocultar</a></div>';
   av.style.display = 'block';
 }
-function _emitidaPorToken(token){
-  for(var i = 0; i < _recetasEmitidas.length; i++){ if(_recetasEmitidas[i].token === token) return _recetasEmitidas[i]; }
-  return null;
-}
-function _entregarRecetaEmitida(accion, token){
-  var em = _emitidaPorToken(token);
-  if(!em){ alert('No se encontró esa receta en esta sesión. Si recargaste la página, buscala en el historial del paciente.'); return; }
+function _mostrarAvisoRecetaEmitida(){ _mostrarCajaEmitidas('receta'); }   // nombre de siempre: lo llama la emisión de la receta
+function _entregarEmitida(tipo, accion, token){
+  var c = _CAJA_EMITIDAS[tipo];
+  var em = _emitidaPorToken(token, tipo);
+  if(!em){ alert('No se encontró ' + c.esa + ' en esta sesión. Si recargaste la página, busca' + (c.o === 'a' ? 'la' : 'lo') + ' en el historial del paciente.'); return; }
   if(accion === 'descargar') _descargarEmitida(em);
   else if(accion === 'imprimir') _imprimirRecetaEmitida(em);
-  else if(accion === 'enviar') mostrarOpcionesEnvio('receta', em);
+  else if(accion === 'enviar') mostrarOpcionesEnvio(tipo, em);
+}
+function _entregarRecetaEmitida(accion, token){ _entregarEmitida('receta', accion, token); }
+function _ocultarCajaEmitidas(tipo){
+  var av = document.getElementById(_CAJA_EMITIDAS[tipo || 'receta'].caja);
+  if(av) av.style.display = 'none';
+}
+function _ocultarAvisoRecetaEmitida(){ _ocultarCajaEmitidas('receta'); }
+// Baja sola, con desplazamiento suave, hasta el cuadro verde (si está visible).
+function _scrollACajaEmitida(tipo){
+  var id = (_CAJA_EMITIDAS[tipo || 'receta'] || _CAJA_EMITIDAS.receta).caja;
+  setTimeout(function(){
+    var av = document.getElementById(id);
+    if(av && av.style.display !== 'none' && av.scrollIntoView){ try{ av.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(eSc){ av.scrollIntoView(); } }
+  }, 120);
+}
+// ¿Lo que hay en el formulario es exactamente la derivación / el pedido que se acaba de emitir? (si el médico ya empezó otro, NO se toca el formulario)
+function _docEnPantallaEsElEmitido(tipo){
+  try{
+    var c = _docFirmadoCache[tipo];
+    if(!c) return false;
+    return _firmaDocClave(tipo, getDatosDocumento(tipo), _docFirmaInfo(tipo)) === c.key;
+  }catch(eId){ return false; }
+}
+// Vacía el contenido de la derivación / del pedido y deja los datos del paciente (y su contacto) para seguir con otro documento al mismo paciente.
+function _vaciarContenidoDocConservandoPaciente(tipo){
+  var campos = { derivacion: ['der-diag','der-motivo','der-especialidad','der-esp-otra','der-ant'], pedido: ['est-diag','est-det','est-otro'] }[tipo] || [];
+  var selects = { derivacion: ['der-urgencia'], pedido: ['est-tipo'] }[tipo] || [];
+  campos.forEach(function(id){ var el = document.getElementById(id); if(el) el.value = ''; });
+  selects.forEach(function(id){ var el = document.getElementById(id); if(el) el.selectedIndex = 0; });
+  if(tipo === 'pedido'){ var otro = document.getElementById('est-otro-div'); if(otro) otro.style.display = 'none'; }
+  if(tipo === 'derivacion') _actualizarEspOtra();
+}
+// ¿El contenido de la derivación / del pedido está vacío? (para no preguntar «¿limpiar?» cuando no se pierde nada)
+function _docSinContenido(tipo){
+  var ids = { derivacion: ['der-diag','der-motivo','der-especialidad','der-esp-otra','der-ant'], pedido: ['est-diag','est-det'] }[tipo] || [];
+  return ids.every(function(id){ return !((document.getElementById(id)||{}).value||'').trim(); });
+}
+// Se llama cuando termina de emitirse una derivación / un pedido. Si el médico ya empezó otro (el formulario ya no es el emitido), no se toca.
+function _limpiarDocTrasEmitir(tipo){
+  try{ if(_docEnPantallaEsElEmitido(tipo)){ _vaciarContenidoDocConservandoPaciente(tipo); _scrollACajaEmitida(tipo); } }catch(eLm){ console.warn('[catch]', eLm); }
+}
+// ÚNICA protección contra el doble clic accidental (receta, derivación y pedido): dos toques en el mismo segundo no crean dos documentos.
+var _ultimoGenerarMs = {};
+function _esDobleClicGenerar(tipo){
+  var ahora = Date.now();
+  if(ahora - (_ultimoGenerarMs[tipo] || 0) < 1500) return true;
+  _ultimoGenerarMs[tipo] = ahora;
+  return false;
 }
 function _descargarEmitida(em){
   var d = em.d || {};
@@ -15506,17 +15647,6 @@ function _fuenteEnvio(tipo, emi){
   var pre = tipo==='receta' ? 'rx2' : tipo==='derivacion' ? 'der' : 'est';
   return { d: d, tel: ((document.getElementById(pre+'-wa')||{}).value||'').trim(), email: ((document.getElementById(pre+'-email')||{}).value||'').trim() };
 }
-// ¿Lo que hay en el formulario es exactamente la última receta emitida? Devuelve esa emisión (o null).
-function _recetaIdenticaYaEmitida(){
-  try{
-    if(!_recetaFirmadaCache) return null;
-    return (_firmaRxClave(getDatosDocumento('receta')) === _recetaFirmadaCache.key) ? _recetaFirmadaCache : null;
-  }catch(eId){ return null; }
-}
-function _avisoRecetaIdentica(em){
-  alert('Esta receta ya fue emitida (código ' + _firmaRxTokenFmt(em.token) + '). No se emitió otra igual: entregala con los botones del cuadro verde.');
-  try{ _mostrarAvisoRecetaEmitida(); _scrollACajaEmitida(); }catch(eSc){ console.warn('[catch]', eSc); }
-}
 // Vacía el contenido de la receta y deja los datos del paciente (y su contacto) para poder seguir con otra receta al mismo paciente.
 function _vaciarContenidoRecetaConservandoPaciente(){
   ['rx2-med-ifa','rx2-med-comercial','rx2-med-forma','rx2-med-presentacion','rx2-med-cantidad','rx2-med-posologia','rx2-med',
@@ -15532,23 +15662,6 @@ function _vaciarContenidoRecetaConservandoPaciente(){
 // Se llama cuando termina la entrega de la receta recién emitida. Si el médico ya empezó otra (el formulario ya no es la emitida), no se toca.
 function _limpiarFormularioTrasEmitir(){
   try{ if(_recetaEnPantallaEsLaEmitida()){ _vaciarContenidoRecetaConservandoPaciente(); _scrollACajaEmitida(); } }catch(eLm){ console.warn('[catch]', eLm); }
-}
-// Descargar, Imprimir y Enviar de abajo: apagados hasta que la receta nueva tenga un medicamento cargado.
-function _actualizarBotonesInferioresReceta(){
-  var cargado = (typeof _recetaMedicamentosData !== 'undefined') && _recetaMedicamentosData.length >= 1;
-  var fila = document.getElementById('rx2-fila-botones');
-  if(fila) fila.style.display = cargado ? 'flex' : 'none';   // sin medicamento no se ven; con uno aparecen
-}
-// Baja sola, con desplazamiento suave, hasta la caja verde (si está visible).
-function _scrollACajaEmitida(){
-  setTimeout(function(){
-    var av = document.getElementById('rx-aviso-emitida');
-    if(av && av.style.display !== 'none' && av.scrollIntoView){ try{ av.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(eSc){ av.scrollIntoView(); } }
-  }, 120);
-}
-function _ocultarAvisoRecetaEmitida(){
-  var av = document.getElementById('rx-aviso-emitida');
-  if(av) av.style.display = 'none';
 }
 // ¿Lo que hay en el formulario es exactamente la receta emitida? (si el médico ya empezó otra, NO se toca)
 function _recetaEnPantallaEsLaEmitida(){
@@ -15662,19 +15775,19 @@ function _toastFirma(msg){
 
 // Emite la receta actual: la registra, genera el PDF con su QR, lo firma en el servidor y entrega los bytes firmados.
 // onOk(em) recibe { bytes, d, token, hash, firmadoEn, ... }. onFail() se llama si se abortó o falló (ya se avisó al médico).
-function emitirRecetaFirmada(onOk, onFail){
+function emitirRecetaFirmada(onOk, onFail, opts){
   onFail = onFail || function(){};
   var d = getDatosDocumento('receta');
   var faltantes = _faltantesRecetaReNaPDiS(d);
   if(faltantes.length){ _alertarFaltantesReceta(faltantes); onFail(); return; }
+  if(_avisarDiagnosticoFaltante(d)){ onFail(); return; }
   if(typeof sb === 'undefined' || !usuarioActual || !usuarioActual.id){ alert('Iniciá sesión para emitir la receta.'); onFail(); return; }
 
   var key = _firmaRxClave(d);
-  if(_recetaFirmadaCache && _recetaFirmadaCache.key === key){ onOk(_recetaFirmadaCache); return; }
+  if(!(opts && opts.nueva) && _recetaFirmadaCache && _recetaFirmadaCache.key === key){ onOk(_recetaFirmadaCache); return; }   // (Generar pasa opts.nueva: siempre emite una nueva; esto solo sirve a Descargar/Imprimir/Enviar sin cuadro)
   if(_recetaEmisionEnCurso && _recetaEmisionEnCurso.key === key){ _recetaEmisionEnCurso.esperando.push({ ok:onOk, fail:onFail }); return; }
 
-  // (Se sacó el aviso «Hace unos minutos ya emitiste una receta…»: con el formulario vaciado tras emitir, hacer otra receta es una decisión del médico.
-  //  Una receta IDÉNTICA a la última ya no se emite de nuevo: lo avisan los botones, ver _recetaIdenticaYaEmitida.)
+  // (Una receta igual a otra ya emitida SÍ se emite de nuevo, con su propio código, cuando se toca Generar. Única protección: el doble clic accidental, ver _esDobleClicGenerar.)
 
   // Aviso si "Válida desde" es anterior a hoy: una fecha vieja en ese campo invalida la receta para quien la dispensa.
   var _hoyIso = (function(){ var h=new Date(); return h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0'); })();
@@ -15812,14 +15925,15 @@ function _firmarDocumentoServidor(p, ok, fail){
 
 // Emite el documento actual: lo registra, genera el PDF con su QR, lo firma en el servidor y entrega los bytes firmados.
 // onOk(em) recibe { bytes, d, token, hash, firmadoEn, ... }. onFail() se llama si se abortó o falló (ya se avisó al médico).
-function emitirDocumentoFirmado(tipo, onOk, onFail){
+function emitirDocumentoFirmado(tipo, onOk, onFail, opts){
   onFail = onFail || function(){};
   var d = getDatosDocumento(tipo);
   if(!d.pac){ alert('Completá el nombre del paciente primero.'); onFail(); return; }
+  if((tipo === 'derivacion' || tipo === 'pedido') && _avisarFaltanteDoc(tipo, d)){ onFail(); return; }
   if(typeof sb === 'undefined' || !usuarioActual || !usuarioActual.id){ alert('Iniciá sesión para emitir el documento.'); onFail(); return; }
   var info = _docFirmaInfo(tipo);
   var key = _firmaDocClave(tipo, d, info);
-  if(_docFirmadoCache[tipo] && _docFirmadoCache[tipo].key === key){ onOk(_docFirmadoCache[tipo]); return; }
+  if(!(opts && opts.nueva) && _docFirmadoCache[tipo] && _docFirmadoCache[tipo].key === key){ onOk(_docFirmadoCache[tipo]); return; }
   var enCurso = _docEmisionEnCurso[tipo];
   if(enCurso && enCurso.key === key){ enCurso.esperando.push({ ok:onOk, fail:onFail }); return; }
   // Si el texto no entra en una hoja se avisa ANTES de registrar nada.
@@ -15839,6 +15953,10 @@ function emitirDocumentoFirmado(tipo, onOk, onFail){
     _firmarDocumentoServidor(p, function(res){
       var em = { key:p.key, d:p.d, bytes:p.bytes, token:p.token, url:p.url, idDoc:p.idDoc, hash:res.hash_pdf, firmadoEn:res.firmado_en };
       _docFirmadoCache[tipo] = em; _docFirmaPendiente[tipo] = null;
+      if(tipo === 'derivacion' || tipo === 'pedido'){
+        try{ _registrarDocEmitido(tipo, em); }catch(eRg){ console.warn('[catch]', eRg); }
+        try{ _mostrarCajaEmitidas(tipo); }catch(eAv){ console.warn('[catch]', eAv); }
+      }
       terminar(em);
     }, function(msg){ terminar(null, msg); });
   };
@@ -15877,7 +15995,7 @@ function emitirDocumentoFirmado(tipo, onOk, onFail){
 // Devuelve un objeto "tipo jsPDF" (save / output) para que los flujos de entrega existentes sigan igual: para la receta, la derivación,
 // el pedido de estudios y la orden entrega los bytes ya firmados; para el resto de los documentos (resumen de HC), el PDF de siempre.
 function _generarParaEntregar(tipo, onOk, onFail, emi){
-  if(tipo === 'receta' && emi){   // receta ya emitida: se entrega su copia firmada, sin leer el formulario
+  if(emi && (tipo === 'receta' || tipo === 'derivacion' || tipo === 'pedido')){   // documento ya emitido: se entrega su copia firmada, sin leer el formulario
     onOk({
       save: function(nombre){ _descargarBytesPDF(emi.bytes, nombre); },
       output: function(kind){ return kind === 'blob' ? new Blob([emi.bytes], {type:'application/pdf'}) : emi.bytes; }
@@ -15924,10 +16042,9 @@ function _descargarDocumentoFirmado(tipo){
 }
 
 function descargarPDF(tipo, opts){
-  if(tipo === 'receta' && opts && opts.emitida){ _descargarEmitida(opts.emitida); return; }   // receta ya emitida: se entrega su copia firmada
+  if(opts && opts.emitida && (tipo === 'receta' || tipo === 'derivacion' || tipo === 'pedido')){ _descargarEmitida(opts.emitida); return; }   // documento ya emitido: se entrega su copia firmada
   var d = getDatosDocumento(tipo);
   if(!d.pac){ alert('Completá el nombre del paciente primero.'); return; }
-  if(tipo === 'receta' && !(opts && opts.sinLimpiar)){ var _yaEmD = _recetaIdenticaYaEmitida(); if(_yaEmD){ _avisoRecetaIdentica(_yaEmD); return; } }
   if(tipo === 'receta'){ _descargarRecetaFirmada(opts); return; }
   // Derivación, pedido de estudios y orden: se registran y se firman en el servidor antes de entregarse, una sola vez por emisión
   // (emitirDocumentoFirmado avisa si el texto no entra en una hoja antes de registrar nada).
@@ -16005,7 +16122,6 @@ var _tipoEnvioActual = null;
 function mostrarOpcionesEnvio(tipo, desdeEmitida){
   _envioDesdeEmitida = desdeEmitida || null;   // si viene de una receta ya emitida, se envía su copia y su contacto guardados
   var d = _envioDesdeEmitida ? (_envioDesdeEmitida.d || {}) : getDatosDocumento(tipo);
-  if(!_envioDesdeEmitida && tipo === 'receta'){ var _yaEmE = _recetaIdenticaYaEmitida(); if(_yaEmE){ _avisoRecetaIdentica(_yaEmE); return; } }
   if(!d.pac){ alert('Completá el nombre del paciente primero.'); return; }
   _tipoEnvioActual = tipo;
   var overlay = document.getElementById('envioOverlay');
@@ -16222,8 +16338,8 @@ function getDatosDocumento(tipo){
     datos.diag=(document.getElementById('der-diag')||{}).value||'';
     datos.contenido=(document.getElementById('der-motivo')||{}).value||'';
     datos.ant=(document.getElementById('der-ant')||{}).value||'';
-    datos.esp=(document.getElementById('der-especialidad')||{}).value||'';
-    datos.medico=(document.getElementById('der-medico')||{}).value||'';
+    datos.esp=_especialidadDerivacion();   // con «Otra»: la especialidad escrita
+    datos.medico=((document.getElementById('der-medico')||{}).value||'').trim() || _medicoDePerfil(usuarioActual);   // vacío -> perfil de la sesión; editado a mano -> se respeta
     datos.labelContenido='MOTIVO DE DERIVACIÓN';
   } else if(tipo==='ord'){
     var tipoOrd = (document.getElementById('ord-tipo')||{}).value||'Orden Médica';
@@ -16236,7 +16352,7 @@ function getDatosDocumento(tipo){
     datos.afiliado=(document.getElementById('ord-afiliado')||{}).value||'';
     datos.diag=(document.getElementById('ord-diag')||{}).value||'';
     datos.contenido=(document.getElementById('ord-det')||{}).value||'';
-    datos.medico=(document.getElementById('ord-medico')||{}).value||'';
+    datos.medico=((document.getElementById('ord-medico')||{}).value||'').trim() || _medicoDePerfil(usuarioActual);   // vacío -> perfil de la sesión; editado a mano -> se respeta
     datos.labelContenido='DETALLE';
   } else if(tipo==='hc'){
     datos.titulo='RESUMEN DE HISTORIA CLÍNICA'; datos.icono='📋';
@@ -16249,7 +16365,7 @@ function getDatosDocumento(tipo){
     datos.diag=(document.getElementById('hc-print-diag')||{}).value||'';
     datos.contenido=(document.getElementById('hc-med')||{}).value||'';
     datos.ind=(document.getElementById('hc-obs')||{}).value||'';
-    datos.medico=(document.getElementById('hc-medico')||{}).value||'';
+    datos.medico=((document.getElementById('hc-medico')||{}).value||'').trim() || _medicoDePerfil(usuarioActual);   // vacío -> perfil de la sesión; editado a mano -> se respeta
     datos.labelContenido='MEDICACIÓN HABITUAL';
   } else {
     datos.titulo='PEDIDO DE ESTUDIOS'; datos.icono='🔬';
@@ -16261,7 +16377,7 @@ function getDatosDocumento(tipo){
     datos.afiliado=(document.getElementById('est-afiliado')||{}).value||'';
     datos.diag=(document.getElementById('est-diag')||{}).value||'';
     datos.contenido=(document.getElementById('est-det')||{}).value||'';
-    datos.medico=(document.getElementById('est-medico')||{}).value||'';
+    datos.medico=((document.getElementById('est-medico')||{}).value||'').trim() || _medicoDePerfil(usuarioActual);   // vacío -> perfil de la sesión; editado a mano -> se respeta
     datos.labelContenido='ESTUDIOS SOLICITADOS';
   }
   datos.fecha=( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); })();
@@ -16297,7 +16413,7 @@ function enviarWhatsApp(tipo){
   } else if(tipo === 'derivacion'){
     var pac = (document.getElementById('der-paciente')||{}).value || '';
     var mot = (document.getElementById('der-motivo')||{}).value || '';
-    var esp = (document.getElementById('der-especialidad')||{}).value || '';
+    var esp = _especialidadDerivacion();
     var medico = (document.getElementById('der-medico')||{}).value || '';
     var fecha = new Date().toLocaleDateString('es-AR');
     pac = pac.toUpperCase();
@@ -16370,7 +16486,7 @@ function enviarEmail(tipo){
   } else if(tipo === 'derivacion'){
     var pac = (document.getElementById('der-paciente')||{}).value || '';
     var mot = (document.getElementById('der-motivo')||{}).value || '';
-    var esp = (document.getElementById('der-especialidad')||{}).value || '';
+    var esp = _especialidadDerivacion();
     var medico = (document.getElementById('der-medico')||{}).value || '';
     asunto = 'Derivación Médica - MedHistoriaClinicaOnline';
    cuerpo = 'Derivación Médica\n\nPaciente: '+pac+'\nEspecialidad: '+esp+'\n\nMotivo:\n'+mot+'\n\n'+medico+'\n\n'+_firmaLeyMsg('Emitida con firma electrónica · Ley 27.553 · ')+'MedHistoriaClinicaOnline';
@@ -16646,11 +16762,12 @@ function imprimirDoc(tipo){
 
 function nuevaOrden(tipo){
   var _yaEmitida = (tipo === 'receta') && (_recetaEnPantallaEsLaEmitida() || (_recetaMedicamentosData.length === 0 && !((document.getElementById('rx2-diag')||{}).value||'').trim() && !((document.getElementById('rx2-ind')||{}).value||'').trim()));   // lo que hay en pantalla ya está emitido y firmado: no se pierde nada
+  if(!_yaEmitida && (tipo === 'derivacion' || tipo === 'pedido')){ _yaEmitida = _docSinContenido(tipo) || _docEnPantallaEsElEmitido(tipo); }   // nada que perder: ya vacío o ya emitido
   if(!_yaEmitida && !confirm('¿Limpiar el formulario para una nueva '+
     (tipo==='receta'?'receta':tipo==='derivacion'?'derivación':'orden de estudios')+'?')) return;
   var campos = {
     receta: ['rx2-paciente','rx2-dni','rx2-cuil','rx2-fnac','rx2-sexo','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind','rx2-wa','rx2-email'],
-derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afiliado','der-plan','der-diag','der-motivo','der-especialidad','der-ant','der-urgencia','der-wa','der-email'],
+derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afiliado','der-plan','der-diag','der-motivo','der-especialidad','der-esp-otra','der-ant','der-urgencia','der-wa','der-email'],
     pedido: ['est-paciente','est-dni','est-fnac','est-sexo','est-os','est-afiliado','est-diag','est-det','est-wa','est-email']
   };
   (campos[tipo]||[]).forEach(function(id){
@@ -16658,6 +16775,7 @@ derivacion: ['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afilia
    if(!el) return;
     if(el.tagName==='SELECT'){ el.selectedIndex = 0; } else { el.value = ''; }
   });
+  if(tipo==='derivacion') _actualizarEspOtra();
   if(tipo==='receta'){
     _recetaMedicamentosData = []; try{ _sincronizarMedicamentoReceta(); }catch(eSm){ console.warn('[catch]', eSm); }
     _recetaFirmadaCache = null; // receta nueva = emisión nueva (otro PDF, otro código, otra firma)
@@ -18421,8 +18539,10 @@ function nombreConTitulo(u){
   return titulo + ' ' + nombre;
 }
 
-function precargarDatosMedico(u){
-  if(!u) return;
+// Texto del médico que sale del PERFIL de la sesión: «Dra. Nombre · M.N. 123» (título según el sexo). Lo usan la precarga de los campos «médico» y el PDF
+// de derivación / pedido cuando el campo «Médico solicitante» está vacío.
+function _medicoDePerfil(u){
+  if(!u) return '';
   var nombre = u.nombre || '';
   var sexo = u.sexo || '';
   var mn = u.mn || '';
@@ -18434,14 +18554,17 @@ function precargarDatosMedico(u){
     else if(mat.indexOf('M.P.')!==-1) mp = mat.replace('M.P.','').trim();
     else mn = mat.trim();
   }
-  // Título según sexo
   var titulo = sexo === 'F' ? 'Dra.' : 'Dr.';
   var medicoStr = titulo + ' ' + nombre;
-  // Evitar duplicar el prefijo si el número ya lo incluye
   var mnLimpio = mn.replace(/^M\.N\.?\s*/i,'').replace(/^MN\s*/i,'').trim();
   var mpLimpio = mp.replace(/^M\.P\.?\s*/i,'').replace(/^MP\s*/i,'').trim();
   if(mnLimpio) medicoStr += ' · M.N. ' + mnLimpio;
   if(mpLimpio) medicoStr += ' · M.P. ' + mpLimpio;
+  return medicoStr;
+}
+function precargarDatosMedico(u){
+  if(!u) return;
+  var medicoStr = _medicoDePerfil(u);
   // Cargar en todos los campos médico (siempre)
   ['rx2-medico','der-medico','est-medico','rx-medico','ord-medico','evol-medico','fo-medico','fp-medico'].forEach(function(id){
     var el = document.getElementById(id);
@@ -18694,7 +18817,7 @@ function finalizarAtencion(){
   var chkContactoFin = document.getElementById('rx2-incluir-contacto'); if(chkContactoFin) chkContactoFin.checked = false;
   var rxSexo=document.getElementById('rx-sexo'); if(rxSexo) rxSexo.selectedIndex=0;
   // Limpiar Derivaciones
-  ['der-paciente','der-dni','der-fnac','der-os','der-afiliado','der-plan','der-diag','der-det','der-medico'].forEach(function(id){
+  ['der-paciente','der-dni','der-fnac','der-os','der-afiliado','der-plan','der-diag','der-det','der-medico','der-esp-otra'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value='';
   });
   var derSexo=document.getElementById('der-sexo'); if(derSexo) derSexo.selectedIndex=0;
@@ -18721,9 +18844,10 @@ function limpiarReceta(){
 }
 
 function limpiarDerivacion(){
-  ['der-paciente','der-dni','der-fnac','der-os','der-afiliado','der-plan','der-diag','der-motivo','der-especialidad','der-ant','der-wa','der-email'].forEach(function(id){
+  ['der-paciente','der-dni','der-fnac','der-os','der-afiliado','der-plan','der-diag','der-motivo','der-especialidad','der-esp-otra','der-ant','der-wa','der-email'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value='';
   });
+  _actualizarEspOtra();
   var s=document.getElementById('der-sexo'); if(s) s.selectedIndex=0;
   var u=document.getElementById('der-urgencia'); if(u) u.selectedIndex=0;
   showPanel('hc');
