@@ -4748,7 +4748,6 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       <button class="mtab on" id="pt-hc" onclick="cambiarPrint('hc')">📋 Resumen HC</button>
       <!-- La receta se emite solo desde la sección Recetas (un medicamento por receta, cargado por campos): esta pestaña de texto libre queda oculta. -->
   <button class="mtab" id="pt-rx" onclick="cambiarPrint('rx')" style="display:none;">💊 Receta</button>
-      <button class="mtab" id="pt-ord" onclick="cambiarPrint('ord')">📄 Orden</button>
     </div>
     <!-- HC -->
     <div id="pf-hc" class="mform" style="gap:10px;">
@@ -4784,24 +4783,6 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
         <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Médico<input class="mi" id="rx-medico" type="text" placeholder="Dr. Apellido · Especialidad · Mat. 00000"></div>
       </div>
       <button class="mbtn" onclick="imprimirDoc('receta')">🖨️ Imprimir Receta</button>
-    </div>
-    <!-- ORD -->
-    <div id="pf-ord" class="mform" style="display:none;gap:10px;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Tipo<select class="mi" id="ord-tipo"><option>Pedido de Estudios de laboratorio</option><option>Pedido de Estudios por imágenes</option><option>Derivación a especialista</option><option>Orden de internación</option></select></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Urgencia<select class="mi" id="ord-urgencia"><option>Programada</option><option>Preferencial</option><option>Urgente</option></select></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Paciente<input class="mi" id="ord-paciente" type="text" placeholder="Apellido y nombre"></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">DNI<input class="mi" id="ord-dni" type="text" placeholder="30.000.000"></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Sexo<select class="mi" id="ord-sexo"><option value="">-</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Fecha de nac.<input class="mi" id="ord-fnac" type="date"></div>
-        <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Diagnóstico / Motivo<input class="mi" id="ord-diag" type="text" placeholder="Diagnóstico o motivo"></div>
-        <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Detalle<textarea class="mi" id="ord-det" style="min-height:80px;" placeholder="Estudios, especialista, detalle de la orden..."></textarea></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Obra Social / Prepaga<input class="mi" id="ord-os" type="text" placeholder="OSDE / Swiss Medical..."></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">N° Afiliado / N° Seg. Social / N° Colegiado<input class="mi" id="ord-afiliado" type="text" placeholder="N° afiliado / N° seguro social / N° colegiado"></div>
-        <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Antecedentes<input class="mi" id="ord-ant" type="text" placeholder="HTA, DBT..."></div>
-        <div style="grid-column:1/-1"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Médico solicitante<input class="mi" id="ord-medico" type="text" placeholder="Dr. Apellido · Especialidad · Mat. 00000"></div>
-      </div>
-      <button class="mbtn" onclick="imprimirDoc('ord')">🖨️ Imprimir Orden Médica</button>
     </div>
   </div>
 </div>
@@ -6203,7 +6184,7 @@ function abrirPrint(){
 }
 function cerrarPrint(){document.getElementById('printOverlay').classList.remove('open');}
 function cambiarPrint(t){
-  ['hc','rx','ord'].forEach(id=>{
+  ['hc','rx'].forEach(id=>{
     document.getElementById('pt-'+id).classList.toggle('on',id===t);
     document.getElementById('pf-'+id).style.display=id===t?'flex':'none';
   });
@@ -15871,31 +15852,30 @@ function emitirRecetaFirmada(onOk, onFail, opts){
 // (Edge Function firma-documento → tabla firmas_documentos, append-only, verificable en /verificar/) y esos MISMOS bytes se
 // descargan, imprimen o envían. Una emisión por contenido: descargar, imprimir y enviar el mismo documento reutilizan la
 // misma emisión firmada, así que no se duplican filas. Si la firma falla, el documento NO se entrega (se reintenta sin
-// duplicar el registro). tipo = 'derivacion' | 'pedido' | 'ord' (la "Orden" del cuadro de imprimir).
+// duplicar el registro). tipo = 'derivacion' | 'pedido'.
 var _docFirmadoCache = {};    // por tipo: { key, d, bytes, token, url, idDoc, hash, firmadoEn }
 var _docFirmaPendiente = {};  // por tipo: { key, tabla, tipoDb, que, idDoc, token, url, bytes, d } — reintento sin duplicar el registro
 var _docEmisionEnCurso = {};  // por tipo: { key, esperando:[{ok,fail}] } — evita emisiones dobles por clicks seguidos
 
-// A qué tabla y a qué tipo de firma corresponde cada documento. La "Orden" del cuadro de imprimir se guarda como derivación si es
-// una "Derivación a especialista" y como pedido de estudios en cualquier otro caso (laboratorio, imágenes, internación).
+// A qué tabla y a qué tipo de firma corresponde cada documento.
 function _docFirmaInfo(tipo){
-  var esDer = tipo === 'derivacion' || (tipo === 'ord' && /^deriv/i.test((document.getElementById('ord-tipo')||{}).value||''));
+  var esDer = tipo === 'derivacion';
   if(esDer) return { tabla:'derivaciones', tipoDb:'derivacion', que:'la derivación' };
-  return { tabla:'pedidos_estudios', tipoDb:'pedido_estudios', que: tipo === 'ord' ? 'la orden médica' : 'el pedido de estudios' };
+  return { tabla:'pedidos_estudios', tipoDb:'pedido_estudios', que:'el pedido de estudios' };
 }
 // Lo que se guarda de cada documento en su tabla (lo mismo que se guardaba antes al descargar; ahora una sola vez por emisión).
 function _docFilaSB(tipo, info, d, pacienteId){
   var v = function(id){ return (document.getElementById(id)||{}).value||''; };
   var fila = { paciente_id:pacienteId, medico_id:(usuarioActual ? usuarioActual.id : null), whatsapp_envio:'', email_envio:'' };
   if(info.tabla === 'derivaciones'){
-    fila.especialidad = tipo === 'ord' ? '' : (d.esp || '');
+    fila.especialidad = d.esp || '';
     fila.motivo_derivacion = d.contenido || '';
-    fila.antecedentes_relevantes = tipo === 'ord' ? v('ord-ant') : (d.ant || '');
-    fila.urgencia = v(tipo === 'ord' ? 'ord-urgencia' : 'der-urgencia');
+    fila.antecedentes_relevantes = d.ant || '';
+    fila.urgencia = v('der-urgencia');
   } else {
     fila.estudios_solicitados = d.contenido || '';
-    fila.tipo_estudio = tipo === 'ord' ? v('ord-tipo') : v('est-tipo');
-    fila.urgencia = tipo === 'ord' ? v('ord-urgencia') : 'Programada';   // el formulario de pedidos no tiene urgencia (antes se copiaba la de Derivaciones por error)
+    fila.tipo_estudio = v('est-tipo');
+    fila.urgencia = 'Programada';   // el formulario de pedidos no tiene urgencia (antes se copiaba la de Derivaciones por error)
   }
   return fila;
 }
@@ -16011,7 +15991,7 @@ function _generarParaEntregar(tipo, onOk, onFail, emi){
     }, onFail);
     return;
   }
-  if(tipo === 'derivacion' || tipo === 'pedido' || tipo === 'ord'){
+  if(tipo === 'derivacion' || tipo === 'pedido'){
     emitirDocumentoFirmado(tipo, function(em){
       onOk({
         save: function(nombre){ _descargarBytesPDF(em.bytes, nombre); },
@@ -16046,9 +16026,9 @@ function descargarPDF(tipo, opts){
   var d = getDatosDocumento(tipo);
   if(!d.pac){ alert('Completá el nombre del paciente primero.'); return; }
   if(tipo === 'receta'){ _descargarRecetaFirmada(opts); return; }
-  // Derivación, pedido de estudios y orden: se registran y se firman en el servidor antes de entregarse, una sola vez por emisión
+  // Derivación y pedido de estudios: se registran y se firman en el servidor antes de entregarse, una sola vez por emisión
   // (emitirDocumentoFirmado avisa si el texto no entra en una hoja antes de registrar nada).
-  if(tipo === 'derivacion' || tipo === 'pedido' || tipo === 'ord'){ _descargarDocumentoFirmado(tipo); return; }
+  if(tipo === 'derivacion' || tipo === 'pedido'){ _descargarDocumentoFirmado(tipo); return; }
   // (La receta, la derivación y el pedido ya no se registran acá: los registra la emisión firmada, una sola vez, junto con su firma.)
   if(!_docEntraEnUnaHoja(tipo)) return;   // si el texto no entra en una hoja se avisa antes de entregar nada
   generarPDFbase64(tipo, function(doc, d){
@@ -16179,7 +16159,7 @@ function _medicoMensaje(){
   return nombreConTitulo(usuarioActual);   // «Dr. / Dra. + nombre», igual que en los PDF
 }
 function _queSeEnvia(tipo){
-  return ({ receta:'su receta', derivacion:'su derivación', pedido:'su pedido de estudios', ord:'su orden médica' })[tipo] || 'su documento';
+  return ({ receta:'su receta', derivacion:'su derivación', pedido:'su pedido de estudios' })[tipo] || 'su documento';
 }
 function _textoWhatsAppDoc(tipo){
   return 'Hola, '+_medicoMensaje()+' le envía '+_queSeEnvia(tipo)+'.';
@@ -16341,19 +16321,6 @@ function getDatosDocumento(tipo){
     datos.esp=_especialidadDerivacion();   // con «Otra»: la especialidad escrita
     datos.medico=((document.getElementById('der-medico')||{}).value||'').trim() || _medicoDePerfil(usuarioActual);   // vacío -> perfil de la sesión; editado a mano -> se respeta
     datos.labelContenido='MOTIVO DE DERIVACIÓN';
-  } else if(tipo==='ord'){
-    var tipoOrd = (document.getElementById('ord-tipo')||{}).value||'Orden Médica';
-    datos.titulo = tipoOrd.toUpperCase(); datos.icono='📄';
-    datos.pac=((document.getElementById('ord-paciente')||{}).value||'').toUpperCase();
-    datos.dni=(document.getElementById('ord-dni')||{}).value||'';
-    datos.fnac=(document.getElementById('ord-fnac')||{}).value||'';
-    datos.sexo=(document.getElementById('ord-sexo')||{}).value||'';
-    datos.os=(document.getElementById('ord-os')||{}).value||'';
-    datos.afiliado=(document.getElementById('ord-afiliado')||{}).value||'';
-    datos.diag=(document.getElementById('ord-diag')||{}).value||'';
-    datos.contenido=(document.getElementById('ord-det')||{}).value||'';
-    datos.medico=((document.getElementById('ord-medico')||{}).value||'').trim() || _medicoDePerfil(usuarioActual);   // vacío -> perfil de la sesión; editado a mano -> se respeta
-    datos.labelContenido='DETALLE';
   } else if(tipo==='hc'){
     datos.titulo='RESUMEN DE HISTORIA CLÍNICA'; datos.icono='📋';
     datos.pac=((document.getElementById('hc-print-paciente')||{}).value||'').toUpperCase();
@@ -16731,10 +16698,10 @@ function exportarCSV(){
 
 // ── GUARDAR DATOS EN LOCALSTORAGE (persistencia básica) ──
 function imprimirDoc(tipo){
-  // La receta, la derivación, el pedido de estudios y la orden se firman en el servidor antes de imprimirse (es asíncrono): la
+  // La receta, la derivación y el pedido de estudios se firman en el servidor antes de imprimirse (es asíncrono): la
   // ventana se abre YA, dentro del click del médico, para que el navegador no la bloquee, y después se le carga el PDF firmado.
   var previa = null;
-  if(tipo === 'receta' || tipo === 'derivacion' || tipo === 'pedido' || tipo === 'ord'){ try{ previa = window.open('', '_blank'); }catch(ePop){ previa = null; } }
+  if(tipo === 'receta' || tipo === 'derivacion' || tipo === 'pedido'){ try{ previa = window.open('', '_blank'); }catch(ePop){ previa = null; } }
   _generarParaEntregar(tipo, function(doc){
     var blob = doc.output('blob');
     var url = URL.createObjectURL(blob);
@@ -18566,7 +18533,7 @@ function precargarDatosMedico(u){
   if(!u) return;
   var medicoStr = _medicoDePerfil(u);
   // Cargar en todos los campos médico (siempre)
-  ['rx2-medico','der-medico','est-medico','rx-medico','ord-medico','evol-medico','fo-medico','fp-medico'].forEach(function(id){
+  ['rx2-medico','der-medico','est-medico','rx-medico','evol-medico','fo-medico','fp-medico'].forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.value = medicoStr;
   });
