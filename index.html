@@ -5969,8 +5969,6 @@ function showPanel(id){
         var fpFecha = document.getElementById('fp-fecha'); if(fpFecha && !fpFecha.value) fpFecha.value = hoyFact;
         var foFecha = document.getElementById('fo-fecha'); if(foFecha && !foFecha.value) foFecha.value = hoyFact;
         if(hcPac && panel){ var sub=panel.querySelector('.app-page-sub'); if(sub) sub.textContent='Paciente: '+hcPac+(hcDni?' · DNI '+hcDni:''); }
-      } else if((id==='recetas' || id==='derivaciones' || id==='estudios') && !hcPac){
-        // Sin paciente abierto en la HC no se pisa con vacío lo que ya está en la receta (nombre, DNI, contacto, CUIL…).
       } else {
         var prefixMap = {recetas:'rx2', derivaciones:'der', estudios:'est'};
         var pre = prefixMap[id];
@@ -19045,28 +19043,45 @@ function completarConIA(campoId, tipoCampo){
 }
 
 function finalizarAtencion(){
-  if(!confirm('¿Finalizar la atención? Se limpiarán los formularios de Recetas, Derivaciones y Estudios.')) return;
-  // Limpiar Recetas
-  ['rx-paciente','rx-dni','rx-cuil','rx-fnac','rx-os','rx-afiliado','rx-plan','rx-diag','rx-med','rx-ind','rx2-paciente','rx2-dni','rx2-cuil','rx2-fnac','rx2-os','rx2-afiliado','rx2-plan','rx2-diag','rx2-med','rx2-ind'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.value='';
-  });
-  _recetaMedicamentosData = []; try{ _sincronizarMedicamentoReceta(); }catch(eSm){ console.warn('[catch]', eSm); }
-  var chkContactoFin = document.getElementById('rx2-incluir-contacto'); if(chkContactoFin) chkContactoFin.checked = false;
-  var rxSexo=document.getElementById('rx-sexo'); if(rxSexo) rxSexo.selectedIndex=0;
-  // Limpiar Derivaciones
-  ['der-paciente','der-dni','der-fnac','der-os','der-afiliado','der-plan','der-diag','der-det','der-medico','der-esp-otra'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.value='';
-  });
-  var derSexo=document.getElementById('der-sexo'); if(derSexo) derSexo.selectedIndex=0;
-  // Limpiar Estudios
-  ['est-paciente','est-dni','est-os','est-afiliado','est-plan','est-diag','est-det','est-medico'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.value='';
-  });
- var estSexo=document.getElementById('est-sexo'); if(estSexo) estSexo.selectedIndex=0;
-  // Limpiar Facturación
+  if(!confirm('¿Finalizar la atención?\n\nSe va a cerrar el paciente de la Historia Clínica y se van a dejar en blanco los formularios de Recetas, Derivaciones, Estudios y Facturación, con todos sus datos.\n\nLo ya emitido y firmado no se borra. Lo que no hayas guardado en la Historia Clínica se pierde.')) return;
+  // Vacía una lista de campos: texto → '', desplegable → primera opción, casilla → desmarcada.
+  var vaciar = function(ids){
+    ids.forEach(function(id){
+      var el = document.getElementById(id); if(!el) return;
+      if(el.tagName === 'SELECT') el.selectedIndex = 0;
+      else if(el.type === 'checkbox') el.checked = false;
+      else el.value = '';
+    });
+  };
+  // Historia Clínica: se cierra el paciente (hc-plan no lo limpia limpiarFormularioHC y volvería a Recetas/Derivaciones/Estudios al re-entrar)
+  try{ limpiarFormularioHC(); }catch(eHc){ console.warn('[catch]', eHc); }
+  vaciar(['hc-plan']);
+  try{ renderEvolucionesHistorial(); }catch(eEv){ console.warn('[catch]', eEv); }
+  // Recetas (no se tocan los datos del médico: rx2-domicilio, rx2-jurisdiccion, rx2-refeps, rx2-medico)
+  vaciar(['rx2-paciente','rx2-dni','rx2-cuil','rx2-fnac','rx2-sexo','rx2-os','rx2-afiliado','rx2-plan','rx2-wa','rx2-email',
+    'rx2-diag','rx2-ind','rx2-med','rx2-med-ifa','rx2-med-comercial','rx2-med-forma','rx2-med-presentacion','rx2-med-cantidad','rx2-med-posologia',
+    'rx2-fecha-inicio-vigencia','rx2-validez','rx2-incluir-contacto',
+    'rx-paciente','rx-dni','rx-cuil','rx-fnac','rx-sexo','rx-os','rx-afiliado','rx-plan','rx-diag','rx-med','rx-ind','rx-validez']);
+  _recetaMedicamentosData = [];
+  try{ actualizarPreviaMedicamento(); }catch(eP){ console.warn('[catch]', eP); }
+  try{ _sincronizarMedicamentoReceta(); }catch(eSm){ console.warn('[catch]', eSm); }
+  // Derivaciones
+  vaciar(['der-paciente','der-dni','der-fnac','der-sexo','der-os','der-afiliado','der-plan','der-wa','der-email',
+    'der-especialidad','der-esp-otra','der-diag','der-motivo','der-ant','der-urgencia','der-medico']);
+  try{ _actualizarEspOtra(); }catch(eEo){ console.warn('[catch]', eEo); }
+  // Estudios
+  vaciar(['est-paciente','est-dni','est-fnac','est-sexo','est-os','est-afiliado','est-plan','est-wa','est-email',
+    'est-diag','est-det','est-tipo','est-otro','est-urgencia','est-medico']);
+  var estOtroDiv = document.getElementById('est-otro-div'); if(estOtroDiv) estOtroDiv.style.display = 'none';
+  // Limpiar Facturación (igual que antes)
   ['fp-paciente','fp-dni'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
   ['fo-paciente','fo-dni','fo-os','fo-afiliado'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
   try{ limpiarFacturaForm('fp'); limpiarFacturaForm('fo'); }catch(e){ console.warn('[catch]', e); }
+  // Cuadros verdes y memoria de lo emitido (para que el próximo paciente no vea ni reuse nada del anterior)
+  ['receta','derivacion','pedido'].forEach(function(t){ try{ _ocultarCajaEmitidas(t); }catch(eCa){ console.warn('[catch]', eCa); } });
+  _recetaFirmadaCache = null; _docFirmadoCache = {};
+  _recetasEmitidas = []; _docsEmitidos = { derivacion: [], pedido: [] };
+  _rxCuilClavePaciente = ''; _contactoClavePaciente = {};
   showPanel('pacientes');
 }
 
