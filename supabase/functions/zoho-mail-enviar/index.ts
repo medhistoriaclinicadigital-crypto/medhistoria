@@ -27,9 +27,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   limiteDesdeEntorno,
+  MENSAJE_DUPLICADO,
   remitenteDeMensaje,
   superaLimite,
   validarEntrada,
+  VENTANA_DUPLICADO_SEG,
 } from "./validar.ts";
 
 const CORS = {
@@ -201,6 +203,19 @@ Deno.serve(async (req) => {
     if (remitente !== destinatario) {
       return rechazo("Solo se puede responder a quien escribió el mail original.");
     }
+
+    // 3b. Duplicado: el mismo mensaje, desde la misma casilla, ya tiene un envío
+    //     pendiente u ok en los últimos minutos (doble clic o reintento apurado).
+    const desdeDup = new Date(Date.now() - VENTANA_DUPLICADO_SEG * 1000).toISOString();
+    const { count: dup, error: dErr } = await admin
+      .from("zoho_mail_envios").select("id", { count: "exact", head: true })
+      .eq("casilla", casilla).eq("message_id_origen", messageId)
+      .in("estado", ["pendiente", "ok"]).gte("creado_en", desdeDup);
+    if (dErr) {
+      console.error("zoho-mail-enviar: no se pudo verificar duplicados:", dErr.message);
+      return rechazo("No se pudo verificar si ya se envió. No se envió nada.");
+    }
+    if ((dup ?? 0) > 0) return rechazo(MENSAJE_DUPLICADO);
 
     // 4. Límite por hora, por casilla (cuenta los envíos pendientes, ok y con error).
     const limite = limiteDesdeEntorno(Deno.env.get("ZOHO_ENVIOS_POR_HORA"));
