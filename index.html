@@ -786,6 +786,11 @@ document.addEventListener('DOMContentLoaded', function(){
   const SUPABASE_KEY = "sb_publishable_JsY8PfRTQZXN1r76gcwJVA_QDyHfa61";
   // Una pantalla bloqueada por inactividad (con guardados fallidos) no deja nada para el próximo ingreso: al recargar, se borra todo lo de la pestaña.
   try{ if(sessionStorage.getItem('mhcd_bloqueada') === '1') sessionStorage.clear(); }catch(eBl){ console.warn('[catch]', eBl); }
+  // Aviso «Sesión cerrada» tras el cierre por 60 minutos: la marca (solo un «1», sin datos de salud, usuario ni clave) se borra en el momento de leerla,
+  // así la tarjeta sale UNA sola vez, solo en la pestaña que se cerró, y no en una pestaña nueva.
+  var _hayAvisoSesionCerrada = false;
+  try{ if(sessionStorage.getItem('mhcd_aviso_inactividad') === '1'){ _hayAvisoSesionCerrada = true; sessionStorage.removeItem('mhcd_aviso_inactividad'); } }catch(eAv){ console.warn('[catch]', eAv); }
+  document.addEventListener('DOMContentLoaded', function(){ if(_hayAvisoSesionCerrada){ try{ _mostrarAvisoSesionCerrada(); }catch(eAv2){ console.warn('[catch]', eAv2); } } });
   // Limpieza única de lo que versiones anteriores dejaron en este navegador: marcas de «Guardar usuario», el mail recordado, el registro de
   // solicitudes y el token de sesión viejo. NO se tocan las copias viejas de pacientes/turnos/videoconsultas (pendiente aparte: podrían tener datos
   // que nunca llegaron al servidor).
@@ -5662,6 +5667,8 @@ function cerrarApp(forzar){
     try{ window.removeEventListener('beforeunload', guardarLocal); }catch(e){ console.warn('[catch]', e); }
     try{ pacientes = []; turnos = []; videoconsultas = []; }catch(e){ console.warn('[catch]', e); }
     try{ _limpiarAlmacenamientoAlCerrarSesion(); }catch(e){ console.warn('[catch]', e); }   // borra lo guardado en la pestaña (la sesión de Supabase ya se cerró arriba)
+    // Cierre por inactividad: se deja UNA marca («1», sin datos) DESPUÉS de borrar, para mostrar el aviso «Sesión cerrada» al recargar.
+    try{ if(window._avisoTrasCierre === 'inactividad') sessionStorage.setItem('mhcd_aviso_inactividad', '1'); }catch(e){ console.warn('[catch]', e); }
     location.replace(location.origin + location.pathname);
   };
   if(pSalida && typeof pSalida.then === 'function'){ pSalida.then(recargar, recargar); } else { recargar(); }
@@ -5759,8 +5766,36 @@ function _inactCerrarSesion(){
   detenerControlInactividad();
   // Con guardados que no llegaron al servidor NO se borra: se cierra la sesión del servidor y se bloquea la pantalla (sin reintentos y sin conservar nada para el próximo ingreso).
   if(_guardadosFallidos.length){ _inactBloquearPantalla(); return; }
+  // La sesión se cierra, se borra lo guardado y se recarga como siempre; el aviso sale sobre la pantalla de entrada ya recargada (ver _mostrarAvisoSesionCerrada).
+  window._avisoTrasCierre = 'inactividad';
   try{ cerrarApp(true); }catch(e){ console.warn('[catch]', e); }
-  alert('🔒 Tu sesión se cerró automáticamente por '+INACTIVIDAD_CIERRE_MIN+' minutos de inactividad, para proteger los datos de tus pacientes.');
+}
+
+// Aviso «Sesión cerrada» (misma tarjeta que «¿Seguís ahí?»): se muestra sobre la pantalla de entrada, sin datos de pacientes detrás.
+function _mostrarAvisoSesionCerrada(){
+  var viejo = document.getElementById('aviso-sesion-cerrada-overlay'); if(viejo) viejo.remove();
+  var ov = document.createElement('div');
+  ov.id = 'aviso-sesion-cerrada-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(4,20,10,.6);z-index:100001;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:380px;width:100%;padding:26px;font-family:\'Outfit\',sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.3);text-align:center;">'
+    + '<div style="font-size:2rem;margin-bottom:8px;">🔒</div>'
+    + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;font-weight:700;color:#042b10;margin-bottom:8px;">Sesión cerrada</div>'
+    + '<p style="font-size:.88rem;color:#5a7362;line-height:1.6;margin:0 0 18px;">Tu sesión se cerró automáticamente por '+INACTIVIDAD_CIERRE_MIN+' minutos de inactividad, para proteger los datos de tus pacientes.</p>'
+    + '<button id="ssc-aceptar" style="width:100%;padding:12px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;">Aceptar</button>'
+    + '</div>';
+  document.body.appendChild(ov);
+  document.getElementById('ssc-aceptar').onclick = function(){ ov.remove(); };
+}
+
+// «Volver a ingresar» de la pantalla de bloqueo: se saca el guardado automático de la pestaña (el manejador de «beforeunload» volvía a escribir las
+// copias de pacientes, turnos y videoconsultas al recargar) y la lista de guardados fallidos (si no, el navegador preguntaría «¿Salir del sitio?»);
+// después se borra todo lo de la pestaña y se recarga. No queda nada para el próximo ingreso.
+function _volverAIngresarTrasBloqueo(){
+  _guardadosFallidos = [];
+  try{ window.removeEventListener('beforeunload', guardarLocal); }catch(e){ console.warn('[catch]', e); }
+  try{ pacientes = []; turnos = []; videoconsultas = []; usuarioActual = null; }catch(e){ console.warn('[catch]', e); }
+  try{ _limpiarAlmacenamientoAlCerrarSesion(); }catch(e){ console.warn('[catch]', e); }
+  location.replace(location.origin + location.pathname);
 }
 
 function _inactBloquearPantalla(){
@@ -5778,7 +5813,7 @@ function _inactBloquearPantalla(){
     + '<p style="font-size:.88rem;color:#5a7362;line-height:1.6;margin:0 0 8px;">Pasaron '+INACTIVIDAD_CIERRE_MIN+' minutos sin actividad y la sesión se cerró para proteger los datos de tus pacientes.</p>'
     + '<p style="font-size:.88rem;color:#b42318;line-height:1.6;margin:0 0 8px;font-weight:600;">Había datos sin guardar en el servidor. No se conservan:</p>'
     + '<ul style="text-align:left;font-size:.85rem;color:#333;margin:0 0 16px 18px;padding:0;">' + que + '</ul>'
-    + '<button onclick="_limpiarAlmacenamientoAlCerrarSesion();location.replace(location.origin+location.pathname)" style="width:100%;padding:12px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;">Volver a ingresar</button>'
+    + '<button onclick="_volverAIngresarTrasBloqueo()" style="width:100%;padding:12px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;">Volver a ingresar</button>'
     + '</div>';
   document.body.appendChild(ov);
 }
@@ -17478,6 +17513,7 @@ function _userKey(base){
 }
 
 function guardarLocal(){
+  if(!usuarioActual || !usuarioActual.email) return;   // sin médico adentro no se guarda nada (antes quedaban claves vacías «_guest» en la pestaña)
   try {
     var reales = pacientes.filter(function(p){ return p.apellido !== undefined; });
     sessionStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(reales));
