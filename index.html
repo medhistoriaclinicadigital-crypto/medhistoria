@@ -784,7 +784,17 @@ document.addEventListener('DOMContentLoaded', function(){
   // STAGING: apunta al proyecto medhistoria-staging (zkppmeayukqxavknhsoe), NO a producción.
   const SUPABASE_URL = "https://zkppmeayukqxavknhsoe.supabase.co";
   const SUPABASE_KEY = "sb_publishable_JsY8PfRTQZXN1r76gcwJVA_QDyHfa61";
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  // Una pantalla bloqueada por inactividad (con guardados fallidos) no deja nada para el próximo ingreso: al recargar, se borra todo lo de la pestaña.
+  try{ if(sessionStorage.getItem('mhcd_bloqueada') === '1') sessionStorage.clear(); }catch(eBl){ console.warn('[catch]', eBl); }
+  // Limpieza única de lo que versiones anteriores dejaron en este navegador: marcas de «Guardar usuario», el mail recordado, el registro de
+  // solicitudes y el token de sesión viejo. NO se tocan las copias viejas de pacientes/turnos/videoconsultas (pendiente aparte: podrían tener datos
+  // que nunca llegaron al servidor).
+  try{
+    ['mhcd_recordar','mhcd_recordar_user','mhcd_salio','med_solicitudes'].forEach(function(k){ localStorage.removeItem(k); });
+    Object.keys(localStorage).forEach(function(k){ if(/^sb-.*-auth-token/.test(k)) localStorage.removeItem(k); });
+  }catch(eLu){ console.warn('[catch]', eLu); }
+  // SESIÓN POR PESTAÑA: el token vive en sessionStorage (recargar la misma pestaña lo conserva; pestaña nueva o navegador reabierto, no).
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storage: window.sessionStorage } });
   // Subir a mano cada vez que cambie el texto de Términos/Privacidad/Cookies
   // (ver registrarAceptacionLegal) — queda guardado junto a cada consentimiento.
   const TERMINOS_VERSION = "2026-10-14";
@@ -895,7 +905,7 @@ function mhcdRechazarCookies(){
   // "Ingresar") hasta saber si el reingreso automático funcionó o no. Sin
   // esto, un clic justo cuando la sesión se restaura sola puede terminar
   // cayendo sobre el botón "Salir" de la app ya cargada debajo.
-  if(localStorage.getItem('mhcd_recordar')==='1' && localStorage.getItem('mhcd_salio')!=='1'){
+  if(Object.keys(sessionStorage).some(function(k){ return /^sb-.*-auth-token$/.test(k); })){
     var _ovVS = document.getElementById('verificandoSesionOverlay');
     if(_ovVS) _ovVS.style.display = 'flex';
     // Red de seguridad: si por lo que sea nada oculta el overlay a tiempo,
@@ -945,21 +955,17 @@ function mhcdRechazarCookies(){
      <div style="display:flex;border-bottom:2px solid #eee;margin-bottom:20px;">
       <button id="tab-ing" onclick="mlTab('ing')" style="flex:1;padding:10px;border:none;background:none;color:#22a050;font-weight:700;border-bottom:2px solid #22a050;margin-bottom:-2px;cursor:pointer;font-size:.95rem;">Ingresar</button>
     </div>
-    <form id="ml-form-ing" onsubmit="return mlIngresarSubmit(event)">
-      <input id="ml-user" type="email" placeholder="Usuario o correo electrónico" autocapitalize="none" autocomplete="username" style="width:100%;padding:12px 14px;margin:5px 0;border:none;border-bottom:1.5px solid #ddd;box-sizing:border-box;font-size:.95rem;display:block;outline:none;background:transparent;">
+    <div id="ml-form-ing">
+      <input id="ml-user" onkeydown="if(event.key==='Enter'){event.preventDefault();mlIngresar();}" type="email" placeholder="Usuario o correo electrónico" autocapitalize="none" autocomplete="off" style="width:100%;padding:12px 14px;margin:5px 0;border:none;border-bottom:1.5px solid #ddd;box-sizing:border-box;font-size:.95rem;display:block;outline:none;background:transparent;">
       <div style="position:relative;">
-        <input id="ml-pass" type="password" placeholder="Contraseña" autocomplete="current-password" style="width:100%;padding:12px 14px;margin:5px 0;border:none;border-bottom:1.5px solid #ddd;box-sizing:border-box;font-size:.95rem;display:block;outline:none;background:transparent;padding-right:40px;">
+        <input id="ml-pass" onkeydown="if(event.key==='Enter'){event.preventDefault();mlIngresar();}" type="password" placeholder="Contraseña" autocomplete="off" style="width:100%;padding:12px 14px;margin:5px 0;border:none;border-bottom:1.5px solid #ddd;box-sizing:border-box;font-size:.95rem;display:block;outline:none;background:transparent;padding-right:40px;">
         <button type="button" onclick="togglePass('ml-pass',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;color:#aaa;padding:4px;"><span style="position:relative;display:inline-block;font-size:1.1rem;">👁<span style="position:absolute;left:0;top:50%;transform:translateY(-50%) rotate(-45deg);width:100%;height:2px;background:#888;display:block;border-radius:2px;"></span></span></button>
       </div>
-      <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#666;margin:10px 0 0;cursor:pointer;">
-       <input type="checkbox" id="ml-recordar" style="accent-color:#22a050;width:15px;height:15px;" onchange="(function(c,chk){var u=(document.getElementById('ml-user')||{}).value||'';var p=(document.getElementById('ml-pass')||{}).value||'';if(c && (!u.trim()||!p.trim())){chk.checked=false;alert('Completá usuario y contraseña antes de tildar \'Guardar usuario\'.');return;}if(c){localStorage.setItem('mhcd_recordar','1');}else{localStorage.removeItem('mhcd_recordar');localStorage.removeItem('mhcd_recordar_user');localStorage.removeItem('mhcd_salio');}})(this.checked,this)">
-        Guardar usuario
-      </label>
-      <p style="margin:2px 0 4px 23px;font-size:.72rem;color:#999;">Por seguridad, no guardamos tu contraseña.</p>
-      <button type="submit" id="ml-btn-ingresar" style="width:100%;padding:13px;margin-top:12px;background:linear-gradient(135deg,#22a050,#145a32);color:white;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">Ingresar a mi cuenta</button>
+      <button type="button" onclick="mlIngresar()" id="ml-btn-ingresar" style="width:100%;padding:13px;margin-top:12px;background:linear-gradient(135deg,#22a050,#145a32);color:white;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;">Ingresar a mi cuenta</button>
+      <p style="margin:12px 0 0;font-size:.72rem;color:#777;line-height:1.45;text-align:center;">Por seguridad, y por tratarse de datos sensibles, esta aplicación no recuerda tu usuario ni tu contraseña. Si usás una computadora compartida, no aceptes que el navegador las guarde.</p>
       <p style="margin:14px 0 0;font-size:.83rem;color:#22a050;cursor:pointer;" onclick="mostrarRecuperarPass()">¿Olvidaste tu contraseña?</p>
       <p style="margin:8px 0 0;font-size:.83rem;color:#666;">¿No tenés cuenta? <span style="color:#22a050;font-weight:700;cursor:pointer;" onclick="document.getElementById('miLoginModal').style.display='none';document.getElementById('sec-planes').scrollIntoView({behavior:'smooth'});">Ver planes</span></p>
-    </form>
+    </div>
     <div id="ml-form-reg" style="display:none;max-height:65vh;overflow-y:auto;padding-right:4px;scroll-behavior:smooth;">
       <div style="font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:6px 0 4px;">Plan</div>
       <select id="ml-reg-plan" style="width:100%;padding:10px 14px;margin:4px 0 10px;border:1.5px solid #22a050;border-radius:8px;box-sizing:border-box;font-size:.9rem;display:block;outline:none;background:#f0fdf4;color:#145a32;font-weight:600;">
@@ -5090,7 +5096,7 @@ function guardarPaciente(){
 
   // Guardar o actualizar en localStorage
   var reales = [];
-  try { reales = JSON.parse(localStorage.getItem(_userKey('mhcd_pacientes'))||'[]'); } catch(e){ console.warn('[catch]', e); }
+  try { reales = JSON.parse(sessionStorage.getItem(_userKey('mhcd_pacientes'))||'[]'); } catch(e){ console.warn('[catch]', e); }
   if(_editandoPacienteIdx >= 0 && pacientes[_editandoPacienteIdx]){
     // Buscar el paciente en reales por DNI primero, luego por nombre
     var pOrig = pacientes[_editandoPacienteIdx];
@@ -5112,7 +5118,7 @@ function guardarPaciente(){
     reales.unshift(pac);
     alert('✅ Paciente '+apellido+', '+nombre+' registrado correctamente.');
   }
-  localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(reales));
+  sessionStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(reales));
   pacientes = reales;
   _editandoPacienteIdx = -1;
   // Si este paciente está abierto en la HC, se refrescan ahí sus datos de cobertura y contacto: Nueva Receta los toma de esos campos
@@ -5150,11 +5156,11 @@ function guardarPaciente(){
       if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){ pacSB.centro_id = miCentro.id; }
       buscarPacienteIdCompartido(dniOriginalSB || pac.dni || '', function(pacienteIdExistente){
         if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
-          sb.rpc('guardar_paciente_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteIdExistente||null, p_campos: pacSB}).then(function(r){ if(r.error){ console.error('Error guardando paciente de centro:', r.error); _revertirPacienteRechazado(pac, r.error); } });
+          sb.rpc('guardar_paciente_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteIdExistente||null, p_campos: pacSB}).then(function(r){ if(r.error){ console.error('Error guardando paciente de centro:', r.error); _revertirPacienteRechazado(pac, r.error); } _guardadoServidor('pac:'+(pac.dni||pac.nombre), 'el paciente ' + pac.nombre, _errNoLimite(r.error)); });
         } else if(pacienteIdExistente){
-          sb.from('pacientes').update(pacSB).eq('id', pacienteIdExistente).then(function(){});
+          sb.from('pacientes').update(pacSB).eq('id', pacienteIdExistente).then(function(r){ _guardadoServidor('pac:'+(pac.dni||pac.nombre), 'los cambios del paciente ' + pac.nombre, r.error); });
         } else {
-          sb.from('pacientes').insert(pacSB).then(function(r){ if(r.error){ console.error('Error guardando paciente:', r.error); _revertirPacienteRechazado(pac, r.error); } });
+          sb.from('pacientes').insert(pacSB).then(function(r){ if(r.error){ console.error('Error guardando paciente:', r.error); _revertirPacienteRechazado(pac, r.error); } _guardadoServidor('pac:'+(pac.dni||pac.nombre), 'el paciente ' + pac.nombre, _errNoLimite(r.error)); });
         }
       });
     }
@@ -5448,6 +5454,7 @@ function entrarDirecto(){
   if(landing) landing.style.display='none';
   if(app){ app.style.display='block'; }
   document.body.classList.add('in-app');
+  try{ iniciarControlInactividad(); }catch(e){ console.warn('[catch]', e); }
   setTimeout(function(){
     window.scrollTo({top:0,behavior:'instant'});
     document.documentElement.scrollTop=0;
@@ -5607,6 +5614,7 @@ function guardarNuevaPass(){
     if(modal) modal.remove();
     alert('✅ Tu contraseña se actualizó correctamente. Ya podés ingresar con la nueva.');
     history.replaceState(null, '', window.location.pathname);
+    try{ sb.auth.signOut({ scope:'local' }); }catch(eSr){ console.warn('[catch]', eSr); }   // la sesión de recuperación no queda abierta en la pestaña
   });
 }
 function mostrarRecuperarPass(){
@@ -5623,22 +5631,14 @@ function mostrarRecuperarPass(){
     alert('✅ Si existe una cuenta con ese email, te enviamos un link para restablecer tu contraseña.\n\nRevisá tu bandeja de entrada (y la carpeta de spam).');
   });
 }
-function cerrarApp(){
-  // Lo guardado en el navegador del médico se persiste con SU clave mientras usuarioActual todavía está seteado
-  // (si no, el guardado del cierre iría a la clave "guest" con los pacientes de este médico).
-  try{ guardarLocal(); }catch(e){ console.warn('[catch]', e); }
-  // Nada del médico debe quedar en la clave "guest" (la que usa el navegador cuando no hay nadie logueado).
-  try{ ['mhcd_pacientes','mhcd_turnos','mhcd_videoconsultas'].forEach(function(base){ localStorage.removeItem(base+'_guest'); }); }catch(e){ console.warn('[catch]', e); }
+function cerrarApp(forzar){
+  // Si en esta pestaña hubo guardados que no llegaron al servidor, NUNCA se borra en silencio: se avisa y se puede cancelar.
+  if(!forzar && _guardadosFallidos.length){ _mostrarAvisoDatosSinGuardar(); return; }
+  _guardadosFallidos = [];
+  try{ detenerControlInactividad(); }catch(e){ console.warn('[catch]', e); }
+  // Cierre LOCAL: solo esta pestaña/navegador (no corta la sesión del médico en su celular ni en otros dispositivos).
   var pSalida = null;
-  try{ pSalida = sb.auth.signOut(); }catch(e){ console.warn('[catch]', e); }
-  // "Salir" es una acción explícita: cierra la sesión de verdad, tildado o
-  // no "Guardar usuario". Lo que "Guardar usuario" recuerda (el email y la
-  // casilla tildada, mhcd_recordar / mhcd_recordar_user) NO se borra: solo se
-  // marca que ya no hay sesión para retomar (mhcd_salio), así la próxima carga
-  // no intenta el reingreso automático contra una sesión que ya no existe
-  // (agotaría los 3 reintentos, unos segundos de espera de más para nada).
-  // La contraseña nunca se guarda. La marca se limpia en el próximo ingreso.
-  if(localStorage.getItem('mhcd_recordar') === '1') localStorage.setItem('mhcd_salio', '1');
+  try{ pSalida = sb.auth.signOut({ scope:'local' }); }catch(e){ console.warn('[catch]', e); }
   usuarioActual = null;
   // La receta o el documento firmado (PDF con datos del paciente) y una emisión pendiente no deben sobrevivir al cierre de sesión.
   _recetaFirmadaCache = null; _recetaFirmaPendiente = null;
@@ -5646,16 +5646,11 @@ function cerrarApp(){
   document.body.classList.remove('in-app');
   document.getElementById('app').style.display='none';
   document.getElementById('landing').style.display='block';
-  // Limpiar campos de login y el usuario recordado si no tiene "Recordar"
-  if(localStorage.getItem('mhcd_recordar')!=='1'){
-    var uEl = document.getElementById('ml-user');
-    var pEl = document.getElementById('ml-pass');
-    var rEl = document.getElementById('ml-recordar');
-    if(uEl) uEl.value='';
-    if(pEl) pEl.value='';
-    if(rEl) rEl.checked=false;
-    localStorage.removeItem('mhcd_recordar_user');
-  }
+  // Limpiar los campos de la pantalla de entrada (la app no recuerda ni usuario ni contraseña)
+  var uEl = document.getElementById('ml-user');
+  var pEl = document.getElementById('ml-pass');
+  if(uEl) uEl.value='';
+  if(pEl) pEl.value='';
   // LIMPIEZA TOTAL: al salir se recarga la página. Así no queda nada del médico anterior en memoria ni en pantalla
   // (pacientes, turnos, formularios de receta / derivación / estudios / historia clínica, receta firmada, etc.):
   // en una computadora compartida el médico siguiente arranca de cero. Se espera a que termine el cierre de sesión
@@ -5666,13 +5661,128 @@ function cerrarApp(){
     recargado = true;
     try{ window.removeEventListener('beforeunload', guardarLocal); }catch(e){ console.warn('[catch]', e); }
     try{ pacientes = []; turnos = []; videoconsultas = []; }catch(e){ console.warn('[catch]', e); }
+    try{ _limpiarAlmacenamientoAlCerrarSesion(); }catch(e){ console.warn('[catch]', e); }   // borra lo guardado en la pestaña (la sesión de Supabase ya se cerró arriba)
     location.replace(location.origin + location.pathname);
   };
   if(pSalida && typeof pSalida.then === 'function'){ pSalida.then(recargar, recargar); } else { recargar(); }
   setTimeout(recargar, 2500);
 }
 
-// (El cierre automático por inactividad se sacó: la sesión se cierra solo cuando el profesional toca «Cerrar sesión».)
+// ── CIERRE DE SESIÓN POR INACTIVIDAD ──
+// Protege datos de pacientes en dispositivos compartidos (consultorio, secretaría): si el médico deja la sesión abierta y se aleja, se cierra
+// sola. Aviso a los 55 min sin actividad, cierre real a los 60 (SIEMPRE, para todos los usuarios). Cualquier clic, tecla, movimiento del mouse,
+// scroll o toque cuenta como actividad. Además de los temporizadores se compara con la HORA REAL: si la computadora se durmió, los temporizadores
+// no cuentan ese tiempo, y al volver a la pestaña se cierra si ya pasaron los 60 minutos. Abrir una videoconsulta cuenta como actividad (la
+// llamada se hace en otra pestaña, donde la app no ve los clics).
+var INACTIVIDAD_AVISO_MIN = 55;
+var INACTIVIDAD_CIERRE_MIN = 60;
+var _inactTimerAviso = null, _inactTimerCierre = null, _inactVigilante = null, _inactActiva = false, _inactUltimoReset = 0;
+var _inactLimiteAviso = 0, _inactLimiteCierre = 0;
+
+function _inactResetear(){
+  if(!_inactActiva) return;
+  var ahora = Date.now();
+  if(ahora - _inactUltimoReset < 1000) return; // throttle: mousemove/scroll no reinician más de 1 vez por segundo
+  _inactUltimoReset = ahora;
+  _inactLimiteAviso = ahora + INACTIVIDAD_AVISO_MIN*60*1000;
+  _inactLimiteCierre = ahora + INACTIVIDAD_CIERRE_MIN*60*1000;
+  clearTimeout(_inactTimerAviso);
+  clearTimeout(_inactTimerCierre);
+  _inactOcultarAviso();
+  _inactTimerAviso = setTimeout(_inactMostrarAviso, INACTIVIDAD_AVISO_MIN*60*1000);
+  _inactTimerCierre = setTimeout(_inactCerrarSesion, INACTIVIDAD_CIERRE_MIN*60*1000);
+}
+
+// Compara con la hora real (compu dormida, pestaña en segundo plano con temporizadores demorados).
+function _inactVerificarHora(){
+  if(!_inactActiva) return;
+  var ahora = Date.now();
+  if(ahora >= _inactLimiteCierre){ _inactCerrarSesion(); }
+  else if(ahora >= _inactLimiteAviso && !document.getElementById('aviso-inactividad-overlay')){ _inactMostrarAviso(); }
+}
+
+// Abrir una videoconsulta cuenta como actividad (se reinicia el plazo de 60 minutos).
+function _inactVideoconsulta(){
+  _inactUltimoReset = 0;
+  _inactResetear();
+}
+
+// Se llama al entrar a la app (login, recarga de la pestaña, registro nuevo, registro de centro).
+function iniciarControlInactividad(){
+  if(_inactActiva) return; // ya armado — evita duplicar los listeners si se llama 2 veces
+  _inactActiva = true;
+  ['click','keydown','mousemove','scroll','touchstart'].forEach(function(ev){
+    document.addEventListener(ev, _inactResetear, {passive:true});
+  });
+  document.addEventListener('visibilitychange', _inactVerificarHora);
+  window.addEventListener('focus', _inactVerificarHora);
+  _inactVigilante = setInterval(_inactVerificarHora, 30000);
+  _inactUltimoReset = 0;
+  _inactResetear();
+}
+
+// Se llama al salir de la app (cerrarApp) para no dejar timers ni listeners corriendo en la landing.
+function detenerControlInactividad(){
+  _inactActiva = false;
+  clearTimeout(_inactTimerAviso);
+  clearTimeout(_inactTimerCierre);
+  clearInterval(_inactVigilante);
+  ['click','keydown','mousemove','scroll','touchstart'].forEach(function(ev){
+    document.removeEventListener(ev, _inactResetear);
+  });
+  document.removeEventListener('visibilitychange', _inactVerificarHora);
+  window.removeEventListener('focus', _inactVerificarHora);
+  _inactOcultarAviso();
+}
+
+function _inactMostrarAviso(){
+  _inactOcultarAviso();
+  var restantes = Math.max(1, Math.ceil((_inactLimiteCierre - Date.now()) / 60000));
+  var ov = document.createElement('div');
+  ov.id = 'aviso-inactividad-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(4,20,10,.6);z-index:100001;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:380px;width:100%;padding:26px;font-family:\'Outfit\',sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.3);text-align:center;">'
+    + '<div style="font-size:2rem;margin-bottom:8px;">⏳</div>'
+    + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;font-weight:700;color:#042b10;margin-bottom:8px;">¿Seguís ahí?</div>'
+    + '<p style="font-size:.88rem;color:#5a7362;line-height:1.6;margin:0 0 18px;">Tu sesión se va a cerrar en <strong>'+restantes+' minutos</strong> por inactividad.</p>'
+    + '<button onclick="_inactUltimoReset=0;_inactResetear()" style="width:100%;padding:12px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;">Seguir conectado</button>'
+    + '</div>';
+  document.body.appendChild(ov);
+}
+
+function _inactOcultarAviso(){
+  var el = document.getElementById('aviso-inactividad-overlay');
+  if(el) el.remove();
+}
+
+function _inactCerrarSesion(){
+  detenerControlInactividad();
+  // Con guardados que no llegaron al servidor NO se borra: se cierra la sesión del servidor y se bloquea la pantalla (sin reintentos y sin conservar nada para el próximo ingreso).
+  if(_guardadosFallidos.length){ _inactBloquearPantalla(); return; }
+  try{ cerrarApp(true); }catch(e){ console.warn('[catch]', e); }
+  alert('🔒 Tu sesión se cerró automáticamente por '+INACTIVIDAD_CIERRE_MIN+' minutos de inactividad, para proteger los datos de tus pacientes.');
+}
+
+function _inactBloquearPantalla(){
+  var que = _guardadosFallidos.map(function(g){ return '<li style="margin:3px 0;">' + escHtml(g.que) + '</li>'; }).join('');
+  // Al recargar la página (por cualquier camino) se borra todo lo de la pestaña: nada queda para el próximo ingreso.
+  try{ sessionStorage.setItem('mhcd_bloqueada', '1'); }catch(e){ console.warn('[catch]', e); }
+  try{ sb.auth.signOut({ scope:'local' }); }catch(e){ console.warn('[catch]', e); }
+  var viejo = document.getElementById('bloqueo-inactividad-overlay'); if(viejo) viejo.remove();
+  var ov = document.createElement('div');
+  ov.id = 'bloqueo-inactividad-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:#042b10;z-index:200000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:440px;width:100%;padding:28px;font-family:\'Outfit\',sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.4);text-align:center;">'
+    + '<div style="font-size:2rem;margin-bottom:8px;">🔒</div>'
+    + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.35rem;font-weight:700;color:#042b10;margin-bottom:8px;">Sesión cerrada por inactividad</div>'
+    + '<p style="font-size:.88rem;color:#5a7362;line-height:1.6;margin:0 0 8px;">Pasaron '+INACTIVIDAD_CIERRE_MIN+' minutos sin actividad y la sesión se cerró para proteger los datos de tus pacientes.</p>'
+    + '<p style="font-size:.88rem;color:#b42318;line-height:1.6;margin:0 0 8px;font-weight:600;">Había datos sin guardar en el servidor. No se conservan:</p>'
+    + '<ul style="text-align:left;font-size:.85rem;color:#333;margin:0 0 16px 18px;padding:0;">' + que + '</ul>'
+    + '<button onclick="_limpiarAlmacenamientoAlCerrarSesion();location.replace(location.origin+location.pathname)" style="width:100%;padding:12px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;">Volver a ingresar</button>'
+    + '</div>';
+  document.body.appendChild(ov);
+}
+
 
 // ── LANDING TABS ──
 function verTab(t){
@@ -7432,11 +7542,6 @@ function procesarPago(){
     +'\n💰 *FORMA DE PAGO:* '+pago.toUpperCase()
     +'\n\n_Enviado desde MedHistoriaClinicaOnline_';
 
-  // Guardar solicitud en localStorage
-  var solicitudes = [];
-  try { solicitudes = JSON.parse(localStorage.getItem('med_solicitudes')||'[]'); } catch(e){ console.warn('[catch]', e); }
-  solicitudes.push({nombre:nombre+' '+apellido, email:email, plan:plan, pago:pago, fecha:new Date().toLocaleString('es-AR')});
-  localStorage.setItem('med_solicitudes', JSON.stringify(solicitudes));
 
   // Enviar por email via Formspree (siempre, para que puedas hacer el seguimiento del pago)
   fetch('https://formspree.io/f/meenywzq',{
@@ -7626,9 +7731,11 @@ function _entrarAppPostRegistroCentro(cb){
   if(landing) landing.style.display = 'none';
   document.body.classList.add('in-app');
   if(app) app.style.display = 'block';
+  try{ iniciarControlInactividad(); }catch(e){ console.warn('[catch]', e); }
   setTimeout(function(){ window.scrollTo(0,0); }, 30);
   try{ document.getElementById('dash-fecha').textContent = (function(){ var s=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){ console.warn('[catch]', e); }
   try{ document.getElementById('app-user-name').textContent = nombreConTitulo(usuarioActual) + ' ✏️'; }catch(e){ console.warn('[catch]', e); }
+  turnos = [];   // cuenta real: sin los turnos de ejemplo del modo demo
   try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){ console.warn('[catch]', e); }
   try{ showPanel('dash'); }catch(e){ console.warn('[catch]', e); }
   try{ precargarDatosMedico(usuarioActual); }catch(e){ console.warn('[catch]', e); }
@@ -12450,6 +12557,7 @@ function buscarPacienteIdCompartido(dni, callback){
   sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', dni).then(function(rPac){
     var pacienteId = (rPac.data && rPac.data.length>0) ? rPac.data[0].id : null;
     if(pacienteId){ callback(pacienteId); return; }
+    if(rPac.error){ callback(null, rPac.error); return; }   // no se pudo consultar el servidor: no es lo mismo que «no existe»
     // No es un paciente propio — si pertenezco a un Centro Médico, busco entre los del centro
     if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
       sb.rpc('obtener_pacientes_centro', {p_device_token: _deviceToken()}).eq('dni', dni).then(function(rPac2){
@@ -12548,7 +12656,9 @@ function guardarExamenFisico(){
     guardarLocal();
    var dniEF = pacientes[pacienteHCActualIdx].dni;
       if(usuarioActual && usuarioActual.id && dniEF){
-        buscarPacienteIdCompartido(dniEF, function(pacienteId){
+        var _nomF = _nombreHCActual();
+        buscarPacienteIdCompartido(dniEF, function(pacienteId, errBusq){
+          if(errBusq && !pacienteId){ _guardadoServidor('examen:'+_nomF, 'el examen físico de ' + (_nomF || 'un paciente'), errBusq); }
           if(pacienteId){
             var hcSB = {
               paciente_id: pacienteId,
@@ -12563,11 +12673,11 @@ function guardarExamenFisico(){
             };
             _queryCentroOProp('historias_clinicas','obtener_historias_centro').eq('paciente_id', pacienteId).then(function(rHC){
               if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
-                sb.rpc('guardar_historia_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB}).then(function(r){ if(r.error) console.error('Error guardando examen fisico de centro:', r.error); });
+                sb.rpc('guardar_historia_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB}).then(function(r){ if(r.error) console.error('Error guardando examen fisico de centro:', r.error); _guardadoServidor('examen:'+_nomF, 'el examen físico de ' + (_nomF || 'un paciente'), r.error); });
               } else if(rHC.data && rHC.data.length>0){
-                sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando examen fisico en Supabase:', r.error); });
+                sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando examen fisico en Supabase:', r.error); _guardadoServidor('examen:'+_nomF, 'el examen físico de ' + (_nomF || 'un paciente'), r.error); });
               } else {
-                sb.from('historias_clinicas').insert(hcSB).then(function(r){ if(r.error) console.error('Error guardando examen fisico en Supabase:', r.error); });
+                sb.from('historias_clinicas').insert(hcSB).then(function(r){ if(r.error) console.error('Error guardando examen fisico en Supabase:', r.error); _guardadoServidor('examen:'+_nomF, 'el examen físico de ' + (_nomF || 'un paciente'), r.error); });
               }
             });
           }
@@ -12662,7 +12772,9 @@ function guardarDiagnostico(){
     guardarLocal();
     var dniDx = pacientes[pacienteHCActualIdx].dni;
       if(usuarioActual && usuarioActual.id && dniDx){
-        buscarPacienteIdCompartido(dniDx, function(pacienteId){
+        var _nomF = _nombreHCActual();
+        buscarPacienteIdCompartido(dniDx, function(pacienteId, errBusq){
+          if(errBusq && !pacienteId){ _guardadoServidor('dx:'+_nomF, 'el diagnóstico de ' + (_nomF || 'un paciente'), errBusq); }
           if(pacienteId){
             var hcSB = {
               paciente_id: pacienteId,
@@ -12670,11 +12782,11 @@ function guardarDiagnostico(){
             };
             _queryCentroOProp('historias_clinicas','obtener_historias_centro').eq('paciente_id', pacienteId).then(function(rHC){
               if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
-                sb.rpc('guardar_historia_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB}).then(function(r){ if(r.error) console.error('Error guardando diagnostico de centro:', r.error); });
+                sb.rpc('guardar_historia_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB}).then(function(r){ if(r.error) console.error('Error guardando diagnostico de centro:', r.error); _guardadoServidor('dx:'+_nomF, 'el diagnóstico de ' + (_nomF || 'un paciente'), r.error); });
               } else if(rHC.data && rHC.data.length>0){
-                sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando diagnostico en Supabase:', r.error); });
+                sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando diagnostico en Supabase:', r.error); _guardadoServidor('dx:'+_nomF, 'el diagnóstico de ' + (_nomF || 'un paciente'), r.error); });
               } else {
-                sb.from('historias_clinicas').insert(hcSB).then(function(r){ if(r.error) console.error('Error guardando diagnostico en Supabase:', r.error); });
+                sb.from('historias_clinicas').insert(hcSB).then(function(r){ if(r.error) console.error('Error guardando diagnostico en Supabase:', r.error); _guardadoServidor('dx:'+_nomF, 'el diagnóstico de ' + (_nomF || 'un paciente'), r.error); });
               }
             });
           }
@@ -12859,7 +12971,9 @@ function guardarEvolucion(){
   // Guardar también en Supabase
   if(usuarioActual && usuarioActual.id && pacienteHCActualIdx>=0 && pacientes[pacienteHCActualIdx]){
     var pacDni = pacientes[pacienteHCActualIdx].dni;
-    buscarPacienteIdCompartido(pacDni, function(pacienteId){
+    var _nomF = _nombreHCActual();
+    buscarPacienteIdCompartido(pacDni, function(pacienteId, errBusq){
+      if(errBusq && !pacienteId){ _guardadoServidor('evol:'+_nomF, 'la evolución de ' + (_nomF || 'un paciente'), errBusq); }
       if(pacienteId){
         var evolSB = {
           paciente_id: pacienteId,
@@ -12870,7 +12984,7 @@ function guardarEvolucion(){
           indicaciones_plan: evol.plan||'',
           proxima_consulta: evol.proxima||''
         };
-        sb.from('evoluciones').insert(evolSB).then(function(){});
+        sb.from('evoluciones').insert(evolSB).then(function(rEv){ _guardadoServidor('evol:'+_nomF, 'la evolución de ' + (_nomF || 'un paciente'), rEv.error); });
       }
     });
   }
@@ -13431,7 +13545,7 @@ async function generarVideollamada(){
       +'<div style="font-size:.82rem;color:#042b10;word-break:break-all;font-weight:600;">'+escHtml(linkVideollamada)+'</div>'
     +'</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px;">'
-      +'<button onclick="window.open(\''+escJs(linkVideollamada)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">🎥 Entrar a la videollamada ahora</button>'
+      +'<button onclick="_inactVideoconsulta();window.open(\''+escJs(linkVideollamada)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">🎥 Entrar a la videollamada ahora</button>'
       +(tel?'<button onclick="window.open(\'https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(msg)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">📱 Enviar link al paciente por WhatsApp</button>':'')
       +(email?'<button onclick="window.location.href=\'mailto:'+escJs(email)+'?subject='+encodeURIComponent('Videoconsulta · '+fechaDisplay)+'&body='+encodeURIComponent(msg.replace(/\*/g,'').replace(/_/g,''))+'\';" style="padding:12px;background:linear-gradient(135deg,#1a6aab,#0e4d8a);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">✉️ Enviar link por Email</button>':'')
       +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+escJs(linkVideollamada)+'\');this.textContent=\'✅ Copiado!\';" style="padding:12px;background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;color:#145a32;">📋 Copiar link</button>'
@@ -13607,6 +13721,7 @@ function guardarVideoconsultaSupabase(v){
       estado: 'programada'
     }).select().then(function(r){
       if(r.data && r.data[0]) v._sbId = r.data[0].id;
+      _guardadoServidor('video:'+v.fecha+' '+v.hora+' '+v.pac, 'la videoconsulta de ' + v.pac, r.error);
     });
   });
 }
@@ -13617,12 +13732,12 @@ function mostrarOpcionesLlamada(i){
   var opciones = '';
   if(v.link==='whatsapp'){
     if(v.telefono){
-      opciones += '<button onclick="window.open(\'https://wa.me/'+_waNumero(v.telefono)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;width:100%;">📱 Abrir WhatsApp con '+escHtml(v.pac)+'</button>';
+      opciones += '<button onclick="_inactVideoconsulta();window.open(\'https://wa.me/'+_waNumero(v.telefono)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;width:100%;">📱 Abrir WhatsApp con '+escHtml(v.pac)+'</button>';
     } else {
       opciones += '<div style="color:#6b7280;font-size:.85rem;margin-bottom:8px;">No hay teléfono guardado para este paciente.</div>';
     }
   } else if(v.link){
-    opciones += '<button onclick="window.open(\''+escJs(v.link)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;width:100%;">🎥 Entrar a la sala</button>'
+    opciones += '<button onclick="_inactVideoconsulta();window.open(\''+escJs(v.link)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;width:100%;">🎥 Entrar a la sala</button>'
       +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+escJs(v.link)+'\');this.textContent=\'✅ Copiado!\';" style="padding:12px;background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;color:#145a32;width:100%;">📋 Copiar link</button>';
   }
   var modal = document.createElement('div');
@@ -13666,7 +13781,7 @@ function sincronizarVideoconsultasSupabase(){
           });
         }
       });
-      localStorage.setItem(_userKey('mhcd_videoconsultas'), JSON.stringify(videoconsultas));
+      sessionStorage.setItem(_userKey('mhcd_videoconsultas'), JSON.stringify(videoconsultas));
       renderVideoconsultas();
     }
   });
@@ -14581,7 +14696,7 @@ function guardarTurno(){
         prioridad: prio||'',
         estado: prio||''
       };
-      sb.from('turnos').insert(turnoSB).then(function(){});
+      sb.from('turnos').insert(turnoSB).then(function(rT){ _guardadoServidor('turno:'+fecha+' '+hora+' '+pac, 'el turno de ' + pac + ' (' + fechaDisplay + ' ' + hora + ' hs)', rT.error); });
     });
   }
   
@@ -14601,7 +14716,7 @@ function escJs(s){s=(s===null||s===undefined)?'':String(s);return s.replace(/\\/
 	document.addEventListener('DOMContentLoaded', function(){
   // Cargar pacientes guardados en localStorage al DOM
 try {
-    var reales = JSON.parse(localStorage.getItem(_userKey('mhcd_pacientes'))||'[]');
+    var reales = JSON.parse(sessionStorage.getItem(_userKey('mhcd_pacientes'))||'[]');
     var lista = document.getElementById('lista-pacientes');
     if(lista && reales.length > 0){
       reales.forEach(function(pac){
@@ -17086,8 +17201,8 @@ function _revertirPacienteRechazado(pac, err){
   if(!err || !/l[ií]mite de pacientes/i.test(err.message||'')) return;
   var mismo = function(p){ return (pac.dni && p.dni) ? p.dni.trim()===pac.dni.trim() : p.nombre===pac.nombre; };
   try {
-    var reales = JSON.parse(localStorage.getItem(_userKey('mhcd_pacientes'))||'[]').filter(function(p){ return !mismo(p); });
-    localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(reales));
+    var reales = JSON.parse(sessionStorage.getItem(_userKey('mhcd_pacientes'))||'[]').filter(function(p){ return !mismo(p); });
+    sessionStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(reales));
   } catch(e){ console.warn('[catch]', e); }
   pacientes = pacientes.filter(function(p){ return !mismo(p); });
   renderPacientes();
@@ -17211,7 +17326,9 @@ function guardarDesdeHC(){
   renderPacientes();
    // Guardar también en Supabase (historias_clinicas)
     if(usuarioActual && usuarioActual.id && dni){
-      buscarPacienteIdCompartido(dni, function(pacienteId){
+      var _nomF = _nombreHCActual();
+      buscarPacienteIdCompartido(dni, function(pacienteId, errBusq){
+        if(errBusq && !pacienteId){ _guardadoServidor('hc:'+_nomF, 'la anamnesis de ' + (_nomF || 'un paciente'), errBusq); }
         if(pacienteId){
           var hcSB = {
             paciente_id: pacienteId,
@@ -17223,11 +17340,11 @@ function guardarDesdeHC(){
           };
           _queryCentroOProp('historias_clinicas','obtener_historias_centro').eq('paciente_id', pacienteId).then(function(rHC){
             if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
-              sb.rpc('guardar_historia_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB}).then(function(r){ if(r.error) console.error('Error guardando HC de centro:', r.error); });
+              sb.rpc('guardar_historia_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB}).then(function(r){ if(r.error) console.error('Error guardando HC de centro:', r.error); _guardadoServidor('hc:'+_nomF, 'la anamnesis de ' + (_nomF || 'un paciente'), r.error); });
             } else if(rHC.data && rHC.data.length>0){
-              sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando HC en Supabase:', r.error); });
+              sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando HC en Supabase:', r.error); _guardadoServidor('hc:'+_nomF, 'la anamnesis de ' + (_nomF || 'un paciente'), r.error); });
             } else {
-              sb.from('historias_clinicas').insert(hcSB).then(function(r){ if(r.error) console.error('Error guardando HC en Supabase:', r.error); });
+              sb.from('historias_clinicas').insert(hcSB).then(function(r){ if(r.error) console.error('Error guardando HC en Supabase:', r.error); _guardadoServidor('hc:'+_nomF, 'la anamnesis de ' + (_nomF || 'un paciente'), r.error); });
             }
           });
         }
@@ -17310,6 +17427,51 @@ function cerrarModalTel(aceptar){
   _modalTelCallback = null;
 }
 
+// ── GUARDADOS QUE NO LLEGARON AL SERVIDOR (solo de esta pestaña) ──
+// Cada guardado intenta el servidor en el momento. Si falla (sin conexión, error del servidor) se avisa en ese momento y se anota acá;
+// «Cerrar sesión», el corte por inactividad y el cierre de la pestaña lo tienen en cuenta. No hay cola ni reintentos: volver a guardar lo borra de la lista.
+var _guardadosFallidos = [];
+var _ultimoAvisoGuardado = 0;
+function _guardadoServidor(clave, descripcion, err){
+  var i;
+  if(!err){
+    for(i = _guardadosFallidos.length - 1; i >= 0; i--){ if(_guardadosFallidos[i].clave === clave) _guardadosFallidos.splice(i, 1); }
+    return;
+  }
+  console.error('No se pudo guardar en el servidor:', descripcion, err);
+  if(!_guardadosFallidos.some(function(g){ return g.clave === clave; })){ _guardadosFallidos.push({ clave: clave, que: descripcion, cuando: Date.now() }); }
+  var ahora = Date.now();
+  if(ahora - _ultimoAvisoGuardado > 4000){
+    _ultimoAvisoGuardado = ahora;
+    alert('⚠️ No se pudo guardar en el servidor: ' + descripcion + '.\n\nPor ahora quedó solo en esta pestaña y se perdería al cerrar sesión o cerrar la pestaña. Revisá tu conexión y volvé a guardarlo.');
+  }
+}
+function _errNoLimite(err){ return (err && /l[ií]mite de pacientes/i.test(err.message || '')) ? null : err; }   // el rechazo por límite ya se avisa y se revierte solo
+function _nombreHCActual(){ var e = document.getElementById('hc-paciente'); return (e && e.value) ? e.value.trim() : ''; }
+// Cerrar la pestaña con guardados fallidos: el navegador pide confirmación.
+window.addEventListener('beforeunload', function(e){ if(_guardadosFallidos.length){ e.preventDefault(); e.returnValue = ''; return ''; } });
+function _mostrarAvisoDatosSinGuardar(){
+  var viejo = document.getElementById('aviso-sin-guardar-overlay'); if(viejo) viejo.remove();
+  var lista = _guardadosFallidos.map(function(g){ return '<li style="margin:3px 0;">' + escHtml(g.que) + '</li>'; }).join('');
+  var ov = document.createElement('div');
+  ov.id = 'aviso-sin-guardar-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(4,20,10,.6);z-index:100002;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:26px;font-family:\'Outfit\',sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.3);text-align:center;">'
+    + '<div style="font-size:2rem;margin-bottom:8px;">⚠️</div>'
+    + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;font-weight:700;color:#042b10;margin-bottom:8px;">Hay datos sin guardar</div>'
+    + '<p style="font-size:.88rem;color:#5a7362;line-height:1.6;margin:0 0 8px;">Esto no llegó al servidor y se perdería al cerrar la sesión:</p>'
+    + '<ul style="text-align:left;font-size:.85rem;color:#333;margin:0 0 16px 18px;padding:0;">' + lista + '</ul>'
+    + '<button id="ssg-cancelar" style="width:100%;padding:12px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;">Cancelar</button>'
+    + '<button id="ssg-cerrar" style="width:100%;padding:11px;background:#fff;color:#b42318;border:1.5px solid #f0b4ae;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;">Cerrar igual y descartar</button>'
+    + '</div>';
+  document.body.appendChild(ov);
+  document.getElementById('ssg-cancelar').onclick = function(){ ov.remove(); };
+  document.getElementById('ssg-cerrar').onclick = function(){ ov.remove(); cerrarApp(true); };
+}
+// Lo guardado en la pestaña (sesión de Supabase y copias de pacientes, turnos y videoconsultas) se borra al cerrar sesión.
+function _limpiarAlmacenamientoAlCerrarSesion(){
+  try{ sessionStorage.clear(); }catch(e){ console.warn('[catch]', e); }
+}
 function _userKey(base){
   var uid = (usuarioActual && usuarioActual.email) ? usuarioActual.email.replace(/[^a-zA-Z0-9]/g,'_') : 'guest';
   return base + '_' + uid;
@@ -17318,23 +17480,23 @@ function _userKey(base){
 function guardarLocal(){
   try {
     var reales = pacientes.filter(function(p){ return p.apellido !== undefined; });
-    localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(reales));
-    localStorage.setItem(_userKey('mhcd_turnos'), JSON.stringify(turnos||[]));
-    localStorage.setItem(_userKey('mhcd_videoconsultas'), JSON.stringify(videoconsultas||[]));
+    sessionStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(reales));
+    sessionStorage.setItem(_userKey('mhcd_turnos'), JSON.stringify(turnos||[]));
+    sessionStorage.setItem(_userKey('mhcd_videoconsultas'), JSON.stringify(videoconsultas||[]));
 
   } catch(e){ console.warn('[catch]', e); }
 }
 function cargarLocal(){
   try {
-    var p = localStorage.getItem(_userKey('mhcd_pacientes'));
+    var p = sessionStorage.getItem(_userKey('mhcd_pacientes'));
     if(p){
       var guardados = JSON.parse(p);
       pacientes = guardados.filter(function(x){ return x.apellido !== undefined; });
     } else {
       pacientes = [];
     }
-    var t = localStorage.getItem(_userKey('mhcd_turnos'));
-    var v = localStorage.getItem(_userKey('mhcd_videoconsultas'));
+    var t = sessionStorage.getItem(_userKey('mhcd_turnos'));
+    var v = sessionStorage.getItem(_userKey('mhcd_videoconsultas'));
     if(t) turnos = JSON.parse(t);
     if(v) videoconsultas = JSON.parse(v);
   } catch(e){ pacientes = []; }
@@ -17361,8 +17523,10 @@ function sincronizarPacientesSupabase(){
     if(r.data){
       r.data.forEach(function(remoto){
         var existe = pacientes.find(function(p){ return _coincidePacienteRemoto(p, remoto); });
+        if(existe && !existe._sbId){ existe._sbId = remoto.id; }
         if(!existe){
           pacientes.unshift({
+            _sbId: remoto.id,
             nombre: (remoto.apellido||'') + ', ' + (remoto.nombre||''),
             apellido: remoto.apellido||'',
             dni: remoto.dni||'',
@@ -17381,7 +17545,8 @@ function sincronizarPacientesSupabase(){
         }
       });
       _quitarPacientesDuplicados();
-      localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(pacientes));
+      try{ _resolverNombresTurnos(); }catch(eRn){ console.warn('[catch]', eRn); }
+      sessionStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(pacientes));
       renderPacientes();
     }
     // Si pertenezco a un Centro Médico, traigo también los pacientes compartidos del centro
@@ -17390,8 +17555,10 @@ function sincronizarPacientesSupabase(){
         if(r2.data){
           r2.data.forEach(function(remoto){
             var existe = pacientes.find(function(p){ return _coincidePacienteRemoto(p, remoto); });
+            if(existe && !existe._sbId){ existe._sbId = remoto.id; }
             if(!existe){
               pacientes.unshift({
+                _sbId: remoto.id,
                 nombre: (remoto.apellido||'') + ', ' + (remoto.nombre||''),
                 apellido: remoto.apellido||'',
                 dni: remoto.dni||'',
@@ -17414,7 +17581,8 @@ function sincronizarPacientesSupabase(){
             }
           });
           _quitarPacientesDuplicados();
-          localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(pacientes));
+          try{ _resolverNombresTurnos(); }catch(eRn){ console.warn('[catch]', eRn); }
+          sessionStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(pacientes));
           renderPacientes();
         }
       });
@@ -17520,12 +17688,25 @@ function sincronizarPacientesSupabase(){
             if(hc.saturacion_o2!=null) pacientes[idx].examen.sat = hc.saturacion_o2;
             if(hc.examen_aparatos_sistemas) pacientes[idx].examen.sistemas = hc.examen_aparatos_sistemas;
           });
-          localStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(pacientes));
+          sessionStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(pacientes));
           renderPacientes();
         });
       });
     }
   
+// Completa el nombre de los turnos del servidor con la lista de pacientes del servidor (que puede terminar de cargar antes o después que los turnos).
+// Devuelve true si completó algún nombre (y en ese caso guarda la copia de la pestaña y vuelve a dibujar la Agenda).
+function _resolverNombresTurnos(){
+  var cambio = false;
+  (turnos || []).forEach(function(t){
+    if(t._pacienteIdSb && (!t.pac || t.pac === '(paciente sin datos)')){
+      var p = pacientes.find(function(x){ return x._sbId === t._pacienteIdSb; });
+      if(p && p.nombre){ t.pac = p.nombre; cambio = true; }
+    }
+  });
+  if(cambio){ try{ guardarLocal(); }catch(e){ console.warn('[catch]', e); } try{ renderTurnos(); }catch(e){ console.warn('[catch]', e); } }
+  return cambio;
+}
 function sincronizarTurnosSupabase(){
   if(!usuarioActual || !usuarioActual.id) return;
   sb.from('turnos').select('*').eq('medico_id', usuarioActual.id).then(function(r){
@@ -17540,8 +17721,12 @@ function sincronizarTurnosSupabase(){
           }
           var partesF = (remoto.fecha||'').split('-');
           var fechaDisp = partesF.length===3 ? (partesF[2]+'/'+partesF[1]+'/'+partesF[0]) : '';
+          // Un turno cargado en esta pestaña que ya está en el servidor (misma fecha, hora y motivo) toma su identificador en vez de repetirse.
+          var turnoLocal = turnos.find(function(t){ return !t._sbId && t.fecha === remoto.fecha && (t.hora||'').slice(0,5) === (remoto.hora||'').slice(0,5) && (t.motivo||'') === (remoto.motivo||'') && (nombrePac === '(paciente sin datos)' || _normNombrePac(t.pac) === _normNombrePac(nombrePac)); });
+          if(turnoLocal){ turnoLocal._sbId = remoto.id; turnoLocal._pacienteIdSb = remoto.paciente_id || null; return; }
           turnos.unshift({
             _sbId: remoto.id,
+            _pacienteIdSb: remoto.paciente_id || null,
             pac: nombrePac,
             fecha: remoto.fecha||'',
             fechaDisplay: fechaDisp,
@@ -17553,7 +17738,8 @@ function sincronizarTurnosSupabase(){
           });
         }
       });
-      localStorage.setItem(_userKey('mhcd_turnos'), JSON.stringify(turnos));
+      try{ _resolverNombresTurnos(); }catch(eRn){ console.warn('[catch]', eRn); }
+      sessionStorage.setItem(_userKey('mhcd_turnos'), JSON.stringify(turnos));
       renderTurnos();
     }
   });
@@ -18464,23 +18650,7 @@ window.addEventListener('beforeunload', guardarLocal);
 function mostrarLogin(){
     document.getElementById('miLoginModal').style.display='block';
     mlTab('ing');
-    // La CONTRASEÑA no la guardamos nosotros — eso lo hace el gestor del
-    // navegador (ver autocomplete en ml-user/ml-pass). Pero el USUARIO sí lo
-    // recordamos en localStorage (mhcd_recordar_user): el autofill de Chrome
-    // no es confiable con un form que estaba en display:none al cargar, así
-    // que al menos el email queda siempre puesto — y con el usuario cargado
-    // Chrome autocompleta la contraseña mucho más seguido.
-    if(localStorage.getItem('mhcd_recordar')==='1'){
-      var rEl = document.getElementById('ml-recordar');
-      if(rEl) rEl.checked = true;
-      var uGuardado = localStorage.getItem('mhcd_recordar_user') || '';
-      var uEl = document.getElementById('ml-user');
-      if(uEl && uGuardado && !uEl.value){
-        uEl.value = uGuardado;
-        // Nudge para que Chrome enganche el usuario y ofrezca la contraseña.
-        try{ uEl.dispatchEvent(new Event('input', { bubbles: true })); }catch(e){}
-      }
-    }
+    // Esta aplicación NO recuerda el usuario ni la contraseña: los campos se abren vacíos y no se empuja al navegador a completarlos o guardarlos.
 }
 function togglePass(id, btn){
   var el = document.getElementById(id);
@@ -18555,12 +18725,12 @@ function mlIngresar(){
       if(rDisp.error){
         console.error('Error verificando dispositivo:', rDisp.error);
         alert('No pudimos verificar el acceso desde este dispositivo. Probá de nuevo en unos segundos, o escribinos a consultas@medhistoriaclinicaonline.com si el problema persiste.');
-        sb.auth.signOut();
+        sb.auth.signOut({ scope:'local' });
         return;
       }
       var estadoDisp = (rDisp.data && rDisp.data[0]) || { permitido:false, estado:'error' };
       if(!estadoDisp.permitido){
-        sb.auth.signOut();
+        sb.auth.signOut({ scope:'local' });
         if(estadoDisp.estado === 'pendiente'){
           alert('🔒 Este dispositivo todavía no fue aprobado.\n\nPedile al dueño del Centro Médico que lo apruebe desde "Mi Centro Médico" → Dispositivos autorizados, y volvé a intentar.');
         } else if(estadoDisp.estado === 'rechazado'){
@@ -18582,14 +18752,8 @@ function mlIngresar(){
 // "Guardar usuario" ya quedó guardado en localStorage por su propio
 // onchange o por una sesión previa, acá no hace falta releerlo.
 function continuarLoginTrasDispositivo(authId, emailFallback){
-    // Hay sesión real de nuevo: el próximo cierre de pestaña (sin "Salir") puede reingresar solo.
-    localStorage.removeItem('mhcd_salio');
-    // Si "Recordar" quedó tildado, guardamos el usuario para precargarlo
-    // la próxima vez que se abra el login (la contraseña la maneja el
-    // gestor del navegador). Ver mostrarLogin().
-    if(localStorage.getItem('mhcd_recordar') === '1' && emailFallback){
-      localStorage.setItem('mhcd_recordar_user', emailFallback);
-    }
+    // La clave escrita no queda en el campo (la app no recuerda ni usuario ni contraseña).
+    try{ var _pEl = document.getElementById('ml-pass'); if(_pEl) _pEl.value = ''; }catch(ePw){ console.warn('[catch]', ePw); }
     sb.from('usuarios').select('*').eq('auth_id', authId).then(function(rPerfil){
     var perfil = (rPerfil.data && rPerfil.data[0]) || { nombre: emailFallback, email: emailFallback };
    perfil.auth_id = authId;
@@ -18602,10 +18766,12 @@ function continuarLoginTrasDispositivo(authId, emailFallback){
       if(landing) landing.style.display='none';
       document.body.classList.add('in-app');
       if(app){ app.style.display='block'; }
+      try{ iniciarControlInactividad(); }catch(e){ console.warn('[catch]', e); }
       setTimeout(function(){ window.scrollTo(0,0); },30);
       try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){ console.warn('[catch]', e); }
       try{ document.getElementById('app-user-name').textContent = nombreConTitulo(perfil) + ' 👨‍⚕️'; }catch(e){ console.warn('[catch]', e); }
       try{ var evMed = document.getElementById('evol-medico'); if(evMed) evMed.value = nombreConTitulo(perfil); }catch(e){ console.warn('[catch]', e); }
+      turnos = [];   // cuenta real: sin los turnos de ejemplo del modo demo
       try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){ console.warn('[catch]', e); }
       try{ cargarMiCentro(function(){ sincronizarPacientesSupabase(); }); }catch(e){ try{ sincronizarPacientesSupabase(); }catch(e2){ console.warn('[catch]', e2); } }
       try{ sincronizarTurnosSupabase(); }catch(e){ console.warn('[catch]', e); }
@@ -18617,25 +18783,21 @@ function continuarLoginTrasDispositivo(authId, emailFallback){
     });
 }
 
-// Reingreso automático ("Guardar usuario"): la sesión real de Supabase ya
-// persiste sola (createClient sin opciones = persistSession + autoRefresh).
-// Nunca guardamos la contraseña acá, ni en claro ni cifrada — solo usamos
-// esa sesión si "Guardar usuario" quedó tildado la última vez. Con sesión
-// válida y dispositivo aprobado, entra derecho a la app: sin pantalla de
-// confirmación, sin que el médico tenga que apretar nada.
+// Recarga de la MISMA pestaña: la sesión vive en la pestaña (sessionStorage), así que al recargar se vuelve a entrar sola a la app, con sesión
+// válida y dispositivo aprobado. Una pestaña nueva o el navegador reabierto no tienen sesión y piden usuario y clave. No hay «Guardar usuario» ni
+// reingreso entre pestañas o navegadores, y nunca se guarda la contraseña.
 function _ocultarVerificandoSesion(){
   var ov = document.getElementById('verificandoSesionOverlay');
   if(ov) ov.style.display = 'none';
 }
 
-// intento: reintenta hasta 3 veces (con espera entre cada una) antes de
-// asumir que no hay nada que recordar — para conexiones lentas o
-// inestables, donde el primer chequeo puede fallar sin que la sesión
-// realmente no exista.
+// intento: reintenta hasta 3 veces (con espera entre cada una) para conexiones lentas o inestables.
 function _procesarReingresoAutomatico(session, intento){
   intento = intento || 1;
-  if(localStorage.getItem('mhcd_recordar') !== '1'){ return; }
-  if(localStorage.getItem('mhcd_salio') === '1'){ return; }
+  // Si la página se abrió desde el link de RECUPERAR CONTRASEÑA, no se entra sola a la app: primero se elige la clave nueva.
+  if(typeof _pendingPasswordRecovery !== 'undefined' && _pendingPasswordRecovery){ _ocultarVerificandoSesion(); return; }
+  var hayToken = Object.keys(sessionStorage).some(function(k){ return /^sb-.*-auth-token$/.test(k); });
+  if((!session || !session.user) && !hayToken){ _ocultarVerificandoSesion(); return; }
   if(!session || !session.user){
     if(intento < 3){
       setTimeout(function(){
@@ -18645,10 +18807,7 @@ function _procesarReingresoAutomatico(session, intento){
       }, 1200);
       return;
     }
-    // Se agotaron los reintentos: no hay una sesión real para reingresar
-    // (venció, por ejemplo). El email y la casilla quedan guardados; se marca
-    // que no hay sesión que retomar para no repetir los 3 intentos en cada carga.
-    localStorage.setItem('mhcd_salio', '1');
+    // Se agotaron los reintentos: no hay una sesión real para retomar (venció, por ejemplo): pantalla de entrada.
     _ocultarVerificandoSesion();
     return;
   }
@@ -18663,21 +18822,27 @@ function _verificarDispositivoConReintento(session, intento){
         setTimeout(function(){ _verificarDispositivoConReintento(session, intento+1); }, 1200);
         return;
       }
-      localStorage.setItem('mhcd_salio', '1');
       _ocultarVerificandoSesion();
       return;
     }
     var estadoDisp = (rDisp.data && rDisp.data[0]) || { permitido:false };
     if(!estadoDisp.permitido){
-      // Dispositivo no aprobado o revocado desde la última vez: que inicie
-      // sesión de nuevo a mano, no hay nada real para recordar acá.
-      localStorage.setItem('mhcd_salio', '1');
-      sb.auth.signOut();
+      // Dispositivo no aprobado o revocado desde la última vez: que inicie sesión de nuevo a mano.
+      try{ sb.auth.signOut({ scope:'local' }); }catch(eSo){ console.warn('[catch]', eSo); }
       _ocultarVerificandoSesion();
       return;
     }
-    _ocultarVerificandoSesion();
-    continuarLoginTrasDispositivo(session.user.id, session.user.email);
+    // Una cuenta de ADMINISTRADOR no vuelve a entrar sola a la app de médicos al recargar (entra por el Panel Admin, con su 2FA): pantalla de entrada.
+    sb.from('usuarios').select('rol').eq('auth_id', session.user.id).then(function(rRol){
+      var rol = (rRol && rRol.data && rRol.data[0]) ? rRol.data[0].rol : null;
+      if(rol === 'admin'){
+        try{ sb.auth.signOut({ scope:'local' }); }catch(eAd){ console.warn('[catch]', eAd); }
+        _ocultarVerificandoSesion();
+        return;
+      }
+      _ocultarVerificandoSesion();
+      continuarLoginTrasDispositivo(session.user.id, session.user.email);
+    });
   });
 }
 
@@ -18743,12 +18908,22 @@ function precargarDatosMedico(u){
   // médicos que ya lo tenían cargado ahí de antes.
   var domEl = document.getElementById('rx2-domicilio');
   if(domEl){
-    var domKey = 'medhistoria_domicilio_' + (u.email || u.id || 'default');
+    var domKey = 'medhistoria_domicilio_' + (u.email || u.id || 'default');   // clave vieja: solo para pasar el dato al perfil UNA vez
+    var domViejo = '';
+    try{ domViejo = localStorage.getItem(domKey) || ''; }catch(eDv){ console.warn('[catch]', eDv); }
     if(!domEl.value){
-      domEl.value = u.domicilio_profesional || localStorage.getItem(domKey) || '';
+      domEl.value = u.domicilio_profesional || domViejo || '';
+    }
+    if(domViejo){
+      if(u.domicilio_profesional){ try{ localStorage.removeItem(domKey); }catch(eDr){ console.warn('[catch]', eDr); } }
+      else if(u.id){
+        // Se borra del navegador SOLO si el servidor lo guardó; si falla, queda para el próximo ingreso.
+        sb.from('usuarios').update({domicilio_profesional: domViejo}).eq('id', u.id).then(function(rDm){
+          if(!rDm.error){ u.domicilio_profesional = domViejo; try{ localStorage.removeItem(domKey); }catch(eDr2){ console.warn('[catch]', eDr2); } }
+        });
+      }
     }
     domEl.addEventListener('change', function(){
-      localStorage.setItem(domKey, domEl.value||'');
       if(u && u.id){
         sb.from('usuarios').update({domicilio_profesional: domEl.value||''}).eq('id', u.id).then(function(){});
         u.domicilio_profesional = domEl.value||'';
@@ -18924,9 +19099,11 @@ function mlRegistrar(){
     if(landing) landing.style.display='none';
     document.body.classList.add('in-app');
     if(app){ app.style.display='block'; }
+    try{ iniciarControlInactividad(); }catch(e){ console.warn('[catch]', e); }
     setTimeout(function(){ window.scrollTo(0,0); },30);
     try{ document.getElementById('dash-fecha').textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); })(); }catch(e){ console.warn('[catch]', e); }
     try{ document.getElementById('app-user-name').textContent = nombreConTitulo(usuarioActual||{nombre:nombre}) + ' ✏️'; }catch(e){ console.warn('[catch]', e); }
+    turnos = [];   // cuenta real: sin los turnos de ejemplo del modo demo
     try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){ console.warn('[catch]', e); }
     try{ showPanel('dash'); }catch(e){ console.warn('[catch]', e); }
     try{ precargarDatosMedico(nuevoUser); }catch(e){ console.warn('[catch]', e); }
