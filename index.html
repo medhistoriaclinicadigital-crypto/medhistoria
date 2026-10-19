@@ -4964,9 +4964,9 @@ function abrirEditarPacienteNombre(nombre){
   if(idx < 0) return;
   abrirEditarPaciente(idx);
 }
-function abrirEditarPacienteDNI(dni, nombre){
-  var idx = -1;
-  if(dni && dni.trim()){
+function abrirEditarPacienteDNI(dni, nombre, idPac){
+  var idx = idPac ? _idxPacientePorId(idPac) : -1;
+  if(idx < 0 && dni && dni.trim()){
     idx = pacientes.findIndex(function(p){ return (p.dni||'').trim() === dni.trim(); });
   }
   if(idx < 0){
@@ -5024,6 +5024,28 @@ function abrirEditarPaciente(idx){
 }
 function cerrarNuevoPaciente(){
   document.getElementById('pacienteOverlay').style.display='none';
+}
+// Guarda en el paciente local el id de su fila del servidor (para editarlo después sin buscar por DNI ni duplicar).
+function _marcarSbIdPaciente(pac, id){
+  try{
+    if(!id || !pac) return;
+    var q = pacientes.filter(function(p){ return p === pac; })[0]
+         || (pac._uid ? pacientes.filter(function(p){ return p._uid === pac._uid; })[0] : null)
+         || pacientes.filter(function(p){ return pac.dni ? ((p.dni||'').trim() === pac.dni.trim()) : (p.nombre === pac.nombre); })[0];
+    if(q && !q._sbId){ q._sbId = id; guardarLocal(); }
+  }catch(e){ console.warn('[catch]', e); }
+}
+// Filas PROPIAS del servidor sin DNI que tienen el nombre dado ("Apellido, Nombre"). callback(ids, error)
+function _buscarIdsPorNombreSinDni(nombreAnterior, callback){
+  var clave = _normNombrePac(nombreAnterior);
+  var filtrar = function(filas){
+    return (filas||[]).filter(function(r){ return !((r.dni||'').toString().trim()) && _normNombrePac((r.apellido||'')+', '+(r.nombre||'')) === clave; }).map(function(r){ return r.id; });
+  };
+  if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
+    sb.rpc('obtener_pacientes_centro', {p_device_token: _deviceToken()}).then(function(r){ if(r.error){ callback([], r.error); return; } callback(filtrar(r.data), null); });
+  } else {
+    sb.from('pacientes').select('id,nombre,apellido,dni').eq('medico_id', usuarioActual.id).then(function(r){ if(r.error){ callback([], r.error); return; } callback(filtrar(r.data), null); });
+  }
 }
 function guardarPaciente(){
   var ga = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
@@ -5083,11 +5105,33 @@ function guardarPaciente(){
     pac.centroNombre = miCentro.nombre;
   }
 
+  if(!pac._sbId && !pac._uid){ pac._uid = _nuevoUid(); }   // toda ficha nueva tiene identidad propia desde que se crea
+  // Paciente NUEVO, sin DNI, con el nombre de otro que tampoco tiene DNI: se pregunta antes de crear otra ficha.
+  if(!(_editandoPacienteIdx >= 0 && pacientes[_editandoPacienteIdx]) && !pac.dni && !window._crearHomonimoConfirmado){
+    var _idxHomo = -1;
+    for(var _h = 0; _h < pacientes.length; _h++){
+      if(!((pacientes[_h].dni||'').trim()) && _normNombrePac(pacientes[_h].nombre) === _normNombrePac(pac.nombre)){ _idxHomo = _h; break; }
+    }
+    if(_idxHomo >= 0){
+      var _idHomo = _idPac(pacientes[_idxHomo]);
+      _tarjetaAviso({
+        icono: '👥',
+        titulo: 'Ya tenés un paciente con este nombre y sin DNI.',
+        parrafos: ['Si es la misma persona, abrí su ficha en lugar de crear otra. Si es otra persona, podés crearla igual: se van a distinguir en la lista por su fecha de nacimiento o teléfono.'],
+        botones: [
+          { texto: 'Abrir la ficha existente', accion: function(){ cerrarNuevoPaciente(); var i2 = _idxPacientePorId(_idHomo); if(i2 >= 0) abrirEditarPaciente(i2); } },
+          { texto: 'Es otra persona, crear', accion: function(){ window._crearHomonimoConfirmado = true; try{ guardarPaciente(); } finally { window._crearHomonimoConfirmado = false; } } }
+        ]
+      });
+      return;
+    }
+  }
+
   // ── CHEQUEO LÍMITE DE PACIENTES (solo altas nuevas) ──
   // Se avisa antes de guardar, así no se muestra "registrado" para un alta que el servidor va a rechazar.
   // El que hace cumplir el límite de verdad es el servidor (trigger verificar_limite_pacientes).
   if(!(_editandoPacienteIdx >= 0 && pacientes[_editandoPacienteIdx])){
-    var yaExiste = pacientes.some(function(p){
+    var yaExiste = !window._crearHomonimoConfirmado && pacientes.some(function(p){
       return (pac.dni && p.dni && p.dni.trim()===pac.dni.trim()) || (p.nombre && p.nombre.toLowerCase()===pac.nombre.toLowerCase());
     });
     var vaAlCentroNuevo = (typeof miCentro !== 'undefined' && miCentro && miCentro.id);
@@ -5106,7 +5150,8 @@ function guardarPaciente(){
     // Buscar el paciente en reales por DNI primero, luego por nombre
     var pOrig = pacientes[_editandoPacienteIdx];
     var idxReal = -1;
-    if(pOrig.dni && pOrig.dni.trim()){
+    if(_idPac(pOrig)){ idxReal = reales.findIndex(function(r){ return _idPac(r) === _idPac(pOrig); }); }
+    if(idxReal < 0 && pOrig.dni && pOrig.dni.trim()){
       idxReal = reales.findIndex(function(r){ return (r.dni||'').trim() === pOrig.dni.trim(); });
     }
     if(idxReal < 0){
@@ -5159,15 +5204,32 @@ function guardarPaciente(){
           sexo: pac.sexo||''
         };
       if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){ pacSB.centro_id = miCentro.id; }
-      buscarPacienteIdCompartido(dniOriginalSB || pac.dni || '', function(pacienteIdExistente){
+      var _seguirGuardandoSB = function(pacienteIdExistente){
+        if(pacienteIdExistente){ _marcarSbIdPaciente(pac, pacienteIdExistente); }
         if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
-          sb.rpc('guardar_paciente_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteIdExistente||null, p_campos: pacSB}).then(function(r){ if(r.error){ console.error('Error guardando paciente de centro:', r.error); _revertirPacienteRechazado(pac, r.error); } _guardadoServidor('pac:'+(pac.dni||pac.nombre), 'el paciente ' + pac.nombre, _errNoLimite(r.error)); });
+          sb.rpc('guardar_paciente_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteIdExistente||null, p_campos: pacSB}).then(function(r){ if(r.error){ console.error('Error guardando paciente de centro:', r.error); _revertirPacienteRechazado(pac, r.error); } else if(!pacienteIdExistente && r.data){ _marcarSbIdPaciente(pac, r.data); } _guardadoServidor('pac:'+(pac.dni||pac.nombre), 'el paciente ' + pac.nombre, _errNoLimite(r.error)); });
         } else if(pacienteIdExistente){
           sb.from('pacientes').update(pacSB).eq('id', pacienteIdExistente).then(function(r){ _guardadoServidor('pac:'+(pac.dni||pac.nombre), 'los cambios del paciente ' + pac.nombre, r.error); });
         } else {
-          sb.from('pacientes').insert(pacSB).then(function(r){ if(r.error){ console.error('Error guardando paciente:', r.error); _revertirPacienteRechazado(pac, r.error); } _guardadoServidor('pac:'+(pac.dni||pac.nombre), 'el paciente ' + pac.nombre, _errNoLimite(r.error)); });
+          sb.from('pacientes').insert(pacSB).select('id').then(function(r){ if(r.error){ console.error('Error guardando paciente:', r.error); _revertirPacienteRechazado(pac, r.error); } else if(r.data && r.data[0]){ _marcarSbIdPaciente(pac, r.data[0].id); } _guardadoServidor('pac:'+(pac.dni||pac.nombre), 'el paciente ' + pac.nombre, _errNoLimite(r.error)); });
         }
-      });
+      };
+      if(pExistente._sbId){
+        _seguirGuardandoSB(pExistente._sbId);   // a) se actualiza SU fila del servidor, cambie o no el DNI
+      } else {
+        buscarPacienteIdCompartido(dniOriginalSB || pac.dni || '', function(idPorDni){
+          if(idPorDni || !pExistente.nombre || dniOriginalSB){ _seguirGuardandoSB(idPorDni); return; }
+          // b) se está editando un paciente que se guardó sin DNI y no se lo encuentra por DNI: se busca por su nombre entre las filas propias sin DNI
+          _buscarIdsPorNombreSinDni(pExistente.nombre, function(ids, errNom){
+            if(errNom){ _seguirGuardandoSB(null); return; }
+            if(ids.length <= 1){ _seguirGuardandoSB(ids[0] || null); return; }   // una coincidencia: se actualiza; ninguna: se crea
+            // dos o más: no se sabe cuál es → no se actualiza ni se crea nada
+            var _clave = 'pac:'+(pac.dni||pac.nombre);
+            if(!_guardadosFallidos.some(function(g){ return g.clave === _clave; })){ _guardadosFallidos.push({ clave: _clave, que: 'los cambios del paciente ' + pac.nombre, cuando: Date.now() }); }
+            _tarjetaAviso({ icono: '⚠️', titulo: 'No se guardaron los cambios de ' + pExistente.nombre + ' en el servidor: hay ' + ids.length + ' pacientes con ese nombre y sin DNI, y no se puede saber cuál es.', parrafos: ['Para no pisar ni duplicar a un paciente, no se modificó nada. Escribinos a consultas@medhistoriaclinicaonline.com para resolverlo.', 'Mientras tanto los cambios quedan solo en esta pestaña y se perderían al cerrar sesión.'] });
+          });
+        });
+      }
     }
 
   cerrarNuevoPaciente();
@@ -6113,11 +6175,11 @@ function limpiarFormularioHC(){
 // Índice del paciente actualmente abierto en HC
 var pacienteHCActualIdx = -1;
 
-function abrirHC(nombre, dni, edad, os){
+function abrirHC(nombre, dni, edad, os, idPac){
   try{ var evMed = document.getElementById('evol-medico'); if(evMed) evMed.value = nombreConTitulo(usuarioActual); }catch(e){ console.warn('[catch]', e); }
-  // Buscar el paciente completo en el array
-  var idx = -1;
-  for(var i=0;i<pacientes.length;i++){
+  // Buscar el paciente completo en el array (primero por el id de la ficha tocada: dos personas con el mismo nombre y sin DNI son fichas distintas)
+  var idx = idPac ? _idxPacientePorId(idPac) : -1;
+  for(var i=0;idx===-1 && i<pacientes.length;i++){
     if(pacientes[i].dni && dni && pacientes[i].dni===dni){ idx=i; break; }
   }
   if(idx===-1){
@@ -14435,9 +14497,14 @@ function renderPacientes(lista){
     return nna.localeCompare(nnb, 'es', {sensitivity:'base'});
   });
 
+  var _cuentaNombres = {};
+  lista.forEach(function(q){ var k = _normNombrePac(q.nombre); _cuentaNombres[k] = (_cuentaNombres[k] || 0) + 1; });
   grid.innerHTML = lista.map(function(p, i){
     var nomEsc = escJs(p.nombre||'');
     var dniEsc = escJs(p.dni||'');
+    var idEsc = escJs(_idPac(p));
+    var _repetido = _cuentaNombres[_normNombrePac(p.nombre)] > 1;
+    var _distinguir = _repetido ? ('<div style="font-size:.72rem;color:#b45309;margin-bottom:4px;">👥 Hay otro paciente con este nombre'+(p.fnac?' · nac. '+escHtml(p.fnac):'')+(p.tel?' · tel. '+escHtml(p.tel):'')+'</div>') : '';
     var centroBadge = p.esDeCentro ? '<span style="background:#eef2ff;color:#4338ca;border-radius:10px;padding:2px 8px;font-size:.7rem;font-weight:600;margin-left:4px;" title="Paciente compartido del centro médico">🏥 '+escHtml(p.centroNombre||'Centro')+'</span>' : '';
     return '<div class="pac-card">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">'
@@ -14445,12 +14512,13 @@ function renderPacientes(lista){
       +'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end;">'+centroBadge+'</div>'
       +'</div>'
       +'<div style="font-size:.75rem;color:var(--muted);margin-bottom:4px;">DNI '+escHtml(p.dni||'—')+(p.os?' · '+escHtml(p.os):'')+'</div>'
+      +_distinguir
       +(p.ultima?'<div style="font-size:.72rem;color:var(--muted);">Última: '+escHtml(p.ultima)+'</div>':'')
       +(p.prox?'<div style="font-size:.72rem;color:var(--g3);margin-top:4px;">📅 Próx: '+escHtml(p.prox)+'</div>':'')
       +'<div style="margin-top:10px;display:flex;justify-content:flex-end;align-items:center;gap:8px;">'
       +'<div style="display:flex;gap:8px;">'
-      +'<button onclick="abrirEditarPacienteDNI(\''+dniEsc+'\',\''+nomEsc+'\')" style="background:none;border:1px solid var(--g3);color:var(--g3);border-radius:6px;padding:4px 12px;font-size:.75rem;font-weight:600;cursor:pointer;">✏️ Editar</button>'
-      +'<button onclick="abrirHC(\''+nomEsc+'\',\''+dniEsc+'\',\''+escJs(p.edad)+'\',\''+escJs(p.os)+'\')" style="background:linear-gradient(135deg,#22a050,#1a7a42);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:.75rem;font-weight:600;cursor:pointer;">📋 Historia Clínica</button>'
+      +'<button onclick="abrirEditarPacienteDNI(\''+dniEsc+'\',\''+nomEsc+'\',\''+idEsc+'\')" style="background:none;border:1px solid var(--g3);color:var(--g3);border-radius:6px;padding:4px 12px;font-size:.75rem;font-weight:600;cursor:pointer;">✏️ Editar</button>'
+      +'<button onclick="abrirHC(\''+nomEsc+'\',\''+dniEsc+'\',\''+escJs(p.edad)+'\',\''+escJs(p.os)+'\',\''+idEsc+'\')" style="background:linear-gradient(135deg,#22a050,#1a7a42);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:.75rem;font-weight:600;cursor:pointer;">📋 Historia Clínica</button>'
       +'</div>'
       +'</div>'
       +'</div>';
@@ -14757,7 +14825,7 @@ try {
       reales.forEach(function(pac){
         var card = document.createElement('div');
         card.className = 'pac-card';
-        card.setAttribute('onclick', "abrirHC('"+escJs(pac.nombre)+"','"+escJs(pac.dni)+"','"+escJs(pac.edad)+"','"+escJs(pac.os)+"')");
+        card.setAttribute('onclick', "abrirHC('"+escJs(pac.nombre)+"','"+escJs(pac.dni)+"','"+escJs(pac.edad)+"','"+escJs(pac.os)+"','"+escJs(_idPac(pac))+"')");
         card.innerHTML = '<div class="pac-card-top"><span class="pac-card-name">'+escHtml(pac.nombre)+'</span>'+(pac.edad?'<span style="background:#e8f5e9;color:#2e7d32;border-radius:10px;padding:2px 8px;font-size:.75rem;font-weight:600;">'+escHtml(pac.edad)+' años</span>':'')+'</div>'          +'<div class="pac-card-info">DNI '+(escHtml(pac.dni)||'—')+(pac.os?' · '+escHtml(pac.os):'')+'</div>'          +'<div class="pac-card-fecha">Última consulta: '+escHtml(pac.ultima||pac.ultimaConsulta||'—')+'</div>';
         lista.insertBefore(card, lista.firstChild);
       });
@@ -17234,7 +17302,7 @@ function getNombrePlanCentro(){
 // Si rechaza el alta, el paciente ya quedó cargado en memoria/localStorage: se saca y se avisa.
 function _revertirPacienteRechazado(pac, err){
   if(!err || !/l[ií]mite de pacientes/i.test(err.message||'')) return;
-  var mismo = function(p){ return (pac.dni && p.dni) ? p.dni.trim()===pac.dni.trim() : p.nombre===pac.nombre; };
+  var mismo = function(p){ return (pac._uid && p._uid) ? p._uid===pac._uid : (pac.dni && p.dni) ? p.dni.trim()===pac.dni.trim() : p.nombre===pac.nombre; };
   try {
     var reales = JSON.parse(sessionStorage.getItem(_userKey('mhcd_pacientes'))||'[]').filter(function(p){ return !mismo(p); });
     sessionStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(reales));
@@ -17244,6 +17312,37 @@ function _revertirPacienteRechazado(pac, err){
   alert('⚠️ ' + err.message + '\n\nEl paciente NO se guardó. Actualizá tu plan para agregar más pacientes.');
 }
 
+function _tarjetaAviso(o){
+  var viejo = document.getElementById('tarjeta-aviso-overlay'); if(viejo) viejo.remove();
+  var el = function(tag, css, txt){ var e = document.createElement(tag); e.style.cssText = css; if(txt) e.textContent = txt; return e; };
+  if(o.discreta){
+    var t = el('div', 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:100001;max-width:calc(100% - 32px);background:#fff;border-radius:14px;padding:12px 18px;font-family:\'Outfit\',sans-serif;box-shadow:0 12px 30px rgba(0,0,0,.3);font-size:.9rem;font-weight:700;color:#042b10;display:flex;align-items:center;gap:10px;');
+    t.id = 'tarjeta-aviso-overlay'; t.setAttribute('role', 'status');
+    t.appendChild(el('span', 'font-size:1.3rem;', o.icono || '')); t.appendChild(el('span', '', o.titulo));
+    document.body.appendChild(t);
+    setTimeout(function(){ if(t.parentNode) t.remove(); }, 3000);
+    return;
+  }
+  var ov = el('div', 'position:fixed;inset:0;background:rgba(4,20,10,.6);z-index:100001;display:flex;align-items:center;justify-content:center;padding:20px;');
+  ov.id = 'tarjeta-aviso-overlay'; ov.setAttribute('role', 'alertdialog');
+  var card = el('div', 'background:#fff;border-radius:16px;max-width:380px;width:100%;padding:26px;font-family:\'Outfit\',sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.3);text-align:center;');
+  card.appendChild(el('div', 'font-size:2rem;margin-bottom:8px;', o.icono || ''));
+  card.appendChild(el('div', 'font-family:\'Cormorant Garamond\',serif;font-size:1.2rem;font-weight:700;color:#042b10;margin-bottom:10px;line-height:1.3;', o.titulo));
+  (o.parrafos || []).forEach(function(p){ card.appendChild(el('p', 'font-size:.88rem;color:#5a7362;line-height:1.6;margin:0 0 12px;', p)); });
+  // botones: [{ texto, accion }]; el primero es el principal (verde) y los demás son secundarios; sin botones, un «Aceptar».
+  var botones = (o.botones && o.botones.length) ? o.botones : [{ texto: 'Aceptar' }];
+  var primero = null;
+  botones.forEach(function(bd, i){
+    var b = el('button', i === 0
+      ? 'width:100%;padding:12px;margin-top:6px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;'
+      : 'width:100%;padding:12px;margin-top:8px;background:#fff;color:#145a32;border:1.5px solid #22a050;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;', bd.texto);
+    if(i === 0){ b.id = 'tarjeta-aviso-aceptar'; primero = b; }
+    b.onclick = function(){ ov.remove(); if(bd.accion){ try{ bd.accion(); }catch(e){ console.warn('[catch]', e); } } };
+    card.appendChild(b);
+  });
+  ov.appendChild(card); document.body.appendChild(ov);
+  try{ primero.focus(); }catch(e){ console.warn('[catch]', e); }
+}
 function guardarDesdeHC(){
   var ga = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
   var nombre = ga('hc-paciente');
@@ -17306,6 +17405,10 @@ function guardarDesdeHC(){
       if(pacientes[i].dni && pacientes[i].dni === dni){ existente=i; break; }
     }
   }
+  if(existente===-1 && nombre && typeof pacienteHCActualIdx === 'number' && pacienteHCActualIdx >= 0 && pacientes[pacienteHCActualIdx]
+     && (pacientes[pacienteHCActualIdx].nombre||'').toLowerCase()===nombre.toLowerCase()){
+    existente = pacienteHCActualIdx;   // el paciente abierto en la HC, aunque haya otro con el mismo nombre y sin DNI
+  }
   if(existente===-1 && nombre){
     for(var j=0;j<pacientes.length;j++){
       if(pacientes[j].nombre && pacientes[j].nombre.toLowerCase()===nombre.toLowerCase()){ existente=j; break; }
@@ -17346,6 +17449,7 @@ function guardarDesdeHC(){
     registrarAuditoria(existente, 'Alergias', prev.alergias, alergias);
     pacientes[existente] = Object.assign({}, prev, pac);
   } else {
+    pac._uid = _nuevoUid();
     pacientes.unshift(pac);
   }
   // El paciente guardado queda como el ABIERTO en la Historia Clínica (examen físico, evolución y estudios guardan en él sin volver a abrirlo desde la lista).
@@ -17359,11 +17463,16 @@ function guardarDesdeHC(){
 
   guardarLocal();
   renderPacientes();
-   // Guardar también en Supabase (historias_clinicas)
-    if(usuarioActual && usuarioActual.id && dni){
+   // Guardar también en Supabase (historias_clinicas). Lo escrito ya quedó en la pestaña (guardarLocal); si no se puede enviar se avisa qué falta, sin «✅».
+    var _avisoHCNoGuardada = function(motivo, accion){ _tarjetaAviso({ icono: '⚠️', titulo: 'No se guardó la anamnesis: ' + motivo, parrafos: [accion + ' Mientras tanto queda solo en esta pestaña y se perdería al cerrar sesión.'] }); };
+    var _hcConfirmada = function(err){ if(!err) _tarjetaAviso({ icono: '✅', titulo: 'Anamnesis guardada.', discreta: true }); };   // el «✅» sale recién cuando el servidor respondió sin error
+    if(!usuarioActual || !usuarioActual.id){ _avisoHCNoGuardada('no hay una sesión iniciada.', 'Ingresá con tu cuenta y volvé a guardar.'); return; }
+    if(!dni){ _avisoHCNoGuardada('el paciente no tiene DNI cargado.', 'Completalo en su ficha y volvé a guardar.'); return; }
+    {
       var _nomF = _nombreHCActual();
       buscarPacienteIdCompartido(dni, function(pacienteId, errBusq){
-        if(errBusq && !pacienteId){ _guardadoServidor('hc:'+_nomF, 'la anamnesis de ' + (_nomF || 'un paciente'), errBusq); }
+        if(errBusq && !pacienteId){ _guardadoServidor('hc:'+_nomF, 'la anamnesis de ' + (_nomF || 'un paciente'), errBusq); return; }
+        if(!pacienteId){ _avisoHCNoGuardada('el paciente todavía no está registrado en el servidor.', 'Guardá su ficha desde Pacientes y volvé a guardar la anamnesis.'); return; }
         if(pacienteId){
           var hcSB = {
             paciente_id: pacienteId,
@@ -17375,17 +17484,17 @@ function guardarDesdeHC(){
           };
           _queryCentroOProp('historias_clinicas','obtener_historias_centro').eq('paciente_id', pacienteId).then(function(rHC){
             if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
-              sb.rpc('guardar_historia_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB}).then(function(r){ if(r.error) console.error('Error guardando HC de centro:', r.error); _guardadoServidor('hc:'+_nomF, 'la anamnesis de ' + (_nomF || 'un paciente'), r.error); });
+              sb.rpc('guardar_historia_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB}).then(function(r){ if(r.error) console.error('Error guardando HC de centro:', r.error); _guardadoServidor('hc:'+_nomF, 'la anamnesis de ' + (_nomF || 'un paciente'), r.error); _hcConfirmada(r.error); });
             } else if(rHC.data && rHC.data.length>0){
-              sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando HC en Supabase:', r.error); _guardadoServidor('hc:'+_nomF, 'la anamnesis de ' + (_nomF || 'un paciente'), r.error); });
+              sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(r){ if(r.error) console.error('Error guardando HC en Supabase:', r.error); _guardadoServidor('hc:'+_nomF, 'la anamnesis de ' + (_nomF || 'un paciente'), r.error); _hcConfirmada(r.error); });
             } else {
-              sb.from('historias_clinicas').insert(hcSB).then(function(r){ if(r.error) console.error('Error guardando HC en Supabase:', r.error); _guardadoServidor('hc:'+_nomF, 'la anamnesis de ' + (_nomF || 'un paciente'), r.error); });
+              sb.from('historias_clinicas').insert(hcSB).then(function(r){ if(r.error) console.error('Error guardando HC en Supabase:', r.error); _guardadoServidor('hc:'+_nomF, 'la anamnesis de ' + (_nomF || 'un paciente'), r.error); _hcConfirmada(r.error); });
             }
           });
         }
       });
     }
-  alert('✅ Anamnesis guardada.');   // se queda en la pantalla del paciente (antes: showPanel('pacientes'))
+  // (El «✅ Anamnesis guardada.» ahora sale desde _hcConfirmada, cuando el servidor respondió. Se queda en la pantalla del paciente.)
 }
 
 // ══ CLAVES DE STORAGE POR USUARIO ══
@@ -17478,7 +17587,8 @@ function _guardadoServidor(clave, descripcion, err){
   var ahora = Date.now();
   if(ahora - _ultimoAvisoGuardado > 4000){
     _ultimoAvisoGuardado = ahora;
-    alert('⚠️ No se pudo guardar en el servidor: ' + descripcion + '.\n\nPor ahora quedó solo en esta pestaña y se perdería al cerrar sesión o cerrar la pestaña. Revisá tu conexión y volvé a guardarlo.');
+    if(/^hc:/.test(clave)){ _tarjetaAviso({ icono: '⚠️', titulo: 'No se pudo guardar en el servidor: ' + descripcion + '.', parrafos: ['Por ahora quedó solo en esta pestaña y se perdería al cerrar sesión o cerrar la pestaña. Revisá tu conexión y volvé a guardarlo.'] }); }
+    else { alert('⚠️ No se pudo guardar en el servidor: ' + descripcion + '.\n\nPor ahora quedó solo en esta pestaña y se perdería al cerrar sesión o cerrar la pestaña. Revisá tu conexión y volvé a guardarlo.'); }
   }
 }
 function _errNoLimite(err){ return (err && /l[ií]mite de pacientes/i.test(err.message || '')) ? null : err; }   // el rechazo por límite ya se avisa y se revierte solo
@@ -17540,7 +17650,16 @@ function cargarLocal(){
 // Un paciente del servidor ya está en la lista local si coincide el DNI; si falta el DNI en alguno
 // de los dos, se compara por apellido y nombre (si no, los pacientes sin DNI se duplicaban en cada carga).
 function _normNombrePac(s){ return (s||'').toString().trim().toLowerCase().replace(/\s+/g,' '); }
+// Identidad de una ficha: id del servidor (_sbId) o, mientras no tiene fila, un id local (_uid). Nunca el nombre.
+function _nuevoUid(){ return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function _idPac(p){ return p ? (p._sbId ? 's' + p._sbId : (p._uid ? 'u' + p._uid : '')) : ''; }
+function _idxPacientePorId(id){
+  if(!id) return -1;
+  for(var i = 0; i < pacientes.length; i++){ if(_idPac(pacientes[i]) === id) return i; }
+  return -1;
+}
 function _coincidePacienteRemoto(p, remoto){
+  if(p._sbId) return String(p._sbId) === String(remoto.id);   // una ficha con id solo es la fila de ESE id
   if(p.dni && remoto.dni) return p.dni.trim()===remoto.dni.trim();
   return _normNombrePac(p.nombre) === _normNombrePac((remoto.apellido||'')+', '+(remoto.nombre||''));
 }
@@ -17548,7 +17667,7 @@ function _coincidePacienteRemoto(p, remoto){
 function _quitarPacientesDuplicados(){
   var vistos = {};
   pacientes = pacientes.filter(function(p){
-    var clave = (p.dni && p.dni.trim()) ? 'dni:'+p.dni.trim() : 'nom:'+_normNombrePac(p.nombre)+'|'+(p.esDeCentro?'c':'p');
+    var clave = (p.dni && p.dni.trim()) ? 'dni:'+p.dni.trim() : p._sbId ? 'id:'+p._sbId : p._uid ? 'uid:'+p._uid : 'nom:'+_normNombrePac(p.nombre)+'|'+(p.esDeCentro?'c':'p');
     if(vistos[clave]) return false;
     vistos[clave] = true; return true;
   });
