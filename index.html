@@ -4175,6 +4175,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
         </div>
         <div class="hc-tabs" style="margin-bottom:20px;">
           <button class="hc-tab on" onclick="switchFactTab(this,'fact-part')">🧾 Factura Paciente</button>
+           <button class="hc-tab" onclick="switchFactTab(this,'fact-miplan')">📋 Mi plan</button>
            <button class="hc-tab" onclick="switchFactTab(this,'fact-suscripcion')">📨 Solicitar Factura</button>
  </div>
         <!-- OBRA SOCIAL -->
@@ -4288,6 +4289,27 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               <div style="text-align:center;color:var(--muted);padding:40px 20px;">No hay facturas emitidas aún.</div>
             </div>
           </div>
+        </div>
+
+        <!-- MI PLAN: lo contratado y la baja -->
+        <div id="fact-miplan" style="display:none;">
+          <style>
+            .mp-caja{max-width:640px;background:#fff;border:1.5px solid #bbf7d0;border-radius:18px;padding:26px 28px;box-shadow:0 14px 40px rgba(20,90,50,.12);}
+            .mp-caja h3{font-family:'Cormorant Garamond',Georgia,serif;font-size:1.6rem;color:#145a32;margin:0 0 6px;}
+            .mp-fila{border-top:1.5px solid #e5f3ea;padding:14px 0;}
+            .mp-n{font-weight:700;color:#145a32;font-size:1.05rem;line-height:1.4;overflow-wrap:anywhere;}
+            .mp-d{font-size:.95rem;color:#5a7362;margin-top:3px;line-height:1.5;overflow-wrap:anywhere;}
+            .mp-canc{margin-top:18px;border-top:1.5px solid #e5f3ea;padding-top:18px;}
+            .mp-ct{font-family:'Cormorant Garamond',Georgia,serif;font-size:1.35rem;font-weight:700;color:#145a32;margin:0 0 12px;}
+            .mp-cfila{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#fafdfb;border:1.5px solid #e5f3ea;border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+            .mp-cfila .mp-n{flex:1;}
+            .mp-rojo,.mp-verde{display:flex;align-items:center;justify-content:center;min-height:46px;padding:10px 22px;border-radius:11px;font:inherit;font-size:.95rem;font-weight:700;text-align:center;flex-shrink:0;cursor:pointer;}
+            .mp-rojo{background:#dc2626;color:#fff;border:1.5px solid #dc2626;}
+            .mp-verde{background:#fff;color:#145a32;border:1.5px solid #22a050;}
+            .mp-prox{font-size:.92rem;font-weight:700;color:#8a9a90;flex-shrink:0;}
+            @media (max-width:700px){.mp-caja{padding:20px 18px;}.mp-cfila{flex-direction:column;align-items:stretch;gap:12px;}.mp-rojo,.mp-verde{width:100%;min-height:50px;}}
+          </style>
+          <div class="mp-caja" id="fact-miplan-cont"></div>
         </div>
 
         <!-- SOLICITAR FACTURA DE SUSCRIPCIÓN -->
@@ -14013,13 +14035,125 @@ function sincronizarVideoconsultasSupabase(){
 
 var facturas = [];
 
+// ── «Mi plan» (Facturación → Mi plan) ──
+// Mientras no exista el cobro automático: false = no se lee mi_suscripcion() y la baja de la SUSCRIPCIÓN dice «Próximamente». Pasar a true cuando existan mi_suscripcion() y la función suscripcion-baja.
+var MI_PLAN_COBRO_ACTIVO = false;
+var _MESES_MP = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function _fechaMP(d){ return d.getDate() + ' de ' + _MESES_MP[d.getMonth()]; }
+function _fechaMPLarga(d){ return _fechaMP(d) + ' de ' + d.getFullYear(); }
+function _fechaAnioMP(d){ return d.getFullYear() === new Date().getFullYear() ? _fechaMP(d) : _fechaMPLarga(d); }
+function _finDeMesMP(){ var h = new Date(); return new Date(h.getFullYear(), h.getMonth() + 1, 0); }
+function _diaAnteriorMP(iso){ var d = new Date(iso); d.setDate(d.getDate() - 1); return d; }
+function _leerRpcMP(nombre){
+  return sb.rpc(nombre).then(function(r){ return (r && !r.error) ? r.data : null; }, function(){ return null; });
+}
+function _eMP(tag, cls, txt){ var e = document.createElement(tag); if(cls) e.className = cls; if(txt) e.textContent = txt; return e; }
+function _filaMP(titulo, detalle){
+  var f = _eMP('div', 'mp-fila'); f.appendChild(_eMP('div', 'mp-n', titulo));
+  if(detalle) f.appendChild(_eMP('div', 'mp-d', detalle));
+  return f;
+}
+function _botonMP(cls, texto, fn){ var b = _eMP('button', cls, texto); b.type = 'button'; b.addEventListener('click', fn); return b; }
+function _cfilaMP(texto, boton){ var f = _eMP('div', 'mp-cfila'); f.appendChild(_eMP('div', 'mp-n', texto)); f.appendChild(boton); return f; }
+function _errorBajaMP(r){
+  _tarjetaAviso({ icono: '⚠️', titulo: 'No se pudo registrar el cambio', parrafos: ['Probá de nuevo en un momento. Si sigue pasando, escribinos.'], grande: true });
+}
+function renderMiPlan(){
+  var cont = document.getElementById('fact-miplan-cont'); if(!cont) return;
+  cont.textContent = 'Cargando…';
+  Promise.all([_leerRpcMP('mi_pack_ia'), MI_PLAN_COBRO_ACTIVO ? _leerRpcMP('mi_suscripcion') : Promise.resolve(null)]).then(function(r){ _pintarMiPlan(cont, r[0], r[1]); });
+}
+function _pintarMiPlan(cont, pack, susc){
+  var plan = ((usuarioActual && usuarioActual.plan) || 'free').toLowerCase();
+  var k = plan.indexOf('premium') >= 0 ? 'premium' : plan.indexOf('pro') >= 0 ? 'pro' : plan.indexOf('starter') >= 0 ? 'starter' : 'free';
+  cont.textContent = '';
+  cont.appendChild(_eMP('h3', '', '📋 Mi plan'));
+  if(k === 'free'){
+    if(typeof miCentro !== 'undefined' && miCentro){
+      cont.appendChild(_filaMP('Centro: ' + miCentro.nombre + ' · ' + getNombrePlanCentro(), 'El plan lo administra el titular del centro.'));
+    } else {
+      cont.appendChild(_filaMP('Prueba Gratuita', ''));
+      var vp = _eMP('div', 'mp-canc'); vp.appendChild(_botonMP('mp-verde', 'Ver planes', function(){ abrirMejorarPlanIndividual(); })); cont.appendChild(vp);
+    }
+    return;
+  }
+  var P = PLANES_INDIVIDUALES[k];
+  var vence = (susc && susc.vence) ? new Date(susc.vence) : _finDeMesMP();
+  var prepago = (susc && susc.prepago_hasta) ? new Date(susc.prepago_hasta) : null;
+  var bajaPlan = (susc && susc.baja_desde) ? _diaAnteriorMP(susc.baja_desde) : null;
+  var bajaPack = (pack && pack.baja_desde) ? _diaAnteriorMP(pack.baja_desde) : null;
+  cont.appendChild(_filaMP('Plan ' + P.nombre + ' · US$ ' + P.precio + ' por mes', 'Activo hasta el ' + _fechaAnioMP(prepago || vence)));
+  if(pack && pack.paquetes) cont.appendChild(_filaMP('Pack IA Extra · +' + (pack.paquetes * 100) + ' consultas', ''));
+  if(prepago) cont.appendChild(_filaMP('Descuento de 6 meses', 'Pagado hasta el ' + _fechaMPLarga(prepago)));
+  var canc = _eMP('div', 'mp-canc'); canc.appendChild(_eMP('div', 'mp-ct', 'Cancelación'));
+  if(bajaPlan){
+    canc.appendChild(_cfilaMP('Se da de baja el ' + _fechaAnioMP(bajaPlan), _botonMP('mp-verde', 'Cancelar la baja', function(){
+      sb.functions.invoke('suscripcion-baja', { body: { accion: 'cancelar' } }).then(function(r){ if(!r || r.error || !r.data || !r.data.ok){ _errorBajaMP(r); } renderMiPlan(); }, function(){ _errorBajaMP(); });
+    })));
+  } else {
+    canc.appendChild(_cfilaMP('Cancelar suscripción', MI_PLAN_COBRO_ACTIVO ? _botonMP('mp-rojo', 'Dar de baja', function(){ _confirmarBajaPlanMP(k, prepago, vence); }) : _eMP('span', 'mp-prox', 'Próximamente')));
+  }
+  if(pack && pack.paquetes){
+    if(bajaPack){
+      canc.appendChild(_cfilaMP('El pack IA Extra se da de baja el ' + _fechaAnioMP(bajaPack), _botonMP('mp-verde', 'Cancelar la baja', function(){
+        sb.rpc('cancelar_baja_pack_ia').then(function(r){ if(r && r.error){ _errorBajaMP(r); } renderMiPlan(); }, function(){ _errorBajaMP(); });
+      })));
+    } else {
+      canc.appendChild(_cfilaMP('Cancelar pack IA Extra', _botonMP('mp-rojo', 'Dar de baja', function(){ _confirmarBajaPackMP(k); })));
+    }
+  }
+  cont.appendChild(canc);
+}
+function _confirmarBajaPlanMP(k, prepago, vence){
+  var nom = PLANES_INDIVIDUALES[k].nombre;
+  var sig = new Date(vence.getFullYear(), vence.getMonth(), vence.getDate() + 1);
+  var o = prepago ? {
+    icono: '📋', titulo: '¿Dar de baja tu plan ' + nom + '?',
+    parrafos: ['Pagaste 6 meses por adelantado. Seguís con tu plan ' + nom + ' hasta el ' + _fechaMPLarga(prepago) + ' y después pasás al plan gratuito.',
+               'No se devuelve lo pagado. Tus datos no se borran. Podés cancelar la baja hasta esa fecha.']
+  } : {
+    icono: '📋', titulo: '¿Dar de baja tu plan ' + nom + '?',
+    parrafos: ['Seguís usando tu plan ' + nom + ' hasta el ' + _fechaMPLarga(vence) + ', el último día del mes que ya pagaste. Desde el ' + _fechaMP(sig) + ' pasás al plan gratuito.',
+               'No se devuelve el dinero del mes pagado. Tus datos no se borran. Podés cancelar la baja cuando quieras hasta esa fecha.']
+  };
+  o.grande = true;
+  o.botones = [{ texto: 'Mantener mi plan' }, { texto: 'Dar de baja', peligro: true, accion: function(){
+    sb.functions.invoke('suscripcion-baja', { body: { accion: 'pedir' } }).then(function(r){
+      if(!r || r.error || !r.data || !r.data.ok){ _errorBajaMP(r); return; }
+      _tarjetaAviso({ icono: '✅', titulo: 'Baja registrada', grande: true,
+        parrafos: ['Tu plan ' + nom + ' sigue activo hasta el ' + _fechaMPLarga(prepago || vence) + ' y después pasa al plan gratuito. Te enviamos la confirmación a tu mail.', 'Si te arrepentís, podés cancelar la baja hasta esa fecha.'],
+        botones: [{ texto: 'Entendido' }] });
+      renderMiPlan();
+    }, function(){ _errorBajaMP(); });
+  } }];
+  _tarjetaAviso(o);
+}
+function _confirmarBajaPackMP(k){
+  var fin = _finDeMesMP(), sig = _inicioMesSigMP();
+  _tarjetaAviso({ icono: '🤖', titulo: '¿Dar de baja el pack IA Extra?', grande: true,
+    parrafos: ['Tenés tus consultas extra hasta el ' + _fechaMPLarga(fin) + '. Desde el ' + _fechaMP(sig) + ' vuelven las consultas de tu plan (' + PLANES_INDIVIDUALES[k].ia + ' al mes).',
+               'No se devuelve el dinero del mes pagado. Tus datos no se borran. Podés cancelar la baja cuando quieras hasta esa fecha.'],
+    botones: [{ texto: 'Mantener el pack' }, { texto: 'Dar de baja', peligro: true, accion: function(){
+      sb.rpc('pedir_baja_pack_ia').then(function(r){
+        if(r && r.error){ _errorBajaMP(r); return; }
+        _tarjetaAviso({ icono: '✅', titulo: 'Baja registrada', grande: true,
+          parrafos: ['Tu pack IA Extra sigue activo hasta el ' + _fechaMPLarga(fin) + ' y después vuelven las consultas de tu plan.', 'Si te arrepentís, podés cancelar la baja hasta esa fecha.'],
+          botones: [{ texto: 'Entendido' }] });
+        renderMiPlan();
+      }, function(){ _errorBajaMP(); });
+    } }] });
+}
+function _inicioMesSigMP(){ var h = new Date(); return new Date(h.getFullYear(), h.getMonth() + 1, 1); }
+// ── fin «Mi plan» ──
+
 function switchFactTab(btn, id){
   document.querySelectorAll('#panel-facturacion .hc-tab').forEach(function(b){ b.classList.remove('on'); });
   btn.classList.add('on');
- ['fact-part','fact-suscripcion'].forEach(function(t){
+ ['fact-part','fact-miplan','fact-suscripcion'].forEach(function(t){
     var el = document.getElementById(t);
     if(el) el.style.display = t===id ? 'block' : 'none';
   });
+  if(id === 'fact-miplan') renderMiPlan();
 }
 
 function solicitarFactura(){
@@ -17438,6 +17572,8 @@ function _revertirPacienteRechazado(pac, err){
 }
 
 function _tarjetaAviso(o){
+  var G = !!o.grande;   // variante grande (cartel de límite de IA, «Mi plan»): tarjeta de hasta 490 px
+  var chico = G && window.innerWidth <= 520;
   var viejo = document.getElementById('tarjeta-aviso-overlay'); if(viejo) viejo.remove();
   var el = function(tag, css, txt){ var e = document.createElement(tag); e.style.cssText = css; if(txt) e.textContent = txt; return e; };
   if(o.discreta){
@@ -17448,12 +17584,12 @@ function _tarjetaAviso(o){
     setTimeout(function(){ if(t.parentNode) t.remove(); }, 3000);
     return;
   }
-  var ov = el('div', 'position:fixed;inset:0;background:rgba(4,20,10,.6);z-index:100001;display:flex;align-items:center;justify-content:center;padding:20px;');
+  var ov = el('div', 'position:fixed;inset:0;background:rgba(4,20,10,.6);z-index:100001;display:flex;align-items:center;justify-content:center;padding:' + (G ? '16px' : '20px') + ';' + (G ? 'overflow-y:auto;' : ''));
   ov.id = 'tarjeta-aviso-overlay'; ov.setAttribute('role', 'alertdialog');
-  var card = el('div', 'background:#fff;border-radius:16px;max-width:380px;width:100%;padding:26px;font-family:\'Outfit\',sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.3);text-align:center;');
-  card.appendChild(el('div', 'font-size:2rem;margin-bottom:8px;', o.icono || ''));
-  card.appendChild(el('div', 'font-family:\'Cormorant Garamond\',serif;font-size:1.2rem;font-weight:700;color:#042b10;margin-bottom:10px;line-height:1.3;', o.titulo));
-  (o.parrafos || []).forEach(function(p){ card.appendChild(el('p', 'font-size:.88rem;color:#5a7362;line-height:1.6;margin:0 0 12px;', p)); });
+  var card = el('div', 'background:#fff;border-radius:16px;max-width:' + (G ? '490px' : '380px') + ';width:100%;padding:' + (G ? (chico ? '28px 20px 22px' : '36px 34px 32px') : '26px') + ';' + (G ? 'margin:auto;' : '') + 'font-family:\'Outfit\',sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.3);text-align:center;');
+  card.appendChild(el('div', 'font-size:' + (G ? '2.6rem' : '2rem') + ';margin-bottom:' + (G ? '12px' : '8px') + ';', o.icono || ''));
+  card.appendChild(el('div', 'font-family:\'Cormorant Garamond\',serif;font-size:' + (G ? (chico ? '1.45rem' : '1.65rem') : '1.2rem') + ';font-weight:700;color:#042b10;margin-bottom:' + (G ? '14px' : '10px') + ';line-height:' + (G ? '1.25' : '1.3') + ';overflow-wrap:anywhere;', o.titulo));
+  (o.parrafos || []).forEach(function(p){ card.appendChild(el('p', 'font-size:' + (G ? (chico ? '1rem' : '1.02rem') : '.88rem') + ';color:#5a7362;line-height:1.6;margin:0 0 12px;overflow-wrap:anywhere;', p)); });
   // botones: [{ texto, accion }]; el primero es el principal (verde) y los demás son secundarios; sin botones, un «Aceptar».
   var botones = (o.botones && o.botones.length) ? o.botones : [{ texto: 'Aceptar' }];
   var primero = null;
@@ -17461,6 +17597,7 @@ function _tarjetaAviso(o){
     var b = el('button', i === 0
       ? 'width:100%;padding:12px;margin-top:6px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;'
       : 'width:100%;padding:12px;margin-top:8px;background:#fff;color:#145a32;border:1.5px solid #22a050;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;', bd.texto);
+    if(G){ b.style.cssText += 'min-height:52px;font-size:1.02rem;border-radius:12px;margin-top:12px;line-height:1.25;font-family:inherit;'; if(bd.peligro){ b.style.color = '#b91c1c'; b.style.borderColor = '#fca5a5'; } }
     if(i === 0){ b.id = 'tarjeta-aviso-aceptar'; primero = b; }
     b.onclick = function(){ ov.remove(); if(bd.accion){ try{ bd.accion(); }catch(e){ console.warn('[catch]', e); } } };
     card.appendChild(b);
