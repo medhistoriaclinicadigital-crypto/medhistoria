@@ -17833,6 +17833,309 @@ function cerrarModalTel(aceptar){
   _modalTelCallback = null;
 }
 
+// ── AUTOGUARDADO de la historia clínica (etapa a): anamnesis y examen físico ──
+// (El diagnóstico NO entra: su pestaña no está visible en la pantalla real desde el 27/06/2026; se vuelve a evaluar cuando la usuaria decida.)
+// Guarda solo lo que el médico tocó, ~3 s después de dejar de escribir y también al salir del campo, cambiar de pestaña o de paciente, ocultar la página y antes de «Cerrar sesión».
+// 1) Atado al paciente de ORIGEN: cada cambio queda anotado en la ficha del paciente que estaba abierto al escribir (id del servidor o id local), aunque después se abra otro.
+// 2) La copia pendiente del navegador (sessionStorage de esta pestaña) se borra apenas el servidor confirma y, en todo caso, al cerrar sesión (que vacía el almacenamiento).
+// 3) Antes de «Cerrar sesión» (y del corte por inactividad) se guarda lo pendiente; si algo no llegó, el aviso que ya existe lo informa.
+var AG_PAUSA_MS = 3000;          // pausa de escritura antes de guardar
+var AG_EDICION_MS = 60000;       // sin tocar este tiempo = termina la «sesión de edición» (historial de cambios)
+var AG_REINTENTOS_MS = [5000, 10000, 20000, 40000, 60000];
+var _AG_CAMPOS = {
+  'hc-ant-personal':   { g: 'hc', l: 'antPersonal',   col: 'antecedentes_personales',  et: 'Antecedentes personales' },
+  'hc-ant-familiar':   { g: 'hc', l: 'antFamiliar',   col: 'antecedentes_familiares',  et: 'Antecedentes familiares' },
+  'hc-ant-quirurgico': { g: 'hc', l: 'antQuirurgico', col: 'antecedentes_quirurgicos', et: 'Antecedentes quirúrgicos' },
+  'hc-medicacion':     { g: 'hc', l: 'medicacion',    col: 'medicacion_habitual',      et: 'Medicación habitual' },
+  'hc-alergias':       { g: 'hc', l: 'alergias',      col: 'alergias',                 et: 'Alergias' },
+  'ex-peso':     { g: 'ex', l: 'peso',     col: 'peso',                    num: 1, et: 'Examen físico — Peso' },
+  'ex-talla':    { g: 'ex', l: 'talla',    col: 'talla',                   num: 1, et: 'Examen físico — Talla' },
+  'ex-ta':       { g: 'ex', l: 'ta',       col: 'tension_arterial',                et: 'Examen físico — Tensión arterial' },
+  'ex-fc':       { g: 'ex', l: 'fc',       col: 'frecuencia_cardiaca',     num: 1, et: 'Examen físico — Frec. cardíaca' },
+  'ex-fr':       { g: 'ex', l: 'fr',       col: 'frecuencia_respiratoria', num: 1, et: 'Examen físico — Frec. respiratoria' },
+  'ex-temp':     { g: 'ex', l: 'temp',     col: 'temperatura',             num: 1, et: 'Examen físico — Temperatura' },
+  'ex-sat':      { g: 'ex', l: 'sat',      col: 'saturacion_o2',           num: 1, et: 'Examen físico — Saturación O2' },
+  'ex-sistemas': { g: 'ex', l: 'sistemas', col: 'examen_aparatos_sistemas',        et: 'Examen físico — Examen por sistemas' }
+};
+var _agEntradas = [];            // una por paciente con cambios: { uid, sbId, dni, nombre, campos, base, estado, hora, timer, idle, enVuelo, repetir, reint, reintT, servId }
+var _agSinPaciente = false;      // se escribió en la HC sin tener un paciente abierto
+var _agPersistT = null;
+
+function _agPacienteAbierto(){
+  var i = (typeof pacienteHCActualIdx === 'number') ? pacienteHCActualIdx : -1;
+  return (i >= 0 && pacientes[i]) ? { idx: i, p: pacientes[i] } : null;
+}
+function _agCoincide(e, p){
+  return !!((e.sbId && p._sbId && String(e.sbId) === String(p._sbId)) || (e.uid && p._uid && e.uid === p._uid));
+}
+function _agEntrada(p, crear){
+  for(var i = 0; i < _agEntradas.length; i++){ if(_agCoincide(_agEntradas[i], p)) return _agEntradas[i]; }
+  if(!crear) return null;
+  if(!p._sbId && !p._uid) p._uid = _nuevoUid();
+  var e = { uid: p._uid || '', sbId: p._sbId || '', dni: p.dni || '', nombre: p.nombre || '', campos: {}, base: {}, estado: '', hora: '', timer: null, idle: null, enVuelo: false, repetir: false, reint: 0, reintT: null, servId: null };
+  _agEntradas.push(e);
+  return e;
+}
+function _agPacienteDe(e){
+  for(var i = 0; i < pacientes.length; i++){ if(_agCoincide(e, pacientes[i])) return { idx: i, p: pacientes[i] }; }
+  return null;
+}
+function _agClave(e){ return 'hcag:' + (e.sbId || e.uid); }
+function _agLeerLocal(p, id){
+  var c = _AG_CAMPOS[id];
+  if(c.g === 'hc') return p[c.l] || '';
+  return (p.examen && p.examen[c.l]) || '';
+}
+function _agEscribirLocal(p, id, val){
+  var c = _AG_CAMPOS[id];
+  if(c.g === 'hc'){ p[c.l] = val; }
+  else { if(!p.examen) p.examen = {}; p.examen[c.l] = val; }
+}
+function _agNum(v){
+  v = ((v === undefined || v === null) ? '' : ('' + v)).trim().replace(',', '.');
+  if(v === '') return { ok: true, val: null };
+  return /^-?\d+(\.\d+)?$/.test(v) ? { ok: true, val: Number(v) } : { ok: false };
+}
+function _agHora(){ var d = new Date(); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+function _agHayCampos(e){ for(var k in e.campos){ if(Object.prototype.hasOwnProperty.call(e.campos, k)) return true; } return false; }
+function _agHayPendiente(){ return _agEntradas.some(function(e){ return _agHayCampos(e); }); }
+
+// Copia pendiente en la pestaña (se borra al confirmar el servidor y al cerrar sesión)
+function _agPersistir(){
+  clearTimeout(_agPersistT);
+  _agPersistT = setTimeout(function(){
+    try{
+      if(!usuarioActual || !usuarioActual.email) return;
+      var lista = _agEntradas.filter(_agHayCampos).map(function(e){ return { uid: e.uid, sbId: e.sbId, dni: e.dni, nombre: e.nombre, campos: e.campos, base: e.base }; });
+      if(lista.length) sessionStorage.setItem(_userKey('mhcd_ag_pend'), JSON.stringify(lista));
+      else sessionStorage.removeItem(_userKey('mhcd_ag_pend'));
+    }catch(x){ console.warn('[catch]', x); }
+  }, 250);
+}
+var _agRestaurado = false;
+function _agRestaurar(){
+  if(_agRestaurado) return;
+  try{
+    if(!usuarioActual || !usuarioActual.email) return;
+    var crudo = sessionStorage.getItem(_userKey('mhcd_ag_pend'));
+    _agRestaurado = true;
+    if(!crudo) return;
+    JSON.parse(crudo).forEach(function(s){
+      var tmp = { uid: s.uid, sbId: s.sbId };
+      var r = _agPacienteDe(tmp);
+      if(!r) return;
+      var e = _agEntrada(r.p, true);
+      Object.keys(s.campos || {}).forEach(function(id){ if(_AG_CAMPOS[id]){ e.campos[id] = s.campos[id]; _agEscribirLocal(r.p, id, s.campos[id]); } });
+      Object.keys(s.base || {}).forEach(function(id){ if(_AG_CAMPOS[id] && !(id in e.base)) e.base[id] = s.base[id]; });
+      e.estado = 'pend';
+      _agProgramar(e, 2500);
+    });
+    _agRender();
+  }catch(x){ console.warn('[catch]', x); }
+}
+
+// ── Indicador ──
+var _AG_TEXTOS = {
+  guardando: { icono: '⏳', txt: 'Guardando…' },
+  ok:        { icono: '',   txt: 'Guardado ✓ ' },
+  offline:   { icono: '📡', txt: 'Sin conexión: se guardará al volver' },
+  error:     { icono: '⚠️', txt: 'No se pudo guardar. ' },
+  sinficha:  { icono: 'ℹ️', txt: 'Este paciente todavía no está guardado: guardá su ficha en Pacientes para que se guarde su historia.' }
+};
+function _agInstalarUI(){
+  try{
+    if(document.getElementById('ag-ind')) return;
+    var btn = document.querySelector('#panel-hc button[onclick="finalizarAtencion()"]');
+    if(!btn || !btn.parentNode) return;
+    if(!document.getElementById('ag-estilos')){
+      var st = document.createElement('style'); st.id = 'ag-estilos';
+      st.textContent = '.ag-der{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;max-width:100%;}'
+        + '.ag-ind{display:inline-flex;align-items:center;gap:7px;border-radius:12px;padding:6px 12px;font-size:.8rem;font-weight:600;line-height:1.35;max-width:360px;font-family:\'Outfit\',sans-serif;}'
+        + '.ag-ind i{font-style:normal;font-size:.9rem;flex-shrink:0;}.ag-ind .ag-reint{text-decoration:underline;cursor:pointer;background:none;border:none;color:inherit;font:inherit;padding:0;}'
+        + '.ag-guardando{background:#eef2ff;color:#3730a3;}.ag-ok{background:#dcfce7;color:#14532d;}.ag-offline{background:#fef3c7;color:#92400e;}.ag-error{background:#fee2e2;color:#991b1b;}.ag-sinficha{background:#f1f5f9;color:#334155;}'
+        + '@media (max-width:700px){#panel-hc .ag-der{justify-content:space-between;width:100%;}.ag-ind{flex:1 1 100%;max-width:none;}#panel-hc .ag-der button{width:100%;padding:10px 14px;}}';
+      document.head.appendChild(st);
+    }
+    var cont = btn.parentNode; cont.classList.add('ag-der');
+    var ind = document.createElement('span'); ind.id = 'ag-ind'; ind.className = 'ag-ind'; ind.setAttribute('role', 'status'); ind.setAttribute('aria-live', 'polite'); ind.style.display = 'none';
+    cont.insertBefore(ind, btn);
+  }catch(x){ console.warn('[catch]', x); }
+}
+function _agRender(){
+  var el = document.getElementById('ag-ind');
+  if(!el){ _agInstalarUI(); el = document.getElementById('ag-ind'); if(!el) return; }
+  var ab = _agPacienteAbierto(), est = '', hora = '';
+  if(ab){ var e = _agEntrada(ab.p, false); if(e){ est = e.estado; hora = e.hora; if(est === 'pend') est = 'guardando'; } }
+  else if(_agSinPaciente){ est = 'sinficha'; }
+  var t = _AG_TEXTOS[est];
+  if(!t){ el.style.display = 'none'; el.textContent = ''; return; }
+  el.className = 'ag-ind ag-' + est;
+  el.textContent = '';
+  if(t.icono){ var i = document.createElement('i'); i.textContent = t.icono; el.appendChild(i); }
+  var s = document.createElement('span'); s.textContent = t.txt + (est === 'ok' ? hora : ''); el.appendChild(s);
+  if(est === 'error'){
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'ag-reint'; b.textContent = 'Reintentar';
+    b.addEventListener('click', function(){ _agGuardarAbiertoYa(); });
+    s.appendChild(b);
+  }
+  el.style.display = 'inline-flex';
+}
+
+// ── Motor ──
+function _agAlEscribir(ev){
+  var el = ev.target, id = el && el.id;
+  if(!id || !_AG_CAMPOS[id]) return;
+  if(!usuarioActual || !usuarioActual.id) return;
+  var ab = _agPacienteAbierto();
+  if(!ab){ _agSinPaciente = true; _agRender(); return; }
+  var p = ab.p, e = _agEntrada(p, true), val = el.value;
+  if(!(id in e.base)) e.base[id] = _agLeerLocal(p, id);   // valor al empezar la sesión de edición (para el historial)
+  e.campos[id] = val;
+  _agEscribirLocal(p, id, val);
+  if(id === 'ex-peso' || id === 'ex-talla'){ setTimeout(function(){ var im = document.getElementById('ex-imc'); if(im){ if(!p.examen) p.examen = {}; p.examen.imc = im.value; } }, 0); }
+  e.estado = 'pend';
+  clearTimeout(e.reintT);
+  _agPersistir();
+  _agProgramar(e, AG_PAUSA_MS);
+  clearTimeout(e.idle); e.idle = setTimeout(function(){ _agCerrarEdicion(e); }, AG_EDICION_MS);
+  _agRender();
+}
+function _agProgramar(e, ms){ clearTimeout(e.timer); e.timer = setTimeout(function(){ _agGuardar(e); }, ms); }
+function _agMarcarFallido(e, motivo){
+  var clave = _agClave(e), g = null;
+  _guardadosFallidos.forEach(function(x){ if(x.clave === clave) g = x; });
+  if(!g){ g = { clave: clave, que: 'los cambios de la historia clínica de ' + (e.nombre || 'un paciente'), cuando: Date.now() }; _guardadosFallidos.push(g); }
+  g.paciente = e.nombre || 'Un paciente'; g.detalle = 'historia clínica'; g.sinFicha = !!motivo;   // para el aviso de «Cerrar sesión»
+}
+function _agIdServidor(e, p, cb){
+  if(p._sbId){ cb(p._sbId); return; }
+  if(e.servId){ cb(e.servId); return; }
+  if(p.dni && usuarioActual && usuarioActual.id){
+    buscarPacienteIdCompartido(p.dni, function(id, err){ if(id){ e.servId = id; cb(id); } else { cb(null, err); } });
+    return;
+  }
+  cb(null);
+}
+function _agEsRed(err){ return (typeof navigator !== 'undefined' && navigator.onLine === false) || /fetch|network|timeout|conexi/i.test((err && (err.message || err)) + ''); }
+function _agEnviar(p, pacienteId, hcSB, cb){
+  var fallo = function(x){ cb(x || { message: 'Failed to fetch' }); };
+  if(typeof miCentro !== 'undefined' && miCentro && miCentro.id && p.esDeCentro){
+    sb.rpc('guardar_historia_centro', { p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB }).then(function(r){ cb(r.error); }, fallo);
+    return;
+  }
+  var actualizar = function(){ sb.from('historias_clinicas').update(hcSB).eq('paciente_id', pacienteId).then(function(u){ cb(u.error); }, fallo); };
+  sb.from('historias_clinicas').select('id').eq('paciente_id', pacienteId).limit(1).then(function(r){
+    if(r.error){ cb(r.error); return; }
+    if(r.data && r.data.length){ actualizar(); return; }
+    sb.from('historias_clinicas').insert(hcSB).then(function(i){
+      if(i.error && (i.error.code === '23505' || /duplicate key/i.test(i.error.message || ''))){ actualizar(); return; }   // otro guardado creó la fila justo antes: se actualiza
+      cb(i.error);
+    }, fallo);
+  }, fallo);
+}
+function _agGuardar(e){
+  clearTimeout(e.timer); clearTimeout(e.reintT);
+  if(e.enVuelo){ e.repetir = true; return; }
+  var r = _agPacienteDe(e);
+  if(!r){ e.campos = {}; e.base = {}; _agPersistir(); return; }   // la ficha ya no está en la lista
+  var p = r.p, ids = Object.keys(e.campos), snap = {}, hcSB = {};
+  ids.forEach(function(id){
+    var c = _AG_CAMPOS[id], v = e.campos[id];
+    if(c.num){ var n = _agNum(v); if(!n.ok){ delete e.campos[id]; return; } hcSB[c.col] = n.val; }   // número a medio escribir: no se manda
+    else { hcSB[c.col] = ('' + v).trim(); }
+    snap[id] = v;
+  });
+  if(!Object.keys(snap).length){ if(e.estado === 'pend') { e.estado = e.hora ? 'ok' : ''; } _agPersistir(); _agRender(); return; }
+  _agIdServidor(e, p, function(pacienteId, errBusq){
+    if(!pacienteId){
+      if(errBusq){ e.estado = _agEsRed(errBusq) ? 'offline' : 'error'; _agMarcarFallido(e, ''); _agReintentar(e); }
+      else { e.estado = 'sinficha'; _agMarcarFallido(e, 'el paciente no tiene ficha guardada'); }
+      _agRender(); return;
+    }
+    if(typeof navigator !== 'undefined' && navigator.onLine === false){ e.estado = 'offline'; _agMarcarFallido(e, ''); _agReintentar(e); _agRender(); return; }
+    hcSB.paciente_id = pacienteId;
+    e.enVuelo = true; e.estado = 'guardando'; _agRender();
+    try{ guardarLocal(); }catch(x){ console.warn('[catch]', x); }
+    _agEnviar(p, pacienteId, hcSB, function(err){
+      e.enVuelo = false;
+      if(err){
+        console.error('Autoguardado: no se pudo guardar', err);
+        e.estado = _agEsRed(err) ? 'offline' : 'error';
+        _agMarcarFallido(e, '');
+        _agReintentar(e);
+        _agRender();
+        return;
+      }
+      Object.keys(snap).forEach(function(id){ if(e.campos[id] === snap[id]) delete e.campos[id]; });   // lo que se siguió escribiendo mientras tanto queda pendiente
+      e.reint = 0;
+      if(_agHayCampos(e)){ e.estado = 'pend'; _agProgramar(e, 400); }
+      else { e.estado = 'ok'; e.hora = _agHora(); _guardadoServidor(_agClave(e), '', null); }
+      if(e.repetir){ e.repetir = false; if(_agHayCampos(e)) _agProgramar(e, 400); }
+      _agPersistir();
+      try{ guardarLocal(); }catch(x){ console.warn('[catch]', x); }
+      _agRender();
+    });
+  });
+}
+function _agReintentar(e){
+  clearTimeout(e.reintT);
+  var ms = AG_REINTENTOS_MS[Math.min(e.reint, AG_REINTENTOS_MS.length - 1)]; e.reint++;
+  e.reintT = setTimeout(function(){ if(_agHayCampos(e)) _agGuardar(e); }, ms);
+}
+function _agGuardarAbiertoYa(){
+  var ab = _agPacienteAbierto(); if(!ab) return;
+  var e = _agEntrada(ab.p, false); if(e && _agHayCampos(e)){ e.reint = 0; _agGuardar(e); }
+}
+function _agGuardarTodoYa(){
+  _agEntradas.forEach(function(e){ if(_agHayCampos(e) && !e.enVuelo) _agGuardar(e); });
+}
+// Historial de cambios: UNA anotación por campo y por sesión de edición (valor del principio contra el del final)
+function _agCerrarEdicion(e){
+  clearTimeout(e.idle);
+  var r = _agPacienteDe(e); if(!r) return;
+  Object.keys(e.base).forEach(function(id){
+    var actual = (id in e.campos) ? e.campos[id] : _agLeerLocal(r.p, id);
+    registrarAuditoria(r.idx, _AG_CAMPOS[id].et, e.base[id], actual);
+  });
+  e.base = {};
+}
+function _agAlCambiarPaciente(){
+  var ab = _agPacienteAbierto();
+  if(ab){ var e = _agEntrada(ab.p, false); if(e){ _agCerrarEdicion(e); if(_agHayCampos(e)) _agGuardar(e); } }
+  _agSinPaciente = false;
+}
+// Antes de «Cerrar sesión» / corte por inactividad: guarda lo pendiente y espera (con tope)
+function _agGuardarTodo(cb, maxMs){
+  _agEntradas.forEach(function(e){ try{ _agCerrarEdicion(e); }catch(x){ console.warn('[catch]', x); } if(_agHayCampos(e)) _agGuardar(e); });
+  var t0 = Date.now();
+  (function esperar(){
+    var falta = _agEntradas.some(function(e){ return e.enVuelo || (_agHayCampos(e) && (e.estado === 'pend' || e.estado === 'guardando' || e.estado === '')); });
+    if(!falta || Date.now() - t0 > maxMs){ cb(); return; }
+    setTimeout(esperar, 150);
+  })();
+}
+
+// Enganches
+document.addEventListener('input', _agAlEscribir, true);
+document.addEventListener('focusout', function(ev){ var id = ev.target && ev.target.id; if(id && _AG_CAMPOS[id]) _agGuardarAbiertoYa(); }, true);
+document.addEventListener('visibilitychange', function(){ if(document.hidden) _agGuardarTodoYa(); });
+window.addEventListener('pagehide', _agGuardarTodoYa);
+window.addEventListener('online', function(){ _agEntradas.forEach(function(e){ if(_agHayCampos(e)){ e.reint = 0; _agGuardar(e); } }); });
+window.addEventListener('beforeunload', function(ev){ if(_agHayPendiente()){ _agGuardarTodoYa(); ev.preventDefault(); ev.returnValue = ''; return ''; } });
+setInterval(function(){ _agEntradas.forEach(function(e){ if(e.estado === 'sinficha' && _agHayCampos(e)){ var r = _agPacienteDe(e); if(r && r.p._sbId) _agGuardar(e); } }); }, 10000);
+var _agAbrirHCOrig = abrirHC;
+abrirHC = function(){ try{ _agAlCambiarPaciente(); }catch(x){ console.warn('[catch]', x); } var r = _agAbrirHCOrig.apply(this, arguments); try{ _agInstalarUI(); _agRender(); }catch(x){ console.warn('[catch]', x); } return r; };
+var _agSwitchHcTabOrig = switchHcTab;
+switchHcTab = function(){ try{ _agGuardarAbiertoYa(); }catch(x){ console.warn('[catch]', x); } return _agSwitchHcTabOrig.apply(this, arguments); };
+var _agCerrarAppOrig = cerrarApp;
+cerrarApp = function(forzar){
+  if(forzar && _guardadosFallidos.length){ _agCerrarAppOrig(forzar); return; }   // ya eligió «Cerrar igual y descartar»
+  _agGuardarTodo(function(){ _agCerrarAppOrig(forzar); }, forzar ? 3000 : 10000);
+};
+var _agCargarLocalOrig = cargarLocal;
+cargarLocal = function(){ var r = _agCargarLocalOrig.apply(this, arguments); setTimeout(function(){ _agRestaurar(); }, 1500); return r; };
+// ── fin AUTOGUARDADO ──
+
 // ── GUARDADOS QUE NO LLEGARON AL SERVIDOR (solo de esta pestaña) ──
 // Cada guardado intenta el servidor en el momento. Si falla (sin conexión, error del servidor) se avisa en ese momento y se anota acá;
 // «Cerrar sesión», el corte por inactividad y el cierre de la pestaña lo tienen en cuenta. No hay cola ni reintentos: volver a guardar lo borra de la lista.
@@ -17857,19 +18160,38 @@ function _errNoLimite(err){ return (err && /l[ií]mite de pacientes/i.test(err.m
 function _nombreHCActual(){ var e = document.getElementById('hc-paciente'); return (e && e.value) ? e.value.trim() : ''; }
 // Cerrar la pestaña con guardados fallidos: el navegador pide confirmación.
 window.addEventListener('beforeunload', function(e){ if(_guardadosFallidos.length){ e.preventDefault(); e.returnValue = ''; return ''; } });
+// Aviso «Hay cambios sin guardar» al cerrar sesión (texto aprobado por la usuaria el 22/10/2026). Reemplaza a _mostrarAvisoDatosSinGuardar.
+// Lista UN renglón por paciente («Paciente — qué»), con lo que no llegó al servidor. Nunca borra en silencio: «Cerrar igual y descartar los cambios» es una elección.
 function _mostrarAvisoDatosSinGuardar(){
   var viejo = document.getElementById('aviso-sin-guardar-overlay'); if(viejo) viejo.remove();
-  var lista = _guardadosFallidos.map(function(g){ return '<li style="margin:3px 0;">' + escHtml(g.que) + '</li>'; }).join('');
+  var porPac = {}, orden = [];
+  _guardadosFallidos.forEach(function(g){
+    var pac = g.paciente, que = g.detalle, sinFicha = !!g.sinFicha;
+    if(!pac){
+      var m = /^(?:el |la |los |las )?(.+?) de (.+)$/.exec(g.que || '');
+      if(m){ que = m[1]; pac = m[2]; } else { pac = g.que || 'Datos sin identificar'; que = ''; }
+    }
+    if(!porPac[pac]){ porPac[pac] = { que: [], sinFicha: false }; orden.push(pac); }
+    if(que && porPac[pac].que.indexOf(que) < 0) porPac[pac].que.push(que);
+    if(sinFicha) porPac[pac].sinFicha = true;
+  });
+  var lista = orden.map(function(pac){
+    var d = porPac[pac];
+    return '<li style="margin:4px 0;"><b>' + escHtml(pac) + '</b>' + (d.que.length ? ' — ' + escHtml(d.que.join(', ')) : '') + (d.sinFicha ? ' (falta guardar su ficha en Pacientes)' : '') + '</li>';
+  }).join('');
   var ov = document.createElement('div');
   ov.id = 'aviso-sin-guardar-overlay';
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(4,20,10,.6);z-index:100002;display:flex;align-items:center;justify-content:center;padding:20px;';
-  ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:26px;font-family:\'Outfit\',sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.3);text-align:center;">'
+  ov.setAttribute('role', 'alertdialog');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(4,20,10,.6);z-index:100002;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto;';
+  ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:440px;width:100%;margin:auto;padding:26px 24px;font-family:Outfit,sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.3);text-align:center;">'
     + '<div style="font-size:2rem;margin-bottom:8px;">⚠️</div>'
-    + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;font-weight:700;color:#042b10;margin-bottom:8px;">Hay datos sin guardar</div>'
-    + '<p style="font-size:.88rem;color:#5a7362;line-height:1.6;margin:0 0 8px;">Esto no llegó al servidor y se perdería al cerrar la sesión:</p>'
-    + '<ul style="text-align:left;font-size:.85rem;color:#333;margin:0 0 16px 18px;padding:0;">' + lista + '</ul>'
-    + '<button id="ssg-cancelar" style="width:100%;padding:12px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;">Cancelar</button>'
-    + '<button id="ssg-cerrar" style="width:100%;padding:11px;background:#fff;color:#b42318;border:1.5px solid #f0b4ae;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;">Cerrar igual y descartar</button>'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:1.4rem;font-weight:700;color:#042b10;margin-bottom:10px;line-height:1.25;">Hay cambios sin guardar</div>'
+    + '<p style="font-size:.95rem;color:#5a7362;line-height:1.55;margin:0 0 10px;">Hay cambios que todavía no se guardaron en el servidor. Si cerrás la sesión ahora, se pierden:</p>'
+    + '<ul style="text-align:left;font-size:.92rem;color:#1a2e1e;line-height:1.45;margin:0 0 12px 22px;padding:0;">' + lista + '</ul>'
+    + '<p style="font-size:.88rem;color:#5a7362;line-height:1.55;margin:0 0 16px;">Si seguís en la sesión, la app vuelve a intentar guardarlos sola cuando haya conexión.</p>'
+    + '<button id="ssg-cancelar" style="width:100%;min-height:48px;padding:12px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:12px;font-size:.98rem;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:inherit;">Seguir en la sesión</button>'
+    + '<button id="ssg-cerrar" style="width:100%;min-height:48px;padding:11px;background:#fff;color:#b42318;border:1.5px solid #f0b4ae;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit;">Cerrar igual y descartar los cambios</button>'
+    + '<p style="font-size:.78rem;color:#8a9a90;line-height:1.5;margin:12px 0 0;">Al descartar, también se borra de esta computadora la copia de estos cambios.</p>'
     + '</div>';
   document.body.appendChild(ov);
   document.getElementById('ssg-cancelar').onclick = function(){ ov.remove(); };
