@@ -18211,16 +18211,10 @@ function _borEncabezadoCuadro(){
   var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   return dias[now.getDay()] + ', ' + now.getDate() + ' de ' + meses[now.getMonth()] + ' de ' + now.getFullYear() + ' — ' + ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2) + ' hs\n\n';
 }
-// Cartel y botón (se arman una vez; se muestran u ocultan según haya borrador)
+// Botón «Descartar borrador» (se arma una vez; se muestra u oculta según haya borrador). Sin cartel amarillo ni aviso «Retomaste…»: el borrador solo se carga en los campos.
 function _borInstalarUI(){
   try{
-    if(document.getElementById('bor-banner')) return;
-    var f = document.getElementById('evol-fecha-display'); if(!f || !f.parentNode || !f.parentNode.parentNode) return;
-    var tarjeta = f.parentNode.parentNode;
-    var b = document.createElement('div'); b.id = 'bor-banner'; b.setAttribute('role', 'status');
-    b.style.cssText = 'display:none;margin:10px 0 0;background:#fff7e0;border:1.5px solid #f5d98b;border-radius:12px;padding:10px 14px;font-size:.88rem;color:#7a5a00;align-items:center;gap:10px;flex-wrap:wrap;';
-    b.innerHTML = '<span style="background:#f5b400;color:#3b2a00;font-weight:800;font-size:.72rem;letter-spacing:.06em;padding:3px 9px;border-radius:999px;white-space:nowrap;">BORRADOR</span><span id="bor-banner-txt"></span>';
-    tarjeta.parentNode.insertBefore(b, tarjeta.nextSibling);
+    if(document.getElementById('bor-descartar-fila')) return;
     var gb = document.querySelector('#hc-evolucion button[onclick="guardarEvolucion()"]');
     if(gb && gb.parentNode){
       var fila = document.createElement('div'); fila.id = 'bor-descartar-fila'; fila.style.cssText = 'display:none;margin-top:8px;text-align:right;';
@@ -18232,25 +18226,17 @@ function _borInstalarUI(){
 }
 function _borRender(){
   _borInstalarUI();
-  var b = document.getElementById('bor-banner'), fila = document.getElementById('bor-descartar-fila');
+  var fila = document.getElementById('bor-descartar-fila');
   var act = _borActivo();
-  if(b){
-    if(act){
-      var ts = act.p.borrador.ts;
-      document.getElementById('bor-banner-txt').textContent = (act.p.borrador.retomado && ts)
-        ? ('Retomaste un borrador guardado el ' + _borFechaHora(ts) + '. Seguí escribiendo o descartalo.')
-        : 'Todavía no es una evolución guardada. Se guarda sola mientras escribís. Cuando termines, tocá «Guardar evolución».';
-      b.style.display = 'flex';
-    } else { b.style.display = 'none'; }
-  }
   if(fila) fila.style.display = act ? 'block' : 'none';
   _borPintarFila();
 }
 // Fila «BORRADOR» arriba de «Evoluciones anteriores» (no cuenta como evolución)
 function _borPintarFila(){
+  var viejo = document.getElementById('bor-fila-lista'); if(viejo) viejo.remove();   // el borrador NO figura en «Evoluciones anteriores» (decisión de la usuaria, 22/10/2026)
+  return;
   var lista = document.getElementById('evol-historial-lista'); if(!lista) return;
-  var viejo = document.getElementById('bor-fila-lista');
-  var act = _borActivo(); if(!act){ if(viejo) viejo.remove(); return; }
+  var act = _borActivo(); if(!act) return;
   var b = act.p.borrador;
   var sig = ('' + (b.motivo || '')) + '|' + (b.ts || '');
   if(viejo && viejo.getAttribute('data-sig') === sig) return;   // sin cambios: no se vuelve a armar en cada tecla
