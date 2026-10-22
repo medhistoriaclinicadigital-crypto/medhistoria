@@ -17982,7 +17982,6 @@ function _agInstalarUI(){
 function _agRender(){
   var el = document.getElementById('ag-ind');
   if(!el){ _agInstalarUI(); el = document.getElementById('ag-ind'); }
-  if(typeof _borRender === 'function'){ try{ _borRender(); }catch(x){ console.warn('[catch]', x); } }
   if(!el) return;
   var ab = _agPacienteAbierto(), est = '', hora = '', okTxt = '';
   if(ab){ var e = _agEntrada(ab.p, false); if(e){ est = e.estado; hora = e.hora; okTxt = e.okTexto; if(est === 'pend') est = 'guardando'; } }
@@ -18069,14 +18068,14 @@ function _borEnviar(e, p, pacienteId, cb){
   var b = e.borr || {}, medicoId = usuarioActual && usuarioActual.id;
   if(_borVacio(b)){
     sb.from('evoluciones_borrador').delete().eq('paciente_id', pacienteId).eq('medico_id', medicoId).then(function(r){
-      if(!r.error){ e.borrExiste = false; if(p.borrador && _borVacio(p.borrador)) p.borrador = null; }
+      if(!r.error){ e.borrExiste = false; e.borrVacioBorrado = true; if(p.borrador && _borVacio(p.borrador)) p.borrador = null; }
       cb(r.error);
     }, fallo);
     return;
   }
   var fila = { paciente_id: pacienteId, medico_id: medicoId, motivo_consulta: b.motivo || '', evolucion: b.cuadro || '', indicaciones_plan: b.plan || '', proxima_consulta: b.proxima || '', actualizado_en: new Date().toISOString() };
   sb.from('evoluciones_borrador').upsert(fila, { onConflict: 'paciente_id,medico_id' }).then(function(r){
-    if(!r.error){ e.borrExiste = true; if(p.borrador) p.borrador.ts = fila.actualizado_en; }
+    if(!r.error){ e.borrExiste = true; e.borrVacioBorrado = false; if(p.borrador) p.borrador.ts = fila.actualizado_en; }
     cb(r.error);
   }, fallo);
 }
@@ -18121,6 +18120,7 @@ function _agGuardar(e){
       }
       e.reint = 0;
       if(_agHayCampos(e)){ e.estado = 'pend'; _agProgramar(e, 400); }
+      else if(hayEv && !hayHc && e.borrVacioBorrado){ e.estado = ''; e.hora = ''; e.okTexto = ''; _guardadoServidor(_agClave(e), '', null); }   // campos de la evolución vacíos: el borrador se borró solo y el indicador desaparece
       else { e.estado = 'ok'; e.hora = _agHora(); e.okTexto = (hayEv && !hayHc) ? 'Borrador guardado ✓ ' : 'Guardado ✓ '; _guardadoServidor(_agClave(e), '', null); }
       if(e.repetir){ e.repetir = false; if(_agHayCampos(e)) _agProgramar(e, 400); }
       _agPersistir();
@@ -18191,8 +18191,9 @@ cargarLocal = function(){ var r = _agCargarLocalOrig.apply(this, arguments); set
 // ── fin AUTOGUARDADO ──
 
 // ── EVOLUCIÓN CON BORRADOR (etapa b) ──
+// Sin botón «Descartar», sin cartel y sin fila en «Evoluciones anteriores» (pedido de la usuaria, 22/10/2026): el borrador se guarda solo, se carga solo y, si todos los campos quedan vacíos, se borra solo.
 // Lo que el médico escribe en «Evolución» se guarda solo como BORRADOR (tabla aparte `evoluciones_borrador`, motor de motor-bloque.js). Una evolución a medias nunca figura como terminada:
-// cartel «BORRADOR», fila con marca en «Evoluciones anteriores», «Descartar borrador» con confirmación y leyenda «BORRADOR» al imprimir. «Guardar evolución» la convierte en evolución
+// sin ninguna marca de borrador en el PDF (sin cartel, sin fila en «Evoluciones anteriores» y sin botón «Descartar»). «Guardar evolución» la convierte en evolución
 // terminada (como siempre) y recién cuando el servidor lo confirma se borra el borrador. NO hay campo de diagnóstico. La evolución ya guardada sigue sin poder editarse.
 var _BOR_IDS = ['evol-motivo', 'evol-cuadro', 'evol-plan', 'evol-proxima'];
 function _borDom(id){ var d = document.getElementById(id); return d ? d.value : ''; }
@@ -18211,72 +18212,10 @@ function _borEncabezadoCuadro(){
   var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   return dias[now.getDay()] + ', ' + now.getDate() + ' de ' + meses[now.getMonth()] + ' de ' + now.getFullYear() + ' — ' + ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2) + ' hs\n\n';
 }
-// Botón «Descartar borrador» (se arma una vez; se muestra u oculta según haya borrador). Sin cartel amarillo ni aviso «Retomaste…»: el borrador solo se carga en los campos.
-function _borInstalarUI(){
-  try{
-    if(document.getElementById('bor-descartar-fila')) return;
-    var gb = document.querySelector('#hc-evolucion button[onclick="guardarEvolucion()"]');
-    if(gb && gb.parentNode){
-      var fila = document.createElement('div'); fila.id = 'bor-descartar-fila'; fila.style.cssText = 'display:none;margin-top:8px;text-align:right;';
-      fila.innerHTML = '<button type="button" id="bor-descartar" style="background:#fff;color:#b42318;border:1.5px solid #f0b4ae;border-radius:10px;padding:8px 14px;font-weight:700;font-size:.85rem;cursor:pointer;font-family:inherit;">Descartar borrador</button>';
-      gb.parentNode.parentNode.insertBefore(fila, gb.parentNode.nextSibling);
-      document.getElementById('bor-descartar').addEventListener('click', _borPedirDescartar);
-    }
-  }catch(x){ console.warn('[catch]', x); }
-}
-function _borRender(){
-  _borInstalarUI();
-  var fila = document.getElementById('bor-descartar-fila');
-  var act = _borActivo();
-  if(fila) fila.style.display = act ? 'block' : 'none';
-  _borPintarFila();
-}
-// Fila «BORRADOR» arriba de «Evoluciones anteriores» (no cuenta como evolución)
-function _borPintarFila(){
-  var viejo = document.getElementById('bor-fila-lista'); if(viejo) viejo.remove();   // el borrador NO figura en «Evoluciones anteriores» (decisión de la usuaria, 22/10/2026)
-  return;
-  var lista = document.getElementById('evol-historial-lista'); if(!lista) return;
-  var act = _borActivo(); if(!act) return;
-  var b = act.p.borrador;
-  var sig = ('' + (b.motivo || '')) + '|' + (b.ts || '');
-  if(viejo && viejo.getAttribute('data-sig') === sig) return;   // sin cambios: no se vuelve a armar en cada tecla
-  if(viejo) viejo.remove();
-  var esc = function(t){ return (typeof escHtml === 'function') ? escHtml(t) : String(t).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
-  var motivo = ('' + (b.motivo || '')).trim();
-  var fila = document.createElement('div'); fila.id = 'bor-fila-lista';
-  fila.setAttribute('data-sig', sig);
-  fila.style.cssText = 'border:1.5px dashed #f5d98b;background:#fffaf0;border-radius:12px;padding:12px 14px;';
-  fila.innerHTML = '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;"><span style="background:#f5b400;color:#3b2a00;font-weight:800;font-size:.72rem;letter-spacing:.06em;padding:3px 9px;border-radius:999px;">BORRADOR</span>'
-    + '<b style="color:#145a32;">' + esc(_borFechaHora(b.ts) || 'Sin fecha') + '</b></div>'
-    + '<div style="color:#7a5a00;font-size:.88rem;margin:6px 0 8px;">Sin terminar' + (motivo ? ' · Motivo: ' + esc(motivo.slice(0, 120)) : '') + ' · Está cargado arriba para que lo sigas.</div>'
-    + '<button type="button" id="bor-descartar-lista" style="background:#fff;color:#b42318;border:1.5px solid #f0b4ae;border-radius:10px;padding:7px 14px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:inherit;">Descartar borrador</button>';
-  lista.insertBefore(fila, lista.firstChild);
-  var bt = document.getElementById('bor-descartar-lista'); if(bt) bt.addEventListener('click', _borPedirDescartar);
-}
-var _borRenderHistOrig = renderEvolucionesHistorial;
-renderEvolucionesHistorial = function(){ var r = _borRenderHistOrig.apply(this, arguments); try{ _borPintarFila(); }catch(x){ console.warn('[catch]', x); } return r; };
 
-// Descartar (con confirmación)
-function _borPedirDescartar(){
-  _tarjetaAviso({ icono: '🗑️', titulo: '¿Descartar el borrador?', grande: true,
-    parrafos: ['Se borra lo que escribiste en esta evolución, que todavía no está guardada. No se puede deshacer.'],
-    botones: [ { texto: 'Seguir escribiendo' }, { texto: 'Descartar borrador', peligro: true, accion: _borDescartar } ] });
-}
 function _borLlenarForm(b){
   var set = function(id, v){ var d = document.getElementById(id); if(d) d.value = v || ''; };
   set('evol-motivo', b.motivo); set('evol-cuadro', b.cuadro); set('evol-plan', b.plan); set('evol-proxima', b.proxima);
-}
-function _borDescartar(){
-  var ab = _agPacienteAbierto(); if(!ab) return;
-  var p = ab.p, e = _agEntrada(p, true);
-  clearTimeout(e.timer);
-  Object.keys(e.campos).forEach(function(k){ if(_AG_CAMPOS[k] && _AG_CAMPOS[k].g === 'ev') delete e.campos[k]; });
-  e.borr = null; p.borrador = null;
-  _borLlenarForm({ motivo: '', cuadro: _borEncabezadoCuadro(), plan: '', proxima: '' });
-  _agPersistir();
-  _borBorrarServidor(e);
-  try{ guardarLocal(); }catch(x){ console.warn('[catch]', x); }
-  _borPintarFila(); _agRender();
 }
 // Borra la fila del servidor (si el motor está guardando, espera a que termine para que no la vuelva a crear)
 function _borBorrarServidor(e){
@@ -18329,7 +18268,7 @@ guardarEvolucion = function(){
     ent.borr = null; ent.borrAlGuardar = { clave: 'evol:' + nom, copia: copia };
     window._borEsperaEvol = ent;
     ab.p.borrador = null;
-    _agPersistir(); _borPintarFila(); _agRender();
+    _agPersistir(); _agRender();
   }
   return r;
 };
@@ -18367,7 +18306,7 @@ abrirHC = function(){
     if(idAhora !== idAntes){
       _borLlenarForm(ab && ab.p.borrador && !_borVacio(ab.p.borrador) ? ab.p.borrador : { motivo: '', cuadro: '', plan: '', proxima: '' });
     }
-    _borInstalarUI(); _agRender(); _borPintarFila();
+    _agRender();
     var pestana = document.getElementById('hc-evolucion');
     if(pestana && pestana.style.display !== 'none') _borCargar();
   }catch(x){ console.warn('[catch]', x); }
@@ -18376,11 +18315,11 @@ abrirHC = function(){
 var _borSwitchHcTabOrig = switchHcTab;
 switchHcTab = function(btn, id){
   var r = _borSwitchHcTabOrig.apply(this, arguments);
-  try{ if(id === 'hc-evolucion'){ _borInstalarUI(); setTimeout(function(){ _borCargar(); _borPintarFila(); _agRender(); }, 50); } }catch(x){ console.warn('[catch]', x); }
+  try{ if(id === 'hc-evolucion'){ setTimeout(function(){ _borCargar(); _agRender(); }, 50); } }catch(x){ console.warn('[catch]', x); }
   return r;
 };
 
-// Imprimir: si hay un borrador sin terminar, sale en el PDF con la marca «BORRADOR» (lo guardado se imprime como siempre)
+// Imprimir: si hay un borrador escrito, sale en el PDF como una evolución más, SIN ninguna marca de borrador (decisión escrita de la usuaria, 22/10/2026; riesgo asumido por ella: no se distingue de una guardada). Lo guardado se imprime como siempre.
 var _borDatosImprimirOrig = _datosEvolucionParaImprimir;
 _datosEvolucionParaImprimir = function(){
   var d = _borDatosImprimirOrig.apply(this, arguments);
@@ -18388,20 +18327,12 @@ _datosEvolucionParaImprimir = function(){
     var vals = { motivo: _borDom('evol-motivo'), cuadro: _borDom('evol-cuadro'), plan: _borDom('evol-plan'), proxima: _borDom('evol-proxima') };
     if(!_borVacio(vals)){
       var now = new Date();
-      var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-      d.evs.push({ fecha: 'BORRADOR (sin terminar) — ' + now.getDate() + ' de ' + meses[now.getMonth()] + ' de ' + now.getFullYear(), hora: ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2),
+      d.evs.push({ fecha: now.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }), hora: ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2),
         motivo: vals.motivo, cuadro: vals.cuadro, plan: vals.plan, proxima: vals.proxima, medico: '', borrador: true });
       d.sinGuardar = false; d.hayBorrador = true;
     }
   }catch(x){ console.warn('[catch]', x); }
   return d;
-};
-var _borImprimirOrig = imprimirEvolucion;
-imprimirEvolucion = function(){
-  var vals = { motivo: _borDom('evol-motivo'), cuadro: _borDom('evol-cuadro'), plan: _borDom('evol-plan'), proxima: _borDom('evol-proxima') };
-  var r = _borImprimirOrig.apply(this, arguments);
-  try{ if(!_borVacio(vals) && typeof _toastAviso === 'function') _toastAviso('Se incluyó tu borrador sin terminar en el PDF, con la marca BORRADOR.', 7000); }catch(x){ console.warn('[catch]', x); }
-  return r;
 };
 // ── fin EVOLUCIÓN CON BORRADOR ──
 
