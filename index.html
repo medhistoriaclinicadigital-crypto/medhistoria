@@ -12956,7 +12956,8 @@ function registrarAuditoria(idxPaciente, campo, valorAnterior, valorNuevo){
 // Diseño aprobado por la usuaria (24/10/2026) y simplificado el 25/10/2026: una sola línea por cambio, lo más nuevo arriba: «fecha y hora · médico — nombre corto: lo que quedó»,
 // SIN «(antes: …)»; sin tarjetas, colores fuertes, títulos repetidos, botones ni carteles. Recetas, derivaciones y pedidos de estudios usan nombre corto (sin «generado/a») y muestran el texto
 // TAL CUAL lo escribió el médico (sin deducir ni recortar dosis). Al tocar la línea se abre (texto completo y, debajo, «Antes: …» si corresponde); al tocar de nuevo se cierra. Un texto largo se corta con «…».
-// Cada médico ve solo lo suyo (lo asegura el servidor con su política de seguridad por filas «Médicos ven su propia auditoría»; además acá se descarta cualquier fila de otro médico).
+// Qué ve cada médico lo decide el SERVIDOR (política de lectura de `auditoria_hc`, SQL 10: las filas propias O las de pacientes con acceso por el centro, `paciente_accesible_centro`). En un centro se
+// muestran todas las filas que el servidor devuelve, cada una con el nombre del médico que hizo el cambio (`listar_medicos_centro`, como las evoluciones); un médico solo (sin centro) ve únicamente lo propio, como siempre.
 // Al abrir la pestaña se leen los cambios del servidor y se juntan con los de esta sesión (sin repetir), así el historial no se vacía al cerrar sesión ni al entrar desde otro dispositivo.
 // NO cambia lo que se guarda (`registrarAuditoria` queda igual: sigue ubicando al paciente por DNI). Todo lo de acá es solo de presentación.
 var _AUD_MAX = 300;
@@ -12995,20 +12996,33 @@ function _audLeerServidor(p, cb){   // cb(filas del servidor | null si no se pud
   });
 }
 // Junta lo del servidor con lo de esta sesión (si ya está en el servidor no se repite) y lo ordena: lo más nuevo arriba
-function _audJuntar(p, filasServidor){
+// Nombres de los médicos del centro (id → nombre), con el mismo mecanismo que usan las evoluciones (`listar_medicos_centro`). Fuera de un centro no hace falta: no hay otros médicos.
+function _audLeerMedicos(cb){
+  if(!(typeof miCentro !== 'undefined' && miCentro && miCentro.id)){ cb({}); return; }
+  sb.rpc('listar_medicos_centro', { p_device_token: _deviceToken() }).then(function(r){
+    var m = {}; if(r && r.data) r.data.forEach(function(x){ if(x && x.id != null) m[x.id] = x.nombre || ''; });
+    cb(m);
+  }, function(x){ console.warn('No se pudo leer la lista de médicos del centro:', x); cb({}); });
+}
+function _audJuntar(p, filasServidor, mapaMedicos){
   var yo = (usuarioActual && usuarioActual.id != null) ? String(usuarioActual.id) : '';
+  var enCentro = !!(typeof miCentro !== 'undefined' && miCentro && miCentro.id);
   var nombre = ''; try{ if(usuarioActual) nombre = nombreConTitulo(usuarioActual); }catch(e){ console.warn('[catch]', e); }
   var lista = [];
   (filasServidor || []).forEach(function(f){
-    if(String(f.medico_id) !== yo) return;   // solo lo del propio médico
+    var propio = String(f.medico_id) === yo;
+    // Fuera de un centro (médico solo) se ve únicamente lo propio, igual que siempre. En un centro, el servidor decide qué filas le corresponden a cada médico (las propias y las de los
+    // pacientes a los que tiene acceso por el centro) y acá se muestran todas, cada una con el nombre del médico que hizo el cambio (no el de quien mira).
+    if(!propio && !enCentro) return;
     var t = Date.parse(f.fecha);
-    lista.push({ t: isNaN(t) ? 0 : t, campo: f.campo, anterior: f.valor_anterior || '', nuevo: f.valor_nuevo || '', medico: nombre });
+    lista.push({ t: isNaN(t) ? 0 : t, campo: f.campo, anterior: f.valor_anterior || '', nuevo: f.valor_nuevo || '', propio: propio,
+      medico: propio ? nombre : ((mapaMedicos && mapaMedicos[f.medico_id]) || 'Otro médico') });
   });
   ((p && p.auditoria) || []).forEach(function(a){
     var t = Date.parse(a.fechaISO || '');
-    var repetido = !isNaN(t) && lista.some(function(s){ return s.campo === a.campo && s.anterior === (a.anterior || '') && s.nuevo === (a.nuevo || '') && Math.abs(s.t - t) < 180000; });
+    var repetido = !isNaN(t) && lista.some(function(s){ return s.propio && s.campo === a.campo && s.anterior === (a.anterior || '') && s.nuevo === (a.nuevo || '') && Math.abs(s.t - t) < 180000; });
     if(repetido) return;
-    lista.push({ t: isNaN(t) ? 0 : t, campo: a.campo, anterior: a.anterior || '', nuevo: a.nuevo || '', medico: a.medico || nombre, texto: isNaN(t) ? (((a.fecha || '') + ' ' + (a.hora || '')).trim()) : '' });
+    lista.push({ t: isNaN(t) ? 0 : t, campo: a.campo, anterior: a.anterior || '', nuevo: a.nuevo || '', propio: true, medico: a.medico || nombre, texto: isNaN(t) ? (((a.fecha || '') + ' ' + (a.hora || '')).trim()) : '' });
   });
   lista.sort(function(a, b){ return b.t - a.t; });
   return lista;
@@ -13069,7 +13083,10 @@ function renderAuditoriaHC(){
   _audPintar(cont, _audJuntar(p, null), false);
   _audLeerServidor(p, function(filas){
     if(!(pacienteHCActualIdx >= 0 && pacientes[pacienteHCActualIdx] === p)) return;   // mientras tanto abrió otro paciente
-    _audPintar(cont, _audJuntar(p, filas), true);
+    _audLeerMedicos(function(mapa){
+      if(!(pacienteHCActualIdx >= 0 && pacientes[pacienteHCActualIdx] === p)) return;
+      _audPintar(cont, _audJuntar(p, filas, mapa), true);
+    });
   });
 }
 // ── fin HISTORIAL DE CAMBIOS ──
