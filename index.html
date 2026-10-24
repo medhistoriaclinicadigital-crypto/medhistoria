@@ -2436,7 +2436,6 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
             <div>
               <div style="font-weight:700;color:var(--g2);font-size:1rem;">🕓 Historial de cambios</div>
-              <div style="font-size:.8rem;color:var(--muted);">Quién modificó qué, cuándo, y qué decía antes y después — para este paciente</div>
             </div>
           </div>
           <div id="hc-auditoria-lista"></div>
@@ -12954,16 +12953,33 @@ function registrarAuditoria(idxPaciente, campo, valorAnterior, valorNuevo){
 }
 
 // ── HISTORIAL DE CAMBIOS (etapa d): una línea por cambio, leído del servidor ──
-// Diseño aprobado por la usuaria (24/10/2026): una sola línea por cambio, lo más nuevo arriba, con médico, fecha y hora; sin tarjetas, colores fuertes, títulos repetidos, botones ni carteles.
-// Un texto largo se corta con «…» y se ve completo al tocar la línea. Cada médico ve solo lo suyo (lo asegura el servidor con su política de seguridad por filas «Médicos ven su propia auditoría»;
-// además acá se descarta cualquier fila de otro médico). Al abrir la pestaña se leen los cambios del servidor y se juntan con los de esta sesión (sin repetir), así el historial no se vacía
-// al cerrar sesión ni al entrar desde otro dispositivo. NO cambia lo que se guarda (`registrarAuditoria` queda igual: sigue ubicando al paciente por DNI).
+// Diseño aprobado por la usuaria (24/10/2026) y simplificado el 25/10/2026: una sola línea por cambio, lo más nuevo arriba: «fecha y hora · médico — nombre corto: lo que quedó»,
+// SIN «(antes: …)»; sin tarjetas, colores fuertes, títulos repetidos, botones ni carteles. Recetas, derivaciones y pedidos de estudios usan nombre corto (sin «generado/a») y muestran el texto
+// TAL CUAL lo escribió el médico (sin deducir ni recortar dosis). Al tocar la línea se abre (texto completo y, debajo, «Antes: …» si corresponde); al tocar de nuevo se cierra. Un texto largo se corta con «…».
+// Cada médico ve solo lo suyo (lo asegura el servidor con su política de seguridad por filas «Médicos ven su propia auditoría»; además acá se descarta cualquier fila de otro médico).
+// Al abrir la pestaña se leen los cambios del servidor y se juntan con los de esta sesión (sin repetir), así el historial no se vacía al cerrar sesión ni al entrar desde otro dispositivo.
+// NO cambia lo que se guarda (`registrarAuditoria` queda igual: sigue ubicando al paciente por DNI). Todo lo de acá es solo de presentación.
 var _AUD_MAX = 300;
 function _audFecha(t){
   var d = new Date(t), p2 = function(n){ return ('0' + n).slice(-2); };
   return p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
 }
 function _audNombreCampo(c){ return ('' + (c || '')).replace(/^Examen físico\s+—\s+/, ''); }
+// Documentos que quedan anotados como «<TÍTULO> generado/a» (receta, derivación, pedido de estudios...): se muestran con un nombre corto, sin «generado/a» ni mayúsculas
+var _AUD_DOCS = { 'RECETA MÉDICA DIGITAL': 'Receta', 'RECETA MÉDICA': 'Receta', 'DERIVACIÓN MÉDICA': 'Derivación', 'DERIVACIÓN': 'Derivación', 'PEDIDO DE ESTUDIOS': 'Pedido de estudios', 'RESUMEN DE HISTORIA CLÍNICA': 'Resumen de historia clínica' };
+function _audDocNombre(campo){
+  var m = /^(.*\S)\s+generado\/a$/i.exec('' + (campo || '')); if(!m) return '';
+  var t = m[1].trim(), k = t.toUpperCase();
+  return _AUD_DOCS[k] || (t.charAt(0).toUpperCase() + t.slice(1).toLowerCase());
+}
+// Qué se muestra de cada cambio: nombre corto, lo que quedó y, si corresponde, lo de antes.
+// El texto sale TAL CUAL lo escribió el médico (receta: el medicamento con sus campos en el mismo orden y con las mismas palabras; derivación y pedido de estudios: el texto escrito): NO se
+// deduce, recorta ni interpreta nada (ni números ni unidades). La línea cerrada lo corta con «…» (con el estilo de la fila) y al tocarla se ve completo.
+function _audDescribir(x){
+  var doc = _audDocNombre(x.campo), nuevo = ('' + (x.nuevo || '')).trim();
+  if(doc) return { nombre: doc, corto: nuevo, completo: nuevo, antes: null };
+  return { nombre: _audNombreCampo(x.campo), corto: nuevo, completo: nuevo, antes: ('' + (x.anterior || '')).trim() };
+}
 function _audIdServidor(p, cb){
   if(p._sbId){ cb(p._sbId); return; }
   if(p.dni){ buscarPacienteIdCompartido(p.dni, function(id){ cb(id || null); }); return; }
@@ -13015,15 +13031,31 @@ function _audPintar(cont, lista, final){
   var caja = document.createElement('div'); caja.style.cssText = 'border-top:1px solid var(--g9);';
   var sp = function(txt, css, cls, tag){ var s = document.createElement(tag || 'span'); if(css) s.style.cssText = css; if(cls) s.className = cls; s.textContent = txt; return s; };
   lista.forEach(function(x){
+    var d = _audDescribir(x);
     var l = document.createElement('div'); l.className = 'aud-linea';
-    l.style.cssText = 'border-bottom:1px solid var(--g9);padding:9px 2px;font-size:.85rem;color:var(--text);line-height:1.45;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
-    l.appendChild(sp((x.t ? _audFecha(x.t) : (x.texto || '')) + (x.medico ? ' · ' + x.medico : ''), 'color:var(--muted);', 'aud-pre'));
-    l.appendChild(sp(' — ', 'color:var(--muted);', 'aud-sep'));
-    l.appendChild(sp(_audNombreCampo(x.campo) + ':', 'font-weight:600;'));
-    l.appendChild(document.createTextNode(' '));
-    l.appendChild(x.nuevo ? document.createTextNode(x.nuevo) : sp('vacío', 'font-style:italic;', '', 'em'));
-    l.appendChild(sp(' (antes: ' + (x.anterior ? x.anterior : 'vacío') + ')', 'color:var(--muted);'));
-    l.addEventListener('click', function(){ l.style.whiteSpace = (l.style.whiteSpace === 'nowrap') ? 'normal' : 'nowrap'; });
+    l.style.cssText = 'border-bottom:1px solid var(--g9);padding:9px 2px;font-size:.85rem;color:var(--text);line-height:1.45;cursor:pointer;';
+    var fila = document.createElement('div'); fila.className = 'aud-fila'; fila.style.cssText = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    fila.appendChild(sp((x.t ? _audFecha(x.t) : (x.texto || '')) + (x.medico ? ' · ' + x.medico : ''), 'color:var(--muted);', 'aud-pre'));
+    fila.appendChild(sp(' — ', 'color:var(--muted);', 'aud-sep'));
+    fila.appendChild(sp(d.nombre + ':', 'font-weight:600;'));
+    fila.appendChild(document.createTextNode(' '));
+    var valor = sp(d.corto || 'vacío', d.corto ? '' : 'font-style:italic;', 'aud-valor'); fila.appendChild(valor);
+    l.appendChild(fila);
+    var antes = null;
+    if(d.antes !== null){
+      antes = document.createElement('div'); antes.className = 'aud-antes';
+      antes.style.cssText = 'display:none;margin-top:4px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;';
+      antes.textContent = 'Antes: ' + (d.antes ? d.antes : 'vacío'); l.appendChild(antes);
+    }
+    l.addEventListener('click', function(){
+      if(l.getAttribute('data-abierta') === '1'){   // cerrar
+        l.removeAttribute('data-abierta'); fila.style.whiteSpace = 'nowrap'; valor.textContent = d.corto || 'vacío'; valor.style.whiteSpace = ''; valor.style.overflowWrap = '';
+        if(antes) antes.style.display = 'none';
+      } else {   // abrir: texto completo y, debajo, «Antes: …»
+        l.setAttribute('data-abierta', '1'); fila.style.whiteSpace = 'normal'; valor.textContent = d.completo || 'vacío'; valor.style.whiteSpace = 'pre-wrap'; valor.style.overflowWrap = 'anywhere';
+        if(antes) antes.style.display = 'block';
+      }
+    });
     caja.appendChild(l);
   });
   cont.appendChild(caja);
