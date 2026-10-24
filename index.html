@@ -12953,29 +12953,94 @@ function registrarAuditoria(idxPaciente, campo, valorAnterior, valorNuevo){
   }
 }
 
-// ══ RENDER: HISTORIAL DE CAMBIOS DEL PACIENTE ABIERTO ══
+// ── HISTORIAL DE CAMBIOS (etapa d): una línea por cambio, leído del servidor ──
+// Diseño aprobado por la usuaria (24/10/2026): una sola línea por cambio, lo más nuevo arriba, con médico, fecha y hora; sin tarjetas, colores fuertes, títulos repetidos, botones ni carteles.
+// Un texto largo se corta con «…» y se ve completo al tocar la línea. Cada médico ve solo lo suyo (lo asegura el servidor con su política de seguridad por filas «Médicos ven su propia auditoría»;
+// además acá se descarta cualquier fila de otro médico). Al abrir la pestaña se leen los cambios del servidor y se juntan con los de esta sesión (sin repetir), así el historial no se vacía
+// al cerrar sesión ni al entrar desde otro dispositivo. NO cambia lo que se guarda (`registrarAuditoria` queda igual: sigue ubicando al paciente por DNI).
+var _AUD_MAX = 300;
+function _audFecha(t){
+  var d = new Date(t), p2 = function(n){ return ('0' + n).slice(-2); };
+  return p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+}
+function _audNombreCampo(c){ return ('' + (c || '')).replace(/^Examen físico\s+—\s+/, ''); }
+function _audIdServidor(p, cb){
+  if(p._sbId){ cb(p._sbId); return; }
+  if(p.dni){ buscarPacienteIdCompartido(p.dni, function(id){ cb(id || null); }); return; }
+  cb(null);
+}
+function _audLeerServidor(p, cb){   // cb(filas del servidor | null si no se pudo)
+  _audIdServidor(p, function(pacienteId){
+    if(!pacienteId){ cb(null); return; }
+    sb.from('auditoria_hc').select('campo,valor_anterior,valor_nuevo,fecha,medico_id').eq('paciente_id', pacienteId).order('fecha', { ascending: false }).limit(_AUD_MAX).then(function(r){
+      if(r.error || !r.data){ if(r.error) console.warn('No se pudo leer el historial de cambios:', r.error); cb(null); return; }
+      cb(r.data);
+    }, function(x){ console.warn('No se pudo leer el historial de cambios:', x); cb(null); });
+  });
+}
+// Junta lo del servidor con lo de esta sesión (si ya está en el servidor no se repite) y lo ordena: lo más nuevo arriba
+function _audJuntar(p, filasServidor){
+  var yo = (usuarioActual && usuarioActual.id != null) ? String(usuarioActual.id) : '';
+  var nombre = ''; try{ if(usuarioActual) nombre = nombreConTitulo(usuarioActual); }catch(e){ console.warn('[catch]', e); }
+  var lista = [];
+  (filasServidor || []).forEach(function(f){
+    if(String(f.medico_id) !== yo) return;   // solo lo del propio médico
+    var t = Date.parse(f.fecha);
+    lista.push({ t: isNaN(t) ? 0 : t, campo: f.campo, anterior: f.valor_anterior || '', nuevo: f.valor_nuevo || '', medico: nombre });
+  });
+  ((p && p.auditoria) || []).forEach(function(a){
+    var t = Date.parse(a.fechaISO || '');
+    var repetido = !isNaN(t) && lista.some(function(s){ return s.campo === a.campo && s.anterior === (a.anterior || '') && s.nuevo === (a.nuevo || '') && Math.abs(s.t - t) < 180000; });
+    if(repetido) return;
+    lista.push({ t: isNaN(t) ? 0 : t, campo: a.campo, anterior: a.anterior || '', nuevo: a.nuevo || '', medico: a.medico || nombre, texto: isNaN(t) ? (((a.fecha || '') + ' ' + (a.hora || '')).trim()) : '' });
+  });
+  lista.sort(function(a, b){ return b.t - a.t; });
+  return lista;
+}
+function _audPintar(cont, lista, final){
+  if(!document.getElementById('aud-estilos')){
+    var st = document.createElement('style'); st.id = 'aud-estilos';
+    st.textContent = '@media (max-width:700px){.aud-pre{display:block;font-size:.75rem;}.aud-sep{display:none;}}';
+    document.head.appendChild(st);
+  }
+  cont.textContent = '';
+  if(!lista.length){
+    if(!final) return;   // todavía se está leyendo el servidor: no se muestra el mensaje de «vacío» antes de tiempo
+    var v = document.createElement('div');
+    v.style.cssText = 'color:var(--muted);font-size:.85rem;background:var(--g9);border-radius:10px;padding:16px;';
+    v.textContent = 'Todavía no hay cambios registrados para este paciente. A partir de ahora, cada vez que modifiques Antecedentes o Examen físico, va a quedar anotado acá.';
+    cont.appendChild(v);
+    return;
+  }
+  var caja = document.createElement('div'); caja.style.cssText = 'border-top:1px solid var(--g9);';
+  var sp = function(txt, css, cls, tag){ var s = document.createElement(tag || 'span'); if(css) s.style.cssText = css; if(cls) s.className = cls; s.textContent = txt; return s; };
+  lista.forEach(function(x){
+    var l = document.createElement('div'); l.className = 'aud-linea';
+    l.style.cssText = 'border-bottom:1px solid var(--g9);padding:9px 2px;font-size:.85rem;color:var(--text);line-height:1.45;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    l.appendChild(sp((x.t ? _audFecha(x.t) : (x.texto || '')) + (x.medico ? ' · ' + x.medico : ''), 'color:var(--muted);', 'aud-pre'));
+    l.appendChild(sp(' — ', 'color:var(--muted);', 'aud-sep'));
+    l.appendChild(sp(_audNombreCampo(x.campo) + ':', 'font-weight:600;'));
+    l.appendChild(document.createTextNode(' '));
+    l.appendChild(x.nuevo ? document.createTextNode(x.nuevo) : sp('vacío', 'font-style:italic;', '', 'em'));
+    l.appendChild(sp(' (antes: ' + (x.anterior ? x.anterior : 'vacío') + ')', 'color:var(--muted);'));
+    l.addEventListener('click', function(){ l.style.whiteSpace = (l.style.whiteSpace === 'nowrap') ? 'normal' : 'nowrap'; });
+    caja.appendChild(l);
+  });
+  cont.appendChild(caja);
+}
 function renderAuditoriaHC(){
   var cont = document.getElementById('hc-auditoria-lista');
   if(!cont) return;
-  var p = (pacienteHCActualIdx>=0 && pacientes[pacienteHCActualIdx]) ? pacientes[pacienteHCActualIdx] : null;
-  var lista = (p && p.auditoria) ? p.auditoria : [];
-  if(lista.length===0){
-    cont.innerHTML = '<div style="color:var(--muted);font-size:.85rem;background:var(--g9);border-radius:10px;padding:16px;">Todavía no hay cambios registrados para este paciente. A partir de ahora, cada vez que modifiques Antecedentes, Examen físico o Diagnóstico, va a quedar anotado acá.</div>';
-    return;
-  }
-  var html = '';
-  lista.forEach(function(a){
-    html += '<div style="background:#fff;border:1px solid var(--g9);border-radius:10px;padding:14px 16px;margin-bottom:10px;">'
-      + '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">'
-      + '<div style="font-weight:700;color:var(--g3);font-size:.85rem;">' + escHtml(a.campo||'') + '</div>'
-      + '<div style="font-size:.75rem;color:var(--muted);">' + escHtml(a.fecha||'') + ' · ' + escHtml(a.hora||'') + (a.medico?' · '+escHtml(a.medico):'') + '</div>'
-      + '</div>'
-      + '<div style="font-size:.82rem;color:#991b1b;background:#fef2f2;border-radius:8px;padding:8px 10px;margin-bottom:4px;"><strong>Antes:</strong> ' + (a.anterior ? escHtml(a.anterior) : '<em>(vacío)</em>') + '</div>'
-      + '<div style="font-size:.82rem;color:#166534;background:#f0fdf4;border-radius:8px;padding:8px 10px;"><strong>Después:</strong> ' + (a.nuevo ? escHtml(a.nuevo) : '<em>(vacío)</em>') + '</div>'
-      + '</div>';
+  var p = (pacienteHCActualIdx >= 0 && pacientes[pacienteHCActualIdx]) ? pacientes[pacienteHCActualIdx] : null;
+  var visible = !!cont.offsetParent;   // solo se consulta el servidor cuando la pestaña está a la vista
+  if(!p || !visible){ _audPintar(cont, _audJuntar(p, null), true); return; }
+  _audPintar(cont, _audJuntar(p, null), false);
+  _audLeerServidor(p, function(filas){
+    if(!(pacienteHCActualIdx >= 0 && pacientes[pacienteHCActualIdx] === p)) return;   // mientras tanto abrió otro paciente
+    _audPintar(cont, _audJuntar(p, filas), true);
   });
-  cont.innerHTML = html;
 }
+// ── fin HISTORIAL DE CAMBIOS ──
 
 // ══ GUARDAR DIAGNÓSTICO EN PACIENTE ══
 function guardarDiagnostico(){
