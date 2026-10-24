@@ -18772,41 +18772,70 @@ function sincronizarPacientesSupabase(){
       }, function(){ if(cb) cb(); });
     }
   
-  function sincronizarHistoriasClinicasSupabase(){
-      if(!usuarioActual || !usuarioActual.id) return;
-      sb.from('pacientes').select('id,dni').eq('medico_id', usuarioActual.id).then(function(rPac){
-        if(!rPac.data) return;
-        var mapaIdDni = {};
-        rPac.data.forEach(function(p){ mapaIdDni[p.id] = p.dni; });
-        sb.from('historias_clinicas').select('*').then(function(rHC){
-          if(!rHC.data) return;
-          rHC.data.forEach(function(hc){
-            var dniLocal = mapaIdDni[hc.paciente_id];
-            if(!dniLocal) return;
-            var idx = -1;
-            for(var i=0;i<pacientes.length;i++){ if(pacientes[i].dni && pacientes[i].dni===dniLocal){ idx=i; break; } }
-            if(idx<0) return;
-            pacientes[idx].antPersonal = hc.antecedentes_personales||pacientes[idx].antPersonal||'';
-            pacientes[idx].antFamiliar = hc.antecedentes_familiares||pacientes[idx].antFamiliar||'';
-            pacientes[idx].antQuirurgico = hc.antecedentes_quirurgicos||pacientes[idx].antQuirurgico||'';
-            pacientes[idx].medicacion = hc.medicacion_habitual||pacientes[idx].medicacion||'';
-            pacientes[idx].alergias = hc.alergias||pacientes[idx].alergias||'';
-            pacientes[idx].examen = pacientes[idx].examen || {};
-            if(hc.talla!=null) pacientes[idx].examen.talla = hc.talla;
-            if(hc.peso!=null) pacientes[idx].examen.peso = hc.peso;
-            if(hc.tension_arterial) pacientes[idx].examen.ta = hc.tension_arterial;
-            if(hc.frecuencia_cardiaca!=null) pacientes[idx].examen.fc = hc.frecuencia_cardiaca;
-            if(hc.frecuencia_respiratoria!=null) pacientes[idx].examen.fr = hc.frecuencia_respiratoria;
-            if(hc.temperatura!=null) pacientes[idx].examen.temp = hc.temperatura;
-            if(hc.saturacion_o2!=null) pacientes[idx].examen.sat = hc.saturacion_o2;
-            if(hc.examen_aparatos_sistemas) pacientes[idx].examen.sistemas = hc.examen_aparatos_sistemas;
-          });
-          sessionStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(pacientes));
-          renderPacientes();
-        });
-      });
-    }
-  
+// ── LECTURA DE LA HISTORIA CLÍNICA AL ENTRAR (etapa e) ──
+// Al entrar se traen del servidor las historias clínicas de los pacientes PROPIOS y se rellenan anamnesis (antecedentes, medicación, alergias) y examen físico en la ficha local.
+// Corrige dos fallas de la lectura anterior: (1) emparejaba cada historia con su ficha por DNI → un paciente SIN DNI guardaba su historia pero nunca la recuperaba; ahora se empareja por el
+// id del servidor (`_sbId`), con el DNI solo como respaldo para fichas que todavía no tienen id; (2) la lectura corría sola y podía terminar ANTES de que llegara la lista de pacientes (navegador o
+// pestaña nuevos, red lenta) y no aplicaba nada; ahora las historias que todavía no encuentran su ficha quedan pendientes y se aplican apenas la lista de pacientes se carga (`renderPacientes`).
+// Reglas: lo vacío del servidor nunca borra lo local; NO se pisa ningún campo con cambios que el autoguardado todavía no envió (ni lo que se está escribiendo); NO se lee ni se muestra el
+// diagnóstico (decisión de la usuaria: la pestaña Diagnóstico y la sección del Resumen no cambian); solo pacientes propios (los de Centros Médicos quedan afuera, el tema está postergado).
+// Sin pantallas, botones ni carteles nuevos. No cambia lo que se guarda.
+var _hcPend = [];          // historias leídas del servidor que todavía no encontraron su ficha
+var _hcPendUsuario = null; // de quién son (si cambia el usuario, se descartan)
+function _hcCampoPendiente(p, id){
+  var e = (typeof _agEntrada === 'function') ? _agEntrada(p, false) : null;
+  return !!(e && e.campos && Object.prototype.hasOwnProperty.call(e.campos, id));
+}
+function _hcFichaDe(hc, dni){
+  var i;
+  for(i = 0; i < pacientes.length; i++){ if(pacientes[i]._sbId && String(pacientes[i]._sbId) === String(hc.paciente_id)) return pacientes[i]; }
+  if(dni){ for(i = 0; i < pacientes.length; i++){ if(pacientes[i].dni && pacientes[i].dni === dni && !pacientes[i]._sbId) return pacientes[i]; } }
+  return null;
+}
+function _hcAplicarEn(p, hc){
+  Object.keys(_AG_CAMPOS).forEach(function(id){
+    var c = _AG_CAMPOS[id]; if(c.g === 'ev') return;
+    if(_hcCampoPendiente(p, id)) return;   // cambios sin enviar del autoguardado: no se pisan
+    var v = hc[c.col], vacio = (v === undefined || v === null || v === '');
+    if(c.g === 'hc'){ p[c.l] = vacio ? (p[c.l] || '') : v; }
+    else { if(!p.examen) p.examen = {}; if(!vacio) p.examen[c.l] = v; }
+  });
+}
+function _hcAplicarPendientes(){
+  if(!_hcPend.length) return;
+  if(!usuarioActual || _hcPendUsuario !== usuarioActual.id){ _hcPend = []; return; }
+  var resto = [], hubo = false;
+  _hcPend.forEach(function(x){
+    var p = _hcFichaDe(x.hc, x.dni);
+    if(!p){ resto.push(x); return; }
+    _hcAplicarEn(p, x.hc); hubo = true;
+  });
+  _hcPend = resto;
+  if(hubo){ try{ sessionStorage.setItem(_userKey('mhcd_pacientes'), JSON.stringify(pacientes)); }catch(e){ console.warn('[catch]', e); } }
+}
+function sincronizarHistoriasClinicasSupabase(){
+  if(!usuarioActual || !usuarioActual.id) return;
+  _hcPend = []; _hcPendUsuario = usuarioActual.id;
+  var uid = usuarioActual.id;
+  sb.from('pacientes').select('id,dni').eq('medico_id', uid).then(function(rPac){
+    var mapaIdDni = {};
+    if(rPac && rPac.data) rPac.data.forEach(function(p){ mapaIdDni[p.id] = p.dni; });
+    sb.from('historias_clinicas').select('*').then(function(rHC){
+      if(!rHC || !rHC.data || !usuarioActual || usuarioActual.id !== uid) return;
+      _hcPend = rHC.data.map(function(hc){ return { hc: hc, dni: mapaIdDni[hc.paciente_id] || '' }; });
+      _hcAplicarPendientes();
+    });
+  });
+}
+// Cada vez que se carga la lista de pacientes se reintenta con las historias que quedaron esperando su ficha
+var _hcRenderPacientesOrig = renderPacientes;
+renderPacientes = function(){
+  var r = _hcRenderPacientesOrig.apply(this, arguments);
+  try{ if(_hcPend.length) _hcAplicarPendientes(); }catch(x){ console.warn('[catch]', x); }
+  return r;
+};
+// ── fin LECTURA DE LA HISTORIA CLÍNICA AL ENTRAR ──
+
 // Completa el nombre de los turnos del servidor con la lista de pacientes del servidor (que puede terminar de cargar antes o después que los turnos).
 // Devuelve true si completó algún nombre (y en ese caso guarda la copia de la pestaña y vuelve a dibujar la Agenda).
 function _resolverNombresTurnos(){
