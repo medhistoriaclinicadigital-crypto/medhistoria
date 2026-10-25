@@ -49,19 +49,25 @@ if(localStorage.getItem('mhcd_cookies_consent') === 'aceptado'){ _cargarGTM(); }
 
 <!-- SCHEMA.ORG (datos estructurados para Google) -->
 <script>
-// Avisos del navegador (alert) → tarjetas con la estética de la app. Ver CLAUDE.md 10.275.
+// Avisos, preguntas y pedidos de texto del navegador (alert / confirm / prompt) → tarjetas con la estética de la app. Ver CLAUDE.md 10.275 y 10.281.
 (function(){
-  var nativa = window.alert ? window.alert.bind(window) : function(){};
+  var nativaAlert = window.alert ? window.alert.bind(window) : function(){};
+  var nativaConfirm = window.confirm ? window.confirm.bind(window) : function(){ return false; };
+  var nativaPrompt = window.prompt ? window.prompt.bind(window) : function(){ return null; };
   var cola = [], abierta = false;
-  function icono(t){
-    var m = /^(✅|✓|⚠️|❌|🔒|🏥)\s*/.exec(t);
+  // Llave para volver a entrar a una función cuya pregunta ya se contestó que sí (un evento de la página no la puede imitar).
+  window._MH_OK = { mh: 'ok' };
+  function icono(t, tipo){
+    var m = /^(✅|✓|⚠️|❌|🔒|🏥|🔑|❓)\s*/.exec(t);
     if(m) return { ic: (m[1] === '✓') ? '✅' : m[1], txt: t.slice(m[0].length) };
+    if(tipo === 'confirm') return { ic: '❓', txt: t };
+    if(tipo === 'prompt') return { ic: '✏️', txt: t };
     if(/^(No se pudo|No pudimos|Error|Hubo un problema|Usuario o contraseña incorrectos|Código incorrecto|Librería PDF no cargada)/i.test(t)) return { ic: '⚠️', txt: t };
     return { ic: 'ℹ️', txt: t };
   }
   function el(tag, css, txt){ var e = document.createElement(tag); e.style.cssText = css; if(txt) e.textContent = txt; return e; }
-  function mostrar(msg){
-    var d = icono(String(msg == null ? '' : msg).trim());
+  function mostrar(it){
+    var d = icono(String(it.msg == null ? '' : it.msg).trim(), it.tipo);
     var partes = d.txt.split(/\n\s*\n/).map(function(x){ return x.trim(); }).filter(Boolean);
     var titulo = partes.shift() || '';
     var previo = document.activeElement;
@@ -71,32 +77,75 @@ if(localStorage.getItem('mhcd_cookies_consent') === 'aceptado'){ _cargarGTM(); }
     card.appendChild(el('div', 'font-size:2rem;margin-bottom:8px;', d.ic));
     card.appendChild(el('div', "font-family:'Cormorant Garamond',serif;font-size:" + (titulo.length > 140 ? '1.05rem' : '1.2rem') + ";font-weight:700;color:#042b10;margin-bottom:10px;line-height:1.3;overflow-wrap:anywhere;white-space:pre-line;", titulo));
     partes.forEach(function(p){ card.appendChild(el('p', 'font-size:.88rem;color:#5a7362;line-height:1.6;margin:0 0 12px;overflow-wrap:anywhere;white-space:pre-line;', p)); });
-    var b = el('button', "width:100%;padding:12px;margin-top:6px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;", 'Aceptar');
-    b.type = 'button'; b.id = 'mh-alerta-aceptar';
+    var input = null;
+    if(it.tipo === 'prompt'){
+      input = el('input', "width:100%;box-sizing:border-box;padding:11px 12px;margin:2px 0 8px;border:1.5px solid #c9d8cf;border-radius:10px;font-size:.95rem;font-family:'Outfit',sans-serif;color:#042b10;background:#fff;");
+      input.type = 'text'; input.id = 'mh-alerta-input'; input.value = (it.def == null) ? '' : String(it.def);
+      input.setAttribute('autocomplete', 'off'); input.setAttribute('aria-label', titulo);
+      card.appendChild(input);
+    }
+    var cancelado = function(){ return it.tipo === 'confirm' ? false : (it.tipo === 'prompt' ? null : undefined); };
     var cerrado = false;
-    function cerrar(){
+    function cerrar(res){
       if(cerrado) return; cerrado = true;
       document.removeEventListener('keydown', teclas, true);
       if(ov.parentNode) ov.parentNode.removeChild(ov);
       try{ if(previo && previo !== document.body && document.contains(previo) && previo.focus) previo.focus(); }catch(e){}
       abierta = false;
+      if(it.cb){ try{ it.cb(res); }catch(eCb){ console.error(eCb); } }
       siguiente();
     }
-    function teclas(ev){ if(ev.key === 'Escape'){ ev.preventDefault(); ev.stopPropagation(); cerrar(); } }
-    b.onclick = cerrar;
-    card.appendChild(b); ov.appendChild(card); document.body.appendChild(ov);
+    var bA = el('button', "width:100%;padding:12px;margin-top:6px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;", 'Aceptar');
+    bA.type = 'button'; bA.id = 'mh-alerta-aceptar';
+    bA.onclick = function(){ cerrar(it.tipo === 'confirm' ? true : (it.tipo === 'prompt' ? input.value : undefined)); };
+    card.appendChild(bA);
+    var bC = null;
+    if(it.tipo !== 'alert'){
+      bC = el('button', "width:100%;padding:12px;margin-top:8px;background:#fff;color:#145a32;border:1.5px solid #22a050;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;", 'Cancelar');
+      bC.type = 'button'; bC.id = 'mh-alerta-cancelar';
+      bC.onclick = function(){ cerrar(cancelado()); };
+      card.appendChild(bC);
+    }
+    function teclas(ev){
+      if(ev.key === 'Escape'){ ev.preventDefault(); ev.stopPropagation(); cerrar(cancelado()); return; }
+      if(ev.key === 'Enter' && input && ev.target === input){ ev.preventDefault(); ev.stopPropagation(); cerrar(input.value); return; }
+      if(ev.key === 'Tab'){
+        var lista = [input, bA, bC].filter(Boolean), i = lista.indexOf(document.activeElement);
+        ev.preventDefault();
+        lista[(i + (ev.shiftKey ? lista.length - 1 : 1)) % lista.length].focus();
+      }
+    }
+    ov.appendChild(card); document.body.appendChild(ov);
     document.addEventListener('keydown', teclas, true);
-    try{ b.focus(); }catch(e){}
+    try{ if(input){ input.focus(); input.select(); } else { bA.focus(); } }catch(e){}
   }
   function siguiente(){
     if(abierta || !cola.length) return;
-    var msg = cola.shift(); abierta = true;
-    try{ mostrar(msg); }
-    catch(e){ abierta = false; try{ nativa(msg); }catch(e2){} siguiente(); }
+    var it = cola.shift(); abierta = true;
+    try{ mostrar(it); }
+    catch(e){
+      abierta = false;
+      try{
+        if(it.tipo === 'alert') nativaAlert(it.msg);
+        else if(it.tipo === 'confirm'){ var r = !!nativaConfirm(it.msg); if(it.cb) it.cb(r); }
+        else { var v = nativaPrompt(it.msg, it.def == null ? '' : it.def); if(it.cb) it.cb(v); }
+      }catch(e2){ console.error(e2); }
+      siguiente();
+    }
   }
   window.alert = function(msg){
-    if(!document.body){ nativa(msg); return; }
-    cola.push(msg); siguiente();
+    if(!document.body){ nativaAlert(msg); return; }
+    cola.push({ tipo: 'alert', msg: msg }); siguiente();
+  };
+  // Pregunta Aceptar / Cancelar: cb(true) si acepta, cb(false) si cancela (o Esc). La respuesta llega cuando se contesta (la tarjeta no frena el código).
+  window._mhConfirmar = function(msg, cb){
+    if(!document.body){ cb(!!nativaConfirm(msg)); return; }
+    cola.push({ tipo: 'confirm', msg: msg, cb: cb }); siguiente();
+  };
+  // Pide un texto: cb(texto) si acepta (puede ser ''), cb(null) si cancela (o Esc).
+  window._mhPedir = function(msg, def, cb){
+    if(!document.body){ cb(nativaPrompt(msg, def == null ? '' : def)); return; }
+    cola.push({ tipo: 'prompt', msg: msg, def: def, cb: cb }); siguiente();
   };
 })();
 </script>
@@ -5552,19 +5601,17 @@ function actualizarBtnApiKey(){
     }
   }
 }
-function pedirApiKey(){
+function pedirApiKey(_p){
   var actual = getApiKey();
-  var key = prompt(
-    '🔑 API Key de Anthropic\n\n' +
+  var key;
+  if(_p && _p._mh){ key = _p.v; } else { _mhPedir('🔑 API Key de Anthropic\n\n' +
     'Para usar las funciones de IA necesitás una API key de Anthropic.\n\n' +
     'Cómo obtenerla GRATIS:\n' +
     '1. Entrá a console.anthropic.com\n' +
     '2. Creá una cuenta gratuita\n' +
     '3. En "API Keys" generá una clave\n' +
     '4. Pegala acá abajo\n\n' +
-    (actual ? '✅ API key configurada: sk-ant-...'+actual.slice(-6) : '⚠️ No hay API key configurada'),
-    actual || ''
-  );
+    (actual ? '✅ API key configurada: sk-ant-...'+actual.slice(-6) : '⚠️ No hay API key configurada'), actual || '', function(v){ if(v === null) return; pedirApiKey({ _mh: true, v: v }); }); return; }
   if(key === null) return; // canceló
   if(key && key.trim().startsWith('sk-ant-')){
     setApiKey(key.trim());
@@ -5758,8 +5805,9 @@ function guardarNuevaPass(){
     try{ sb.auth.signOut({ scope:'local' }); }catch(eSr){ console.warn('[catch]', eSr); }   // la sesión de recuperación no queda abierta en la pestaña
   });
 }
-function mostrarRecuperarPass(){
-  var email = prompt('Ingresá tu email para recuperar tu contraseña:');
+function mostrarRecuperarPass(_p){
+  var email;
+  if(_p && _p._mh){ email = _p.v; } else { _mhPedir('Ingresá tu email para recuperar tu contraseña:', '', function(v){ if(v === null) return; mostrarRecuperarPass({ _mh: true, v: v }); }); return; }
   if(!email) return;
   email = email.trim().toLowerCase();
   sb.auth.resetPasswordForEmail(email, {
@@ -6063,9 +6111,11 @@ function generarDocumento(tipo){
   }, 3000);
   // Ofrecer imprimir
   setTimeout(function(){
-    if(confirm('✅ ' + nombres[tipo] + ' generada con firma electrónica.\n\n' + (ley ? ley + '\n\n' : '') + '¿Querés imprimirla ahora?')){
+    _mhConfirmar('✅ ' + nombres[tipo] + ' generada con firma electrónica.\n\n' + (ley ? ley + '\n\n' : '') + '¿Querés imprimirla ahora?', function(ok){
+      if(ok){
       imprimirDoc(tipo);
     }
+    });
   }, 400);
 }
 function showPanelMob(id, btn){
@@ -6861,8 +6911,8 @@ function cargarCentrosPendientesPago(){
   });
 }
 
-function confirmarPagoCentro(centroId, btn){
-  if(!confirm('¿Confirmar que llegó el pago de este centro y activarle el plan completo?')) return;
+function confirmarPagoCentro(centroId, btn, _c){
+  if(_c !== _MH_OK){ _mhConfirmar('¿Confirmar que llegó el pago de este centro y activarle el plan completo?', function(ok){ if(ok) confirmarPagoCentro(centroId, btn, _MH_OK); }); return; }
   if(btn){ btn.disabled = true; btn.textContent = 'Activando...'; }
   sb.rpc('activar_plan_centro', { p_centro_id: centroId }).then(function(r){
     if(r.error){
@@ -7006,13 +7056,13 @@ function _esAutomaticaZoho(email){
   return /^(no[-_.]?reply|do[-_.]?not[-_.]?reply|mailer[-_.]?daemon)([-_.+].*)?$/i.test(mm[0].split('@')[0]);
 }
 
-function abrirResponderZoho(messageId){
+function abrirResponderZoho(messageId, _c){
   var m = _mensajesZohoData.find(function(x){ return String(x.messageId) === String(messageId); });
   if(!m) return;
   var mm = String(m.fromAddress||'').match(/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i);
   if(!mm){ alert('Este mail no tiene una dirección de remitente a la que responder.'); return; }
   if(_esAutomaticaZoho(mm[0])){ alert(_MSJ_AUTOMATICA_ZOHO); return; }
-  if(_respondidosZoho()[String(m.messageId)] && !confirm('Ya respondiste este mail desde este navegador. ¿Querés enviar otra respuesta?')) return;
+  if(_respondidosZoho()[String(m.messageId)] && _c !== _MH_OK){ _mhConfirmar('Ya respondiste este mail desde este navegador. ¿Querés enviar otra respuesta?', function(ok){ if(ok) abrirResponderZoho(messageId, _MH_OK); }); return; }
   var asunto = m.subject || '(sin asunto)';
   if(!/^re:/i.test(asunto)) asunto = 'RE: ' + asunto;
   _respZoho = { m: m, destinatario: mm[0].toLowerCase(), citado: m.summary || '', enviando: false };
@@ -7551,16 +7601,18 @@ function procesarCancelacion(){
   });
 }
 
-function enviarLandingWA(tipo){
-  var tel = prompt('N° de WhatsApp del paciente ('+_waFormato().corto+'):');
+function enviarLandingWA(tipo, _p){
+  var tel;
+  if(_p && _p._mh){ tel = _p.v; } else { _mhPedir('N° de WhatsApp del paciente ('+_waFormato().corto+'):', '', function(v){ if(v === null) return; enviarLandingWA(tipo, { _mh: true, v: v }); }); return; }
   if(!tel) return;
   var labels = {receta:'Receta Médica Online', derivacion:'Derivación Médica', estudios:'Pedido de Estudios'};
   var txt = '🏥 *MedHistoriaClinicaOnline · '+labels[tipo]+'*\n\nFirmado electrónicamente · Ley 27.553\n\n_medhistoriaclinicaonline.com_';
   window.open('https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(txt),'_blank');
 }
 
-function enviarLandingEmail(tipo){
-  var email = prompt('Email del paciente:');
+function enviarLandingEmail(tipo, _p){
+  var email;
+  if(_p && _p._mh){ email = _p.v; } else { _mhPedir('Email del paciente:', '', function(v){ if(v === null) return; enviarLandingEmail(tipo, { _mh: true, v: v }); }); return; }
   if(!email) return;
   var labels = {receta:'Receta Médica Online', derivacion:'Derivación Médica', estudios:'Pedido de Estudios'};
   var asunto = labels[tipo]+' - MedHistoriaClinicaOnline';
@@ -8339,8 +8391,8 @@ function cargarPreviewFirma(){
   if(chk){ chk.checked = yaAcepto; }
   toggleConsentimientoFirma(yaAcepto, true);
 }
-function borrarFirmaGuardada(){
-  if(!confirm('¿Eliminar la firma guardada?'))return;
+function borrarFirmaGuardada(_c){
+  if(_c !== _MH_OK){ _mhConfirmar('¿Eliminar la firma guardada?', function(ok){ if(ok) borrarFirmaGuardada(_MH_OK); }); return; }
   localStorage.removeItem('medhistoria_firma');
   cargarPreviewFirma();
   if(_firmaCanvas) _firmaCtx.clearRect(0,0,_firmaCanvas.width,_firmaCanvas.height);
@@ -8360,8 +8412,8 @@ function marcarPaso1(){
   if(btn){btn.textContent='✓ Marcado como completado';btn.style.background='#dcfce7';btn.style.color='#15803d';}
 }
 
-function desmarcarPaso1(){
-  if(!confirm('¿Desmarcar el Paso 1? Esto no borra ningún trámite real, solo quita el cartel de "Completado" en la app.')) return;
+function desmarcarPaso1(_c){
+  if(_c !== _MH_OK){ _mhConfirmar('¿Desmarcar el Paso 1? Esto no borra ningún trámite real, solo quita el cartel de "Completado" en la app.', function(ok){ if(ok) desmarcarPaso1(_MH_OK); }); return; }
   localStorage.removeItem('medhistoria_firma_paso1');
   if(usuarioActual){ usuarioActual.firma_paso1 = false; }
   if(usuarioActual && usuarioActual.auth_id){
@@ -8400,10 +8452,11 @@ function esDuenioDeCentro(){
   return !!(miCentro && usuarioActual && miCentro.creado_por && usuarioActual.id === miCentro.creado_por);
 }
 
-function editarNombreCentro(){
+function editarNombreCentro(_p){
   if(!miCentro || !miCentro.id){ alert('No encontramos tu centro médico.'); return; }
   if(!esDuenioDeCentro()){ alert('Solo quien creó el centro puede cambiarle el nombre.'); return; }
-  var nuevoNombre = prompt('Nombre del Centro Médico:', miCentro.nombre || '');
+  var nuevoNombre;
+  if(_p && _p._mh){ nuevoNombre = _p.v; } else { _mhPedir('Nombre del Centro Médico:', miCentro.nombre || '', function(v){ if(v === null) return; editarNombreCentro({ _mh: true, v: v }); }); return; }
   if(nuevoNombre === null) return; // canceló
   nuevoNombre = nuevoNombre.trim();
   if(!nuevoNombre){ alert('El nombre no puede quedar vacío.'); return; }
@@ -8570,8 +8623,8 @@ function aprobarDispositivoUI(id){
   });
 }
 
-function rechazarDispositivoUI(id){
-  if(!confirm('¿Seguro que querés bloquear el acceso desde este dispositivo?')) return;
+function rechazarDispositivoUI(id, _c){
+  if(_c !== _MH_OK){ _mhConfirmar('¿Seguro que querés bloquear el acceso desde este dispositivo?', function(ok){ if(ok) rechazarDispositivoUI(id, _MH_OK); }); return; }
   sb.rpc('rechazar_dispositivo', {p_dispositivo_id: id}).then(function(r){
     if(r.error || !r.data){ alert('No se pudo actualizar el dispositivo.'); console.error('Error rechazando dispositivo:', r.error); return; }
     renderDispositivosCentro();
@@ -12687,10 +12740,10 @@ function renderEstudios(){
     }).join('');
 }
 
-function eliminarEstudio(id){
+function eliminarEstudio(id, _c){
   var estudio = estudiosAdjuntos.find(function(e){ return e.id === id; });
   if(!estudio) return;
-  if(!confirm('¿Eliminar "'+estudio.nombre+'"? Esta acción no se puede deshacer.')) return;
+  if(_c !== _MH_OK){ _mhConfirmar('¿Eliminar "'+estudio.nombre+'"? Esta acción no se puede deshacer.', function(ok){ if(ok) eliminarEstudio(id, _MH_OK); }); return; }
 
   // Pacientes de un Centro Médico: el borrado pasa por la Edge Function
   // estudio-gestion-centro (mismo motivo que la subida — ver hallazgo C).
@@ -14659,21 +14712,23 @@ function imprimirFacturaHistorial(idx){
   });
 }
   
-  function enviarFacturaHistorialWA(idx){
+  function enviarFacturaHistorialWA(idx, _p){
 	  var f = window._histFacturas && window._histFacturas[idx];
   if(!f) return;
   var totalTxt = '$ '+(parseFloat(f.total)||0).toFixed(2);
-  var tel = prompt('N° de WhatsApp ('+_waFormato().corto+'):');
+  var tel;
+  if(_p && _p._mh){ tel = _p.v; } else { _mhPedir('N° de WhatsApp ('+_waFormato().corto+'):', '', function(v){ if(v === null) return; enviarFacturaHistorialWA(idx, { _mh: true, v: v }); }); return; }
   if(!tel) return;
   var txt = '🏥 *MedHistoriaClinicaOnline - '+(f.tipo==='particular'?'Recibo Particular':'Factura Obra Social')+'*\n\nPaciente: '+f.nombrePac+'\nTotal: '+totalTxt+'\n\n_MedHistoriaClinicaOnline · medhistoriaclinicaonline.com_';
   window.open('https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(txt),'_blank');
 }
 
-function enviarFacturaHistorialEmail(idx){
+function enviarFacturaHistorialEmail(idx, _p){
   var f = window._histFacturas && window._histFacturas[idx];
   if(!f) return;
   var totalTxt = '$ '+(parseFloat(f.total)||0).toFixed(2);
-  var email = prompt('Email del destinatario:');
+  var email;
+  if(_p && _p._mh){ email = _p.v; } else { _mhPedir('Email del destinatario:', '', function(v){ if(v === null) return; enviarFacturaHistorialEmail(idx, { _mh: true, v: v }); }); return; }
   if(!email) return;
   var asunto = f.tipo==='particular' ? 'Recibo - MedHistoriaClinicaOnline' : 'Factura Obra Social - MedHistoriaClinicaOnline';
   var cuerpo = 'Paciente: '+f.nombrePac+'\nTotal: '+totalTxt+'\n\nMedHistoriaClinicaOnline · medhistoriaclinicaonline.com';
@@ -14764,21 +14819,23 @@ function pintarFacturaParaImprimir(f, items){
   document.getElementById('printArea').innerHTML = html;
   setTimeout(function(){ window.print(); },150);
 }
-function enviarFacturaWA(tipo){
+function enviarFacturaWA(tipo, _p){
   var prefix = tipo==='os'?'fo':'fp';
   var pac = (document.getElementById(prefix+'-paciente')||{}).value||'';
   var total = (document.getElementById(prefix+'-total')||{}).value||'$ 0.00';
-  var tel = prompt('N° de WhatsApp ('+_waFormato().corto+'):');
+  var tel;
+  if(_p && _p._mh){ tel = _p.v; } else { _mhPedir('N° de WhatsApp ('+_waFormato().corto+'):', '', function(v){ if(v === null) return; enviarFacturaWA(tipo, { _mh: true, v: v }); }); return; }
   if(!tel) return;
   var txt = '🏥 *MedHistoriaClinicaOnline - '+(tipo==='os'?'Factura Obra Social':'Recibo Particular')+'*\n\nPaciente: '+pac+'\nTotal: '+total+'\n\n_MedHistoriaClinicaOnline · medhistoriaclinicaonline.com_';
   window.open('https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(txt),'_blank');
 }
 
-function enviarFacturaEmail(tipo){
+function enviarFacturaEmail(tipo, _p){
   var prefix = tipo==='os'?'fo':'fp';
   var pac = (document.getElementById(prefix+'-paciente')||{}).value||'';
   var total = (document.getElementById(prefix+'-total')||{}).value||'$ 0.00';
-  var email = prompt('Email del destinatario:');
+  var email;
+  if(_p && _p._mh){ email = _p.v; } else { _mhPedir('Email del destinatario:', '', function(v){ if(v === null) return; enviarFacturaEmail(tipo, { _mh: true, v: v }); }); return; }
   if(!email) return;
   var asunto = tipo==='os'?'Factura Obra Social - MedHistoriaClinicaOnline':'Recibo - MedHistoriaClinicaOnline';
   var cuerpo = 'Paciente: '+pac+'\nTotal: '+total+'\n\nMedHistoriaClinicaOnline · medhistoriaclinicaonline.com';
@@ -15071,10 +15128,15 @@ function marcarAtendido(i){
 }
 
 function eliminarTurno(i){
-  if(confirm('¿Eliminar el turno de '+turnos[i].pac+'?')){
-    turnos.splice(i,1);
+  var _t = turnos[i];   // el turno que se tocó (la lista puede cambiar mientras la tarjeta está abierta)
+  _mhConfirmar('¿Eliminar el turno de '+turnos[i].pac+'?', function(ok){
+    if(!ok) return;
+    var j = turnos.indexOf(_t);
+    if(j < 0) j = turnos.findIndex(function(x){ return x && _t && x.pac === _t.pac && x.fecha === _t.fecha && x.hora === _t.hora; });
+    if(j < 0) return;   // ya no está en la lista
+    turnos.splice(j,1);
     renderTurnos();
-  }
+  });
 }
 
 function filtrarPorFecha(){
@@ -16514,15 +16576,17 @@ function _salirDeRecetas(){
 }
 // Anti-duplicado: si hace poco se emitió una receta de este paciente y ahora el contenido es otro, se emite una receta NUEVA (otro código)
 // y las dos quedan vigentes: se pide confirmación. Devuelve true para seguir.
-function _confirmarOtraRecetaMismoPaciente(prev, d){
+function _confirmarOtraRecetaMismoPaciente(prev, d, cb){
+  var _fin = function(v){ if(cb) cb(v); };
   try{
-    if(!prev || !prev._ts || (Date.now() - prev._ts) > 30*60*1000) return true;
+    if(!prev || !prev._ts || (Date.now() - prev._ts) > 30*60*1000){ _fin(true); return; }
     var n = function(v){ return String(v == null ? '' : v).trim().toLowerCase(); };
-    if(n(prev.d && prev.d.pac) !== n(d.pac) || n(prev.d && prev.d.dni) !== n(d.dni)) return true;
-    return confirm('⚠️ Hace unos minutos ya emitiste una receta para ' + String(d.pac||'').trim() + ' (código ' + _firmaRxTokenFmt(prev.token) + ').\n\n'
+    if(n(prev.d && prev.d.pac) !== n(d.pac) || n(prev.d && prev.d.dni) !== n(d.dni)){ _fin(true); return; }
+    _mhConfirmar('⚠️ Hace unos minutos ya emitiste una receta para ' + String(d.pac||'').trim() + ' (código ' + _firmaRxTokenFmt(prev.token) + ').\n\n'
       + 'Esta tiene otro contenido: se emite como receta NUEVA, con otro código, y las dos quedan vigentes.\n\n'
-      + '¿Es otra receta (por ejemplo, otro medicamento)?\nAceptar = emitir otra · Cancelar = volver');
-  }catch(eCo){ return true; }
+      + '¿Es otra receta (por ejemplo, otro medicamento)?\nAceptar = emitir otra · Cancelar = volver', _fin);
+    return;
+  }catch(eCo){ _fin(true); }
 }
 var _recetaFirmaPendiente = null;  // { key, idReceta, token, url, bytes, d } — reintento sin duplicar la receta
 var _recetaEmisionEnCurso = null;  // { key, esperando:[{ok,fail}] } — evita emisiones dobles por clicks seguidos
@@ -16620,10 +16684,16 @@ function emitirRecetaFirmada(onOk, onFail, opts){
 
   // Aviso si "Válida desde" es anterior a hoy: una fecha vieja en ese campo invalida la receta para quien la dispensa.
   var _hoyIso = (function(){ var h=new Date(); return h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0'); })();
-  if(d.fechaInicioVigencia && d.fechaInicioVigencia < _hoyIso){
+  if(d.fechaInicioVigencia && d.fechaInicioVigencia < _hoyIso && !(opts && opts._fechaOk)){
     console.warn('[receta] "Válida desde" anterior a hoy:', d.fechaInicioVigencia);
     var _fp = d.fechaInicioVigencia.split('-');
-    if(!confirm('⚠️ La fecha "Válida desde" es '+_fp[2]+'/'+_fp[1]+'/'+_fp[0]+', anterior a hoy.'+"\n\n¿Querés generar la receta con esa fecha?\n\nAceptar = generar así · Cancelar = volver y corregirla (si dejás el campo vacío, rige desde hoy).")) { onFail(); return; }
+    _mhConfirmar('⚠️ La fecha "Válida desde" es '+_fp[2]+'/'+_fp[1]+'/'+_fp[0]+', anterior a hoy.'+"\n\n¿Querés generar la receta con esa fecha?\n\nAceptar = generar así · Cancelar = volver y corregirla (si dejás el campo vacío, rige desde hoy).", function(ok){
+      if(!ok){ onFail(); return; }
+      var _o2 = {}; for(var _k in (opts || {})) _o2[_k] = opts[_k];
+      _o2._fechaOk = true;
+      emitirRecetaFirmada(onOk, onFail, _o2);
+    });
+    return;
   }
 
   var en = { key:key, esperando:[{ ok:onOk, fail:onFail }] };
@@ -16919,13 +16989,13 @@ function enviarAutoWA(tipo){
   });
 }
 
-function enviarAutoEmail(tipo, emi){
+function enviarAutoEmail(tipo, emi, _p){
   var fuente = _fuenteEnvio(tipo, emi);
   var d = fuente.d;
   if(!d.pac){ alert('Completá el nombre del paciente primero.'); return; }
   var email = fuente.email;
   if(!email){ 
-    email = prompt('Ingresá el email del paciente:');
+    if(_p && _p._mh){ email = _p.v; } else { _mhPedir('Ingresá el email del paciente:', '', function(v){ if(v === null) return; enviarAutoEmail(tipo, emi, { _mh: true, v: v }); }); return; }
     if(!email) return;
   }
 
@@ -17202,9 +17272,10 @@ function getDatosDocumento(tipo){
 
 
 // ── ENVIAR POR WHATSAPP ──
-function enviarWhatsApp(tipo){
+function enviarWhatsApp(tipo, _p){
   if(!checkAddonComunicacion()) return;
-  var tel = prompt('Ingresá el número de WhatsApp del paciente ('+_waFormato().aviso+'):\nEj: '+_waFormato().ej);
+  var tel;
+  if(_p && _p._mh){ tel = _p.v; } else { _mhPedir('Ingresá el número de WhatsApp del paciente ('+_waFormato().aviso+'):\nEj: '+_waFormato().ej, '', function(v){ if(v === null) return; enviarWhatsApp(tipo, { _mh: true, v: v }); }); return; }
   if(!tel) return;
   var texto = '';
   if(tipo === 'receta'){
@@ -17274,9 +17345,10 @@ function checkAddonComunicacion(){
   return true;
 }
 
-function enviarEmail(tipo){
+function enviarEmail(tipo, _p){
   if(!checkAddonComunicacion()) return;
-  var email = prompt('Ingresá el email del paciente:');
+  var email;
+  if(_p && _p._mh){ email = _p.v; } else { _mhPedir('Ingresá el email del paciente:', '', function(v){ if(v === null) return; enviarEmail(tipo, { _mh: true, v: v }); }); return; }
   if(!email) return;
   var asunto = '', cuerpo = '';
   if(tipo === 'receta'){
@@ -17514,13 +17586,17 @@ function importarDatos(input){
       if(!data.plataforma || data.plataforma !== 'MedHistoriaClinicaOnline'){
         alert('❌ El archivo no es un backup válido de MedHistoriaClinicaOnline.'); return;
       }
-      if(!confirm('⚠️ Esto reemplazará todos los datos actuales con el backup del '+new Date(data.exportado).toLocaleDateString('es-AR')+'\n\n¿Continuar?')) return;
+      _mhConfirmar('⚠️ Esto reemplazará todos los datos actuales con el backup del '+new Date(data.exportado).toLocaleDateString('es-AR')+'\n\n¿Continuar?', function(ok){
+        if(!ok) return;
+        try {
       if(data.pacientes) pacientes = data.pacientes;
       if(data.turnos) turnos = data.turnos;
       if(data.videoconsultas) videoconsultas = data.videoconsultas;
       renderPacientes(); renderTurnos();
       cerrarBackup();
       alert('✅ Datos restaurados correctamente.');
+        } catch(err){ alert('❌ Error al leer el archivo. Asegurate de que sea un backup válido.'); }
+      });
     } catch(err){ alert('❌ Error al leer el archivo. Asegurate de que sea un backup válido.'); }
   };
   reader.readAsText(file);
@@ -17575,10 +17651,10 @@ function imprimirDoc(tipo){
   });
 }
 
-function nuevaOrden(tipo){
+function nuevaOrden(tipo, _c){
   var _yaEmitida = (tipo === 'receta') && (_recetaEnPantallaEsLaEmitida() || (_recetaMedicamentosData.length === 0 && !((document.getElementById('rx2-diag')||{}).value||'').trim() && !((document.getElementById('rx2-ind')||{}).value||'').trim()));   // lo que hay en pantalla ya está emitido y firmado: no se pierde nada
   if(!_yaEmitida && (tipo === 'derivacion' || tipo === 'pedido')){ _yaEmitida = _docSinContenido(tipo) || _docEnPantallaEsElEmitido(tipo); }   // nada que perder: ya vacío o ya emitido
-  if(!_yaEmitida && !confirm('¿Borrar los datos de ' + (tipo==='receta' ? 'esta receta' : tipo==='derivacion' ? 'esta derivación' : 'este pedido de estudios') + '? Los datos del paciente se conservan.')) return;
+  if(!_yaEmitida && _c !== _MH_OK){ _mhConfirmar('¿Borrar los datos de ' + (tipo==='receta' ? 'esta receta' : tipo==='derivacion' ? 'esta derivación' : 'este pedido de estudios') + '? Los datos del paciente se conservan.', function(ok){ if(ok) nuevaOrden(tipo, _MH_OK); }); return; }
   var campos = {
     receta: [],   // el contenido de la receta se vacía con _vaciarContenidoRecetaConservandoPaciente (abajo); los datos del paciente se conservan
 derivacion: [],   // el contenido se vacía con _vaciarContenidoDocConservandoPaciente (abajo); los datos del paciente se conservan
@@ -17968,7 +18044,9 @@ function importarPacientes(event){
       var data = JSON.parse(e.target.result);
       var lista = data.pacientes || data;
       if(!Array.isArray(lista)) throw new Error('Formato inválido');
-      if(!confirm('¿Restaurar ' + lista.length + ' pacientes del backup? Los pacientes actuales se conservarán y se agregarán los del backup.')) return;
+      _mhConfirmar('¿Restaurar ' + lista.length + ' pacientes del backup? Los pacientes actuales se conservarán y se agregarán los del backup.', function(ok){
+        if(!ok) return;
+        try {
       // Merge: agregar los que no existen por DNI o nombre
       var agregados = 0;
       lista.forEach(function(p){
@@ -17980,6 +18058,8 @@ function importarPacientes(event){
       guardarLocal();
       renderPacientes();
       alert('✅ Backup restaurado. Se agregaron ' + agregados + ' pacientes.');
+        } catch(err) { alert('Error al importar: ' + err.message); }
+      });
     } catch(err) {
       alert('Error al importar: ' + err.message);
     }
@@ -20367,8 +20447,8 @@ function completarConIA(campoId, tipoCampo){
   alert('La función de IA no está disponible en esta versión. Completá el campo manualmente.');
 }
 
-function finalizarAtencion(){
-  if(!confirm('¿Finalizar la atención?\n\nSe va a cerrar el paciente de la Historia Clínica y se van a dejar en blanco los formularios de Recetas, Derivaciones, Estudios y Facturación, con todos sus datos.\n\nLo ya emitido y firmado no se borra. Lo que no hayas guardado en la Historia Clínica se pierde.')) return;
+function finalizarAtencion(_c){
+  if(_c !== _MH_OK){ _mhConfirmar('¿Finalizar la atención?\n\nSe va a cerrar el paciente de la Historia Clínica y se van a dejar en blanco los formularios de Recetas, Derivaciones, Estudios y Facturación, con todos sus datos.\n\nLo ya emitido y firmado no se borra. Lo que no hayas guardado en la Historia Clínica se pierde.', function(ok){ if(ok) finalizarAtencion(_MH_OK); }); return; }
   // Vacía una lista de campos: texto → '', desplegable → primera opción, casilla → desmarcada.
   var vaciar = function(ids){
     ids.forEach(function(id){
