@@ -2453,7 +2453,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               <div class="hc-sec-title">👤 Datos personales</div>
               <div class="form-g2">
                 <div class="fl"><label>Apellido y nombre<input type="text" id="hc-paciente" placeholder="Apellido y nombre"></div>
-                <div class="fl"><label>DNI<input type="text" id="hc-dni" placeholder="30.000.000"></div>
+                <div class="fl"><label>DNI / documento<input type="text" id="hc-dni" placeholder="30.000.000"></div>
                 <div class="fl"><label>Fecha de nacimiento<input type="date" id="hc-fnac"></div>
                 <div class="fl"><label>Edad<input type="text" id="hc-edad" placeholder="55 años"></div>
                 <div class="fl"><label>Nacionalidad<input type="text" id="hc-nacionalidad" placeholder="Argentina"></div>
@@ -2708,7 +2708,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <div id="validez-recetas"></div>
           <div class="form-g2">
             <div class="fl"><label>Paciente<input type="text" id="rx2-paciente" placeholder="Apellido y nombre"></div>
-            <div class="fl"><label>DNI<input type="text" id="rx2-dni" placeholder="30.000.000" data-ph-solo-ar onchange="_autocompletarCuilReceta()"></div>
+            <div class="fl"><label>DNI / documento<input type="text" id="rx2-dni" placeholder="30.000.000" data-ph-solo-ar onchange="_autocompletarCuilReceta()"></div>
             <div class="fl firma-solo-ar"><label>CUIL<input type="text" id="rx2-cuil" placeholder="20-30000000-1"></div>
             <div class="fl"><label>Fecha de Nacimiento<input type="date" id="rx2-fnac"></div>
             <div class="fl"><label>Sexo<select id="rx2-sexo" onchange="_autocompletarCuilReceta()"><option value="">Seleccionar...</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
@@ -2808,7 +2808,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <div id="validez-derivaciones"></div>
           <div class="form-g2">
             <div class="fl"><label>Paciente<input type="text" id="der-paciente" placeholder="Apellido y nombre"></div>
-            <div class="fl"><label>DNI<input type="text" id="der-dni" placeholder="30.000.000" data-ph-solo-ar></div>
+            <div class="fl"><label>DNI / documento<input type="text" id="der-dni" placeholder="30.000.000" data-ph-solo-ar></div>
             <div class="fl"><label>Fecha de Nacimiento<input type="date" id="der-fnac"></div>
             <div class="fl"><label>Sexo<select id="der-sexo"><option value="">Seleccionar...</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
             <div class="fl"><label>Obra Social / Prepaga<input type="text" id="der-os" placeholder="OSDE / IOMA / Swiss Medical..." data-ph-solo-ar></div>
@@ -2949,7 +2949,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           
           <div class="form-g2">
             <div class="fl"><label>Paciente<input type="text" id="est-paciente" placeholder="Apellido y nombre"></div>
-            <div class="fl"><label>DNI<input type="text" id="est-dni" placeholder="30.000.000" data-ph-solo-ar></div>
+            <div class="fl"><label>DNI / documento<input type="text" id="est-dni" placeholder="30.000.000" data-ph-solo-ar></div>
             <div class="fl"><label>Fecha de Nacimiento<input type="date" id="est-fnac"></div>
             <div class="fl"><label>Sexo<select id="est-sexo"><option value="">Seleccionar...</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
             <div class="fl"><label>Obra Social / Prepaga<input type="text" id="est-os" placeholder="OSDE / IOMA / Swiss Medical..." data-ph-solo-ar></div>
@@ -4815,7 +4815,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
     <div id="pf-rx" class="mform" style="display:none;gap:10px;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Paciente<input class="mi" id="rx-paciente" type="text" placeholder="Apellido y nombre"></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">DNI<input class="mi" id="rx-dni" type="text" placeholder="30.000.000" data-ph-solo-ar onchange="_autocompletarCuilRx()"></div>
+        <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">DNI / documento<input class="mi" id="rx-dni" type="text" placeholder="30.000.000" data-ph-solo-ar onchange="_autocompletarCuilRx()"></div>
         <div class="firma-solo-ar"><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">CUIL<input class="mi" id="rx-cuil" type="text" placeholder="20-30000000-1"></div>
         <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Sexo<select class="mi" id="rx-sexo" onchange="_autocompletarCuilRx()"><option value="">-</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
         <div><label style="font-size:.7rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Fecha de nac.<input class="mi" id="rx-fnac" type="date"></div>
@@ -4845,7 +4845,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div><label style="font-size:.7rem;font-weight:700;color:#145a32;text-transform:uppercase;display:block;margin-bottom:4px;">Apellido<input class="mi" id="pac-apellido" type="text" placeholder="Apellido"></div>
         <div><label style="font-size:.7rem;font-weight:700;color:#145a32;text-transform:uppercase;display:block;margin-bottom:4px;">Nombre<input class="mi" id="pac-nombre" type="text" placeholder="Nombre"></div>
-        <div><label style="font-size:.7rem;font-weight:700;color:#145a32;text-transform:uppercase;display:block;margin-bottom:4px;">DNI<input class="mi" id="pac-dni" type="text" autocomplete="off" placeholder="30.000.000"></div>
+        <div><label style="font-size:.7rem;font-weight:700;color:#145a32;text-transform:uppercase;display:block;margin-bottom:4px;">DNI / documento<input class="mi" id="pac-dni" type="text" autocomplete="off" placeholder="30.000.000"></div>
         <div><label style="font-size:.7rem;font-weight:700;color:#145a32;text-transform:uppercase;display:block;margin-bottom:4px;">CUIL<input class="mi" id="pac-cuil" type="text" autocomplete="off" placeholder="20-30000000-1"></div>
         <div><label style="font-size:.7rem;font-weight:700;color:#145a32;text-transform:uppercase;display:block;margin-bottom:4px;">Fecha de nac.<input class="mi" id="pac-fnac" type="date"></div>
         <div><label style="font-size:.7rem;font-weight:700;color:#145a32;text-transform:uppercase;display:block;margin-bottom:4px;">Sexo<select class="mi" id="pac-sexo"><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
@@ -4880,6 +4880,7 @@ var _recetaMedicamentosData = [];
 // el campo para que el médico lo complete a mano antes que arriesgar un
 // CUIL incorrecto en un documento médico real.
 function calcularCUIL(dni, sexo){
+  if(/[A-Za-z]/.test(dni||'')) return null;   // documento con letras (pasaporte): no hay CUIL que calcular
   var d = (dni||'').replace(/\D/g,'');
   if(d.length < 7 || d.length > 8) return null;
   while(d.length < 8) d = '0'+d;
@@ -4975,7 +4976,7 @@ function abrirNuevoPaciente(){
   // El autocompletado del navegador puede rellenar campos DESPUÉS de abrir el formulario (por ejemplo un DNI viejo):
   // si el usuario todavía no escribió nada, se vuelve a limpiar un instante después.
   _pacTocado = false;
-  var _dniInp = document.getElementById('pac-dni'); if(_dniInp) _dniInp.setAttribute('inputmode', medicoEsArgentina() ? 'numeric' : 'text');
+  var _dniInp = document.getElementById('pac-dni'); if(_dniInp) _dniInp.setAttribute('inputmode', 'text');   // acepta también pasaporte (letras y números)
   setTimeout(function(){
     if(_editandoPacienteIdx !== -1 || _pacTocado) return;
     campos.forEach(function(id){ var el=document.getElementById(id); if(el && el !== document.activeElement && el.value) el.value=''; });
@@ -5090,14 +5091,17 @@ function guardarPaciente(){
   // Si el paciente no tiene DNI argentino, el campo puede quedar vacío.
   var dniIngresado = ga('pac-dni');
   if(dniIngresado && medicoEsArgentina()){
-    var dniLimpio = dniIngresado.replace(/[.\s-]/g, '');
-    if(!/^\d+$/.test(dniLimpio)){
-      alert('El DNI debe tener solo números (sin letras ni símbolos). Ejemplo: 30123456\n\nSi el paciente no tiene DNI argentino, dejá el campo vacío.');
+    // Acepta DNI y también número de pasaporte (letras y números); se guardan sin puntos, espacios ni guiones y en mayúsculas («30.123.456» → «30123456», «ab 123-456» → «AB123456»).
+    var dniLimpio = _normalizarDocumento(dniIngresado);
+    if(!/^[A-Z0-9]+$/.test(dniLimpio)){
+      _tarjetaAviso({ icono: '🪪', titulo: 'DNI / documento no válido', parrafos: [ 'Solo puede tener letras y números, sin símbolos. Ejemplos: 30123456 o AB123456.' ] });
       return;
     }
     dniIngresado = dniLimpio;
     var dniEl = document.getElementById('pac-dni'); if(dniEl) dniEl.value = dniLimpio;
   }
+  // DNI / documento obligatorio SOLO al crear un paciente nuevo (los que ya existen se editan como siempre)
+  if(_editandoPacienteIdx < 0 && !dniIngresado){ _avisoFaltaDni('form'); return; }
 
   // Obtener datos existentes si estamos editando
   var pExistente = (_editandoPacienteIdx >= 0 && pacientes[_editandoPacienteIdx]) ? pacientes[_editandoPacienteIdx] : {};
@@ -12705,6 +12709,17 @@ function buscarPacienteIdCompartido(dni, callback){
   });
 }
 
+// DNI / documento OBLIGATORIO al crear un paciente nuevo. Acepta número de pasaporte (letras y números). Sin puntos, espacios ni guiones y en mayúsculas.
+function _normalizarDocumento(t){ return ((t == null ? '' : '' + t).trim()).replace(/[.\s-]/g, '').toUpperCase(); }
+// Tarjeta de la app (no cartel del navegador). donde = 'form' (hay un campo «DNI / documento» en pantalla) o 'agenda' (turno / videoconsulta: no tienen ese campo).
+function _avisoFaltaDni(donde){
+  _tarjetaAviso({
+    icono: '🪪',
+    titulo: 'Falta el DNI / documento',
+    parrafos: [ 'Para crear un paciente nuevo hace falta su DNI o número de pasaporte.',
+      donde === 'agenda' ? 'Cargalo primero en Pacientes y después volvé acá.' : 'Completá «DNI / documento» y volvé a guardar.' ]
+  });
+}
 // Antes de crear una ficha mínima: se pregunta. si(true) crea; si(false) = «No, volver» (no se pierde lo escrito). total = pacientes que devolvió el servidor (o null).
 function _confirmarCrearFicha(nombreEscrito, total, limite, esCentro, si){
   var parrafos = ['¿Querés crear un paciente nuevo con ese nombre? Si elegís no crearlo, lo que escribiste queda como está.'];
@@ -12801,6 +12816,7 @@ function asegurarPacienteId(datos, callback){
   var claveBuscada = claveNombre(nombre, apellido);
 
   var crear = function(){
+    if(!dni){ _avisoFaltaDni(('dni' in datos) ? 'form' : 'agenda'); callback(null, 'sinDni'); return; }   // sin DNI / documento no se crea ninguna ficha
     var campos = { nombre: nombre, apellido: apellido };
     if(dni) campos.dni = dni;
     if(datos.telefono) campos.telefono = datos.telefono.toString().trim();
@@ -12832,6 +12848,7 @@ function asegurarPacienteId(datos, callback){
         return !dni || !((p.dni||'').toString().trim());
       });
       if(cands.length === 0){
+        if(!dni){ _avisoFaltaDni(('dni' in datos) ? 'form' : 'agenda'); callback(null, 'sinDni'); return; }   // paciente nuevo sin DNI / documento: no se ofrece crearlo
         if(!datos.confirmarCrear){ nextIfNone(); return; }
         // N sale de la lista que acaba de devolver el servidor; si no cargó, no se muestra la línea
         var totalServidor = (!r.error && Array.isArray(r.data)) ? (esCentro ? r.data.length : r.data.filter(function(p){ return !p.centro_id; }).length) : null;
@@ -17735,6 +17752,12 @@ function guardarDesdeHC(){
   var esNuevo = true;
   if(dni){ for(var k=0;k<pacientes.length;k++){ if(pacientes[k].dni===dni){ esNuevo=false; break; } } }
   if(esNuevo && nombre){ for(var m=0;m<pacientes.length;m++){ if(pacientes[m].nombre&&_normNombrePac(pacientes[m].nombre)===_normNombrePac(nombre)){ esNuevo=false; break; } } }
+  // DNI / documento obligatorio SOLO al crear un paciente nuevo (un paciente que ya existe se guarda como siempre)
+  if(esNuevo){
+    var dniNuevo = _normalizarDocumento(dni);
+    if(!dniNuevo){ _avisoFaltaDni('form'); return; }
+    dni = dniNuevo;
+  }
   if(esNuevo && totalActual >= limite){
     var plan = vaAlCentro ? ('Centro: '+miCentro.nombre) : getNombrePlan();
     var msg = '⚠️ Límite de pacientes alcanzado\n\n' + plan + ' permite hasta ' + (limite===Infinity?'pacientes ilimitados':limite+' pacientes') + '.\nYa hay ' + totalActual + ' pacientes registrados' + (vaAlCentro?' en el centro':'') + '.\n\n' + (vaAlCentro ? 'Contactá al dueño del centro para actualizar su plan.' : 'Actualizá tu plan para agregar más pacientes.');
