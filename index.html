@@ -65,7 +65,7 @@ if(localStorage.getItem('mhcd_cookies_consent') === 'aceptado'){ _cargarGTM(); }
     var partes = d.txt.split(/\n\s*\n/).map(function(x){ return x.trim(); }).filter(Boolean);
     var titulo = partes.shift() || '';
     var previo = document.activeElement;
-    var ov = el('div', 'position:fixed;inset:0;background:rgba(4,20,10,.6);z-index:100002;display:flex;align-items:center;justify-content:center;padding:20px;');
+    var ov = el('div', 'position:fixed;inset:0;background:rgba(4,20,10,.6);z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:20px;');
     ov.id = 'mh-alerta-overlay'; ov.setAttribute('role', 'alertdialog'); ov.setAttribute('aria-modal', 'true');
     var card = el('div', "background:#fff;border-radius:16px;max-width:380px;width:100%;max-height:calc(100vh - 40px);overflow-y:auto;padding:26px;font-family:'Outfit',sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.3);text-align:center;box-sizing:border-box;");
     card.appendChild(el('div', 'font-size:2rem;margin-bottom:8px;', d.ic));
@@ -967,7 +967,7 @@ function mhcdRechazarCookies(){
 <!-- ══════════════════════════════════════
      LANDING PAGE
 ══════════════════════════════════════ -->
-<div id="landing"><div id="verificandoSesionOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.92);z-index:999998;align-items:center;justify-content:center;color:#fff;font-family:inherit;font-size:1rem;text-align:center;padding:20px;box-sizing:border-box;">Verificando sesión…</div>
+<div id="landing"><div id="verificandoSesionOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.92);z-index:1000001;align-items:center;justify-content:center;color:#fff;font-family:inherit;font-size:1rem;text-align:center;padding:20px;box-sizing:border-box;">Verificando sesión…</div>
 <script>
   // Si hay algo para reingresar solo, tapamos la landing (incluido su botón
   // "Ingresar") hasta saber si el reingreso automático funcionó o no. Sin
@@ -976,11 +976,17 @@ function mhcdRechazarCookies(){
   if(Object.keys(sessionStorage).some(function(k){ return /^sb-.*-auth-token$/.test(k); })){
     var _ovVS = document.getElementById('verificandoSesionOverlay');
     if(_ovVS) _ovVS.style.display = 'flex';
-    // Red de seguridad: si por lo que sea nada oculta el overlay a tiempo,
-    // no se queda bloqueada para siempre.
-    setTimeout(function(){
-      if(_ovVS && _ovVS.style.display !== 'none') _ovVS.style.display = 'none';
-    }, 10000);
+    window._reingresoEnCurso = true;
+    // Red de seguridad: mientras el reingreso siga reintentando, la pantalla sigue tapada (hasta 30 s); pasado ese tope se destapa y se cancela
+    // el reingreso tardío (así nunca entra solo «por detrás» del cuadro de entrada). No se queda tapada para siempre.
+    var _tVS = Date.now();
+    var _vigilarVS = function(){
+      if(!_ovVS || _ovVS.style.display === 'none') return;
+      if(window._reingresoEnCurso && Date.now() - _tVS < 30000){ setTimeout(_vigilarVS, 1000); return; }
+      window._reingresoCancelado = true; window._reingresoEnCurso = false;
+      _ovVS.style.display = 'none';
+    };
+    setTimeout(_vigilarVS, 10000);
   }
 </script>
 <div id="miLoginModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,20,8,0.88);z-index:999999;backdrop-filter:blur(8px);overflow-y:auto;-webkit-overflow-scrolling:touch;">
@@ -5581,9 +5587,7 @@ function getHeaders(){
 }
 
 // ── ENTRAR AL APP ──
-function abrirLogin(){
-  entrarDirecto();
-}
+// (abrirLogin() y entrarDirecto() se sacaron: entraban a la app sin autenticar y nadie las llamaba)
 function abrirRegistro(plan){
   var ml = document.getElementById('miLoginModal');
   if(ml){
@@ -5608,30 +5612,6 @@ function abrirRegistro(plan){
   }
 }
 
-function entrarDirecto(){
-  usuarioActual = {nombre: 'Dr. Usuario'};
-  var landing = document.getElementById('landing');
-  var app = document.getElementById('app');
-  if(landing) landing.style.display='none';
-  if(app){ app.style.display='block'; }
-  document.body.classList.add('in-app');
-  try{ iniciarControlInactividad(); }catch(e){ console.warn('[catch]', e); }
-  setTimeout(function(){
-    window.scrollTo({top:0,behavior:'instant'});
-    document.documentElement.scrollTop=0;
-    document.body.scrollTop=0;
-    var app=document.getElementById('app');
-    if(app) app.scrollTop=0;
-  },100);
-  var df = document.getElementById('dash-fecha');
-  if(df) df.textContent = ( function(){ var s = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); })();
-  var aun = document.getElementById('app-user-name');
-  if(aun) aun.textContent = 'Dr. Usuario ✏️';
-  try{ cargarLocal(); renderPacientes(); renderTurnos(); }catch(e){ console.warn('[catch]', e); }
-  try{ actualizarFechaHC(); }catch(e){ console.warn('[catch]', e); }
-  try{ fixScroll(); }catch(e){ console.warn('[catch]', e); }
-  try{ showPanel('dash'); }catch(e){ console.warn('[catch]', e); }
-}
 
 
 // ── MATRÍCULA / CUIL DEL PERFIL ──
@@ -19937,9 +19917,15 @@ function mlIngresar(){
   var btnIng = document.getElementById('ml-btn-ingresar');
   if(btnIng){ btnIng.disabled = true; }
 
+  // Ingresar a mano manda sobre el reingreso automático de una sesión que ya estuviera abierta en esta pestaña: se cancela, para que no entre solo «por detrás».
+  window._reingresoCancelado = true;
+  var _habiaSesionVieja = Object.keys(sessionStorage).some(function(k){ return /^sb-.*-auth-token$/.test(k); });
+
   sb.auth.signInWithPassword({ email: u, password: p }).then(function(r){
     if(btnIng){ btnIng.disabled = false; }
     if(r.error){
+      // Con la clave mala no se entra, y la sesión vieja que había en la pestaña (si había) se cierra.
+      if(_habiaSesionVieja){ try{ sb.auth.signOut({ scope:'local' }); }catch(eSv){ console.warn('[catch]', eSv); } }
       alert('Usuario o contraseña incorrectos.');
       return;
     }
@@ -20015,6 +20001,7 @@ function continuarLoginTrasDispositivo(authId, emailFallback){
 // válida y dispositivo aprobado. Una pestaña nueva o el navegador reabierto no tienen sesión y piden usuario y clave. No hay «Guardar usuario» ni
 // reingreso entre pestañas o navegadores, y nunca se guarda la contraseña.
 function _ocultarVerificandoSesion(){
+  window._reingresoEnCurso = false;
   var ov = document.getElementById('verificandoSesionOverlay');
   if(ov) ov.style.display = 'none';
 }
@@ -20022,6 +20009,7 @@ function _ocultarVerificandoSesion(){
 // intento: reintenta hasta 3 veces (con espera entre cada una) para conexiones lentas o inestables.
 function _procesarReingresoAutomatico(session, intento){
   intento = intento || 1;
+  if(window._reingresoCancelado){ _ocultarVerificandoSesion(); return; }   // el médico ya está ingresando a mano: el reingreso automático no entra por detrás
   // Si la página se abrió desde el link de RECUPERAR CONTRASEÑA, no se entra sola a la app: primero se elige la clave nueva.
   if(typeof _pendingPasswordRecovery !== 'undefined' && _pendingPasswordRecovery){ _ocultarVerificandoSesion(); return; }
   var hayToken = Object.keys(sessionStorage).some(function(k){ return /^sb-.*-auth-token$/.test(k); });
@@ -20044,7 +20032,9 @@ function _procesarReingresoAutomatico(session, intento){
 window._procesarReingresoAutomatico = _procesarReingresoAutomatico;
 
 function _verificarDispositivoConReintento(session, intento){
+  if(window._reingresoCancelado){ _ocultarVerificandoSesion(); return; }
   sb.rpc('verificar_dispositivo', { p_device_token: _deviceToken(), p_descripcion: _descripcionDispositivo() }).then(function(rDisp){
+    if(window._reingresoCancelado){ _ocultarVerificandoSesion(); return; }
     if(rDisp.error){
       if(intento < 3){
         setTimeout(function(){ _verificarDispositivoConReintento(session, intento+1); }, 1200);
@@ -20062,6 +20052,7 @@ function _verificarDispositivoConReintento(session, intento){
     }
     // Una cuenta de ADMINISTRADOR no vuelve a entrar sola a la app de médicos al recargar (entra por el Panel Admin, con su 2FA): pantalla de entrada.
     sb.from('usuarios').select('rol').eq('auth_id', session.user.id).then(function(rRol){
+      if(window._reingresoCancelado){ _ocultarVerificandoSesion(); return; }
       var rol = (rRol && rRol.data && rRol.data[0]) ? rRol.data[0].rol : null;
       if(rol === 'admin'){
         try{ sb.auth.signOut({ scope:'local' }); }catch(eAd){ console.warn('[catch]', eAd); }
