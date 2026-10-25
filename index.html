@@ -12745,7 +12745,7 @@ function _avisoTopePacientes(mensajeServidor){
 // Videoconsulta: antes de crear la sala se resuelve la ficha (pregunta si hace falta). cb(true) sigue; cb(false) = no se crea la sala ni se guarda nada.
 function _prepararFichaVideo(pac, tel, cb){
   if(!usuarioActual || !usuarioActual.id){ cb(true); return; }
-  asegurarPacienteId({ nombre: pac, telefono: tel || '', contexto: 'esta videoconsulta', nombreEscrito: pac, confirmarCrear: true }, function(id, motivoNo){
+  asegurarPacienteId({ nombre: pac, telefono: tel || '', contexto: 'esta videoconsulta', nombreEscrito: pac, soloBuscar: true }, function(id, motivoNo){
     if(!id && motivoNo){ cb(false); return; }
     window._idPreVideo = id ? { clave: _normNombrePac(pac), id: id } : null;
     cb(true);
@@ -12816,6 +12816,7 @@ function asegurarPacienteId(datos, callback){
   var claveBuscada = claveNombre(nombre, apellido);
 
   var crear = function(){
+    if(datos.soloBuscar){ callback(null); return; }   // turno / videoconsulta de alguien que todavía no es paciente: no se crea ninguna ficha (se la carga en la primera consulta, con su DNI)
     if(!dni){ _avisoFaltaDni(('dni' in datos) ? 'form' : 'agenda'); callback(null, 'sinDni'); return; }   // sin DNI / documento no se crea ninguna ficha
     var campos = { nombre: nombre, apellido: apellido };
     if(dni) campos.dni = dni;
@@ -12848,7 +12849,7 @@ function asegurarPacienteId(datos, callback){
         return !dni || !((p.dni||'').toString().trim());
       });
       if(cands.length === 0){
-        if(!dni){ _avisoFaltaDni(('dni' in datos) ? 'form' : 'agenda'); callback(null, 'sinDni'); return; }   // paciente nuevo sin DNI / documento: no se ofrece crearlo
+        if(!dni && !datos.soloBuscar){ _avisoFaltaDni(('dni' in datos) ? 'form' : 'agenda'); callback(null, 'sinDni'); return; }   // paciente nuevo sin DNI / documento: no se ofrece crearlo
         if(!datos.confirmarCrear){ nextIfNone(); return; }
         // N sale de la lista que acaba de devolver el servidor; si no cargó, no se muestra la línea
         var totalServidor = (!r.error && Array.isArray(r.data)) ? (esCentro ? r.data.length : r.data.filter(function(p){ return !p.centro_id; }).length) : null;
@@ -14070,7 +14071,7 @@ function enviarLinkExterno(nombre){
 
 function guardarVideoconsultaSupabase(v){
   if(!usuarioActual || !usuarioActual.id) return;
-  asegurarPacienteId({ nombre: v.pac, telefono: v.telefono||'', contexto: 'esta videoconsulta', pacienteId: _idPreVideoDe(v.pac) }, function(pacienteId){
+  asegurarPacienteId({ nombre: v.pac, telefono: v.telefono||'', contexto: 'esta videoconsulta', pacienteId: _idPreVideoDe(v.pac), soloBuscar: true }, function(pacienteId){
     sb.from('videoconsultas').insert({
       medico_id: usuarioActual.id,
       paciente_id: pacienteId,
@@ -15164,8 +15165,8 @@ function guardarTurno(){
   var fechaDisplay = partes[2]+'/'+partes[1]+'/'+partes[0];
   if(_esFechaHoraPasada(fecha, hora)){ _avisoFechaHoraPasada(fechaDisplay, hora); return; }
   if(!window._turnoFichaLista && usuarioActual && usuarioActual.id){
-    asegurarPacienteId({ nombre: pac, telefono: wa, contexto: 'este turno', nombreEscrito: pac, confirmarCrear: true }, function(idPre, motivoNo){
-      if(!idPre && motivoNo) return;   // «No, volver» o tope del plan: el formulario del turno queda abierto con todo lo escrito
+    asegurarPacienteId({ nombre: pac, telefono: wa, contexto: 'este turno', nombreEscrito: pac, soloBuscar: true }, function(idPre, motivoNo){
+      if(!idPre && motivoNo) return;   // el médico cerró la tarjeta de «¿cuál de estos pacientes?»: el formulario del turno queda abierto con todo lo escrito
       window._idPreTurno = idPre || null;
       window._turnoFichaLista = true;
       try{ guardarTurno(); } finally { window._turnoFichaLista = false; }
@@ -15176,7 +15177,7 @@ function guardarTurno(){
   turnos.push(_turnoNuevo);
   // Guardar también en Supabase
   if(usuarioActual && usuarioActual.id){
-    asegurarPacienteId({ nombre: pac, telefono: wa, contexto: 'este turno', pacienteId: window._idPreTurno || null }, function(pacienteId){
+    asegurarPacienteId({ nombre: pac, telefono: wa, contexto: 'este turno', pacienteId: window._idPreTurno || null, soloBuscar: true }, function(pacienteId){
       if(pacienteId){ _turnoNuevo._pacienteIdSb = pacienteId; try{ guardarLocal(); }catch(eGl){ console.warn('[catch]', eGl); } }
       var turnoSB = {
         medico_id: usuarioActual.id,
@@ -15189,7 +15190,16 @@ function guardarTurno(){
         prioridad: prio||'',
         estado: prio||''
       };
-      sb.from('turnos').insert(turnoSB).then(function(rT){ _guardadoServidor('turno:'+fecha+' '+hora+' '+pac, 'el turno de ' + pac + ' (' + fechaDisplay + ' ' + hora + ' hs)', rT.error); });
+      // Sin ficha todavía: el nombre viaja en `paciente_nombre` (columna opcional de turnos). Si el servidor aún no la tiene, se reintenta sin ese dato para no perder el turno.
+      var _guardarTurnoSB = function(conNombre){
+        var fila = Object.assign({}, turnoSB);
+        if(conNombre && !pacienteId) fila.paciente_nombre = pac;
+        sb.from('turnos').insert(fila).then(function(rT){
+          if(rT.error && conNombre && !pacienteId && /paciente_nombre/i.test((rT.error.message || '') + ' ' + (rT.error.details || ''))){ _guardarTurnoSB(false); return; }
+          _guardadoServidor('turno:'+fecha+' '+hora+' '+pac, 'el turno de ' + pac + ' (' + fechaDisplay + ' ' + hora + ' hs)', rT.error);
+        });
+      };
+      _guardarTurnoSB(true);
     });
   }
   
@@ -18884,6 +18894,7 @@ function sincronizarTurnosSupabase(){
             var pEncontrado = pacientes.find(function(p){ return p._sbId === remoto.paciente_id; });
             if(pEncontrado) nombrePac = pEncontrado.nombre;
           }
+          if(nombrePac === '(paciente sin datos)' && remoto.paciente_nombre) nombrePac = remoto.paciente_nombre;   // turno de alguien que todavía no es paciente
           var partesF = (remoto.fecha||'').split('-');
           var fechaDisp = partesF.length===3 ? (partesF[2]+'/'+partesF[1]+'/'+partesF[0]) : '';
           // Un turno cargado en esta pestaña que ya está en el servidor (misma fecha, hora y motivo) toma su identificador en vez de repetirse.
