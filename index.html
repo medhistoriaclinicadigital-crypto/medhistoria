@@ -6500,7 +6500,13 @@ function abrirAdmin(){
 }
 
 function cerrarAdmin(){
-  sb.auth.signOut();
+  // El pase de Pagos se olvida ya y se le avisa al servidor (que borra su fila) ANTES de cerrar la sesión de admin; si el aviso tarda o falla, la sesión se cierra igual a los 4 segundos.
+  var _tokPagos = _pagosSesionToken; _pagosSesionToken = null;
+  var _sesionCerrada = false, _cerrarSesionAdmin = function(){ if(_sesionCerrada) return; _sesionCerrada = true; sb.auth.signOut(); };
+  if(_tokPagos){
+    try{ _pagos2FAInvoke('bloquear', { sesion_token: _tokPagos }).then(_cerrarSesionAdmin, _cerrarSesionAdmin); }catch(eBloq){ _cerrarSesionAdmin(); }
+    setTimeout(_cerrarSesionAdmin, 4000);
+  } else { _cerrarSesionAdmin(); }
   document.getElementById('adminOverlay').style.display='none';
   document.getElementById('admin-user').value='';
   document.getElementById('admin-pass').value='';
@@ -6835,6 +6841,7 @@ function cargarFirmasAdmin(buscar){
 }
 
 function switchAdminTab(btn, id){
+  if(id !== 'at-mp' && _pagosSesionToken){ bloquearPagos(); }   // al salir de Pagos se borra el pase (y se avisa al servidor); al volver pide el código
   document.querySelectorAll('.admin-tab').forEach(function(b){ b.classList.remove('on'); });
   btn.classList.add('on');
   ['at-mp','at-reportes','at-facturacion','at-consentimientos','at-firmas','at-mensajes'].forEach(function(t){
@@ -7444,6 +7451,11 @@ function guardarDatosBancariosAdmin(){
   if(btn){ btn.disabled = true; btn.textContent = 'Guardando…'; }
   sb.rpc('guardar_datos_bancarios_admin', { p_sesion_token: _pagosSesionToken, p_datos: d }).then(function(r){
     if(btn){ btn.disabled = false; btn.textContent = '💾 Guardar datos bancarios'; }
+    if(r.error && r.error.code === 'P0001' && /sesi[oó]n de pagos/i.test(r.error.message || '')){
+      bloquearPagos();   // el pase venció: se bloquea la pantalla y se pide el código (los campos quedan vacíos, como al bloquear)
+      alert('⚠️ La sesión de Pagos venció\n\nNo se guardó nada. Poné el código de nuevo y volvé a cargar los datos.');
+      return;
+    }
     if(r.error){
       alert(r.error.code === 'P0001'
         ? '⚠️ ' + r.error.message
@@ -7566,8 +7578,12 @@ function cargarDatosBancariosAdminGated(){
   sb.rpc('obtener_datos_bancarios_admin', { p_sesion_token: _pagosSesionToken }).then(function(r){
     if(r.error){
       // La sesión pudo haber quedado inválida del lado del servidor (por ej.
-      // se bloqueó desde otra pestaña) — volver a pedir el código.
+      // se bloqueó desde otra pestaña o venció) — volver a pedir el código.
       bloquearPagos();
+      if(r.error.code === 'P0001' && /sesi[oó]n de pagos/i.test(r.error.message || '')){
+        var errVenc = document.getElementById('pagos-2fa-error');
+        if(errVenc){ errVenc.textContent = 'La sesión de Pagos venció. Poné el código de nuevo.'; errVenc.style.display = 'block'; }
+      }
       return;
     }
     _datosBancariosGuardados = r.data || {};
@@ -12373,6 +12389,12 @@ function buscarANMAT(){
   window.open('https://cima.aemps.es/cima/publico/home.html#busqueda='+encodeURIComponent(q), '_blank');
 }
 
+function buscarCIMA(){
+  var q = document.getElementById('vad-buscar').value.trim();
+  if(!q){ alert('Escribí el nombre del medicamento primero.'); return; }
+  window.open('https://cima.aemps.es/cima/publico/home.html#busqueda='+encodeURIComponent(q), '_blank');
+}
+
 function buscarDrugbank(){
   var q = document.getElementById('vad-buscar').value.trim();
   if(!q){ alert('Escribí el nombre del medicamento primero.'); return; }
@@ -13917,7 +13939,9 @@ function imprimirResumenTab(){
   generarResumen();
   var doc = document.getElementById('hc-resumen-doc');
   if(!doc) return;
-  var w = window.open('','_blank');
+  var w = null;
+  try{ w = window.open('','_blank'); }catch(eVent){ w = null; }
+  if(!w){ alert('⚠️ No se pudo abrir la ventana para imprimir\n\nTu navegador bloqueó la ventana emergente. Permitila para este sitio (ícono en la barra de direcciones) y volvé a tocar «Imprimir».'); return; }
   w.document.write('<html><head><title>Historia Clínica</title>'
     +'<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">'
     +'<style>:root{--g2:#0a3d1f;--g3:#145a32;--g4:#1a7a42;--g5:#22a050;--g6:#34c464;--g9:#e3fbed;--cream:#f6fcf8;--text:#1a2e1e;--muted:#5a7362;}body{font-family:Outfit,sans-serif;background:#fff;padding:24px;color:var(--text);}</style>'
