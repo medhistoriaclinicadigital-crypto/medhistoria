@@ -2610,14 +2610,9 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             </div>
             <div class="form-g2">
               <div class="fl full">
-                <label style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:700;color:var(--g2);text-transform:none;letter-spacing:0;">Motivo de la consulta
-                <textarea id="evol-motivo" placeholder="¿Por qué consulta el paciente en esta visita?"></textarea>
-              </div>
-              <div class="fl full">
                 <label style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:700;color:var(--g2);text-transform:none;letter-spacing:0;">Evolución
                 <textarea id="evol-cuadro" style="min-height:130px;" placeholder="Evolución del cuadro clínico, hallazgos del examen físico, síntomas actuales..."></textarea>
                 <button class="ai-assist" onclick="generarResumenNarrativoIA()">✨ IA: generar resumen narrativo de la consulta</button>
-                <div style="font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-top:6px;">⚠️ "Motivo de la consulta" y "Evolución" se envían a un servicio de IA externo al usar este botón. El sistema no incluye el nombre del paciente automáticamente — evitá escribirlo vos también en estos campos. Vos sos responsable de que los datos que cargues sean correctos y de revisar la respuesta antes de usarla clínicamente. MedHistoriaClinicaOnline no asume responsabilidad legal por las decisiones clínicas que el profesional adopte a partir de esta sugerencia — la decisión y la responsabilidad son siempre del médico tratante.</div>
               </div>
               <div class="fl full">
                 <label style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:700;color:var(--g2);text-transform:none;letter-spacing:0;">Indicaciones y plan
@@ -2667,7 +2662,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <div class="hc-form">
             <h3>🧠 Diagnóstico</h3>
             <div class="form-g2">
-              <div class="fl full"><label>Diagnóstico principal (CIE-10)<input type="text" id="hc-diag-principal" placeholder="Ej: Hipertensión esencial — I10"><button class="ai-assist" style="margin-top:6px;">🤖 IA: sugerir diagnóstico CIE-10 según síntomas</button><div style="font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-top:6px;">⚠️ Este campo puede enviarse a un servicio de IA externo. No escribas el nombre del paciente acá. Vos sos responsable de que los datos que cargues sean correctos y de revisar la respuesta antes de usarla clínicamente. MedHistoriaClinicaOnline no asume responsabilidad legal por las decisiones clínicas que el profesional adopte a partir de esta sugerencia — la decisión y la responsabilidad son siempre del médico tratante.</div></div>
+              <div class="fl full"><label>Diagnóstico principal (CIE-10)<input type="text" id="hc-diag-principal" placeholder="Ej: Hipertensión esencial — I10"></div>
               <div class="fl full"><label>Diagnósticos secundarios<textarea id="hc-diag-secundarios" placeholder="Otros diagnósticos asociados..."></textarea></div>
 
             </div>
@@ -2679,7 +2674,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <div class="hc-form">
             <h3>📋 Plan terapéutico</h3>
             <div class="form-g2">
-              <div class="fl full"><label>Tratamiento farmacológico<textarea placeholder="Medicación indicada con dosis y duración..."></textarea><button class="ai-assist" style="margin-top:6px;">🤖 IA: sugerir tratamiento según diagnóstico e historial</button><div style="font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-top:6px;">⚠️ Este campo puede enviarse a un servicio de IA externo. No escribas el nombre del paciente acá. Vos sos responsable de que los datos que cargues sean correctos y de revisar la respuesta antes de usarla clínicamente. MedHistoriaClinicaOnline no asume responsabilidad legal por las decisiones clínicas que el profesional adopte a partir de esta sugerencia — la decisión y la responsabilidad son siempre del médico tratante.</div></div>
+              <div class="fl full"><label>Tratamiento farmacológico<textarea placeholder="Medicación indicada con dosis y duración..."></textarea></div>
               <div class="fl full"><label>Indicaciones no farmacológicas<textarea placeholder="Dieta, actividad física, reposo, higiene..."></textarea></div>
               <div class="fl full"><label>Estudios solicitados<textarea placeholder="Análisis, imágenes u otros estudios complementarios..."></textarea></div>
               <div class="fl full"><label>Derivaciones<textarea placeholder="Especialistas a los que se deriva..."></textarea></div>
@@ -2778,14 +2773,6 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             </div>
 
 
-            <!-- Evoluciones -->
-            <div style="margin-bottom:20px;">
-              <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:700;color:var(--g2);padding:10px 0 8px;border-bottom:2px solid var(--g6);margin-bottom:12px;">📆 Evoluciones</div>
-              <div id="res-evoluciones">
-                <div style="color:var(--muted);font-size:.85rem;padding:10px 0;">No hay evoluciones registradas aún.</div>
-              </div>
-            </div>
-
             <!-- Pie -->
             <div style="border-top:2px solid var(--g9);padding-top:16px;display:flex;justify-content:space-between;align-items:flex-end;margin-top:20px;">
               <div style="font-size:.75rem;color:var(--muted);">Ley 27.706 · Ley 26.529 · Ley 25.506<br>HC Digital según normativa vigente</div>
@@ -2856,7 +2843,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               </div>
               <textarea id="rx2-med" readonly style="width:100%;min-height:64px;box-sizing:border-box;background:#f3f4f6;cursor:default;" placeholder="El medicamento que cargues arriba va a aparecer acá."></textarea>
               <div class="firma-solo-ar" style="font-size:.72rem;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:6px 10px;margin-top:6px;">💡 Para cumplir con el Registro de Recetarios Electrónicos, cada medicamento necesita: nombre genérico (IFA), forma farmacéutica, presentación, cantidad de unidades y posología. La receta también necesita el diagnóstico. Solo la marca comercial es opcional.</div>
-              <button class="ai-assist" style="margin-top:6px;">🤖 IA: completar medicación según historial</button><div style="font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-top:6px;">⚠️ Este campo puede enviarse a un servicio de IA externo. No escribas el nombre del paciente acá. Vos sos responsable de que los datos que cargues sean correctos y de revisar la respuesta antes de usarla clínicamente. MedHistoriaClinicaOnline no asume responsabilidad legal por las decisiones clínicas que el profesional adopte a partir de esta sugerencia — la decisión y la responsabilidad son siempre del médico tratante.</div>
+              
             </div>
             <div class="fl full" style="grid-column:1/-1;">
               <label for="rx2-ind" style="display:block;margin-bottom:4px;">Indicaciones para el paciente (opcional)</label>
@@ -3011,7 +2998,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div class="fl full" style="grid-column:1/-1;">
               <label for="der-motivo" style="display:block;margin-bottom:4px;">Motivo de derivación</label>
               <textarea id="der-motivo" style="width:100%;min-height:100px;box-sizing:border-box;" placeholder="Motivo clínico detallado..."></textarea>
-              <button class="ai-assist" style="margin-top:6px;">🤖 IA: generar motivo según historial</button><div style="font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-top:6px;">⚠️ Este campo puede enviarse a un servicio de IA externo. No escribas el nombre del paciente acá. Vos sos responsable de que los datos que cargues sean correctos y de revisar la respuesta antes de usarla clínicamente. MedHistoriaClinicaOnline no asume responsabilidad legal por las decisiones clínicas que el profesional adopte a partir de esta sugerencia — la decisión y la responsabilidad son siempre del médico tratante.</div>
+              
             </div>
             <div class="fl full" style="grid-column:1/-1;">
               <label for="der-ant" style="display:block;margin-bottom:4px;">Antecedentes relevantes</label>
@@ -3069,7 +3056,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div class="fl full" style="grid-column:1/-1;">
               <label for="est-det" style="display:block;margin-bottom:4px;">Estudios solicitados</label>
               <textarea id="est-det" style="width:100%;min-height:200px;box-sizing:border-box;" placeholder="Hemograma completo&#10;Glucemia en ayunas&#10;Perfil lipídico&#10;TSH · Creatinina y urea"></textarea>
-              <button class="ai-assist" style="margin-top:6px;">🤖 IA: sugerir estudios según diagnóstico</button><div style="font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-top:6px;">⚠️ Este campo puede enviarse a un servicio de IA externo. No escribas el nombre del paciente acá. Vos sos responsable de que los datos que cargues sean correctos y de revisar la respuesta antes de usarla clínicamente. MedHistoriaClinicaOnline no asume responsabilidad legal por las decisiones clínicas que el profesional adopte a partir de esta sugerencia — la decisión y la responsabilidad son siempre del médico tratante.</div>
+              
             </div>
             <div class="fl"><label>Tipo de estudio<select id="est-tipo" onchange="mostrarOtroEstudio(this)"><option>Laboratorio</option><option>Radiografía</option><option>Ecografía</option><option>TAC</option><option>RMN</option><option>ECG</option><option>Ecocardiograma</option><option>Otro</option></select></div>
             <div class="fl" id="est-otro-div" style="display:none;"><label>Especificar tipo<input type="text" id="est-otro" placeholder="Describí el tipo de estudio..."></div>
@@ -6277,7 +6264,7 @@ function limpiarFormularioHC(){
     'hc-ant-personal','hc-ant-familiar','hc-ant-quirurgico','hc-medicacion','hc-alergias',
     'ex-peso','ex-talla','ex-ta','ex-fc','ex-fr','ex-temp','ex-sat','ex-imc',
     'ex-sistemas','ex-obs','hc-diag-principal','hc-diag-secundarios',
-    'evol-motivo','evol-cuadro','evol-examen','evol-diag','evol-plan','evol-proxima'];
+    'evol-cuadro','evol-examen','evol-diag','evol-plan','evol-proxima'];
   ids.forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.value = '';
@@ -13274,7 +13261,7 @@ async function generarResumenCompletoIA(){
   if(p.medicacion) datos += 'Medicación habitual: '+p.medicacion+'\n';
   var evolTexto = '';
   (evoluciones||[]).forEach(function(e){
-    evolTexto += '- '+(e.fecha||'')+': Motivo: '+(e.motivo||'')+'. Evolución: '+(e.cuadro||'')+'. Plan: '+(e.plan||'')+'\n';
+    evolTexto += '- '+(e.fecha||'')+': Evolución: '+(e.cuadro||'')+'. Plan: '+(e.plan||'')+'\n';
   });
   if(evolTexto) datos += 'Evoluciones registradas:\n'+evolTexto;
   if(!datos){ alert('No hay datos clínicos cargados todavía para este paciente.'); if(btn){ btn.textContent = '✨ Generar Resumen con IA'; btn.disabled = false; } return; }
@@ -13306,12 +13293,11 @@ async function generarResumenCompletoIA(){
   var ga = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
   var p = (pacienteHCActualIdx>=0 && pacientes[pacienteHCActualIdx]) ? pacientes[pacienteHCActualIdx] : {};
 
-  var motivo = ga('evol-motivo');
   var diag   = ga('evol-diag');
   var plan   = ga('evol-plan');
   var cuadro = ga('evol-cuadro');
 
-  if(!motivo && !cuadro){ alert('Completá al menos el motivo de consulta antes de generar el resumen.'); return; }
+  if(!cuadro){ alert('Completá la evolución antes de generar el resumen.'); return; }
 
   var btn = document.querySelector('[onclick="generarResumenNarrativoIA()"]');
   if(btn){ btn.textContent = '⏳ Generando...'; btn.disabled = true; }
@@ -13321,7 +13307,6 @@ async function generarResumenCompletoIA(){
    + 'PACIENTE: paciente' + (p.edad?' de '+p.edad+' años':'') + (p.sexo?', sexo '+p.sexo:'') + ' (sin identificar por privacidad)' + '\n'
     + (p.antPersonal?'ANTECEDENTES: '+p.antPersonal+'\n':'')
     + (p.medicacion?'MEDICACIÓN HABITUAL: '+p.medicacion+'\n':'')
-    + 'MOTIVO DE CONSULTA: ' + (motivo||'No especificado') + '\n'
     + (cuadro?'NOTAS DEL MÉDICO: '+cuadro+'\n':'')
     + (diag?'DIAGNÓSTICO: '+diag+'\n':'')
     + (plan?'PLAN: '+plan+'\n':'')
@@ -13414,7 +13399,6 @@ function guardarEvolucion(){
     fecha: fechaLarga,
     fechaISO: new Date().toISOString(),
     hora: hora,
-    motivo: ga('evol-motivo'),
     cuadro: ga('evol-cuadro'),
     diag: ga('evol-diag'),
     plan: ga('evol-plan'),
@@ -13422,8 +13406,8 @@ function guardarEvolucion(){
     medico: nombreConTitulo(usuarioActual),
   };
 
-  if(!evol.motivo && !evol.cuadro && !evol.diag){
-    alert('Completá al menos el motivo, la evolución o el diagnóstico antes de guardar.');
+  if(!evol.cuadro && !evol.diag){
+    alert('Completá la evolución antes de guardar.');
     return;
   }
 
@@ -13439,7 +13423,7 @@ function guardarEvolucion(){
           paciente_id: pacienteId,
           medico_id: usuarioActual.id,
           fecha_evolucion: evol.fechaISO,
-          motivo_consulta: evol.motivo||'',
+          motivo_consulta: '',   // el campo «Motivo de consulta» ya no existe; la columna del servidor queda sin usar y se manda vacía
           evolucion: evol.cuadro||'',
           indicaciones_plan: evol.plan||'',
           proxima_consulta: evol.proxima||''
@@ -13463,7 +13447,7 @@ function guardarEvolucion(){
   alert('✓ Evolución guardada correctamente.\nFecha: '+fechaLarga+' · '+hora+' hs');
 
   // Limpiar campos para nueva evolución
-  ['evol-motivo','evol-cuadro','evol-diag','evol-plan','evol-proxima'].forEach(function(id){
+  ['evol-cuadro','evol-diag','evol-plan','evol-proxima'].forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.value = '';
   });
@@ -13629,12 +13613,12 @@ function generarResumen(){
     var evolActual = {
       fecha: (document.getElementById('evol-fecha-display')||{}).textContent || fechaLarga,
       hora: (document.getElementById('evol-hora-display')||{}).textContent || '',
-      motivo: ga('evol-motivo'), cuadro: ga('evol-cuadro'),
+      cuadro: ga('evol-cuadro'),
       ta: ga('evol-ta'), fc: ga('evol-fc'), peso: ga('evol-peso'), temp: ga('evol-temp'),
       examen: ga('evol-examen'), diag: ga('evol-diag'), plan: ga('evol-plan'),
       proxima: ga('evol-proxima'), medico: ga('evol-medico'),
     };
-    if(evolActual.motivo || evolActual.cuadro || evolActual.diag){
+    if(evolActual.cuadro || evolActual.diag){
       todasEvoluciones.push(evolActual);
     }
 
@@ -13682,7 +13666,7 @@ function _datosEvolucionParaImprimir(){
   var fnac = ga('hc-fnac') || p.fnac || '';
   var cuil = '';
   try{ cuil = medicoEsArgentina() ? _cuilDePaciente(dni, nombre) : ''; }catch(eC){ cuil = ''; }
-  var sinGuardar = !!(ga('evol-motivo') || ga('evol-cuadro') || ga('evol-diag'));
+  var sinGuardar = !!(ga('evol-cuadro') || ga('evol-diag'));
   return { pac: nombre, dni: dni, fnac: fnac, cuil: cuil, os: ga('hc-os') || p.os || '', afiliado: ga('hc-afiliado') || p.afiliado || '', evs: evs, sinGuardar: sinGuardar };
 }
 // Arma el PDF. Devuelve { doc, nombreArchivo } (o null si no hay nada para imprimir). No hace ningún pedido a la red.
@@ -13755,7 +13739,7 @@ function _generarPDFEvolucion(){
   var campos = function(e){
     var sv = [e.ta && ('TA: '+e.ta), e.fc && ('FC: '+e.fc), e.peso && ('Peso: '+e.peso+' kg'), e.temp && ('Temp: '+e.temp+' °C')].filter(Boolean).join('   ·   ');
     var otro = (e.medico && limpiar(e.medico) !== limpiar(medicaNombre)) ? limpiar(e.medico) : '';
-    return [['SIGNOS VITALES', sv], ['MOTIVO DE LA CONSULTA', limpiar(e.motivo)], ['EVOLUCIÓN', limpiar(e.cuadro)], ['EXAMEN', limpiar(e.examen)],
+    return [['SIGNOS VITALES', sv], ['EVOLUCIÓN', limpiar(e.cuadro)], ['EXAMEN', limpiar(e.examen)],
             ['DIAGNÓSTICO', limpiar(e.diag)], ['INDICACIONES Y PLAN', limpiar(e.plan)], ['PRÓXIMA CONSULTA', limpiar(e.proxima)], ['MÉDICO QUE ATENDIÓ', otro]]
            .filter(function(c){ return c[1]; });
   };
@@ -18118,7 +18102,7 @@ function cerrarModalTel(aceptar){
 
 // ── AUTOGUARDADO de la historia clínica (etapa a): anamnesis y examen físico ──
 // (El diagnóstico NO entra: su pestaña no está visible en la pantalla real desde el 27/06/2026; se vuelve a evaluar cuando la usuaria decida.)
-// ETAPA b): también autoguarda el BORRADOR de la evolución (campos evol-motivo, evol-cuadro, evol-plan, evol-proxima) en la tabla aparte `evoluciones_borrador`.
+// ETAPA b): también autoguarda el BORRADOR de la evolución (campos evol-cuadro, evol-plan, evol-proxima) en la tabla aparte `evoluciones_borrador`.
 // Guarda solo lo que el médico tocó, ~3 s después de dejar de escribir y también al salir del campo, cambiar de pestaña o de paciente, ocultar la página y antes de «Cerrar sesión».
 // 1) Atado al paciente de ORIGEN: cada cambio queda anotado en la ficha del paciente que estaba abierto al escribir (id del servidor o id local), aunque después se abra otro.
 // 2) La copia pendiente del navegador (sessionStorage de esta pestaña) se borra apenas el servidor confirma y, en todo caso, al cerrar sesión (que vacía el almacenamiento).
@@ -18141,7 +18125,6 @@ var _AG_CAMPOS = {
   'ex-sat':      { g: 'ex', l: 'sat',      col: 'saturacion_o2',           num: 1, et: 'Examen físico — Saturación O2' },
   'ex-sistemas': { g: 'ex', l: 'sistemas', col: 'examen_aparatos_sistemas',        et: 'Examen físico — Examen por sistemas' },
   // Borrador de la evolución (tabla aparte; sin historial de cambios ni campo de diagnóstico)
-  'evol-motivo':  { g: 'ev', l: 'motivo',  et: 'Evolución — Motivo' },
   'evol-cuadro':  { g: 'ev', l: 'cuadro',  et: 'Evolución' },
   'evol-plan':    { g: 'ev', l: 'plan',    et: 'Evolución — Indicaciones y plan' },
   'evol-proxima': { g: 'ev', l: 'proxima', et: 'Evolución — Próxima consulta' }
@@ -18179,7 +18162,7 @@ function _agLeerLocal(p, id){
 function _agEscribirLocal(p, id, val){
   var c = _AG_CAMPOS[id];
   if(c.g === 'hc'){ p[c.l] = val; }
-  else if(c.g === 'ev'){ if(!p.borrador) p.borrador = { motivo: '', cuadro: '', plan: '', proxima: '', ts: '' }; p.borrador[c.l] = val; p.borrador.ts = new Date().toISOString(); }
+  else if(c.g === 'ev'){ if(!p.borrador) p.borrador = { cuadro: '', plan: '', proxima: '', ts: '' }; p.borrador[c.l] = val; p.borrador.ts = new Date().toISOString(); }
   else { if(!p.examen) p.examen = {}; p.examen[c.l] = val; }
 }
 function _agNum(v){
@@ -18191,11 +18174,11 @@ function _agHora(){ var d = new Date(); return ('0' + d.getHours()).slice(-2) + 
 function _agHayCampos(e){ for(var k in e.campos){ if(Object.prototype.hasOwnProperty.call(e.campos, k)) return true; } return false; }
 function _agHayPendiente(){ return _agEntradas.some(function(e){ return _agHayCampos(e); }); }
 function _agHayCamposEv(e){ for(var k in e.campos){ if(Object.prototype.hasOwnProperty.call(e.campos, k) && _AG_CAMPOS[k] && _AG_CAMPOS[k].g === 'ev') return true; } return false; }
-// Un borrador «vacío» = sin motivo, plan ni próxima consulta, y la evolución sin nada más que el encabezado automático («fecha — hora hs»)
+// Un borrador «vacío» = sin plan ni próxima consulta, y la evolución sin nada más que el encabezado automático («fecha — hora hs»)
 function _borVacio(b){
   if(!b) return true;
   var t = function(x){ return ('' + (x || '')).trim(); };
-  if(t(b.motivo) || t(b.plan) || t(b.proxima)) return false;
+  if(t(b.plan) || t(b.proxima)) return false;
   var c = t(b.cuadro);
   return !c || /^[^\n]{0,80}\d\d:\d\d hs$/.test(c);
 }
@@ -18294,7 +18277,7 @@ function _agAlEscribir(ev){
   if(c.g === 'ev'){
     if(!e.borr){   // primer cambio del borrador: se toma lo que hay en la pantalla de ESTE paciente (los 4 campos)
       var dom = function(x){ var d = document.getElementById(x); return d ? d.value : ''; };
-      e.borr = { motivo: dom('evol-motivo'), cuadro: dom('evol-cuadro'), plan: dom('evol-plan'), proxima: dom('evol-proxima') };
+      e.borr = { cuadro: dom('evol-cuadro'), plan: dom('evol-plan'), proxima: dom('evol-proxima') };
     }
     e.borr[c.l] = val;
   } else if(!(id in e.base)){ e.base[id] = _agLeerLocal(p, id); }   // valor al empezar la sesión de edición (para el historial)
@@ -18356,7 +18339,7 @@ function _borEnviar(e, p, pacienteId, cb){
     }, fallo);
     return;
   }
-  var fila = { paciente_id: pacienteId, medico_id: medicoId, motivo_consulta: b.motivo || '', evolucion: b.cuadro || '', indicaciones_plan: b.plan || '', proxima_consulta: b.proxima || '', actualizado_en: new Date().toISOString() };
+  var fila = { paciente_id: pacienteId, medico_id: medicoId, motivo_consulta: '', evolucion: b.cuadro || '', indicaciones_plan: b.plan || '', proxima_consulta: b.proxima || '', actualizado_en: new Date().toISOString() };
   sb.from('evoluciones_borrador').upsert(fila, { onConflict: 'paciente_id,medico_id' }).then(function(r){
     if(!r.error){ e.borrExiste = true; e.borrVacioBorrado = false; if(p.borrador) p.borrador.ts = fila.actualizado_en; }
     cb(r.error);
@@ -18478,7 +18461,7 @@ cargarLocal = function(){ var r = _agCargarLocalOrig.apply(this, arguments); set
 // Lo que el médico escribe en «Evolución» se guarda solo como BORRADOR (tabla aparte `evoluciones_borrador`, motor de motor-bloque.js). Una evolución a medias nunca figura como terminada:
 // sin ninguna marca de borrador en el PDF (sin cartel, sin fila en «Evoluciones anteriores» y sin botón «Descartar»). «Guardar evolución» la convierte en evolución
 // terminada (como siempre) y recién cuando el servidor lo confirma se borra el borrador. NO hay campo de diagnóstico. La evolución ya guardada sigue sin poder editarse.
-var _BOR_IDS = ['evol-motivo', 'evol-cuadro', 'evol-plan', 'evol-proxima'];
+var _BOR_IDS = ['evol-cuadro', 'evol-plan', 'evol-proxima'];
 function _borDom(id){ var d = document.getElementById(id); return d ? d.value : ''; }
 function _borActivo(){
   var ab = _agPacienteAbierto(); if(!ab) return null;
@@ -18498,7 +18481,7 @@ function _borEncabezadoCuadro(){
 
 function _borLlenarForm(b){
   var set = function(id, v){ var d = document.getElementById(id); if(d) d.value = v || ''; };
-  set('evol-motivo', b.motivo); set('evol-cuadro', b.cuadro); set('evol-plan', b.plan); set('evol-proxima', b.proxima);
+  set('evol-cuadro', b.cuadro); set('evol-plan', b.plan); set('evol-proxima', b.proxima);
 }
 // Borra la fila del servidor (si el motor está guardando, espera a que termine para que no la vuelva a crear)
 function _borBorrarServidor(e){
@@ -18525,9 +18508,9 @@ function _borCargar(){
       var fila = r.data[0];
       e.borrExiste = true;
       if(_agHayCamposEv(e) || e.enVuelo || e.borrAlGuardar) { _agRender(); return; }   // lo que se está escribiendo ahora manda
-      var b = { motivo: fila.motivo_consulta || '', cuadro: fila.evolucion || '', plan: fila.indicaciones_plan || '', proxima: fila.proxima_consulta || '', ts: fila.actualizado_en || '', retomado: true };
+      var b = { cuadro: fila.evolucion || '', plan: fila.indicaciones_plan || '', proxima: fila.proxima_consulta || '', ts: fila.actualizado_en || '', retomado: true };
       if(_borVacio(b)){ _agRender(); return; }
-      p.borrador = b; e.borr = { motivo: b.motivo, cuadro: b.cuadro, plan: b.plan, proxima: b.proxima };
+      p.borrador = b; e.borr = { cuadro: b.cuadro, plan: b.plan, proxima: b.proxima };
       var ab2 = _agPacienteAbierto();
       if(ab2 && ab2.p === p) _borLlenarForm(b);
       _agRender(); try{ renderEvolucionesHistorial(); }catch(x){ console.warn('[catch]', x); }
@@ -18541,7 +18524,7 @@ guardarEvolucion = function(){
   var ab = _agPacienteAbierto(), e = ab ? _agEntrada(ab.p, false) : null;
   var antes = (typeof evoluciones !== 'undefined' && evoluciones) ? evoluciones.length : 0;
   var nom = (typeof _nombreHCActual === 'function') ? _nombreHCActual() : '';
-  var copia = { motivo: _borDom('evol-motivo'), cuadro: _borDom('evol-cuadro'), plan: _borDom('evol-plan'), proxima: _borDom('evol-proxima') };
+  var copia = { cuadro: _borDom('evol-cuadro'), plan: _borDom('evol-plan'), proxima: _borDom('evol-proxima') };
   var r = _borGuardarEvOrig.apply(this, arguments);
   var despues = (typeof evoluciones !== 'undefined' && evoluciones) ? evoluciones.length : 0;
   if(despues > antes && ab){   // se guardó (no fue el aviso de «completá al menos…»)
@@ -18567,8 +18550,8 @@ _guardadoServidor = function(clave, descripcion, err){
       else {   // la evolución no llegó al servidor: el texto vuelve como borrador (no se pierde)
         var rr = _agPacienteDe(ent);
         if(rr){
-          rr.p.borrador = { motivo: copia.motivo, cuadro: copia.cuadro, plan: copia.plan, proxima: copia.proxima, ts: new Date().toISOString(), retomado: false };
-          ent.borr = { motivo: copia.motivo, cuadro: copia.cuadro, plan: copia.plan, proxima: copia.proxima };
+          rr.p.borrador = { cuadro: copia.cuadro, plan: copia.plan, proxima: copia.proxima, ts: new Date().toISOString(), retomado: false };
+          ent.borr = { cuadro: copia.cuadro, plan: copia.plan, proxima: copia.proxima };
           ent.campos['evol-cuadro'] = copia.cuadro; ent.estado = 'pend'; _agProgramar(ent, 400);
           var ab = _agPacienteAbierto(); if(ab && ab.p === rr.p) _borLlenarForm(rr.p.borrador);
           _agPersistir(); _agRender(); try{ renderEvolucionesHistorial(); }catch(x){ console.warn('[catch]', x); }
@@ -18587,7 +18570,7 @@ abrirHC = function(){
   try{
     var ab = _agPacienteAbierto(), idAhora = ab ? _idPac(ab.p) : '';
     if(idAhora !== idAntes){
-      _borLlenarForm(ab && ab.p.borrador && !_borVacio(ab.p.borrador) ? ab.p.borrador : { motivo: '', cuadro: '', plan: '', proxima: '' });
+      _borLlenarForm(ab && ab.p.borrador && !_borVacio(ab.p.borrador) ? ab.p.borrador : { cuadro: '', plan: '', proxima: '' });
     }
     _agRender();
     var pestana = document.getElementById('hc-evolucion');
@@ -18607,11 +18590,11 @@ var _borDatosImprimirOrig = _datosEvolucionParaImprimir;
 _datosEvolucionParaImprimir = function(){
   var d = _borDatosImprimirOrig.apply(this, arguments);
   try{
-    var vals = { motivo: _borDom('evol-motivo'), cuadro: _borDom('evol-cuadro'), plan: _borDom('evol-plan'), proxima: _borDom('evol-proxima') };
+    var vals = { cuadro: _borDom('evol-cuadro'), plan: _borDom('evol-plan'), proxima: _borDom('evol-proxima') };
     if(!_borVacio(vals)){
       var now = new Date();
       d.evs.push({ fecha: now.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }), hora: ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2),
-        motivo: vals.motivo, cuadro: vals.cuadro, plan: vals.plan, proxima: vals.proxima, medico: '', borrador: true });
+        cuadro: vals.cuadro, plan: vals.plan, proxima: vals.proxima, medico: '', borrador: true });
       d.sinGuardar = false; d.hayBorrador = true;
     }
   }catch(x){ console.warn('[catch]', x); }
@@ -18926,7 +18909,6 @@ function sincronizarPacientesSupabase(){
                 fecha: fechaLarga,
                 fechaISO: fechaISO,
                 hora: hora,
-                motivo: remoto.motivo_consulta||'',
                 cuadro: remoto.evolucion||'',
                 diag: '',
                 plan: remoto.indicaciones_plan||'',
@@ -19332,7 +19314,6 @@ function insertarEnHC(){
   }
 
   // También insertar en evolución si existe
-  var evolMotivo = document.getElementById('evol-motivo');
   var evolCuadro = document.getElementById('evol-cuadro');
   if(evolCuadro){
     var prevEvol = evolCuadro.value;
