@@ -2591,8 +2591,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
 
 
             <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <button class="form-submit" onclick="guardarDesdeHC();" style="flex:1;min-width:200px;padding:14px;font-size:1rem;font-weight:700;background:linear-gradient(135deg,#145a32,#22a050);">💾 Guardar anamnesis</button>
-            <button class="form-submit" onclick="imprimirAnamnesis()" style="flex:1;min-width:200px;padding:14px;font-size:1rem;font-weight:700;background:linear-gradient(135deg,var(--g4),var(--g3));">🖨️ Imprimir anamnesis</button>
+            <button class="form-submit" onclick="imprimirAnamnesis()" style="background:linear-gradient(135deg,var(--g4),var(--g3));">🖨️ Imprimir anamnesis</button>
             </div>
           </div>
         </div>
@@ -13074,7 +13073,7 @@ function _audFecha(t){
   var d = new Date(t), p2 = function(n){ return ('0' + n).slice(-2); };
   return p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
 }
-function _audNombreCampo(c){ return ('' + (c || '')).replace(/^Examen físico\s+—\s+/, ''); }
+function _audNombreCampo(c){ return ('' + (c || '')).replace(/^(Examen físico|Datos personales)\s+—\s+/, ''); }
 // Documentos que quedan anotados como «<TÍTULO> generado/a» (receta, derivación, pedido de estudios...): se muestran con un nombre corto, sin «generado/a» ni mayúsculas
 var _AUD_DOCS = { 'RECETA MÉDICA DIGITAL': 'Receta', 'RECETA MÉDICA': 'Receta', 'DERIVACIÓN MÉDICA': 'Derivación', 'DERIVACIÓN': 'Derivación', 'PEDIDO DE ESTUDIOS': 'Pedido de estudios', 'RESUMEN DE HISTORIA CLÍNICA': 'Resumen de historia clínica' };
 function _audDocNombre(campo){
@@ -18134,6 +18133,18 @@ var _AG_CAMPOS = {
   'hc-ant-quirurgico': { g: 'hc', l: 'antQuirurgico', col: 'antecedentes_quirurgicos', et: 'Antecedentes quirúrgicos' },
   'hc-medicacion':     { g: 'hc', l: 'medicacion',    col: 'medicacion_habitual',      et: 'Medicación habitual' },
   'hc-alergias':       { g: 'hc', l: 'alergias',      col: 'alergias',                 et: 'Alergias' },
+  // Datos personales del paciente (tabla `pacientes`; solo si la ficha ya existe en el servidor)
+  'hc-paciente':       { g: 'pac', l: 'nombre',       col: 'nombre',           et: 'Datos personales — Apellido y nombre' },
+  'hc-dni':            { g: 'pac', l: 'dni',          col: 'dni',              et: 'Datos personales — DNI / documento' },
+  'hc-fnac':           { g: 'pac', l: 'fnac',         col: 'fecha_nacimiento', et: 'Datos personales — Fecha de nacimiento' },
+  'hc-nacionalidad':   { g: 'pac', l: 'nacionalidad', col: 'nacionalidad',     et: 'Datos personales — Nacionalidad' },
+  'hc-sexo':           { g: 'pac', l: 'sexo',         col: 'sexo',             et: 'Datos personales — Sexo' },
+  'hc-domicilio':      { g: 'pac', l: 'domicilio',    col: 'domicilio',        et: 'Datos personales — Domicilio' },
+  'hc-localidad':      { g: 'pac', l: 'localidad',    col: 'localidad',        et: 'Datos personales — Localidad' },
+  'hc-tel':            { g: 'pac', l: 'tel',          col: 'telefono',         et: 'Datos personales — Teléfono' },
+  'hc-email':          { g: 'pac', l: 'email',        col: 'email',            et: 'Datos personales — Email' },
+  'hc-os':             { g: 'pac', l: 'os',           col: 'obra_social',      et: 'Datos personales — Obra social' },
+  'hc-afiliado':       { g: 'pac', l: 'afiliado',     col: 'n_afiliado',       et: 'Datos personales — N° de afiliado' },
   'ex-peso':     { g: 'ex', l: 'peso',     col: 'peso',                    num: 1, et: 'Examen físico — Peso' },
   'ex-talla':    { g: 'ex', l: 'talla',    col: 'talla',                   num: 1, et: 'Examen físico — Talla' },
   'ex-ta':       { g: 'ex', l: 'ta',       col: 'tension_arterial',                et: 'Examen físico — Tensión arterial' },
@@ -18173,13 +18184,20 @@ function _agPacienteDe(e){
 function _agClave(e){ return 'hcag:' + (e.sbId || e.uid); }
 function _agLeerLocal(p, id){
   var c = _AG_CAMPOS[id];
-  if(c.g === 'hc') return p[c.l] || '';
+  if(c.g === 'hc' || c.g === 'pac') return p[c.l] || '';
   if(c.g === 'ev') return (p.borrador && p.borrador[c.l]) || '';
   return (p.examen && p.examen[c.l]) || '';
 }
 function _agEscribirLocal(p, id, val){
   var c = _AG_CAMPOS[id];
   if(c.g === 'hc'){ p[c.l] = val; }
+  else if(c.g === 'pac'){
+    var _vv = _agValidarPac(id, val);
+    if(_vv.ok){ p[c.l] = (id === 'hc-dni' || id === 'hc-fnac') ? (_vv.val === null ? '' : _vv.val) : val; }   // un valor a medio escribir no pisa el último válido de la ficha
+    if(id === 'hc-paciente' && _vv.ok) p.apellido = ('' + val).split(',')[0].trim();
+    if(id === 'hc-fnac'){ setTimeout(function(){ try{ var _ed = document.getElementById('hc-edad'); if(_ed){ p.edad = _edadParaGuardar(_ed.value); _agRefrescarTituloHC(p); } }catch(eEd){ console.warn('[catch]', eEd); } }, 0); }
+    try{ _agRefrescarTituloHC(p); }catch(eTi){ console.warn('[catch]', eTi); }
+  }
   else if(c.g === 'ev'){ if(!p.borrador) p.borrador = { cuadro: '', plan: '', proxima: '', ts: '' }; p.borrador[c.l] = val; p.borrador.ts = new Date().toISOString(); }
   else { if(!p.examen) p.examen = {}; p.examen[c.l] = val; }
 }
@@ -18365,21 +18383,54 @@ function _borEnviar(e, p, pacienteId, cb){
   }, fallo);
 }
 function _agLimpiar(e, snap){ Object.keys(snap).forEach(function(id){ if(e.campos[id] === snap[id]) delete e.campos[id]; }); }
+// Título y subtítulo de la pantalla con el nombre, el DNI y la edad del paciente abierto (como al abrirlo desde la lista)
+function _agRefrescarTituloHC(p){
+  var ab = _agPacienteAbierto(); if(!ab || ab.p !== p) return;
+  var tit = document.querySelector('#panel-hc .app-page-title'), sub = document.querySelector('#panel-hc .app-page-sub');
+  if(tit) tit.textContent = '📋 HC — ' + (p.nombre || '');
+  if(sub) sub.textContent = 'DNI ' + (p.dni || '—') + (p.edad ? ' · ' + _edadConUnidad(p.edad) : '') + (p.os ? ' · ' + p.os : '');
+}
+// Un dato personal a medio escribir NO se manda (igual que un número incompleto): devuelve { ok, val }
+function _agValidarPac(id, v){
+  v = ('' + (v === undefined || v === null ? '' : v)).trim();
+  if(id === 'hc-paciente') return v ? { ok: true, val: v } : { ok: false };
+  if(id === 'hc-dni'){ var d = _normalizarDocumento(v); return d ? { ok: true, val: d } : { ok: false }; }
+  if(id === 'hc-fnac'){ var _fe = document.getElementById('hc-fnac'); if(v === '' && _fe && _fe.validity && _fe.validity.badInput) return { ok: false }; }
+  if(id === 'hc-fnac') return v === '' ? { ok: true, val: null } : (/^\d{4}-\d{2}-\d{2}$/.test(v) && _edadDesdeFnac(v).ok ? { ok: true, val: v } : { ok: false });
+  if(id === 'hc-email') return (v === '' || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) ? { ok: true, val: v } : { ok: false };
+  return { ok: true, val: v };
+}
+// Envía los datos personales tocados a la fila del paciente (solo las columnas tocadas); fichas de centro: con la llamada que ya usa «Pacientes»
+function _agEnviarPac(p, pacienteId, pacSB, cb){
+  var fallo = function(x){ cb(x || { message: 'Failed to fetch' }); };
+  if(typeof miCentro !== 'undefined' && miCentro && miCentro.id && p.esDeCentro){
+    var completo = { medico_id: usuarioActual.id, nombre: p.nombre || '', apellido: p.apellido || '', dni: p.dni || '', cuil: p.cuil || '', fecha_nacimiento: p.fnac || null, telefono: p.tel || '', email: p.email || '', obra_social: p.os || '', n_afiliado: p.afiliado || '', plan: p.plan || '', domicilio: p.domicilio || '', localidad: p.localidad || '', nacionalidad: p.nacionalidad || '', sexo: p.sexo || '', centro_id: miCentro.id };
+    sb.rpc('guardar_paciente_centro', { p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: Object.assign(completo, pacSB) }).then(function(r){ cb(r.error); }, fallo);
+    return;
+  }
+  sb.from('pacientes').update(pacSB).eq('id', pacienteId).then(function(r){ cb(r.error); }, fallo);
+}
 function _agGuardar(e){
   clearTimeout(e.timer); clearTimeout(e.reintT);
   if(e.enVuelo){ e.repetir = true; return; }
   var r = _agPacienteDe(e);
   if(!r){ e.campos = {}; e.base = {}; e.borr = null; _agPersistir(); return; }   // la ficha ya no está en la lista
-  var p = r.p, ids = Object.keys(e.campos), snapHc = {}, snapEv = {}, hcSB = {};
+  var p = r.p, ids = Object.keys(e.campos), snapHc = {}, snapEv = {}, hcSB = {}, snapPac = {}, pacSB = {};
   ids.forEach(function(id){
     var c = _AG_CAMPOS[id], v = e.campos[id];
     if(c.g === 'ev'){ snapEv[id] = v; return; }
+    if(c.g === 'pac'){
+      var vp = _agValidarPac(id, v);
+      if(!vp.ok){ delete e.campos[id]; return; }   // a medio escribir: no se manda (lo escrito queda en la pantalla)
+      pacSB[c.col] = vp.val; if(id === 'hc-paciente') pacSB.apellido = ('' + vp.val).split(',')[0].trim();
+      snapPac[id] = v; return;
+    }
     if(c.num){ var n = _agNum(v); if(!n.ok){ delete e.campos[id]; return; } hcSB[c.col] = n.val; }   // número a medio escribir: no se manda
     else { hcSB[c.col] = ('' + v).trim(); }
     snapHc[id] = v;
   });
-  var hayHc = Object.keys(snapHc).length > 0, hayEv = Object.keys(snapEv).length > 0;
-  if(!hayHc && !hayEv){ if(e.estado === 'pend') { e.estado = e.hora ? 'ok' : ''; } _agPersistir(); _agRender(); return; }
+  var hayHc = Object.keys(snapHc).length > 0, hayEv = Object.keys(snapEv).length > 0, hayPac = Object.keys(snapPac).length > 0;
+  if(!hayHc && !hayEv && !hayPac){ if(e.estado === 'pend') { e.estado = e.hora ? 'ok' : ''; } _agPersistir(); _agRender(); return; }
   _agIdServidor(e, p, function(pacienteId, errBusq){
     if(!pacienteId){
       if(errBusq){ e.estado = _agEsRed(errBusq) ? 'offline' : 'error'; _agMarcarFallido(e, ''); _agReintentar(e); }
@@ -18392,6 +18443,7 @@ function _agGuardar(e){
     var pasos = [], fallo = null;
     if(hayHc){ hcSB.paciente_id = pacienteId; pasos.push(function(cb){ _agEnviar(p, pacienteId, hcSB, function(err){ if(!err) _agLimpiar(e, snapHc); cb(err); }); }); }
     if(hayEv){ pasos.push(function(cb){ _borEnviar(e, p, pacienteId, function(err){ if(!err) _agLimpiar(e, snapEv); cb(err); }); }); }
+    if(hayPac){ pasos.push(function(cb){ _agEnviarPac(p, pacienteId, pacSB, function(err){ if(!err) _agLimpiar(e, snapPac); cb(err); }); }); }
     var i = 0;
     var fin = function(){
       e.enVuelo = false;
@@ -20475,6 +20527,107 @@ function mlRegistrar(){
 function completarConIA(campoId, tipoCampo){
   alert('La función de IA no está disponible en esta versión. Completá el campo manualmente.');
 }
+
+// ══ REGLA DE PACIENTE (Historia Clínica) ══
+// Estados: 'ok' (paciente abierto y con ficha en el servidor) · 'sinpaciente' · 'sinficha' · 'abriendo' (esperando el id del servidor)
+var _hcCrearFicha = null;   // { nombre, t }: se tocó «Crear la ficha de …»; al llegar el id del servidor se abre su Historia Clínica
+var _hcReglaT = null;
+var _hcReglaEstado = '';
+function _hcNombreNatural(n){ var p = ('' + (n || '')).split(','); return p.length > 1 ? ((p[1].trim() + ' ' + p[0].trim()).trim()) : ('' + (n || '')).trim(); }
+function _hcReglaMostrar(estado, info){
+  var panel = document.getElementById('panel-hc'); if(!panel) return;
+  _hcReglaEstado = estado;
+  var tabs = panel.querySelector('.hc-tabs');
+  var secs = ['hc-anamnesis','hc-evolucion','hc-examen','hc-diag','hc-plan','hc-estudios','hc-resumen','hc-auditoria'];
+  var fin = panel.querySelector('button[onclick*="finalizarAtencion"]');
+  var tarj = document.getElementById('hc-regla-tarjeta');
+  if(estado === 'ok'){
+    if(tarj) tarj.remove();
+    if(fin) fin.style.display = '';
+    try{ var _ab = _agPacienteAbierto(); if(_ab) _agRefrescarTituloHC(_ab.p); }catch(eT){ console.warn('[catch]', eT); }   // título y subtítulo del paciente (nombre, DNI, edad)
+    if(tabs && tabs.style.display === 'none'){
+      tabs.style.display = '';
+      var on = panel.querySelector('.hc-tab.on') || panel.querySelector('.hc-tab');
+      if(on) on.click();   // vuelve a mostrar la pestaña que estaba activa
+    }
+    return;
+  }
+  if(tabs) tabs.style.display = 'none';
+  secs.forEach(function(i){ var e = document.getElementById(i); if(e) e.style.display = 'none'; });
+  if(fin) fin.style.display = 'none';   // no hay nada que finalizar
+  var nombre = (info && info.nombre) || '', dni = (info && info.dni) || '';
+  var tit = panel.querySelector('.app-page-title'), sub = panel.querySelector('.app-page-sub');
+  if(estado === 'sinpaciente'){ if(tit) tit.textContent = '📋 Historia Clínica'; if(sub) sub.textContent = 'Elegí un paciente para empezar'; }
+  else { if(tit) tit.textContent = '📋 HC — ' + nombre; if(sub) sub.textContent = estado === 'abriendo' ? 'Abriendo la ficha…' : ('DNI ' + (dni || '—') + ' · todavía sin ficha'); }
+  if(tarj) tarj.remove();
+  tarj = document.createElement('div'); tarj.id = 'hc-regla-tarjeta';
+  tarj.style.cssText = 'background:#fff;border:1px solid var(--g9);border-radius:14px;padding:34px 30px;margin-top:18px;text-align:center;box-shadow:0 8px 24px rgba(20,90,50,.08);';
+  var mk = function(tag, css, txt){ var e = document.createElement(tag); if(css) e.style.cssText = css; if(txt !== undefined) e.textContent = txt; return e; };
+  tarj.appendChild(mk('div', 'font-size:2.2rem;margin-bottom:6px;', '👤'));
+  var natural = _hcNombreNatural(nombre);
+  var titulo = estado === 'sinpaciente' ? 'Elegí un paciente para abrir su Historia Clínica' : (estado === 'abriendo' ? 'Abriendo la Historia Clínica…' : (natural + ' todavía no tiene ficha'));
+  var texto = estado === 'sinpaciente' ? 'La Historia Clínica siempre se abre con un paciente ya guardado. Elegilo de tu lista de Pacientes o creá uno nuevo con su DNI.'
+    : (estado === 'abriendo' ? 'Un momento: se está buscando la ficha del paciente.' : 'Para escribir su historia clínica primero hay que crear su ficha con su DNI. Hasta entonces la Historia Clínica queda cerrada, así nada de lo que escribas se pierde.');
+  tarj.appendChild(mk('div', "font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;color:var(--g2);margin-bottom:8px;", titulo));
+  tarj.appendChild(mk('div', 'font-size:.92rem;color:var(--g3);max-width:520px;margin:0 auto 18px;line-height:1.5;', texto));
+  var fila = mk('div', 'display:flex;gap:12px;justify-content:center;flex-wrap:wrap;');
+  var btn = function(txt, css, fn){ var b = mk('button', 'margin-top:0;' + (css || ''), txt); b.className = 'form-submit'; b.type = 'button'; b.onclick = fn; fila.appendChild(b); };
+  if(estado === 'sinpaciente'){
+    btn('👥 Elegir un paciente', '', function(){ showPanel('pacientes'); });
+    btn('＋ Nuevo paciente', 'background:linear-gradient(135deg,var(--g4),var(--g3));', function(){ abrirNuevoPaciente(); });
+  } else if(estado === 'sinficha'){
+    btn('＋ Crear la ficha de ' + natural, '', function(){
+      _hcCrearFicha = { nombre: nombre, t: Date.now() };
+      abrirNuevoPaciente();
+      var pp = ('' + nombre).split(',');
+      var a = document.getElementById('pac-apellido'), n = document.getElementById('pac-nombre'), d = document.getElementById('pac-dni');
+      if(a) a.value = pp[0].trim(); if(n) n.value = (pp[1] || '').trim(); if(d && dni) d.value = dni;
+      _pacTocado = true;
+    });
+  }
+  if(fila.childNodes.length) tarj.appendChild(fila);
+  var ref = tabs || panel.querySelector('.hc-tabs');
+  (ref ? ref.parentNode : panel).insertBefore(tarj, ref ? ref.nextSibling : null);
+}
+function _hcReglaEvaluar(info){
+  var panel = document.getElementById('panel-hc'); if(!panel) return;
+  clearTimeout(_hcReglaT);
+  var ab = _agPacienteAbierto();
+  if(ab && ab.p._sbId){ _hcReglaMostrar('ok'); return; }
+  if(ab){
+    var pac = ab.p, intentos = 0;
+    _hcReglaMostrar('abriendo', { nombre: pac.nombre, dni: pac.dni });
+    (function esperar(){
+      var ab2 = _agPacienteAbierto();
+      if(!ab2 || ab2.p !== pac) return;                       // se abrió otro paciente o se cerró
+      if(pac._sbId){ _hcReglaMostrar('ok'); return; }
+      if(intentos === 0 || intentos === 4){ try{ buscarPacienteIdCompartido(pac.dni, function(id){ if(id) _marcarSbIdPaciente(pac, id); }); }catch(eB){ console.warn('[catch]', eB); } }
+      if(++intentos > 9){ _hcReglaMostrar('sinficha', { nombre: pac.nombre, dni: pac.dni }); return; }
+      _hcReglaT = setTimeout(esperar, 700);
+    })();
+    return;
+  }
+  if(info && info.nombre){ _hcReglaMostrar('sinficha', info); return; }
+  _hcReglaMostrar('sinpaciente');
+}
+// Llegó el id del servidor de una ficha: si se estaba creando desde la tarjeta, se abre su Historia Clínica; si no, se vuelve a evaluar
+function _hcReglaAlLlegarId(pac){
+  if(_hcCrearFicha && Date.now() - _hcCrearFicha.t < 300000 && _normNombrePac(pac.nombre) === _normNombrePac(_hcCrearFicha.nombre)){
+    _hcCrearFicha = null;
+    abrirHC(pac.nombre, pac.dni || '', pac.edad || '', pac.os || '', _idPac(pac));
+    return;
+  }
+  var ab = _agPacienteAbierto();
+  if(ab && ab.p === pac && _hcReglaEstado !== 'ok') _hcReglaEvaluar();
+}
+var _hcReglaAbrirOrig = abrirHC;
+abrirHC = function(nombre, dni, edad, os, idPac){ var r = _hcReglaAbrirOrig.apply(this, arguments); try{ _hcReglaEvaluar({ nombre: nombre, dni: dni }); }catch(eR){ console.warn('[catch]', eR); } return r; };
+var _hcReglaShowOrig = showPanel;
+showPanel = function(id){ var r = _hcReglaShowOrig.apply(this, arguments); if(id === 'hc'){ try{ _hcReglaEvaluar(); }catch(eR){ console.warn('[catch]', eR); } } return r; };
+var _hcReglaLimpiarOrig = limpiarFormularioHC;
+limpiarFormularioHC = function(){ var r = _hcReglaLimpiarOrig.apply(this, arguments); try{ _hcReglaEvaluar(); }catch(eR){ console.warn('[catch]', eR); } return r; };
+var _hcReglaMarcarOrig = _marcarSbIdPaciente;
+_marcarSbIdPaciente = function(pac, id){ var r = _hcReglaMarcarOrig.apply(this, arguments); try{ if(pac && id) _hcReglaAlLlegarId(pac); }catch(eR){ console.warn('[catch]', eR); } return r; };
 
 function finalizarAtencion(_c){
   if(_c !== _MH_OK){ _mhConfirmar('¿Finalizar la atención?\n\nSe va a cerrar el paciente de la Historia Clínica y se van a dejar en blanco los formularios de Recetas, Derivaciones, Estudios y Facturación, con todos sus datos.\n\nLo ya emitido y firmado no se borra. Lo que no hayas guardado en la Historia Clínica se pierde.', function(ok){ if(ok) finalizarAtencion(_MH_OK); }); return; }
