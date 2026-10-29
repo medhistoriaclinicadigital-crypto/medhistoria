@@ -6357,6 +6357,7 @@ function abrirHC(nombre, dni, edad, os, idPac){
   document.querySelectorAll('.mob-btn')[2].classList.add('act');
 }
 function switchHcTab(btn,id){
+  if(typeof _agCerrarEdicionTodas === 'function'){ try{ _agCerrarEdicionTodas(); }catch(eAg){ console.warn('[catch]', eAg); } }   // el Historial anota los cambios hechos hasta ahora
   document.querySelectorAll('.hc-tab').forEach(b=>b.classList.remove('on'));
   ['hc-anamnesis','hc-evolucion','hc-examen','hc-diag','hc-plan','hc-estudios','hc-resumen','hc-auditoria'].forEach(p=>{
     var el=document.getElementById(p);
@@ -13049,16 +13050,12 @@ function registrarAuditoria(idxPaciente, campo, valorAnterior, valorNuevo){
   });
 
   // Guardar también en Supabase (del propio médico, o del centro si es paciente compartido)
-  if(usuarioActual && usuarioActual.id && p.dni){
-    buscarPacienteIdCompartido(p.dni, function(pacienteId){
+  if(usuarioActual && usuarioActual.id){
+    _audIdServidor(p, function(pacienteId){   // primero el id del servidor (como el autoguardado y la lectura), después el DNI
       if(pacienteId){
-        sb.from('auditoria_hc').insert({
-          paciente_id: pacienteId,
-          medico_id: usuarioActual.id,
-          campo: campo,
-          valor_anterior: valorAnterior,
-          valor_nuevo: valorNuevo
-        }).then(function(r){ if(r.error) console.error('Error guardando auditoria en Supabase:', r.error); });
+        var fila = { id: Date.now() + '-' + Math.random().toString(36).slice(2), t: Date.now(), paciente_id: pacienteId, medico_id: usuarioActual.id, campo: campo, valor_anterior: valorAnterior, valor_nuevo: valorNuevo };
+        var cola = _audColaLeer(); cola.push(fila); _audColaEscribir(cola);   // queda anotada hasta que el servidor la confirme (si se recarga la página, se reenvía al volver)
+        _audEnviarFila(fila);
       }
     });
   }
@@ -13092,6 +13089,27 @@ function _audDescribir(x){
   var doc = _audDocNombre(x.campo), nuevo = ('' + (x.nuevo || '')).trim();
   if(doc) return { nombre: doc, corto: nuevo, completo: nuevo, antes: null };
   return { nombre: _audNombreCampo(x.campo), corto: nuevo, completo: nuevo, antes: ('' + (x.anterior || '')).trim() };
+}
+// Cola de líneas del Historial sin confirmar (sessionStorage: sobrevive a recargar la pestaña; «Cerrar sesión» la borra)
+function _audColaLeer(){ try{ var c = sessionStorage.getItem(_userKey('mhcd_ag_aud')); return c ? JSON.parse(c) : []; }catch(x){ return []; } }
+function _audColaEscribir(l){ try{ if(l.length) sessionStorage.setItem(_userKey('mhcd_ag_aud'), JSON.stringify(l)); else sessionStorage.removeItem(_userKey('mhcd_ag_aud')); }catch(x){ console.warn('[catch]', x); } }
+function _audColaQuitar(id){ _audColaEscribir(_audColaLeer().filter(function(x){ return x.id !== id; })); }
+function _audEnviarFila(fila){
+  sb.from('auditoria_hc').insert({ paciente_id: fila.paciente_id, medico_id: fila.medico_id, campo: fila.campo, valor_anterior: fila.valor_anterior, valor_nuevo: fila.valor_nuevo }).then(function(r){
+    if(r.error) console.error('Error guardando auditoria en Supabase:', r.error); else _audColaQuitar(fila.id);
+  }, function(x){ console.warn('[catch]', x); });
+}
+// Al volver a entrar: las líneas que no llegaron a confirmarse se reenvían, salvo que el servidor ya las tenga (mismo paciente, campo y valor, desde ese momento)
+function _audColaVaciar(){
+  var l = _audColaLeer();
+  if(!l.length || !usuarioActual || !usuarioActual.id) return;
+  l.forEach(function(fila){
+    sb.from('auditoria_hc').select('fecha').eq('paciente_id', fila.paciente_id).eq('campo', fila.campo).eq('valor_nuevo', fila.valor_nuevo).order('fecha', { ascending: false }).limit(1).then(function(r){
+      if(r.error) return;
+      var yaEsta = !!(r.data && r.data.length && Date.parse(r.data[0].fecha) >= fila.t - 120000);
+      if(yaEsta) _audColaQuitar(fila.id); else _audEnviarFila(fila);
+    }, function(x){ console.warn('[catch]', x); });
+  });
 }
 function _audIdServidor(p, cb){
   if(p._sbId){ cb(p._sbId); return; }
@@ -18200,6 +18218,7 @@ function _agRestaurar(){
   if(_agRestaurado) return;
   try{
     if(!usuarioActual || !usuarioActual.email) return;
+    try{ _audColaVaciar(); }catch(eCo){ console.warn('[catch]', eCo); }
     var crudo = sessionStorage.getItem(_userKey('mhcd_ag_pend'));
     _agRestaurado = true;
     if(!crudo) return;
@@ -18387,7 +18406,7 @@ function _agGuardar(e){
       e.reint = 0;
       if(_agHayCampos(e)){ e.estado = 'pend'; _agProgramar(e, 400); }
       else if(hayEv && !hayHc && e.borrVacioBorrado){ e.estado = ''; e.hora = ''; e.okTexto = ''; _guardadoServidor(_agClave(e), '', null); }   // campos de la evolución vacíos: el borrador se borró solo y el indicador desaparece
-      else { e.estado = 'ok'; e.hora = _agHora(); e.okTexto = (hayEv && !hayHc) ? 'Borrador guardado ✓ ' : 'Guardado ✓ '; _guardadoServidor(_agClave(e), '', null); }
+      else { e.estado = 'ok'; e.hora = _agHora(); e.okTexto = (hayEv && !hayHc) ? 'Guardado ✓ ' : 'Guardado ✓ '; _guardadoServidor(_agClave(e), '', null); }
       if(e.repetir){ e.repetir = false; if(_agHayCampos(e)) _agProgramar(e, 400); }
       _agPersistir();
       try{ guardarLocal(); }catch(x){ console.warn('[catch]', x); }
@@ -18407,6 +18426,7 @@ function _agGuardarAbiertoYa(){
   var e = _agEntrada(ab.p, false); if(e && _agHayCampos(e)){ e.reint = 0; _agGuardar(e); }
 }
 function _agGuardarTodoYa(){
+  _agCerrarEdicionTodas();
   _agEntradas.forEach(function(e){ if(_agHayCampos(e) && !e.enVuelo) _agGuardar(e); });
 }
 // Historial de cambios: UNA anotación por campo y por sesión de edición (valor del principio contra el del final)
@@ -18418,6 +18438,10 @@ function _agCerrarEdicion(e){
     registrarAuditoria(r.idx, _AG_CAMPOS[id].et, e.base[id], actual);
   });
   e.base = {};
+}
+// Opción B: cierra la sesión de edición de todos los pacientes con cambios (anota las líneas del Historial). Se llama al abrir el Historial, al cambiar de pestaña de la HC y al ocultar/cerrar/recargar la página.
+function _agCerrarEdicionTodas(){
+  _agEntradas.forEach(function(e){ try{ if(e.base && Object.keys(e.base).length) _agCerrarEdicion(e); }catch(x){ console.warn('[catch]', x); } });
 }
 function _agAlCambiarPaciente(){
   var ab = _agPacienteAbierto();
