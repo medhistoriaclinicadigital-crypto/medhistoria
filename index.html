@@ -20655,7 +20655,7 @@ function _hcReglaMostrar(estado, info){
       tx.appendChild(mk('div', 'font-weight:700;color:var(--g2);', c.nombre || ''));
       tx.appendChild(mk('div', 'font-size:.8rem;color:var(--muted);', 'DNI ' + (c.dni || '—') + ' · nac. ' + fn + (c.os ? ' · ' + c.os : '')));
       var bo = mk('button', 'margin-top:0;padding:6px 16px;font-size:.8rem;white-space:nowrap;', (_confirmar && _nCand === 1) ? 'Sí, abrir su HC' : 'Abrir su HC'); bo.className = 'form-submit'; bo.type = 'button';
-      bo.onclick = function(){ if(!c._sbId && !c._uid) c._uid = _nuevoUid(); if(_confirmar && info.turno && c._sbId) _hcVincularTurno(info.turno, c._sbId); abrirHC(c.nombre, c.dni || '', c.edad || '', c.os || '', _idPac(c)); };
+      bo.onclick = function(){ if(!c._sbId && !c._uid) c._uid = _nuevoUid(); if(info && info.turno && c._sbId) _hcVincularTurno(info.turno, c._sbId); abrirHC(c.nombre, c.dni || '', c.edad || '', c.os || '', _idPac(c)); };
       it.appendChild(tx); it.appendChild(bo); lst.appendChild(it);
     });
     tarj.appendChild(lst);
