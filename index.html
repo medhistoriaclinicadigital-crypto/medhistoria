@@ -19150,6 +19150,7 @@ function sincronizarTurnosSupabase(){
     if(r.data){
       r.data.forEach(function(remoto){
         var yaExiste = turnos.find(function(t){ return t._sbId === remoto.id; });
+        if(yaExiste && !remoto.paciente_id && yaExiste._pacienteIdSb){ _hcVincularTurno(yaExiste, yaExiste._pacienteIdSb); }   // un envío anterior del vínculo falló: se reintenta
         if(!yaExiste){
           var nombrePac = '(paciente sin datos)';
           if(remoto.paciente_id){
@@ -19161,7 +19162,12 @@ function sincronizarTurnosSupabase(){
           var fechaDisp = partesF.length===3 ? (partesF[2]+'/'+partesF[1]+'/'+partesF[0]) : '';
           // Un turno cargado en esta pestaña que ya está en el servidor (misma fecha, hora y motivo) toma su identificador en vez de repetirse.
           var turnoLocal = turnos.find(function(t){ return !t._sbId && t.fecha === remoto.fecha && (t.hora||'').slice(0,5) === (remoto.hora||'').slice(0,5) && (t.motivo||'') === (remoto.motivo||'') && (nombrePac === '(paciente sin datos)' || _normNombrePac(t.pac) === _normNombrePac(nombrePac)); });
-          if(turnoLocal){ turnoLocal._sbId = remoto.id; turnoLocal._pacienteIdSb = remoto.paciente_id || null; return; }
+          if(turnoLocal){
+            turnoLocal._sbId = remoto.id;
+            if(!remoto.paciente_id && turnoLocal._pacienteIdSb){ _hcVincularTurno(turnoLocal, turnoLocal._pacienteIdSb); }   // el turno ya estaba atado a una ficha y el servidor todavía no lo sabe: se conserva y se manda ahora
+            else { turnoLocal._pacienteIdSb = remoto.paciente_id || null; }
+            return;
+          }
           turnos.unshift({
             _sbId: remoto.id,
             _pacienteIdSb: remoto.paciente_id || null,
