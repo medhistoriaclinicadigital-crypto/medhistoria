@@ -15159,17 +15159,53 @@ function abrirHCDesdeTurno(idx){
   var pac = null;
   if(t._pacienteIdSb){ pac = pacientes.filter(function(p){ return p._sbId && String(p._sbId) === String(t._pacienteIdSb); })[0] || null; }
   if(pac){ abrirHC(pac.nombre, pac.dni || '', pac.edad || '', pac.os || '', _idPac(pac)); return; }
-  // Sin id en el turno: se busca por nombre. Con UN solo paciente con ese nombre se abre; con DOS O MÁS (homónimos) NO se elige ninguno: se muestra la lista para elegir cuál (DNI y fecha de nacimiento)
-  var cand = t.pac ? pacientes.filter(function(p){ return p.nombre && _normNombrePac(p.nombre) === _normNombrePac(t.pac); }) : [];
+  // Sin id en el turno: se busca por nombre (sin comas, tildes, mayúsculas ni orden de palabras). Con UN solo paciente con ese nombre se abre; con DOS O MÁS (homónimos) NO se elige ninguno: se muestra la lista para elegir cuál (DNI y fecha de nacimiento)
+  var cand = t.pac ? pacientes.filter(function(p){ return p.nombre && _hcClaveNombre(p.nombre) === _hcClaveNombre(t.pac); }) : [];
   if(cand.length === 1){ abrirHC(cand[0].nombre, cand[0].dni || '', cand[0].edad || '', cand[0].os || '', _idPac(cand[0])); return; }
   if(cand.length > 1){
     try{ _agAlCambiarPaciente(); }catch(eA){ console.warn('[catch]', eA); }
     limpiarFormularioHC();   // no queda ningún paciente abierto
     showPanel('hc');
-    _hcReglaMostrar('elegir', { nombre: t.pac, candidatos: cand });
+    _hcReglaMostrar('elegir', { nombre: t.pac, candidatos: cand, turno: t });
     return;
   }
+  // Sin coincidencia exacta: si el nombre del turno está CONTENIDO en el de alguna ficha, NUNCA se abre por parecido: se pide confirmar (y al confirmar se ata el turno)
+  var _pal = _hcPalabras(t.pac);
+  var cont = _pal.length ? pacientes.filter(function(p){ return p.nombre && _hcContiene(_hcPalabras(p.nombre), _pal); }) : [];
+  if(cont.length >= 1){
+    try{ _agAlCambiarPaciente(); }catch(eA2){ console.warn('[catch]', eA2); }
+    limpiarFormularioHC();
+    showPanel('hc');
+    _hcReglaMostrar('elegir', { nombre: t.pac, candidatos: cont, modo: 'confirmar', turno: t });
+    return;
+  }
+  _hcTurnoOrigen = t;
   abrirHC(t.pac || '', '', '', '', '');
+}
+// ── Vínculo turno ↔ ficha ──
+var _hcTurnoOrigen = null;   // turno desde el que se abrió el cartel «todavía no tiene ficha»
+function _hcPalabras(s){
+  var w = _normNombrePac(s).replace(/[-,.;:()_]/g, ' ').split(' ').filter(function(x){ return x; });
+  return w.filter(function(x, i){ return w.indexOf(x) === i; }).sort();
+}
+function _hcClaveNombre(s){ return _hcPalabras(s).join(' '); }
+function _hcContiene(pal, sub){ return sub.length > 0 && pal.length > sub.length && sub.every(function(x){ return pal.indexOf(x) >= 0; }); }
+function _hcNuevaCreacion(nombre, info){
+  var turno = (info && info.turno) || ((_hcTurnoOrigen && _hcClaveNombre(_hcTurnoOrigen.pac) === _hcClaveNombre(nombre)) ? _hcTurnoOrigen : null);
+  _hcTurnoOrigen = null;
+  return { nombre: nombre, t: Date.now(), turno: turno, antes: pacientes.map(_hcClavePac) };
+}
+// Identidad de una ficha para saber si es NUEVA: su id local; si no lo tiene, nombre (sin coma ni orden) + DNI
+function _hcClavePac(p){ return p._uid || ('n:' + _hcClaveNombre(p.nombre) + '|' + (p.dni || '')); }
+function _hcEsFichaNueva(pac, flag){ return (flag.antes || []).indexOf(_hcClavePac(pac)) < 0; }
+// Ata el turno a la ficha: en el turno (local) y, si el turno ya tiene fila en el servidor, en su columna paciente_id (UPDATE de su propia fila)
+function _hcVincularTurno(t, sbId){
+  if(!t || !sbId) return;
+  t._pacienteIdSb = sbId;
+  try{ guardarLocal(); }catch(eV){ console.warn('[catch]', eV); }
+  if(t._sbId && usuarioActual && usuarioActual.id){
+    sb.from('turnos').update({ paciente_id: sbId }).eq('id', t._sbId).then(function(r){ if(r && r.error) console.warn('No se pudo atar el turno a la ficha:', r.error); }, function(x){ console.warn('[catch]', x); });
+  }
 }
 function marcarAtendido(i){
   if(!turnos[i]) return;
@@ -20598,8 +20634,9 @@ function _hcReglaMostrar(estado, info){
   var mk = function(tag, css, txt){ var e = document.createElement(tag); if(css) e.style.cssText = css; if(txt !== undefined) e.textContent = txt; return e; };
   tarj.appendChild(mk('div', 'font-size:2.2rem;margin-bottom:6px;', '👤'));
   var natural = _hcNombreNatural(nombre);
-  var titulo = estado === 'elegir' ? ('Hay ' + ((info && info.candidatos) || []).length + ' pacientes con el nombre «' + nombre + '»') : estado === 'sinpaciente' ? 'Elegí un paciente para abrir su Historia Clínica' : (estado === 'abriendo' ? 'Abriendo la Historia Clínica…' : (natural + ' todavía no tiene ficha'));
-  var texto = estado === 'elegir' ? 'Elegí cuál es el paciente de este turno para abrir su Historia Clínica.' : estado === 'sinpaciente' ? 'La Historia Clínica siempre se abre con un paciente ya guardado. Elegilo de tu lista de Pacientes o creá uno nuevo con su DNI.'
+  var _nCand = ((info && info.candidatos) || []).length, _confirmar = !!(info && info.modo === 'confirmar');
+  var titulo = estado === 'elegir' ? (_confirmar ? (_nCand === 1 ? '¿Es este el paciente del turno?' : '¿Cuál es el paciente del turno?') : ('Hay ' + _nCand + ' pacientes con el nombre «' + nombre + '»')) : estado === 'sinpaciente' ? 'Elegí un paciente para abrir su Historia Clínica' : (estado === 'abriendo' ? 'Abriendo la Historia Clínica…' : (natural + ' todavía no tiene ficha'));
+  var texto = estado === 'elegir' ? (_confirmar ? ('El turno dice «' + nombre + '». ' + (_nCand === 1 ? 'Confirmá si es esta persona para abrir su Historia Clínica.' : 'Elegí cuál es para abrir su Historia Clínica.')) : 'Elegí cuál es el paciente de este turno para abrir su Historia Clínica.') : estado === 'sinpaciente' ? 'La Historia Clínica siempre se abre con un paciente ya guardado. Elegilo de tu lista de Pacientes o creá uno nuevo con su DNI.'
     : (estado === 'abriendo' ? 'Un momento: se está buscando la ficha del paciente.' : 'Para escribir su historia clínica primero hay que crear su ficha con su DNI. Hasta entonces la Historia Clínica queda cerrada, así nada de lo que escribas se pierde.');
   tarj.appendChild(mk('div', "font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;color:var(--g2);margin-bottom:8px;", titulo));
   tarj.appendChild(mk('div', 'font-size:.92rem;color:var(--g3);max-width:520px;margin:0 auto 18px;line-height:1.5;', texto));
@@ -20611,8 +20648,8 @@ function _hcReglaMostrar(estado, info){
       var tx = mk('div', 'font-size:.88rem;color:var(--text);line-height:1.4;');
       tx.appendChild(mk('div', 'font-weight:700;color:var(--g2);', c.nombre || ''));
       tx.appendChild(mk('div', 'font-size:.8rem;color:var(--muted);', 'DNI ' + (c.dni || '—') + ' · nac. ' + fn + (c.os ? ' · ' + c.os : '')));
-      var bo = mk('button', 'margin-top:0;padding:6px 16px;font-size:.8rem;white-space:nowrap;', 'Abrir su HC'); bo.className = 'form-submit'; bo.type = 'button';
-      bo.onclick = function(){ if(!c._sbId && !c._uid) c._uid = _nuevoUid(); abrirHC(c.nombre, c.dni || '', c.edad || '', c.os || '', _idPac(c)); };
+      var bo = mk('button', 'margin-top:0;padding:6px 16px;font-size:.8rem;white-space:nowrap;', (_confirmar && _nCand === 1) ? 'Sí, abrir su HC' : 'Abrir su HC'); bo.className = 'form-submit'; bo.type = 'button';
+      bo.onclick = function(){ if(!c._sbId && !c._uid) c._uid = _nuevoUid(); if(_confirmar && info.turno && c._sbId) _hcVincularTurno(info.turno, c._sbId); abrirHC(c.nombre, c.dni || '', c.edad || '', c.os || '', _idPac(c)); };
       it.appendChild(tx); it.appendChild(bo); lst.appendChild(it);
     });
     tarj.appendChild(lst);
@@ -20623,8 +20660,8 @@ function _hcReglaMostrar(estado, info){
     btn('👥 Elegir un paciente', '', function(){ showPanel('pacientes'); });
     btn('＋ Nuevo paciente', 'background:linear-gradient(135deg,var(--g4),var(--g3));', function(){ abrirNuevoPaciente(); });
   } else if(estado === 'elegir'){
-    btn('＋ Es otro paciente: crear su ficha', 'background:linear-gradient(135deg,var(--g4),var(--g3));', function(){
-      _hcCrearFicha = { nombre: nombre, t: Date.now() };
+    btn((_confirmar && _nCand === 1) ? '＋ No, es otro paciente: crear su ficha' : '＋ Es otro paciente: crear su ficha', 'background:linear-gradient(135deg,var(--g4),var(--g3));', function(){
+      _hcCrearFicha = _hcNuevaCreacion(nombre, info);
       abrirNuevoPaciente();
       var pq = ('' + nombre).split(',');
       var aq = document.getElementById('pac-apellido'), nq = document.getElementById('pac-nombre');
@@ -20634,7 +20671,7 @@ function _hcReglaMostrar(estado, info){
     btn('👥 Elegir otro paciente', '', function(){ showPanel('pacientes'); });
   } else if(estado === 'sinficha'){
     btn('＋ Crear la ficha de ' + natural, '', function(){
-      _hcCrearFicha = { nombre: nombre, t: Date.now() };
+      _hcCrearFicha = _hcNuevaCreacion(nombre, info);
       abrirNuevoPaciente();
       var pp = ('' + nombre).split(',');
       var a = document.getElementById('pac-apellido'), n = document.getElementById('pac-nombre'), d = document.getElementById('pac-dni');
@@ -20669,9 +20706,11 @@ function _hcReglaEvaluar(info){
 }
 // Llegó el id del servidor de una ficha: si se estaba creando desde la tarjeta, se abre su Historia Clínica; si no, se vuelve a evaluar
 function _hcReglaAlLlegarId(pac){
-  if(_hcCrearFicha && Date.now() - _hcCrearFicha.t < 300000 && _normNombrePac(pac.nombre) === _normNombrePac(_hcCrearFicha.nombre)){
-    _hcCrearFicha = null;
-    abrirHC(pac.nombre, pac.dni || '', pac.edad || '', pac.os || '', _idPac(pac));
+  if(_hcCrearFicha && Date.now() - _hcCrearFicha.t < 300000 && _hcEsFichaNueva(pac, _hcCrearFicha)){
+    var _fCre = _hcCrearFicha; _hcCrearFicha = null;
+    var _real = pacientes.filter(function(p){ return _hcClavePac(p) === _hcClavePac(pac); })[0] || pac;
+    if(_fCre.turno) _hcVincularTurno(_fCre.turno, _real._sbId || pac._sbId);
+    abrirHC(_real.nombre, _real.dni || '', _real.edad || '', _real.os || '', _idPac(_real));
     return;
   }
   var ab = _agPacienteAbierto();
