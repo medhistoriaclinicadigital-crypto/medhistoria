@@ -546,6 +546,10 @@ footer p{font-size:.83rem;line-height:1.8;max-width:500px;margin:0 auto 20px;}
 .agenda-info{flex:1;}
 .agenda-pac{font-size:.88rem;font-weight:600;color:var(--text);}
 .agenda-mot{font-size:.78rem;color:var(--muted);margin-top:2px;}
+.agenda-item.mh-con-hc{flex-wrap:wrap;row-gap:8px;}
+.agenda-item.mh-con-hc .agenda-info{flex:1 1 170px;min-width:0;}
+.agenda-item.mh-con-hc .mh-acciones{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex:0 0 100%;}   /* SIEMPRE en una segunda línea, juntos y a la derecha */
+.mh-hc-btn{background:linear-gradient(135deg,#22a050,#1a7a42);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:.74rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'Outfit',sans-serif;}
 
 /* TARJETAS PACIENTES MÓVIL */
 .pac-card{background:#fff;border:1.5px solid var(--g9);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
@@ -15074,12 +15078,15 @@ function renderTurnos(lista){
     var fecha = (mostrarFecha && t.fechaDisplay)?'<span style="font-size:.76rem;color:var(--g4);font-weight:600;"> '+escHtml(t.fechaDisplay)+'</span>':'';
     var op = t.estado==='ok'?'opacity:.65;':'';
     var waBtn = '<button onclick="avisoRecordatoriosTurno('+idx+')" title="Recordatorios de turno (servicio adicional)" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:1rem;padding:0 4px;opacity:.7;">🔔</button>';
-    return '<div class="agenda-item" style="'+op+'">'
+    return '<div class="agenda-item mh-con-hc" style="'+op+'">'
       +'<div class="agenda-hora">'+escHtml(t.hora)+'</div>'
       +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(t.pac)+fecha+'</div><div class="agenda-mot">'+escHtml(t.motivo||'Consulta')+(t.os?' · '+escHtml(t.os):'')+'</div></div>'
+      +'<div class="mh-acciones">'
+      +_hcBotonTurno(idx)
       +waBtn
       +'<span class="pac-tag '+tagInfo(t)+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;">'+tagTxt(t)+'</span>'
       +'<button onclick="eliminarTurno('+idx+')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:0 4px;">✕</button>'
+      +'</div>'
       +'</div>';
   }
 
@@ -15142,6 +15149,28 @@ function renderTurnos(lista){
       +'<div style="display:inline-flex;align-items:center;gap:7px;background:#fff;border:1.5px solid var(--g9);border-radius:10px;padding:8px 14px;"><span>🗓️</span><span style="font-size:1.1rem;font-weight:700;color:var(--g3);">'+proximos.length+'</span><span style="font-size:.78rem;color:var(--muted);">próximos</span></div>';
   }
 }
+// Botón «📋 Historia clínica» de cada turno de la Agenda
+function _hcBotonTurno(idx){
+  return '<button type="button" class="mh-hc-btn" onclick="abrirHCDesdeTurno('+idx+')" title="Abrir la Historia Clínica de este paciente">📋 Historia clínica</button>';
+}
+// Turno con ficha (id del servidor del turno, o un ÚNICO paciente con ese nombre): abre su Historia Clínica; con homónimos y sin id: lista para elegir. Turno sin ficha: abre la HC con el cartel «todavía no tiene ficha»
+function abrirHCDesdeTurno(idx){
+  var t = turnos[idx]; if(!t) return;
+  var pac = null;
+  if(t._pacienteIdSb){ pac = pacientes.filter(function(p){ return p._sbId && String(p._sbId) === String(t._pacienteIdSb); })[0] || null; }
+  if(pac){ abrirHC(pac.nombre, pac.dni || '', pac.edad || '', pac.os || '', _idPac(pac)); return; }
+  // Sin id en el turno: se busca por nombre. Con UN solo paciente con ese nombre se abre; con DOS O MÁS (homónimos) NO se elige ninguno: se muestra la lista para elegir cuál (DNI y fecha de nacimiento)
+  var cand = t.pac ? pacientes.filter(function(p){ return p.nombre && _normNombrePac(p.nombre) === _normNombrePac(t.pac); }) : [];
+  if(cand.length === 1){ abrirHC(cand[0].nombre, cand[0].dni || '', cand[0].edad || '', cand[0].os || '', _idPac(cand[0])); return; }
+  if(cand.length > 1){
+    try{ _agAlCambiarPaciente(); }catch(eA){ console.warn('[catch]', eA); }
+    limpiarFormularioHC();   // no queda ningún paciente abierto
+    showPanel('hc');
+    _hcReglaMostrar('elegir', { nombre: t.pac, candidatos: cand });
+    return;
+  }
+  abrirHC(t.pac || '', '', '', '', '');
+}
 function marcarAtendido(i){
   if(!turnos[i]) return;
   var ciclo = ['pend','confirmado','cancelado','ok'];
@@ -15194,12 +15223,15 @@ function filtrarPorFecha(){
       var idx = turnos.indexOf(t);
       var tagClass = tagInfo(t);
       var tagText = tagTxt(t);
-      return '<div class="agenda-item" style="">'
+      return '<div class="agenda-item mh-con-hc" style="">'
         +'<div class="agenda-hora">'+escHtml(t.hora)+'</div>'
         +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(t.pac)+'</div>'
         +'<div class="agenda-mot">'+escHtml(t.motivo)+(t.os?' · '+escHtml(t.os):'')+'</div></div>'
+        +'<div class="mh-acciones">'
+        +_hcBotonTurno(idx)
         +'<span class="pac-tag '+tagClass+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;">'+tagText+'</span>'
         +'<button onclick="eliminarTurno('+idx+')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:0 4px;">✕</button>'
+        +'</div>'
         +'</div>';
     }
     lista.innerHTML = filtrados.sort(function(a,b){return a.hora.localeCompare(b.hora);}).map(renderFila).join('');
@@ -20529,7 +20561,7 @@ function completarConIA(campoId, tipoCampo){
 }
 
 // ══ REGLA DE PACIENTE (Historia Clínica) ══
-// Estados: 'ok' (paciente abierto y con ficha en el servidor) · 'sinpaciente' · 'sinficha' · 'abriendo' (esperando el id del servidor)
+// Estados: 'elegir' (turno sin id con dos o más pacientes homónimos: lista para elegir cuál, con DNI y fecha de nacimiento) · 'ok' (paciente abierto y con ficha en el servidor) · 'sinpaciente' · 'sinficha' · 'abriendo' (esperando el id del servidor)
 var _hcCrearFicha = null;   // { nombre, t }: se tocó «Crear la ficha de …»; al llegar el id del servidor se abre su Historia Clínica
 var _hcReglaT = null;
 var _hcReglaEstado = '';
@@ -20558,6 +20590,7 @@ function _hcReglaMostrar(estado, info){
   var nombre = (info && info.nombre) || '', dni = (info && info.dni) || '';
   var tit = panel.querySelector('.app-page-title'), sub = panel.querySelector('.app-page-sub');
   if(estado === 'sinpaciente'){ if(tit) tit.textContent = '📋 Historia Clínica'; if(sub) sub.textContent = 'Elegí un paciente para empezar'; }
+  else if(estado === 'elegir'){ if(tit) tit.textContent = '📋 Historia Clínica'; if(sub) sub.textContent = 'Elegí cuál es el paciente del turno'; }
   else { if(tit) tit.textContent = '📋 HC — ' + nombre; if(sub) sub.textContent = estado === 'abriendo' ? 'Abriendo la ficha…' : ('DNI ' + (dni || '—') + ' · todavía sin ficha'); }
   if(tarj) tarj.remove();
   tarj = document.createElement('div'); tarj.id = 'hc-regla-tarjeta';
@@ -20565,16 +20598,40 @@ function _hcReglaMostrar(estado, info){
   var mk = function(tag, css, txt){ var e = document.createElement(tag); if(css) e.style.cssText = css; if(txt !== undefined) e.textContent = txt; return e; };
   tarj.appendChild(mk('div', 'font-size:2.2rem;margin-bottom:6px;', '👤'));
   var natural = _hcNombreNatural(nombre);
-  var titulo = estado === 'sinpaciente' ? 'Elegí un paciente para abrir su Historia Clínica' : (estado === 'abriendo' ? 'Abriendo la Historia Clínica…' : (natural + ' todavía no tiene ficha'));
-  var texto = estado === 'sinpaciente' ? 'La Historia Clínica siempre se abre con un paciente ya guardado. Elegilo de tu lista de Pacientes o creá uno nuevo con su DNI.'
+  var titulo = estado === 'elegir' ? ('Hay ' + ((info && info.candidatos) || []).length + ' pacientes con el nombre «' + nombre + '»') : estado === 'sinpaciente' ? 'Elegí un paciente para abrir su Historia Clínica' : (estado === 'abriendo' ? 'Abriendo la Historia Clínica…' : (natural + ' todavía no tiene ficha'));
+  var texto = estado === 'elegir' ? 'Elegí cuál es el paciente de este turno para abrir su Historia Clínica.' : estado === 'sinpaciente' ? 'La Historia Clínica siempre se abre con un paciente ya guardado. Elegilo de tu lista de Pacientes o creá uno nuevo con su DNI.'
     : (estado === 'abriendo' ? 'Un momento: se está buscando la ficha del paciente.' : 'Para escribir su historia clínica primero hay que crear su ficha con su DNI. Hasta entonces la Historia Clínica queda cerrada, así nada de lo que escribas se pierde.');
   tarj.appendChild(mk('div', "font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;color:var(--g2);margin-bottom:8px;", titulo));
   tarj.appendChild(mk('div', 'font-size:.92rem;color:var(--g3);max-width:520px;margin:0 auto 18px;line-height:1.5;', texto));
+  if(estado === 'elegir'){
+    var lst = mk('div', 'max-width:560px;margin:0 auto 18px;text-align:left;');
+    ((info && info.candidatos) || []).forEach(function(c){
+      var fn = c.fnac ? ('' + c.fnac).split('-').reverse().join('/') : 'sin fecha';
+      var it = mk('div', 'display:flex;align-items:center;gap:12px;justify-content:space-between;border:1.5px solid var(--g9);border-radius:10px;padding:10px 14px;margin-bottom:8px;');
+      var tx = mk('div', 'font-size:.88rem;color:var(--text);line-height:1.4;');
+      tx.appendChild(mk('div', 'font-weight:700;color:var(--g2);', c.nombre || ''));
+      tx.appendChild(mk('div', 'font-size:.8rem;color:var(--muted);', 'DNI ' + (c.dni || '—') + ' · nac. ' + fn + (c.os ? ' · ' + c.os : '')));
+      var bo = mk('button', 'margin-top:0;padding:6px 16px;font-size:.8rem;white-space:nowrap;', 'Abrir su HC'); bo.className = 'form-submit'; bo.type = 'button';
+      bo.onclick = function(){ if(!c._sbId && !c._uid) c._uid = _nuevoUid(); abrirHC(c.nombre, c.dni || '', c.edad || '', c.os || '', _idPac(c)); };
+      it.appendChild(tx); it.appendChild(bo); lst.appendChild(it);
+    });
+    tarj.appendChild(lst);
+  }
   var fila = mk('div', 'display:flex;gap:12px;justify-content:center;flex-wrap:wrap;');
   var btn = function(txt, css, fn){ var b = mk('button', 'margin-top:0;' + (css || ''), txt); b.className = 'form-submit'; b.type = 'button'; b.onclick = fn; fila.appendChild(b); };
   if(estado === 'sinpaciente'){
     btn('👥 Elegir un paciente', '', function(){ showPanel('pacientes'); });
     btn('＋ Nuevo paciente', 'background:linear-gradient(135deg,var(--g4),var(--g3));', function(){ abrirNuevoPaciente(); });
+  } else if(estado === 'elegir'){
+    btn('＋ Es otro paciente: crear su ficha', 'background:linear-gradient(135deg,var(--g4),var(--g3));', function(){
+      _hcCrearFicha = { nombre: nombre, t: Date.now() };
+      abrirNuevoPaciente();
+      var pq = ('' + nombre).split(',');
+      var aq = document.getElementById('pac-apellido'), nq = document.getElementById('pac-nombre');
+      if(aq) aq.value = pq[0].trim(); if(nq) nq.value = (pq[1] || '').trim();
+      _pacTocado = true;
+    });
+    btn('👥 Elegir otro paciente', '', function(){ showPanel('pacientes'); });
   } else if(estado === 'sinficha'){
     btn('＋ Crear la ficha de ' + natural, '', function(){
       _hcCrearFicha = { nombre: nombre, t: Date.now() };
