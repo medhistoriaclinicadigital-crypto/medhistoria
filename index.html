@@ -19299,7 +19299,7 @@ function sincronizarTurnosSupabase(){
           var partesF = (remoto.fecha||'').split('-');
           var fechaDisp = partesF.length===3 ? (partesF[2]+'/'+partesF[1]+'/'+partesF[0]) : '';
           // Un turno cargado en esta pestaña que ya está en el servidor (misma fecha, hora y motivo) toma su identificador en vez de repetirse.
-          var turnoLocal = turnos.find(function(t){ return !t._sbId && t.fecha === remoto.fecha && (t.hora||'').slice(0,5) === (remoto.hora||'').slice(0,5) && (t.motivo||'') === (remoto.motivo||'') && (nombrePac === '(paciente sin datos)' || _normNombrePac(t.pac) === _normNombrePac(nombrePac)); });
+          var turnoLocal = turnos.find(function(t){ return !t._sbId && t.fecha === remoto.fecha && (t.hora||'').slice(0,5) === (remoto.hora||'').slice(0,5) && (t.motivo||'') === (remoto.motivo||'') && (nombrePac === '(paciente sin datos)' || _normNombrePac(t.pac) === _normNombrePac(nombrePac) || _hcClaveNombre(t.pac) === _hcClaveNombre(nombrePac) || (t._pacienteIdSb && remoto.paciente_id && String(t._pacienteIdSb) === String(remoto.paciente_id))); });
           if(turnoLocal){
             turnoLocal._sbId = remoto.id;
             if(turnoLocal._estPend){ turnoLocal._estPend = false; _turnoEstadoCambio(turnoLocal); }   // el cambio de estado esperaba el id del turno
