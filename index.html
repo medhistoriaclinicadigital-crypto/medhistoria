@@ -5811,6 +5811,13 @@ function mostrarRecuperarPass(_p){
   });
 }
 function cerrarApp(forzar){
+  if(!window._turnosCierreListo && usuarioActual && _turnosHayPendientes()){
+    var _hecho = false;
+    var _fin = function(){ if(_hecho) return; _hecho = true; window._turnosCierreListo = true; cerrarApp(forzar); };
+    _turnosEnviarPendientes().then(_fin, _fin); setTimeout(_fin, 2500);
+    return;
+  }
+  window._turnosCierreListo = false;
   // Si en esta pestaña hubo guardados que no llegaron al servidor, NUNCA se borra en silencio: se avisa y se puede cancelar.
   if(!forzar && _guardadosFallidos.length){ _mostrarAvisoDatosSinGuardar(); return; }
   _guardadosFallidos = [];
@@ -15214,6 +15221,7 @@ function marcarAtendido(i){
   var idx = ciclo.indexOf(actual);
   turnos[i].estado = ciclo[(idx+1) % ciclo.length];
   guardarLocal();
+  try{ _turnoEstadoCambio(turnos[i]); }catch(eEs){ console.warn('[catch]', eEs); }
   renderTurnos();
 }
 
@@ -15224,7 +15232,9 @@ function eliminarTurno(i){
     var j = turnos.indexOf(_t);
     if(j < 0) j = turnos.findIndex(function(x){ return x && _t && x.pac === _t.pac && x.fecha === _t.fecha && x.hora === _t.hora; });
     if(j < 0) return;   // ya no está en la lista
+    var _porBorrar = turnos[j];
     turnos.splice(j,1);
+    try{ _turnoBorrarEnServidor(_porBorrar); }catch(eBo){ console.warn('[catch]', eBo); }
     renderTurnos();
   });
 }
@@ -19144,6 +19154,132 @@ function _resolverNombresTurnos(){
   if(cambio){ try{ guardarLocal(); }catch(e){ console.warn('[catch]', e); } try{ renderTurnos(); }catch(e){ console.warn('[catch]', e); } }
   return cambio;
 }
+// ── Estado del turno en el servidor, reintentos sin conexión y «Eliminar turno» (script 70) ──
+// Cola de cambios pendientes en localStorage: SOLO el id del turno y su estado (o el id de un turno a borrar), sin datos del paciente; una cola por médico.
+function _turnosPendClave(){ return 'mhcd_turnos_pend_' + ((usuarioActual && usuarioActual.id) ? usuarioActual.id : 'x'); }
+function _turnosPendLeer(){
+  try{
+    var o = JSON.parse(localStorage.getItem(_turnosPendClave()) || 'null');
+    if(o && typeof o === 'object') return { est: (o.est && typeof o.est === 'object') ? o.est : {}, del: Array.isArray(o.del) ? o.del : [] };
+  }catch(e){ console.warn('[catch]', e); }
+  return { est: {}, del: [] };
+}
+function _turnosPendGuardar(q){
+  try{
+    if(!Object.keys(q.est).length && !q.del.length) localStorage.removeItem(_turnosPendClave());
+    else localStorage.setItem(_turnosPendClave(), JSON.stringify(q));
+  }catch(e){ console.warn('[catch]', e); }
+}
+function _turnosHayPendientes(){ var q = _turnosPendLeer(); return Object.keys(q.est).length > 0 || q.del.length > 0; }
+// Turnos eliminados que todavía no tenían id: SOLO en esta pestaña (sessionStorage), con lo justo para reconocer la fila exacta
+function _turnosLapidasClave(){ return 'mhcd_turnos_borrados_' + ((usuarioActual && usuarioActual.id) ? usuarioActual.id : 'x'); }
+function _turnosLapidasLeer(){ try{ var a = JSON.parse(sessionStorage.getItem(_turnosLapidasClave()) || '[]'); return Array.isArray(a) ? a : []; }catch(e){ console.warn('[catch]', e); return []; } }
+function _turnosLapidasGuardar(a){ try{ if(a.length) sessionStorage.setItem(_turnosLapidasClave(), JSON.stringify(a)); else sessionStorage.removeItem(_turnosLapidasClave()); }catch(e){ console.warn('[catch]', e); } }
+// Un cambio de estado: con id se anota en la cola y se manda; sin id (turno recién creado) espera a tenerlo
+function _turnoEstadoCambio(t){
+  if(!t || !usuarioActual || !usuarioActual.id) return;
+  if(t._sbId){
+    var q = _turnosPendLeer(); q.est[String(t._sbId)] = t.estado || 'pend'; _turnosPendGuardar(q);
+    t._estPend = false; guardarLocal();
+    _turnosEnviarPendientes();
+  } else { t._estPend = true; guardarLocal(); }
+}
+var _turnosFlushEnCurso = null, _turnosFlushOtraVez = false;
+function _turnosEnviarPendientes(){
+  if(!usuarioActual || !usuarioActual.id) return Promise.resolve();
+  if(_turnosFlushEnCurso){ _turnosFlushOtraVez = true; return _turnosFlushEnCurso; }
+  var paso = function(){
+    var q = _turnosPendLeer(), ids = Object.keys(q.est);
+    if(ids.length){
+      var id = ids[0], v = q.est[id];
+      return Promise.resolve(sb.from('turnos').update({ estado: v }).eq('id', id).select('id')).then(function(r){
+        if(r && r.error) throw r.error;
+        var q2 = _turnosPendLeer(); if(q2.est[id] === v){ delete q2.est[id]; _turnosPendGuardar(q2); }
+        return paso();
+      });
+    }
+    if(q.del.length){
+      var d = q.del[0];
+      return Promise.resolve(sb.from('turnos').delete().eq('id', d).select('id')).then(function(r){
+        if(r && r.error) throw r.error;
+        var q3 = _turnosPendLeer(); q3.del = q3.del.filter(function(x){ return String(x) !== String(d); }); _turnosPendGuardar(q3);
+        return paso();
+      });
+    }
+    return null;
+  };
+  _turnosFlushEnCurso = Promise.resolve().then(paso).catch(function(e){ console.warn('No se pudieron enviar los cambios de turnos; se reintentan solos:', e); }).then(function(){
+    _turnosFlushEnCurso = null;
+    if(_turnosFlushOtraVez){ _turnosFlushOtraVez = false; if(_turnosHayPendientes()) _turnosEnviarPendientes(); }
+  });
+  return _turnosFlushEnCurso;
+}
+// Reintentos solos: al volver la conexión y cada 15 s mientras haya algo pendiente
+window.addEventListener('online', function(){ try{ if(usuarioActual && usuarioActual.id){ _turnosEnviarPendientes(); sincronizarTurnosSupabase(); } }catch(e){ console.warn('[catch]', e); } });
+setInterval(function(){
+  try{
+    if(!usuarioActual || !usuarioActual.id) return;
+    if(_turnosHayPendientes()) _turnosEnviarPendientes();
+    if(_turnosLapidasLeer().length) sincronizarTurnosSupabase();
+  }catch(e){ console.warn('[catch]', e); }
+}, 15000);
+// El servidor manda en el estado de un turno que ya existe, salvo que haya un cambio nuestro todavía sin enviar
+function _turnoTomarEstadoDelServidor(t, remoto){
+  if(t._estPend){ if(t._sbId){ t._estPend = false; _turnoEstadoCambio(t); } return; }
+  if(_turnosPendLeer().est[String(t._sbId)] !== undefined) return;
+  var e = remoto.estado || remoto.prioridad || 'pend';
+  if(t.estado !== e) t.estado = e;
+}
+// «Eliminar turno»: con id se anota el borrado en la cola; sin id se deja una lápida y la sincronización busca la fila exacta
+function _turnoBorrarEnServidor(t){
+  if(!t || !usuarioActual || !usuarioActual.id) return;
+  if(t._sbId){
+    var q = _turnosPendLeer();
+    if(q.del.map(String).indexOf(String(t._sbId)) < 0) q.del.push(t._sbId);
+    delete q.est[String(t._sbId)]; _turnosPendGuardar(q);
+    _turnosEnviarPendientes();
+    return;
+  }
+  var lap = _turnosLapidasLeer();
+  lap.push({ fecha: t.fecha || '', hora: (t.hora || '').slice(0, 5), motivo: t.motivo || '', pac: t.pac || '', pid: t._pacienteIdSb || null });
+  _turnosLapidasGuardar(lap);   // la fila se borra en la próxima sincronización (al volver a la Agenda, al volver la conexión o cada 15 s): no se sincroniza en el momento para no cambiar la lista que se está viendo
+}
+// ¿La fila del servidor es un turno que el médico eliminó? (borrado pendiente por id, o lápida con UNA ÚNICA fila igual: si hay varias, no se adivina)
+function _turnoEsBorradoPendiente(remoto, lista){
+  var q = _turnosPendLeer();
+  if(q.del.some(function(x){ return String(x) === String(remoto.id); })) return true;
+  var lap = _turnosLapidasLeer(); if(!lap.length) return false;
+  var igual = function(l, r){
+    if(l.fecha !== (r.fecha || '') || l.hora !== (r.hora || '').slice(0, 5) || (l.motivo || '') !== (r.motivo || '')) return false;
+    if(l.pid) return String(l.pid) === String(r.paciente_id);
+    return !r.paciente_id && _normNombrePac(l.pac) === _normNombrePac(r.paciente_nombre || '');
+  };
+  for(var i = 0; i < lap.length; i++){
+    if(!igual(lap[i], remoto)) continue;
+    if((lista || []).filter(function(r){ return igual(lap[i], r); }).length !== 1) return false;
+    lap.splice(i, 1); _turnosLapidasGuardar(lap);
+    q.del.push(remoto.id); _turnosPendGuardar(q);
+    _turnosEnviarPendientes();
+    return true;
+  }
+  return false;
+}
+// «Finalizar atención»: el turno de HOY de ese paciente (atado por el vínculo turno-ficha) pasa a «Atendido». Solo cambia con UN candidato; con ninguno atado o con más de uno no hace nada especial (sin tarjeta ni aviso).
+function _turnoAtendidoAlFinalizar(){
+  var p = (typeof pacienteHCActualIdx === 'number' && pacienteHCActualIdx >= 0) ? pacientes[pacienteHCActualIdx] : null;
+  if(!p || !p._sbId) return;
+  var hoy = _fechaLocalISO();
+  var cand = turnos.filter(function(t){
+    return t && t._pacienteIdSb && String(t._pacienteIdSb) === String(p._sbId) && (!t.fecha || t.fecha === hoy)
+      && t.estado !== 'ok' && t.estado !== 'cancelado';
+  });
+  if(cand.length === 1){
+    cand[0].estado = 'ok';
+    guardarLocal();
+    _turnoEstadoCambio(cand[0]);
+    try{ renderTurnos(); }catch(e){ console.warn('[catch]', e); }
+  }
+}
 function sincronizarTurnosSupabase(){
   if(!usuarioActual || !usuarioActual.id) return;
   sb.from('turnos').select('*').eq('medico_id', usuarioActual.id).then(function(r){
@@ -19151,7 +19287,9 @@ function sincronizarTurnosSupabase(){
       r.data.forEach(function(remoto){
         var yaExiste = turnos.find(function(t){ return t._sbId === remoto.id; });
         if(yaExiste && !remoto.paciente_id && yaExiste._pacienteIdSb){ _hcVincularTurno(yaExiste, yaExiste._pacienteIdSb); }   // un envío anterior del vínculo falló: se reintenta
+        if(yaExiste){ try{ _turnoTomarEstadoDelServidor(yaExiste, remoto); }catch(eTe){ console.warn('[catch]', eTe); } }
         if(!yaExiste){
+          if(_turnoEsBorradoPendiente(remoto, r.data)) return;   // el médico lo eliminó y el servidor todavía no lo borró: no vuelve a la lista
           var nombrePac = '(paciente sin datos)';
           if(remoto.paciente_id){
             var pEncontrado = pacientes.find(function(p){ return p._sbId === remoto.paciente_id; });
@@ -19164,6 +19302,7 @@ function sincronizarTurnosSupabase(){
           var turnoLocal = turnos.find(function(t){ return !t._sbId && t.fecha === remoto.fecha && (t.hora||'').slice(0,5) === (remoto.hora||'').slice(0,5) && (t.motivo||'') === (remoto.motivo||'') && (nombrePac === '(paciente sin datos)' || _normNombrePac(t.pac) === _normNombrePac(nombrePac)); });
           if(turnoLocal){
             turnoLocal._sbId = remoto.id;
+            if(turnoLocal._estPend){ turnoLocal._estPend = false; _turnoEstadoCambio(turnoLocal); }   // el cambio de estado esperaba el id del turno
             if(!remoto.paciente_id && turnoLocal._pacienteIdSb){ _hcVincularTurno(turnoLocal, turnoLocal._pacienteIdSb); }   // el turno ya estaba atado a una ficha y el servidor todavía no lo sabe: se conserva y se manda ahora
             else { turnoLocal._pacienteIdSb = remoto.paciente_id || null; }
             return;
@@ -19177,7 +19316,7 @@ function sincronizarTurnosSupabase(){
             hora: (remoto.hora||'').slice(0,5),
             motivo: remoto.motivo||'',
             os: remoto.obra_social||'',
-            estado: remoto.estado||remoto.prioridad||'pend',
+            estado: _turnosPendLeer().est[String(remoto.id)] || remoto.estado||remoto.prioridad||'pend',
             wa: remoto.whatsapp||''
           });
         }
@@ -19185,6 +19324,7 @@ function sincronizarTurnosSupabase(){
       try{ _resolverNombresTurnos(); }catch(eRn){ console.warn('[catch]', eRn); }
       sessionStorage.setItem(_userKey('mhcd_turnos'), JSON.stringify(turnos));
       renderTurnos();
+      try{ _turnosEnviarPendientes(); }catch(eEp){ console.warn('[catch]', eEp); }
     }
   });
 }
@@ -20742,6 +20882,7 @@ function finalizarAtencion(_c){
       else el.value = '';
     });
   };
+  try{ _turnoAtendidoAlFinalizar(); }catch(eAt){ console.warn('[catch]', eAt); }   // el turno de hoy de este paciente pasa a «Atendido» (antes de cerrar al paciente)
   // Historia Clínica: se cierra el paciente (hc-plan no lo limpia limpiarFormularioHC y volvería a Recetas/Derivaciones/Estudios al re-entrar)
   try{ limpiarFormularioHC(); }catch(eHc){ console.warn('[catch]', eHc); }
   vaciar(['hc-plan']);
