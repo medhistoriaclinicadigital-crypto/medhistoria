@@ -246,7 +246,19 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;
 .pbtn{width:100%;padding:8px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;border:1.5px solid var(--g5);background:transparent;color:var(--g3);transition:all .2s;}
 .pbtn:hover{background:var(--g5);color:#fff;}
 a.pbtn{display:block;text-align:center;text-decoration:none;box-sizing:border-box;}
-/* Cinta "Lanzamiento en diciembre" en la portada (hero): esquina superior IZQUIERDA, debajo de la barra fija de 64px. Oro metálico con brillos y sombras. */
+.desc6{max-width:900px;margin:28px auto 0;background:linear-gradient(135deg,#fffbeb,#f0fdf4);border:1.5px solid #fde68a;border-left:6px solid #f59e0b;border-radius:18px;padding:26px 30px;box-shadow:0 12px 32px rgba(146,64,14,.10);}
+.desc6-tit{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:'Cormorant Garamond',Georgia,serif;font-size:1.45rem;font-weight:700;color:#145a32;margin:0 0 8px;}
+.desc6-badge{display:inline-block;background:#fef3c7;color:#92400e;font-family:'Outfit',sans-serif;font-size:.72rem;font-weight:800;letter-spacing:.04em;border-radius:999px;padding:3px 10px;}
+.desc6-txt{font-size:.95rem;color:#145a32;line-height:1.6;margin:0 0 16px;}
+.desc6-tabla{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:.9rem;}
+.desc6-tabla th{background:#145a32;color:#fff;text-align:left;font-weight:700;font-size:.78rem;letter-spacing:.03em;padding:10px 14px;}
+.desc6-tabla td{padding:11px 14px;border-top:1px solid #e5f3ea;color:#145a32;}
+.desc6-tabla td.n{font-weight:800;}
+.desc6-tabla td.m{color:var(--muted);}
+.desc6-nota{font-size:.8rem;color:var(--muted);line-height:1.6;margin:14px 0 0;}
+@media(max-width:640px){.desc6{padding:20px 16px;}.desc6-tabla th,.desc6-tabla td{padding:9px 8px;font-size:.78rem;}}
+@media(max-width:600px){.desc6-tabla th:nth-child(3),.desc6-tabla td:nth-child(3),.desc6-tabla th:nth-child(4),.desc6-tabla td:nth-child(4){display:table-cell;}}
+/* Cinta "Próximamente" (sin fecha) en la portada (hero): esquina superior IZQUIERDA, debajo de la barra fija de 64px. Oro metálico con brillos y sombras. */
 .hero-cinta-wrap{position:absolute;top:64px;left:0;width:320px;height:320px;overflow:hidden;pointer-events:none;z-index:6;}
 .hero-cinta{position:absolute;top:91px;left:-100px;width:470px;transform:rotate(-45deg);text-align:center;padding:14px 24px 14px 0;
   font-family:'Outfit',sans-serif;font-weight:800;font-size:1.08rem;letter-spacing:.1em;text-transform:uppercase;color:#3a2200;
@@ -622,7 +634,7 @@ function abrirPago(plan, precio){
   document.querySelectorAll('.centro-medico-only').forEach(function(el){ el.style.display = 'none'; });
   overlay.setAttribute('data-registro-centro', 'false');
   var btn=document.getElementById('pago-submit-btn'); if(btn) btn.textContent='✦ Solicitar suscripción';
-  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='Te contactaremos en menos de 24hs para confirmar el pago y activar tu cuenta.';
+  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='Próximamente: la suscripción va a ser automática desde tu cuenta.';
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
@@ -667,7 +679,7 @@ function abrirRegistroCentro(){
   document.querySelectorAll('.centro-medico-only').forEach(function(el){ el.style.display = 'block'; });
   overlay.setAttribute('data-registro-centro', 'true');
   var btn=document.getElementById('pago-submit-btn'); if(btn) btn.textContent='✦ Crear mi Centro Médico';
-  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='El centro se crea al instante. Te mostramos los datos para transferir — el plan completo (pacientes ilimitados) se activa apenas confirmemos el pago.';
+  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='El centro se crea al instante. El plan completo (pacientes ilimitados) va a estar disponible cuando la suscripción sea automática.';
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
@@ -701,7 +713,7 @@ function solicitarAddon(nombre, precio){
   document.querySelectorAll('.centro-medico-only').forEach(function(el){ el.style.display = 'none'; });
   overlay.setAttribute('data-registro-centro', 'false');
   var btn=document.getElementById('pago-submit-btn'); if(btn) btn.textContent='✦ Solicitar suscripción';
-  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='Te contactaremos en menos de 24hs para confirmar el pago y activar tu cuenta.';
+  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='Próximamente: la suscripción va a ser automática desde tu cuenta.';
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
@@ -963,9 +975,9 @@ function mhcdRechazarCookies(){
       <div style="font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:6px 0 4px;">Plan</div>
       <select id="ml-reg-plan" style="width:100%;padding:10px 14px;margin:4px 0 10px;border:1.5px solid #22a050;border-radius:8px;box-sizing:border-box;font-size:.9rem;display:block;outline:none;background:#f0fdf4;color:#145a32;font-weight:600;">
         <option value="Prueba Gratuita">🆓 Prueba Gratuita — 30 días gratis</option>
-        <option value="Starter">⚕️ Starter — U$S 29/mes</option>
-        <option value="Pro">💊 Pro — U$S 41/mes</option>
-        <option value="Premium">👑 Premium — U$S 71/mes</option>
+        <option value="Starter">⚕️ Starter — U$S 24/mes</option>
+        <option value="Pro">💊 Pro — U$S 34/mes</option>
+        <option value="Premium">👑 Premium — U$S 44/mes</option>
       </select>
       <div style="font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:6px 0 4px;">¿Te invitó un Centro Médico?</div>
       <input id="ml-reg-codigo-centro" type="text" autocomplete="off" placeholder="Código de invitación (opcional)" style="width:100%;padding:10px 14px;margin:4px 0 10px;border:1.5px solid #d1d5db;border-radius:8px;box-sizing:border-box;font-size:.9rem;display:block;outline:none;background:transparent;text-transform:uppercase;">
@@ -1098,7 +1110,7 @@ function mhcdRechazarCookies(){
 <section class="hero">
   <div class="orb orb1"></div>
   <div class="orb orb2"></div>
-  <div class="hero-cinta-wrap"><div class="hero-cinta">Lanzamiento en diciembre</div></div>
+  <div class="hero-cinta-wrap"><div class="hero-cinta">Próximamente</div></div>
   <div class="hero-inner">
     <div class="hero-pill"><span></span>Multipaís · Cumplimiento Legal por País</div>
     <div class="hero-kicker">Hecho por médicos, para médicos</div>
@@ -1188,43 +1200,58 @@ function mhcdRechazarCookies(){
         <span class="plan-icon">🩺</span>
         <div class="pname">Starter</div>
         <div class="pdesc">Para el médico que da el primer paso hacia la digitalización.</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">29</span><span class="pprice-p">/mes</span></div>
+        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">24</span><span class="pprice-p">/mes</span></div>
         <div class="ppat">Pacientes y recetas ilimitados</div>
         <hr class="pline">
         <ul class="pfeats">
           <li>1.500 imágenes y archivos</li>
-          <li>150 consultas de IA/mes</li>
+          <li>80 consultas de IA/mes</li>
         </ul>
-        <button class="pbtn" onclick="abrirPago('Starter','29')">Elegir Starter</button>
+        <button class="pbtn" type="button" disabled aria-disabled="true" title="Próximamente" style="background:#e5e7eb;color:#6b7280;border:none;cursor:default;">Próximamente</button>
       </div>
       <div class="plan" style="border-left:6px solid var(--g5);">
         <span class="plan-icon">⚕️</span>
         <div class="pname">Pro</div>
         <div class="pdesc">Para el médico con consulta establecida.</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">41</span><span class="pprice-p">/mes</span></div>
+        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">34</span><span class="pprice-p">/mes</span></div>
         <div class="ppat">Pacientes y recetas ilimitados</div>
         <hr class="pline">
         <ul class="pfeats">
           <li>5.000 imágenes y archivos</li>
           <li>Analítica avanzada</li>
-          <li>400 consultas de IA/mes</li>
+          <li>200 consultas de IA/mes</li>
         </ul>
-        <button class="pbtn" onclick="abrirPago('Pro','41')">Elegir Pro</button>
+        <button class="pbtn" type="button" disabled aria-disabled="true" title="Próximamente" style="background:#e5e7eb;color:#6b7280;border:none;cursor:default;">Próximamente</button>
       </div>
       <div class="plan" style="border-left:6px solid var(--g4);">
         <span class="plan-icon">👑</span>
         <div class="pname">Premium</div>
         <div class="pdesc">Para profesionales con alta demanda y múltiples consultorios.</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">71</span><span class="pprice-p">/mes</span></div>
+        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">44</span><span class="pprice-p">/mes</span></div>
         <div class="ppat">Pacientes y recetas ilimitados</div>
         <hr class="pline">
         <ul class="pfeats">
           <li>15.000 imágenes y archivos</li>
-          <li>900 consultas de IA/mes</li>
+          <li>500 consultas de IA/mes</li>
         </ul>
-        <button class="pbtn" onclick="abrirPago('Premium','71')">Elegir Premium</button>
+        <button class="pbtn" type="button" disabled aria-disabled="true" title="Próximamente" style="background:#e5e7eb;color:#6b7280;border:none;cursor:default;">Próximamente</button>
       </div>
     </div><!-- /planes-grid -->
+
+    <!-- DESCUENTO DEL 15 % EN LOS PRIMEROS 3 MESES (bloque aparte; no cambia el valor mensual de las tarjetas) -->
+    <div class="desc6" id="descuento-3-meses">
+      <div class="desc6-tit">Descuento del 15 % <span class="desc6-badge">PRIMEROS 3 MESES</span></div>
+      <p class="desc6-txt">Descuento del 15 % pagando por transferencia bancaria los primeros 3 meses por adelantado. Después de los 3 meses, se paga el valor mensual de cada plan.</p>
+      <table class="desc6-tabla">
+        <thead><tr><th>Plan</th><th>Los primeros 3 meses</th><th>Equivale a</th><th>Después de los 3 meses</th></tr></thead>
+        <tbody>
+          <tr><td>Starter</td><td class="n">u$s 61,20</td><td>u$s 20,40 por mes</td><td class="m">u$s 24 por mes</td></tr>
+          <tr><td>Pro</td><td class="n">u$s 86,70</td><td>u$s 28,90 por mes</td><td class="m">u$s 34 por mes</td></tr>
+          <tr><td>Premium</td><td class="n">u$s 112,20</td><td>u$s 37,40 por mes</td><td class="m">u$s 44 por mes</td></tr>
+        </tbody>
+      </table>
+      <p class="desc6-nota">El descuento se aplica una sola vez, a los primeros 3 meses; no es un precio permanente. Los add-ons (IA Extra y otros) no llevan descuento. Medio de pago: por ahora, transferencia bancaria. Tarjeta de crédito: próximamente.</p>
+    </div>
 
     <!-- ADD-ON RECORDATORIOS AUTOMÁTICOS -->
     <div style="max-width:900px;margin:56px auto 0;background:linear-gradient(135deg,#f0fdf4,#eef2ff);border:1.5px solid var(--g8);border-left:6px solid var(--g4);border-radius:18px;padding:34px 36px;box-shadow:0 16px 40px rgba(20,90,50,.14);">
@@ -4507,7 +4534,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           </select>
           <input type="text" id="centro-cuit-nuevo" placeholder="CUIT (para la factura)" style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--g8);border-radius:8px;font-size:.9rem;font-family:'Outfit',sans-serif;margin-bottom:12px;">
           <input type="text" id="centro-direccion-nueva" placeholder="Dirección (para la factura)" style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--g8);border-radius:8px;font-size:.9rem;font-family:'Outfit',sans-serif;margin-bottom:12px;">
-          <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 10px;margin-bottom:12px;line-height:1.5;">El centro se crea al instante y ya podés usarlo. Al crearlo te mostramos los datos para transferir — el plan completo (pacientes ilimitados) se activa apenas confirmemos la transferencia.</div>
+          <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 10px;margin-bottom:12px;line-height:1.5;">El centro se crea al instante y ya podés usarlo. El plan completo (pacientes ilimitados) va a estar disponible cuando la suscripción sea automática.</div>
           <button onclick="crearCentroMedico()" style="padding:10px 24px;background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">Crear Centro Médico</button>
           <div style="border-top:1px solid var(--g9);margin-top:20px;padding-top:16px;">
             <div style="font-weight:700;color:var(--g2);font-size:.9rem;margin-bottom:4px;">¿Te invitaron a un centro?</div>
@@ -4632,7 +4659,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <option value="grande">Centro Grande — hasta 50 médicos · u$s 699/mes</option>
         </select>
       </label>
-      <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 10px;margin-top:8px;line-height:1.5;">El centro se crea al instante y ya podés usarlo. Al terminar te mostramos los datos para transferir — el plan completo (pacientes ilimitados) se activa apenas confirmemos la transferencia.</div>
+      <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 10px;margin-top:8px;line-height:1.5;">El centro se crea al instante y ya podés usarlo. El plan completo (pacientes ilimitados) va a estar disponible cuando la suscripción sea automática.</div>
       <div style="font-size:.75rem;color:#666;margin-top:8px;line-height:1.5;">Vas a poder agregar a los demás médicos de tu equipo apenas termines este paso.</div>
       <label style="display:flex;align-items:flex-start;gap:8px;font-size:.8rem;color:#145a32;font-weight:600;margin-top:12px;padding-top:12px;border-top:1px solid #bbf7d0;cursor:pointer;">
         <input type="checkbox" id="pago-centro-tambien-medico" checked onchange="toggleCentroTambienMedico()" style="margin-top:2px;flex-shrink:0;accent-color:#22a050;width:16px;height:16px;">
@@ -4695,7 +4722,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       <span style="font-size:1.4rem;">🏦</span>
       <div>
         <div style="font-size:.88rem;font-weight:700;color:#145a32;">Transferencia bancaria</div>
-        <div style="font-size:.78rem;color:#166534;">Sin comisiones · Te enviamos los datos al confirmar</div>
+        <div style="font-size:.78rem;color:#166534;">Sin comisiones · Próximamente</div>
       </div>
       <input type="hidden" name="forma-pago" value="transferencia">
     </div>
@@ -4710,7 +4737,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
     <button id="pago-submit-btn" onclick="procesarPago()" style="width:100%;padding:16px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:.5px;">
       ✦ Solicitar suscripción
     </button>
-    <p id="pago-submit-sub" style="text-align:center;font-size:.75rem;color:#888;margin-top:10px;">Te contactaremos en menos de 24hs para confirmar el pago y activar tu cuenta.</p>
+    <p id="pago-submit-sub" style="text-align:center;font-size:.75rem;color:#888;margin-top:10px;">Próximamente: la suscripción va a ser automática desde tu cuenta.</p>
 
     <!-- Separador código de activación -->
     <div style="display:flex;align-items:center;gap:10px;margin:20px 0 14px;">
@@ -4762,7 +4789,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <span style="font-size:1.4rem;">🏦</span>
           <div>
             <div style="font-size:.88rem;font-weight:700;color:#145a32;">Transferencia bancaria</div>
-            <div style="font-size:.78rem;color:#166534;">Te enviamos los datos al confirmar</div>
+            <div style="font-size:.78rem;color:#166534;">Próximamente</div>
           </div>
         </div>
         <div style="background:#f9fafb;border:1.5px dashed #d1d5db;border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px;opacity:.8;">
@@ -4776,7 +4803,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       <button onclick="confirmarMejorarPlan()" id="btn-confirmar-mejorar-plan" style="width:100%;padding:16px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:.5px;">
         ✦ Solicitar cambio de plan
       </button>
-      <p style="text-align:center;font-size:.75rem;color:#888;margin-top:10px;">Te contactaremos en menos de 24hs para coordinar el pago y activar el nuevo plan.</p>
+      <p style="text-align:center;font-size:.75rem;color:#888;margin-top:10px;">Próximamente: el cambio de plan va a ser automático desde tu cuenta.</p>
     </div>
   </div>
 </div>
@@ -7587,7 +7614,7 @@ function procesarPago(){
       // no alarmamos al usuario — queda en consola para diagnóstico.
       console.error('Error guardando solicitud de suscripción:', r.error);
     }
-    alert('✅ ¡Solicitud enviada!\n\nTe contactaremos en menos de 24hs al email:\n'+email);
+    alert('✅ Solicitud registrada.\n\nPróximamente la suscripción va a ser automática desde tu cuenta.');
   });
 }
 
@@ -8570,7 +8597,7 @@ function confirmarMejorarPlan(){
 
   cerrarMejorarPlan();
   if(btn){ btn.disabled = false; btn.textContent = '✦ Solicitar cambio de plan'; }
-  alert('✅ ¡Listo! Pedimos el plan '+planInfo.nombre+' para tu centro.\n\nTe contactaremos en menos de 24hs al mail de tu cuenta para coordinar el pago y activarlo.');
+  alert('✅ Pedido registrado: plan '+planInfo.nombre+' para tu centro.\n\nPróximamente el cambio de plan va a ser automático desde tu cuenta.');
 }
 
 // El Centro Médico se crea al instante (RPC crear_centro_medico), pero arranca
@@ -8655,9 +8682,9 @@ function abrirPanelTransferenciaCentro(plan){
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(4,20,10,.55);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;';
   ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:440px;width:100%;padding:24px;font-family:\'Outfit\',sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;">'
     + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.4rem;color:var(--g2);font-weight:700;margin-bottom:4px;">🏥 Centro creado — falta el pago</div>'
-    + '<p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin:0 0 16px;">Tu centro ya funciona. El plan completo (pacientes ilimitados) se activa apenas confirmemos la transferencia. Transferí <strong>u$s '+precio+'</strong> (Plan '+(nombresPlan[plan]||plan)+') a esta cuenta:</p>'
+    + '<p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin:0 0 16px;">Tu centro ya funciona. El plan completo (pacientes ilimitados) va a estar disponible cuando la suscripción sea automática.</p>'
     + '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-bottom:16px;">'+filas+'</div>'
-    + '<p style="font-size:.78rem;color:var(--muted);line-height:1.55;margin:0 0 16px;">Cuando tengamos la transferencia activamos tu plan completo (puede tardar hasta 24hs hábiles). Mientras tanto seguí usando el centro.</p>'
+    + '<p style="font-size:.78rem;color:var(--muted);line-height:1.55;margin:0 0 16px;">Mientras tanto seguí usando el centro.</p>'
     + '<div style="display:flex;gap:10px;flex-wrap:wrap;">'
     + '<button onclick="confirmarTransferenciaCentro()" style="flex:1;min-width:150px;padding:11px 18px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">Ya hice la transferencia</button>'
     + '<button onclick="cerrarPanelTransferenciaCentro()" style="padding:11px 18px;background:#fff;color:var(--muted);border:1.5px solid var(--g8);border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:\'Outfit\',sans-serif;">Después</button>'
@@ -19062,7 +19089,7 @@ function mlRegistrar(){
       registrarAceptacionLegal();
 
       // Guardar la solicitud real en el reporte del panel admin (incluida Prueba Gratuita)
-      var preciosPlan = {'Prueba Gratuita':0, 'Starter':29, 'Pro':41, 'Premium':71};
+      var preciosPlan = {'Prueba Gratuita':0, 'Starter':24, 'Pro':34, 'Premium':44};
       sb.from('solicitudes_suscripcion').insert({
         medico_nombre: nombre,
         medico_email: email,
