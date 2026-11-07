@@ -19150,19 +19150,38 @@ function _turnoEsBorradoPendiente(remoto, lista){
   }
   return false;
 }
-// «Finalizar atención»: el turno de HOY de ese paciente (atado por el vínculo turno-ficha) pasa a «Atendido». Solo cambia con UN candidato; con ninguno atado o con más de uno no hace nada especial (sin tarjeta ni aviso).
+// «Finalizar atención»: marca «Atendido» el turno correcto (orden de la Dra. 07/11/2026). Sin parecido de nombre; con 2 o más candidatos no marca ninguno y no avisa.
+//  1) Turno de ENTRADA: el desde el que se abrió la HC con «📋 Historia clínica» (de hoy o de días anteriores; nunca uno futuro), mientras el paciente abierto sea el de ese turno.
+//  2) Sin turno de entrada: el ÚNICO turno de hoy no atendido del paciente: atado a su ficha, o sin atar con el MISMO nombre exacto (sin comas, tildes, mayúsculas ni orden) y siendo ese el único paciente con ese nombre; en ese caso además se ata el turno a la ficha.
+function _hcEntradaCoincide(t, p){
+  if(!t || !p || turnos.indexOf(t) < 0) return false;
+  if(t._pacienteIdSb) return !!p._sbId && String(t._pacienteIdSb) === String(p._sbId);
+  return !!t.pac && !!p.nombre && _hcClaveNombre(t.pac) === _hcClaveNombre(p.nombre);
+}
 function _turnoAtendidoAlFinalizar(){
+  var en = _hcTurnoEntrada; _hcTurnoEntrada = null;   // el turno de entrada vale una sola vez
   var p = (typeof pacienteHCActualIdx === 'number' && pacienteHCActualIdx >= 0) ? pacientes[pacienteHCActualIdx] : null;
-  if(!p || !p._sbId) return;
+  if(!p) return;
   var hoy = _fechaLocalISO();
-  var cand = turnos.filter(function(t){
-    return t && t._pacienteIdSb && String(t._pacienteIdSb) === String(p._sbId) && (!t.fecha || t.fecha === hoy)
-      && t.estado !== 'ok';
-  });
-  if(cand.length === 1){
-    cand[0].estado = 'ok';
+  var elegido = null;
+  if(en && en.dia === hoy && _hcEntradaCoincide(en.t, p)){
+    // Hay turno de entrada de este paciente: decide solo él (de hoy o anterior, no futuro, y no atendido todavía)
+    if(en.t.estado !== 'ok' && (!en.t.fecha || en.t.fecha <= hoy)) elegido = en.t;
+  } else {
+    var clave = _hcClaveNombre(p.nombre || '');
+    var unico = !!clave && pacientes.filter(function(x){ return x && x.nombre && _hcClaveNombre(x.nombre) === clave; }).length === 1;
+    var cand = turnos.filter(function(t){
+      if(!t || t.estado === 'ok' || (t.fecha && t.fecha !== hoy)) return false;
+      if(t._pacienteIdSb) return !!p._sbId && String(t._pacienteIdSb) === String(p._sbId);
+      return unico && !!t.pac && _hcClaveNombre(t.pac) === clave;
+    });
+    if(cand.length === 1) elegido = cand[0];
+  }
+  if(elegido){
+    if(!elegido._pacienteIdSb && p._sbId){ try{ _hcVincularTurno(elegido, p._sbId); }catch(eV){ console.warn('[catch]', eV); } }
+    elegido.estado = 'ok';
     guardarLocal();
-    _turnoEstadoCambio(cand[0]);
+    _turnoEstadoCambio(elegido);
     try{ renderTurnos(); }catch(e){ console.warn('[catch]', e); }
   }
 }
@@ -20756,6 +20775,12 @@ var _hcReglaLimpiarOrig = limpiarFormularioHC;
 limpiarFormularioHC = function(){ var r = _hcReglaLimpiarOrig.apply(this, arguments); try{ _hcReglaEvaluar(); }catch(eR){ console.warn('[catch]', eR); } return r; };
 var _hcReglaMarcarOrig = _marcarSbIdPaciente;
 _marcarSbIdPaciente = function(pac, id){ var r = _hcReglaMarcarOrig.apply(this, arguments); try{ if(pac && id) _hcReglaAlLlegarId(pac); }catch(eR){ console.warn('[catch]', eR); } return r; };
+// Turno de ENTRADA de «Finalizar atención»: se anota al abrir la HC con el botón «📋 Historia clínica» de un turno; se olvida si después se abre OTRO paciente.
+var _hcTurnoEntrada = null;   // { t: turno, dia: 'AAAA-MM-DD' }
+var _hcEntradaDesdeTurnoOrig = abrirHCDesdeTurno;
+abrirHCDesdeTurno = function(idx){ var tt = turnos[idx]; var r = _hcEntradaDesdeTurnoOrig.apply(this, arguments); if(tt) _hcTurnoEntrada = { t: tt, dia: _fechaLocalISO() }; return r; };
+var _hcEntradaAbrirOrig = abrirHC;
+abrirHC = function(){ var r = _hcEntradaAbrirOrig.apply(this, arguments); try{ if(_hcTurnoEntrada){ var pa = (typeof pacienteHCActualIdx === 'number' && pacienteHCActualIdx >= 0) ? pacientes[pacienteHCActualIdx] : null; if(pa && !_hcEntradaCoincide(_hcTurnoEntrada.t, pa)) _hcTurnoEntrada = null; } }catch(eE){ console.warn('[catch]', eE); } return r; };
 
 function finalizarAtencion(_c){
   if(_c !== _MH_OK){ _mhConfirmar('¿Finalizar la atención?\n\nSe va a cerrar el paciente de la Historia Clínica y se van a dejar en blanco los formularios de Recetas, Derivaciones, Estudios y Facturación, con todos sus datos.\n\nLo ya emitido y firmado no se borra. Lo que no hayas guardado en la Historia Clínica se pierde.', function(ok){ if(ok) finalizarAtencion(_MH_OK); }); return; }
