@@ -740,7 +740,7 @@ function abrirPago(plan, precio){
   document.querySelectorAll('.centro-medico-only').forEach(function(el){ el.style.display = 'none'; });
   overlay.setAttribute('data-registro-centro', 'false');
   var btn=document.getElementById('pago-submit-btn'); if(btn) btn.textContent='✦ Solicitar suscripción';
-  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='Próximamente: la suscripción va a ser automática desde tu cuenta.';
+  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='La suscripción va a ser automática desde tu cuenta.';
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
@@ -819,7 +819,7 @@ function solicitarAddon(nombre, precio){
   document.querySelectorAll('.centro-medico-only').forEach(function(el){ el.style.display = 'none'; });
   overlay.setAttribute('data-registro-centro', 'false');
   var btn=document.getElementById('pago-submit-btn'); if(btn) btn.textContent='✦ Solicitar suscripción';
-  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='Próximamente: la suscripción va a ser automática desde tu cuenta.';
+  var sub=document.getElementById('pago-submit-sub'); if(sub) sub.textContent='La suscripción va a ser automática desde tu cuenta.';
   document.body.style.overflow='hidden';
   overlay.scrollTop=0;
   _limpiarFormPago();
@@ -1330,7 +1330,7 @@ function mhcdRechazarCookies(){
           <li>1.500 imágenes y archivos</li>
           <li>80 consultas de IA/mes</li>
         </ul>
-        <button class="pbtn" type="button" disabled aria-disabled="true" title="Próximamente" style="background:#e5e7eb;color:#6b7280;border:none;cursor:default;">Próximamente</button>
+        <button class="pbtn" type="button" disabled aria-disabled="true" style="background:#e5e7eb;color:#6b7280;border:none;cursor:default;">Elegir Starter</button>
       </div>
       <div class="plan" style="border-left:6px solid var(--g5);">
         <span class="plan-icon">⚕️</span>
@@ -1344,7 +1344,7 @@ function mhcdRechazarCookies(){
           <li>Analítica avanzada</li>
           <li>200 consultas de IA/mes</li>
         </ul>
-        <button class="pbtn" type="button" disabled aria-disabled="true" title="Próximamente" style="background:#e5e7eb;color:#6b7280;border:none;cursor:default;">Próximamente</button>
+        <button class="pbtn" type="button" disabled aria-disabled="true" style="background:#e5e7eb;color:#6b7280;border:none;cursor:default;">Elegir Pro</button>
       </div>
       <div class="plan" style="border-left:6px solid var(--g4);">
         <span class="plan-icon">👑</span>
@@ -1357,7 +1357,7 @@ function mhcdRechazarCookies(){
           <li>15.000 imágenes y archivos</li>
           <li>500 consultas de IA/mes</li>
         </ul>
-        <button class="pbtn" type="button" disabled aria-disabled="true" title="Próximamente" style="background:#e5e7eb;color:#6b7280;border:none;cursor:default;">Próximamente</button>
+        <button class="pbtn" type="button" disabled aria-disabled="true" style="background:#e5e7eb;color:#6b7280;border:none;cursor:default;">Elegir Premium</button>
       </div>
     </div><!-- /planes-grid -->
 
@@ -1381,7 +1381,7 @@ function mhcdRechazarCookies(){
       <div class="sec-head">
         <div class="sec-tag">Add-on opcional</div>
         <h2 class="sec-title" style="font-size:clamp(1.5rem,3vw,2rem);">Recordatorios Automáticos</h2>
-        <p class="sec-sub">El envío manual de WhatsApp y mail (tocando un botón vos) es <strong>gratis en todos los planes</strong>. Este add-on es solo para el envío <strong>automático</strong>, sin que tengas que tocar nada.</p>
+        <p class="sec-sub">Los recordatorios de turno por WhatsApp están disponibles <strong>solo con este add-on</strong>. El envío de recetas, derivaciones y estudios al paciente es <strong>gratis en todos los planes</strong> y no usa este cupo.</p>
       </div>
       <div class="planes-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
         <div class="plan" style="border-left:4px solid var(--g4);">
@@ -1389,21 +1389,21 @@ function mhcdRechazarCookies(){
           <div class="pname">Chico</div>
           <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">11</span><span class="pprice-p">/mes</span></div>
           <hr class="pline">
-          <ul class="pfeats"><li>150 WhatsApp automáticos/mes</li><li>300 emails automáticos/mes</li></ul>
+          <ul class="pfeats"><li>150 WhatsApp automáticos/mes</li></ul>
         </div>
         <div class="plan" style="border-left:4px solid var(--g4);">
           <span class="plan-icon">💬</span>
           <div class="pname">Mediano</div>
           <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">18</span><span class="pprice-p">/mes</span></div>
           <hr class="pline">
-          <ul class="pfeats"><li>300 WhatsApp automáticos/mes</li><li>800 emails automáticos/mes</li></ul>
+          <ul class="pfeats"><li>300 WhatsApp automáticos/mes</li></ul>
         </div>
         <div class="plan" style="border-left:4px solid var(--g4);">
           <span class="plan-icon">💬</span>
           <div class="pname">Grande</div>
           <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">30</span><span class="pprice-p">/mes</span></div>
           <hr class="pline">
-          <ul class="pfeats"><li>600 WhatsApp automáticos/mes</li><li>2.000 emails automáticos/mes</li></ul>
+          <ul class="pfeats"><li>600 WhatsApp automáticos/mes</li></ul>
         </div>
       </div><!-- /add-on grid -->
     </div><!-- /add-on panel -->
@@ -1422,7 +1422,7 @@ function mhcdRechazarCookies(){
           <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">7</span><span class="pprice-p">/mes</span></div>
           <hr class="pline">
           <ul class="pfeats"><li>+100 consultas de IA/mes</li></ul>
-          <button class="pbtn" type="button" disabled aria-disabled="true" title="Próximamente" style="background:#e5e7eb;color:#6b7280;border:none;cursor:default;">Próximamente</button>
+          <button class="pbtn" type="button" disabled aria-disabled="true" style="background:#e5e7eb;color:#6b7280;border:none;cursor:default;">Contratar IA Extra</button>
         </div>
       </div><!-- /add-on IA Extra grid -->
       <p style="font-size:.78rem;color:var(--muted);text-align:center;margin:16px 0 0;">Las consultas extra no se acumulan al mes siguiente. No están disponibles desde la Prueba Gratuita. En un Centro Médico se comparten entre todos los médicos del centro. Los add-ons no llevan descuento.</p>
@@ -1470,7 +1470,7 @@ function mhcdRechazarCookies(){
         <div class="ctr-step">
           <div class="ctr-rail"><div class="ctr-num">1</div><div class="ctr-line"></div></div>
           <div>
-            <div class="ctr-head"><h4>Crear tu Centro Médico</h4><span class="ctr-tag owner">Vos</span><span class="ctr-tag soon">⏳ Próximamente</span></div>
+            <div class="ctr-head"><h4>Crear tu Centro Médico</h4><span class="ctr-tag owner">Vos</span></div>
             <p>Se hace una sola vez, con el botón <span class="ctr-ui">Inscribir mi Centro Médico</span> de abajo — un mismo formulario cubre el registro, el centro y el plan.</p>
             <ol>
               <li>Completá el <span class="ctr-ui">Nombre del Centro Médico</span> y elegí el <span class="ctr-ui">Plan del centro</span> (Centro Chico, Centro Mediano o Centro Grande) — el que cubre a todo el equipo.</li>
@@ -3307,12 +3307,12 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
             <div class="app-page-title" style="margin-bottom:2px;">Agenda</div>
             <div class="app-page-sub" style="margin-bottom:14px;">Turnos de hoy y próximos días</div>
 
-            <!-- RECORDATORIOS INFO -->
-            <div style="background:linear-gradient(135deg,#075e54,#128c7e);border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-              <div style="font-size:1.8rem;">📱</div>
-              <div style="flex:1;">
-                <div style="color:#fff;font-weight:700;font-size:.88rem;margin-bottom:3px;">Recordatorios por WhatsApp</div>
-                <div style="color:rgba(255,255,255,.8);font-size:.76rem;line-height:1.5;">Hacé clic en <strong>📱 Recordatorio</strong> en cada turno para enviar el mensaje directo al paciente.</div>
+            <!-- RECORDATORIOS DE TURNO — servicio adicional (add-on Recordatorios Automáticos) -->
+            <div id="agenda-recordatorios-info" style="background:#f3f4f6;border:1.5px solid #d1d5db;border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+              <div style="font-size:1.8rem;">🔔</div>
+              <div style="flex:1;min-width:200px;">
+                <div style="color:#374151;font-weight:700;font-size:.88rem;margin-bottom:3px;">Recordatorios de turno</div>
+                <div style="color:#6b7280;font-size:.76rem;line-height:1.5;">Los recordatorios de turno son un servicio adicional. Para usarlos, adquirí el add-on Recordatorios Automáticos.</div>
               </div>
             </div>
             <div class="app-page-sub" style="margin:0;">Gestión de turnos y citas</div>
@@ -3411,11 +3411,6 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               <input class="mi" id="turno-motivo" type="text" placeholder="Ej: Control HTA, Primera consulta...">
               <label style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">WhatsApp del paciente
               <input class="mi" id="turno-wa" type="text" placeholder="11 1234-5678" style="margin-bottom:8px;">
-              <label style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Email del paciente <span style="font-weight:400;text-transform:none;">(para recibir confirmaciones)</span>
-              <input class="mi" id="turno-email" type="email" placeholder="paciente@email.com" style="margin-bottom:8px;">
-              <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button onclick="enviarRecordatorioWANuevoTurno(1)" style="flex:1;background:linear-gradient(135deg,#128c7e,#25d366);color:#fff;border:none;border-radius:9px;padding:10px 12px;font-size:.78rem;font-weight:600;cursor:pointer;">📱 Recordatorio 1 día antes</button>
-              </div>
             </div>
 
             <!-- OS y Prioridad -->
@@ -4807,7 +4802,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       <span style="font-size:1.4rem;">🏦</span>
       <div>
         <div style="font-size:.88rem;font-weight:700;color:#145a32;">Transferencia bancaria</div>
-        <div style="font-size:.78rem;color:#166534;">Sin comisiones · Próximamente</div>
+        <div style="font-size:.78rem;color:#166534;">Sin comisiones</div>
       </div>
       <input type="hidden" name="forma-pago" value="transferencia">
     </div>
@@ -4822,7 +4817,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
     <button id="pago-submit-btn" onclick="procesarPago()" style="width:100%;padding:16px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:.5px;">
       ✦ Solicitar suscripción
     </button>
-    <p id="pago-submit-sub" style="text-align:center;font-size:.75rem;color:#888;margin-top:10px;">Próximamente: la suscripción va a ser automática desde tu cuenta.</p>
+    <p id="pago-submit-sub" style="text-align:center;font-size:.75rem;color:#888;margin-top:10px;">La suscripción va a ser automática desde tu cuenta.</p>
 
     <!-- Separador código de activación -->
     <div style="display:flex;align-items:center;gap:10px;margin:20px 0 14px;">
@@ -4874,7 +4869,6 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
           <span style="font-size:1.4rem;">🏦</span>
           <div>
             <div style="font-size:.88rem;font-weight:700;color:#145a32;">Transferencia bancaria</div>
-            <div style="font-size:.78rem;color:#166534;">Próximamente</div>
           </div>
         </div>
         <div style="background:#f9fafb;border:1.5px dashed #d1d5db;border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px;opacity:.8;">
@@ -4888,7 +4882,7 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
       <button onclick="confirmarMejorarPlan()" id="btn-confirmar-mejorar-plan" style="width:100%;padding:16px;background:linear-gradient(135deg,#22a050,#145a32);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:.5px;">
         ✦ Solicitar cambio de plan
       </button>
-      <p style="text-align:center;font-size:.75rem;color:#888;margin-top:10px;">Próximamente: el cambio de plan va a ser automático desde tu cuenta.</p>
+      <p style="text-align:center;font-size:.75rem;color:#888;margin-top:10px;">El cambio de plan va a ser automático desde tu cuenta.</p>
     </div>
   </div>
 </div>
@@ -7834,7 +7828,7 @@ function procesarPago(){
       // no alarmamos al usuario — queda en consola para diagnóstico.
       console.error('Error guardando solicitud de suscripción:', r.error);
     }
-    alert('✅ Solicitud registrada.\n\nPróximamente la suscripción va a ser automática desde tu cuenta.');
+    alert('✅ Solicitud registrada.');
   });
 }
 
@@ -8819,7 +8813,7 @@ function confirmarMejorarPlan(){
 
   cerrarMejorarPlan();
   if(btn){ btn.disabled = false; btn.textContent = '✦ Solicitar cambio de plan'; }
-  alert('✅ Pedido registrado: plan '+planInfo.nombre+' para tu centro.\n\nPróximamente el cambio de plan va a ser automático desde tu cuenta.');
+  alert('✅ Pedido registrado: plan '+planInfo.nombre+' para tu centro.');
 }
 
 // El Centro Médico se crea al instante (RPC crear_centro_medico), pero arranca
@@ -14986,7 +14980,7 @@ function renderTurnos(lista){
     var idx = turnos.indexOf(t);
     var fecha = (mostrarFecha && t.fechaDisplay)?'<span style="font-size:.76rem;color:var(--g4);font-weight:600;"> '+escHtml(t.fechaDisplay)+'</span>':'';
     var op = t.estado==='ok'?'opacity:.65;':'';
-    var waBtn = '<button onclick="enviarRecordatorioWA('+idx+')" title="Enviar recordatorio por WhatsApp" style="background:none;border:none;color:#25D366;cursor:pointer;font-size:1rem;padding:0 4px;">📱</button>';
+    var waBtn = '<button onclick="avisoRecordatoriosTurno('+idx+')" title="Recordatorios de turno (servicio adicional)" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:1rem;padding:0 4px;opacity:.7;">🔔</button>';
     return '<div class="agenda-item mh-con-hc" style="'+op+'">'
       +'<div class="agenda-hora">'+escHtml(t.hora)+'</div>'
       +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(t.pac)+fecha+'</div><div class="agenda-mot">'+escHtml(t.motivo||'Consulta')+(t.os?' · '+escHtml(t.os):'')+'</div></div>'
@@ -15224,7 +15218,7 @@ document.addEventListener('change', function(e){
 function abrirNuevoTurno(){
   document.getElementById('turnoOverlay').style.display='block';
   // Limpiar campos del formulario
-  ['turno-pac','turno-motivo','turno-wa','turno-email','turno-os'].forEach(function(id){
+  ['turno-pac','turno-motivo','turno-wa','turno-os'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value='';
   });
   try{ var pr=document.getElementById('turno-prioridad'); if(pr) pr.value='Normal'; }catch(e){ console.warn('[catch]', e); }
@@ -15242,51 +15236,6 @@ function abrirNuevoTurno(){
 function cerrarNuevoTurno(){
   document.getElementById('turnoOverlay').style.display='none';
 }
-function enviarRecordatorioWANuevoTurno(diasAntes){
-  diasAntes = diasAntes || 1;
-  var pac = (document.getElementById('turno-pac')||{}).value||'';
-  var fecha = (document.getElementById('turno-fecha')||{}).value||'';
-  var hora = (document.getElementById('turno-hora')||{}).value||'';
-  var wa = (document.getElementById('turno-wa')||{}).value||'';
-  var emailPac = (document.getElementById('turno-email')||{}).value||'';
-  var motivo = (document.getElementById('turno-motivo')||{}).value||'';
-  if(!wa){ alert('Ingresá el número de WhatsApp del paciente.'); return; }
-  if(!fecha||!hora){ alert('Ingresá fecha y hora del turno primero.'); return; }
-  var partes = fecha.split('-');
-  var fechaDisplay = partes[2]+'/'+partes[1]+'/'+partes[0];
-
-  // Nombre del médico — tomar del campo de usuario (sin ✏️)
-  var medicoEl = document.getElementById('app-user-name');
-  var medico = medicoEl ? medicoEl.textContent.replace(/✏️/g,'').trim() : 'Su médico';
-  if(!medico || medico === 'Dr. Usuario') medico = 'Su médico';
-
-  // Email del médico que emite el turno: a ese mail le llegan las respuestas del paciente (si no hubiera ninguno, la línea no se agrega)
-  var emailMedico = (usuarioActual && usuarioActual.email) ? String(usuarioActual.email).trim() : '';
-
-  var cuando = diasAntes === 2 ? 'RECORDATORIO — faltan 2 días para su turno' : 'RECORDATORIO — mañana es su turno';
-  var pacMayus = pac.toUpperCase();
-
-  // Links de confirmación por email
-  var asuntoConfirma = encodeURIComponent('CONFIRMO turno '+fechaDisplay+' '+hora+'hs - '+pac);
-  var asuntoCancela = encodeURIComponent('CANCELO turno '+fechaDisplay+' '+hora+'hs - '+pac);
-  var linkConfirma = 'mailto:'+emailMedico+'?subject='+asuntoConfirma+'&body='+encodeURIComponent('Confirmo mi turno del '+fechaDisplay+' a las '+hora+' hs.\n\nPaciente: '+pac);
-  var linkCancela = 'mailto:'+emailMedico+'?subject='+asuntoCancela+'&body='+encodeURIComponent('Necesito cancelar mi turno del '+fechaDisplay+' a las '+hora+' hs.\n\nPaciente: '+pac);
-
-  var msg = '🏥 *MedHistoriaClinicaOnline*\n\n'
-    +'📅 '+cuando+'\n\n'
-    +'Hola *'+pacMayus+'*, le recordamos su turno médico:\n\n'
-    +'📆 Fecha: *'+fechaDisplay+'*\n'
-    +'🕐 Hora: *'+hora+' hs*\n'
-    +(motivo ? '📋 Motivo: '+motivo+'\n' : '')
-    +'👨‍⚕️ Médico: *'+medico+'*\n\n'
-    +'✅ Para *CONFIRMAR* su turno responda este mensaje con la palabra:\n*CONFIRMO*\n\n'
-    +'❌ Para *CANCELAR* responda con:\n*CANCELO*\n\n'
-    +(emailMedico ? '📧 O puede responder por email a:\n'+emailMedico+'\n\n' : '')
-    +'_MedHistoriaClinicaOnline_';
-
-  window.open('https://wa.me/54'+wa.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
-}
-
 function guardarTurno(){
   var pac = document.getElementById('turno-pac').value.trim();
   var fecha = document.getElementById('turno-fecha').value;
@@ -15340,26 +15289,14 @@ function guardarTurno(){
     });
   }
   
-  // Ofrecer enviar recordatorio por WA
   cerrarNuevoTurno();
   renderTurnos();
-  var _limpiarNuevoTurno = function(){
-    document.getElementById('turno-pac').value='';
-    document.getElementById('turno-fecha').value='';
-    document.getElementById('turno-hora').value='09:00';
-    document.getElementById('turno-motivo').value='';
-    document.getElementById('turno-os').value='';
-    document.getElementById('turno-wa').value='';
-  };
-  if(wa){
-    // Tarjeta de la app (no confirm nativo). El formulario se limpia DESPUÉS de la respuesta, porque el recordatorio lee sus campos.
-    _mhConfirmar('✅ Turno guardado.\n\n¿Querés enviarle un recordatorio por WhatsApp a '+pac+'?', function(enviar){
-      if(enviar) enviarRecordatorioWANuevoTurno();
-      _limpiarNuevoTurno();
-    });
-  } else {
-    _limpiarNuevoTurno();
-  }
+  document.getElementById('turno-pac').value='';
+  document.getElementById('turno-fecha').value='';
+  document.getElementById('turno-hora').value='09:00';
+  document.getElementById('turno-motivo').value='';
+  document.getElementById('turno-os').value='';
+  document.getElementById('turno-wa').value='';
 }
 
 // Renderizar al cargar agenda
@@ -17733,38 +17670,18 @@ derivacion: [],   // el contenido se vacía con _vaciarContenidoDocConservandoPa
   // Los datos del paciente se conservan (no se vuelve a rellenar desde la HC: se pisaría un paciente cargado a mano). Para otro paciente: abrirlo desde la Historia Clínica.
 }
 
-function enviarRecordatorioWA(idx){
-  var t = turnos[idx];
-  if(!t) return;
-  var tel = t.wa || '';
-  if(!tel){
-    pedirTelefono('WhatsApp del paciente ' + t.pac, function(telIngresado){
-      if(!telIngresado) return;
-      turnos[idx].wa = telIngresado;
-      guardarLocal();
-      _enviarRecordatorioTurno(t, telIngresado);
-    });
+// Recordatorios de turno: servicio adicional (add-on «Recordatorios Automáticos»). NO existe ningún recordatorio manual, ni gratis ni pago.
+// Con el add-on activo, el botón 🔔 solo MUESTRA el estado del recordatorio de ese turno (Programado / Enviado); no reenvía nada.
+// Mientras el motor de recordatorios no exista, nadie tiene el add-on: tieneAddonRecordatoriosTurno() devuelve falso.
+function tieneAddonRecordatoriosTurno(){
+  return false;
+}
+function avisoRecordatoriosTurno(idx){
+  if(!tieneAddonRecordatoriosTurno()){
+    alert('Los recordatorios de turno son un servicio adicional. Para usarlos, adquirí el add-on Recordatorios Automáticos.');
     return;
   }
-  _enviarRecordatorioTurno(t, tel);
-}
-
-function _enviarRecordatorioTurno(t, tel){
-  var medicoNombre = usuarioActual ? (usuarioActual.nombre || 'Su médico') : 'Su médico';
-  var msg = '🏥 *MedHistoriaClinicaOnline*\n\n'
-    +'📋 *RECORDATORIO DE TURNO*\n\n'
-    +'Hola *'+t.pac+'*, le recordamos su turno médico:\n\n'
-    +'📅 *Fecha:* '+t.fechaDisplay+'\n'
-    +'⏰ *Hora:* '+t.hora+' hs\n'
-    +(t.motivo ? '📝 *Motivo:* '+t.motivo+'\n' : '')
-    +(t.os ? '🏥 *Obra Social:* '+t.os+'\n' : '')
-    +'👨‍⚕️ *Médico:* '+medicoNombre+'\n\n'
-    +'Por favor responda este mensaje con:\n\n'
-    +'✅ Para *CONFIRMAR* su turno escriba:\n*CONFIRMO*\n\n'
-    +'❌ Para *CANCELAR* su turno escriba:\n*CANCELO*\n\n'
-    +'_Gracias · MedHistoriaClinicaOnline_';
-
-  window.open('https://wa.me/54'+tel.replace(/\D/g,'')+'?text='+encodeURIComponent(msg), '_blank');
+  // Con el add-on activo: panel con el estado del recordatorio de este turno (se construye con el motor de recordatorios).
 }
 
 // ══ ESTRUCTURA DE PRECIOS (2026-09-24) — planes individuales, Centro Médico y
