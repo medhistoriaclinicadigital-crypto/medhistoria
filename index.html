@@ -1381,29 +1381,29 @@ function mhcdRechazarCookies(){
       <div class="sec-head">
         <div class="sec-tag">Add-on opcional</div>
         <h2 class="sec-title" style="font-size:clamp(1.5rem,3vw,2rem);">Recordatorios Automáticos</h2>
-        <p class="sec-sub">Los recordatorios de turno por WhatsApp y mail están disponibles <strong>solo con este add-on</strong>. El envío de recetas, derivaciones y estudios al paciente es <strong>gratis en todos los planes</strong> y no usa este cupo.</p>
+        <p class="sec-sub">Los recordatorios de turno por WhatsApp están disponibles <strong>solo con este add-on</strong>. El envío de recetas, derivaciones y estudios al paciente es <strong>gratis en todos los planes</strong> y no usa este cupo.</p>
       </div>
       <div class="planes-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
         <div class="plan" style="border-left:4px solid var(--g4);">
           <span class="plan-icon">💬</span>
           <div class="pname">Chico</div>
-          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">18</span><span class="pprice-p">/mes</span></div>
+          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">11</span><span class="pprice-p">/mes</span></div>
           <hr class="pline">
-          <ul class="pfeats"><li>150 mensajes de turno por WhatsApp/mes</li><li>300 mensajes de turno por email/mes</li></ul>
+          <ul class="pfeats"><li>150 mensajes de turno por WhatsApp/mes</li></ul>
         </div>
         <div class="plan" style="border-left:4px solid var(--g4);">
           <span class="plan-icon">💬</span>
           <div class="pname">Mediano</div>
-          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">25</span><span class="pprice-p">/mes</span></div>
+          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">18</span><span class="pprice-p">/mes</span></div>
           <hr class="pline">
-          <ul class="pfeats"><li>300 mensajes de turno por WhatsApp/mes</li><li>800 mensajes de turno por email/mes</li></ul>
+          <ul class="pfeats"><li>300 mensajes de turno por WhatsApp/mes</li></ul>
         </div>
         <div class="plan" style="border-left:4px solid var(--g4);">
           <span class="plan-icon">💬</span>
           <div class="pname">Grande</div>
-          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">37</span><span class="pprice-p">/mes</span></div>
+          <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">30</span><span class="pprice-p">/mes</span></div>
           <hr class="pline">
-          <ul class="pfeats"><li>600 mensajes de turno por WhatsApp/mes</li><li>2.000 mensajes de turno por email/mes</li></ul>
+          <ul class="pfeats"><li>600 mensajes de turno por WhatsApp/mes</li></ul>
         </div>
       </div><!-- /add-on grid -->
     </div><!-- /add-on panel -->
@@ -1470,7 +1470,7 @@ function mhcdRechazarCookies(){
         <div class="ctr-step">
           <div class="ctr-rail"><div class="ctr-num">1</div><div class="ctr-line"></div></div>
           <div>
-            <div class="ctr-head"><h4>Crear tu Centro Médico</h4><span class="ctr-tag owner">Vos</span><span class="ctr-tag soon">⏳ Próximamente</span></div>
+            <div class="ctr-head"><h4>Crear tu Centro Médico</h4><span class="ctr-tag owner">Vos</span></div>
             <p>Se hace una sola vez, con el botón <span class="ctr-ui">Inscribir mi Centro Médico</span> de abajo — un mismo formulario cubre el registro, el centro y el plan.</p>
             <ol>
               <li>Completá el <span class="ctr-ui">Nombre del Centro Médico</span> y elegí el <span class="ctr-ui">Plan del centro</span> (Centro Chico, Centro Mediano o Centro Grande) — el que cubre a todo el equipo.</li>
@@ -3371,8 +3371,6 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               <input class="mi" id="turno-motivo" type="text" placeholder="Ej: Control HTA, Primera consulta...">
               <label style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">WhatsApp del paciente <span style="font-weight:400;text-transform:none;">(se usa solo con el add-on Recordatorios Automáticos)</span>
               <input class="mi" id="turno-wa" type="text" placeholder="11 1234-5678" data-wa-ph="{ej}" style="margin-bottom:8px;">
-              <label style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;display:block;margin-bottom:4px;">Email del paciente <span style="font-weight:400;text-transform:none;">(se usa solo con el add-on Recordatorios Automáticos)</span>
-              <input class="mi" id="turno-email" type="email" placeholder="paciente@email.com" style="margin-bottom:8px;">
             </div>
 
             <!-- OS y Prioridad -->
@@ -15315,7 +15313,7 @@ document.addEventListener('change', function(e){
 function abrirNuevoTurno(){
   document.getElementById('turnoOverlay').style.display='block';
   // Limpiar campos del formulario
-  ['turno-pac','turno-motivo','turno-wa','turno-email','turno-os'].forEach(function(id){
+  ['turno-pac','turno-motivo','turno-wa','turno-os'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value='';
   });
   try{ var pr=document.getElementById('turno-prioridad'); if(pr) pr.value='Normal'; }catch(e){ console.warn('[catch]', e); }
