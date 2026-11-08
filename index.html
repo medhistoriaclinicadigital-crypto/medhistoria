@@ -15082,7 +15082,7 @@ function renderTurnos(lista){
       +'<div class="mh-acciones">'
       +_hcBotonTurno(idx)
       +waBtn
-      +'<span class="pac-tag '+tagInfo(t)+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;">'+tagTxt(t)+'</span>'
+      +(t.estado==='ok' ? '<span class="pac-tag '+tagInfo(t)+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;">'+tagTxt(t)+'</span>' : '')   // sin etiqueta «Pendiente»: el turno pasa a «Atendido» con «Finalizar atención»
       +_botonCancelarTurno(t, idx)
       +'</div>'
       +'</div>';
@@ -15259,7 +15259,7 @@ function filtrarPorFecha(){
         +'<div class="agenda-mot">'+escHtml(t.motivo)+(t.os?' · '+escHtml(t.os):'')+'</div></div>'
         +'<div class="mh-acciones">'
         +_hcBotonTurno(idx)
-        +'<span class="pac-tag '+tagClass+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;">'+tagText+'</span>'
+        +(t.estado==='ok' ? '<span class="pac-tag '+tagClass+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;">'+tagText+'</span>' : '')   // sin etiqueta «Pendiente»
         +_botonCancelarTurno(t, idx)
         +'</div>'
         +'</div>';
