@@ -20783,7 +20783,7 @@ var _hcEntradaAbrirOrig = abrirHC;
 abrirHC = function(){ var r = _hcEntradaAbrirOrig.apply(this, arguments); try{ if(_hcTurnoEntrada){ var pa = (typeof pacienteHCActualIdx === 'number' && pacienteHCActualIdx >= 0) ? pacientes[pacienteHCActualIdx] : null; if(pa && !_hcEntradaCoincide(_hcTurnoEntrada.t, pa)) _hcTurnoEntrada = null; } }catch(eE){ console.warn('[catch]', eE); } return r; };
 
 function finalizarAtencion(_c){
-  if(_c !== _MH_OK){ _mhConfirmar('¿Finalizar la atención?\n\nSe va a cerrar el paciente de la Historia Clínica y se van a dejar en blanco los formularios de Recetas, Derivaciones, Estudios y Facturación, con todos sus datos.\n\nLo ya emitido y firmado no se borra. Lo que no hayas guardado en la Historia Clínica se pierde.', function(ok){ if(ok) finalizarAtencion(_MH_OK); }); return; }
+  // Sin cartel de confirmación (orden de la Dra. 08/11/2026): se ejecuta directo. Lo que se escribe en la HC se guarda solo (autoguardado).
   // Vacía una lista de campos: texto → '', desplegable → primera opción, casilla → desmarcada.
   var vaciar = function(ids){
     ids.forEach(function(id){
