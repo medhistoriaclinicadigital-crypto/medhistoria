@@ -20782,6 +20782,37 @@ abrirHCDesdeTurno = function(idx){ var tt = turnos[idx]; var r = _hcEntradaDesde
 var _hcEntradaAbrirOrig = abrirHC;
 abrirHC = function(){ var r = _hcEntradaAbrirOrig.apply(this, arguments); try{ if(_hcTurnoEntrada){ var pa = (typeof pacienteHCActualIdx === 'number' && pacienteHCActualIdx >= 0) ? pacientes[pacienteHCActualIdx] : null; if(pa && !_hcEntradaCoincide(_hcTurnoEntrada.t, pa)) _hcTurnoEntrada = null; } }catch(eE){ console.warn('[catch]', eE); } return r; };
 
+
+// ── Cambio de paciente en Recetas / Derivaciones / Pedido de estudios (orden de la Dra. 09/11/2026) ──
+// Cada pantalla recuerda de qué paciente es su contenido. Al entrar con OTRO paciente abierto en la Historia Clínica (o sin ninguno), se vacía lo propio del documento
+// (medicamento y mini-formulario, diagnóstico, indicaciones, vigencia, validez, casilla de contacto; motivo, antecedentes, especialidad; tipo, detalle) y se conservan los datos del paciente.
+// Con el MISMO paciente no se toca nada (el borrador sigue). Sin cartel y sin pasos extra.
+var _docPacDe = {};   // pantalla ('recetas' | 'derivaciones' | 'estudios') → paciente cuyo contenido tiene { sbId, uid, dni, nombre } o null (sin paciente)
+function _docPacienteAbierto(){
+  var p = (typeof pacienteHCActualIdx === 'number' && pacienteHCActualIdx >= 0) ? pacientes[pacienteHCActualIdx] : null;
+  return p ? { sbId: p._sbId ? String(p._sbId) : '', uid: p._uid || '', dni: String(p.dni || '').trim(), nombre: p.nombre || '' } : null;
+}
+function _docMismoPaciente(a, b){
+  if(!a || !b) return !a && !b;
+  if(a.sbId && b.sbId) return a.sbId === b.sbId;
+  if(a.uid && b.uid) return a.uid === b.uid;
+  if(a.dni && b.dni) return a.dni === b.dni;
+  return !!a.nombre && _hcClaveNombre(a.nombre) === _hcClaveNombre(b.nombre);
+}
+function _docAlEntrar(id){
+  if(id !== 'recetas' && id !== 'derivaciones' && id !== 'estudios') return;
+  var act = _docPacienteAbierto();
+  if((id in _docPacDe) && !_docMismoPaciente(_docPacDe[id], act)){
+    if(id === 'recetas') _vaciarContenidoRecetaConservandoPaciente();
+    else _vaciarContenidoDocConservandoPaciente(id === 'derivaciones' ? 'derivacion' : 'pedido');
+  }
+  _docPacDe[id] = act;
+}
+var _docPacShowOrig = showPanel;
+showPanel = function(id){ try{ _docAlEntrar(id); }catch(eDp){ console.warn('[catch]', eDp); } return _docPacShowOrig.apply(this, arguments); };
+var _docPacShowMobOrig = showPanelMob;
+showPanelMob = function(id, btn){ try{ _docAlEntrar(id); }catch(eDm){ console.warn('[catch]', eDm); } return _docPacShowMobOrig.apply(this, arguments); };
+
 function finalizarAtencion(_c){
   // Sin cartel de confirmación (orden de la Dra. 08/11/2026): se ejecuta directo. Lo que se escribe en la HC se guarda solo (autoguardado).
   // Vacía una lista de campos: texto → '', desplegable → primera opción, casilla → desmarcada.
