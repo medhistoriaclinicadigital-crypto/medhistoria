@@ -15096,7 +15096,7 @@ function renderTurnos(lista){
   function renderFila(t, mostrarFecha){
     var idx = turnos.indexOf(t);
     var fecha = (mostrarFecha && t.fechaDisplay)?'<span style="font-size:.76rem;color:var(--g4);font-weight:600;"> '+escHtml(t.fechaDisplay)+'</span>':'';
-    var op = t.estado==='ok'?'opacity:.65;':'';
+    var op = '';   // «Atendido» con sus colores originales (orden de la Dra. 10/11/2026): la fila ya no se apaga
     var waBtn = '<button onclick="avisoRecordatoriosTurno('+idx+')" title="Recordatorios de turno (servicio adicional)" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:1rem;padding:0 4px;opacity:.7;">🔔</button>';
     return '<div class="agenda-item mh-con-hc" style="'+op+'">'
       +'<div class="agenda-hora">'+escHtml(t.hora)+'</div>'
@@ -15104,7 +15104,7 @@ function renderTurnos(lista){
       +'<div class="mh-acciones">'
       +_hcBotonTurno(idx)
       +waBtn
-      +(t.estado==='ok' ? '<span class="pac-tag '+tagInfo(t)+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;">'+tagTxt(t)+'</span>' : '')   // sin etiqueta «Pendiente»: el turno pasa a «Atendido» con «Finalizar atención»
+      +(t.estado==='ok' ? '<span class="pac-tag '+tagInfo(t)+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;background:#d1fae5;color:#065f46;">'+tagTxt(t)+'</span>' : '')   // sin etiqueta «Pendiente»: el turno pasa a «Atendido» con «Finalizar atención»
       +_botonCancelarTurno(t, idx)
       +'</div>'
       +'</div>';
@@ -15281,7 +15281,7 @@ function filtrarPorFecha(){
         +'<div class="agenda-mot">'+escHtml(t.motivo)+(t.os?' · '+escHtml(t.os):'')+'</div></div>'
         +'<div class="mh-acciones">'
         +_hcBotonTurno(idx)
-        +(t.estado==='ok' ? '<span class="pac-tag '+tagClass+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;">'+tagText+'</span>' : '')   // sin etiqueta «Pendiente»
+        +(t.estado==='ok' ? '<span class="pac-tag '+tagClass+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;background:#d1fae5;color:#065f46;">'+tagText+'</span>' : '')   // sin etiqueta «Pendiente»
         +_botonCancelarTurno(t, idx)
         +'</div>'
         +'</div>';
