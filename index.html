@@ -721,6 +721,28 @@ function avisarInteresIAExtra(el){
   return false;
 }
 
+// ── PRECIOS DE LOS PLANES INDIVIDUALES: ÚNICA FUENTE (orden de la Dra. 10/11/2026; IVA incluido) ──
+// Si cambia un precio o el descuento, se cambia SOLO acá: lo demás (tarjetas, tabla del descuento, selectores, «Mejorar plan», «Mi plan», precio que se guarda) sale de estas dos variables.
+var PRECIOS_PLANES = { starter: 27, pro: 37, premium: 47 };   // u$s por mes
+var DESCUENTO_PREPAGO = { porcentaje: 15, meses: 3 };           // 15 % pagando 3 meses por adelantado
+function _redondear2(n){ return Math.round(n * 100) / 100; }
+function _fmtUsd(n){ var v = _redondear2(n); return (v % 1 === 0) ? String(v) : v.toFixed(2).replace('.', ','); }
+function _totalPrepago(precio){ return _redondear2(precio * DESCUENTO_PREPAGO.meses * (100 - DESCUENTO_PREPAGO.porcentaje) / 100); }   // 15 % de descuento sobre los meses prepagos
+function _equivalePorMes(precio){ return _redondear2(_totalPrepago(precio) / DESCUENTO_PREPAGO.meses); }                              // total / meses
+function _aplicarPreciosPlanes(){
+  try{
+    Object.keys(PRECIOS_PLANES).forEach(function(k){
+      var p = PRECIOS_PLANES[k];
+      var poner = function(attr, txt){ document.querySelectorAll('[' + attr + '="' + k + '"]').forEach(function(e){ e.textContent = txt; }); };
+      poner('data-precio', _fmtUsd(p));
+      poner('data-precio-total', 'u$s ' + _fmtUsd(_totalPrepago(p)));
+      poner('data-precio-equivale', 'u$s ' + _fmtUsd(_equivalePorMes(p)) + ' por mes');
+      poner('data-precio-mensual', 'u$s ' + _fmtUsd(p) + ' por mes');
+      document.querySelectorAll('option[data-precio-opt="' + k + '"]').forEach(function(o){ o.textContent = (o.getAttribute('data-pre') || '') + 'U$S ' + _fmtUsd(p) + '/mes'; });
+    });
+  }catch(ePr){ console.warn('[catch]', ePr); }
+}
+if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', _aplicarPreciosPlanes); } else { _aplicarPreciosPlanes(); }
 function abrirPago(plan, precio){
   var overlay = document.getElementById('pagoOverlay');
   if(!overlay) return;
@@ -1098,9 +1120,9 @@ function mhcdRechazarCookies(){
       <div style="font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:6px 0 4px;">Plan</div>
       <select id="ml-reg-plan" style="width:100%;padding:10px 14px;margin:4px 0 10px;border:1.5px solid #22a050;border-radius:8px;box-sizing:border-box;font-size:.9rem;display:block;outline:none;background:#f0fdf4;color:#145a32;font-weight:600;">
         <option value="Prueba Gratuita">🆓 Prueba Gratuita — 30 días gratis</option>
-        <option value="Starter">⚕️ Starter — U$S 24/mes</option>
-        <option value="Pro">💊 Pro — U$S 34/mes</option>
-        <option value="Premium">👑 Premium — U$S 44/mes</option>
+        <option value="Starter" data-precio-opt="starter" data-pre="⚕️ Starter — ">⚕️ Starter — U$S 27/mes</option>
+        <option value="Pro" data-precio-opt="pro" data-pre="💊 Pro — ">💊 Pro — U$S 37/mes</option>
+        <option value="Premium" data-precio-opt="premium" data-pre="👑 Premium — ">👑 Premium — U$S 47/mes</option>
       </select>
       <div style="font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:6px 0 4px;">¿Te invitó un Centro Médico?</div>
       <input id="ml-reg-codigo-centro" type="text" autocomplete="off" placeholder="Código de invitación (opcional)" style="width:100%;padding:10px 14px;margin:4px 0 10px;border:1.5px solid #d1d5db;border-radius:8px;box-sizing:border-box;font-size:.9rem;display:block;outline:none;background:transparent;text-transform:uppercase;">
@@ -1323,20 +1345,20 @@ function mhcdRechazarCookies(){
         <span class="plan-icon">🩺</span>
         <div class="pname">Starter</div>
         <div class="pdesc">Para el médico que da el primer paso hacia la digitalización.</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">24</span><span class="pprice-p">/mes</span></div>
+        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n" data-precio="starter">27</span><span class="pprice-p">/mes</span></div>
         <div class="ppat">Pacientes y recetas ilimitados</div>
         <hr class="pline">
         <ul class="pfeats">
           <li>1.500 imágenes y archivos</li>
           <li>80 consultas de IA/mes</li>
         </ul>
-        <button class="pbtn" onclick="abrirPago('Starter','24')">Elegir Starter</button>
+        <button class="pbtn" onclick="abrirPago('Starter',String(PRECIOS_PLANES.starter))">Elegir Starter</button>
       </div>
       <div class="plan" style="border-left:6px solid var(--g5);">
         <span class="plan-icon">⚕️</span>
         <div class="pname">Pro</div>
         <div class="pdesc">Para el médico con consulta establecida.</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">34</span><span class="pprice-p">/mes</span></div>
+        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n" data-precio="pro">37</span><span class="pprice-p">/mes</span></div>
         <div class="ppat">Pacientes y recetas ilimitados</div>
         <hr class="pline">
         <ul class="pfeats">
@@ -1344,36 +1366,36 @@ function mhcdRechazarCookies(){
           <li>Analítica avanzada</li>
           <li>200 consultas de IA/mes</li>
         </ul>
-        <button class="pbtn" onclick="abrirPago('Pro','34')">Elegir Pro</button>
+        <button class="pbtn" onclick="abrirPago('Pro',String(PRECIOS_PLANES.pro))">Elegir Pro</button>
       </div>
       <div class="plan" style="border-left:6px solid var(--g4);">
         <span class="plan-icon">👑</span>
         <div class="pname">Premium</div>
         <div class="pdesc">Para profesionales con alta demanda y múltiples consultorios.</div>
-        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n">44</span><span class="pprice-p">/mes</span></div>
+        <div class="pprice"><span class="pprice-c">u$s</span><span class="pprice-n" data-precio="premium">47</span><span class="pprice-p">/mes</span></div>
         <div class="ppat">Pacientes y recetas ilimitados</div>
         <hr class="pline">
         <ul class="pfeats">
           <li>15.000 imágenes y archivos</li>
           <li>500 consultas de IA/mes</li>
         </ul>
-        <button class="pbtn" onclick="abrirPago('Premium','44')">Elegir Premium</button>
+        <button class="pbtn" onclick="abrirPago('Premium',String(PRECIOS_PLANES.premium))">Elegir Premium</button>
       </div>
     </div><!-- /planes-grid -->
 
-    <!-- DESCUENTO DEL 15 % EN LOS PRIMEROS 6 MESES (bloque aparte; no cambia el valor mensual de las tarjetas) -->
-    <div class="desc6" id="descuento-6-meses">
-      <div class="desc6-tit">Descuento del 15 % <span class="desc6-badge">PRIMEROS 6 MESES</span></div>
-      <p class="desc6-txt">Descuento del 15 % pagando por transferencia bancaria los primeros 6 meses por adelantado. Después de los 6 meses, se paga el valor mensual de cada plan.</p>
+    <!-- DESCUENTO DEL 15 % EN LOS PRIMEROS 3 MESES (bloque aparte; no cambia el valor mensual de las tarjetas) -->
+    <div class="desc6" id="descuento-3-meses">
+      <div class="desc6-tit">Descuento del 15 % <span class="desc6-badge">PRIMEROS 3 MESES</span></div>
+      <p class="desc6-txt">Descuento del 15 % pagando por transferencia bancaria los primeros 3 meses por adelantado. Después de los 3 meses, se paga el valor mensual de cada plan.</p>
       <table class="desc6-tabla">
-        <thead><tr><th>Plan</th><th>Los primeros 6 meses</th><th>Equivale a</th><th>Después de los 6 meses</th></tr></thead>
+        <thead><tr><th>Plan</th><th>Los primeros 3 meses</th><th>Equivale a</th><th>Después de los 3 meses</th></tr></thead>
         <tbody>
-          <tr><td>Starter</td><td class="n">u$s 122,40</td><td>u$s 20,40 por mes</td><td class="m">u$s 24 por mes</td></tr>
-          <tr><td>Pro</td><td class="n">u$s 173,40</td><td>u$s 28,90 por mes</td><td class="m">u$s 34 por mes</td></tr>
-          <tr><td>Premium</td><td class="n">u$s 224,40</td><td>u$s 37,40 por mes</td><td class="m">u$s 44 por mes</td></tr>
+          <tr><td>Starter</td><td class="n" data-precio-total="starter">u$s 68,85</td><td data-precio-equivale="starter">u$s 22,95 por mes</td><td class="m" data-precio-mensual="starter">u$s 27 por mes</td></tr>
+          <tr><td>Pro</td><td class="n" data-precio-total="pro">u$s 94,35</td><td data-precio-equivale="pro">u$s 31,45 por mes</td><td class="m" data-precio-mensual="pro">u$s 37 por mes</td></tr>
+          <tr><td>Premium</td><td class="n" data-precio-total="premium">u$s 119,85</td><td data-precio-equivale="premium">u$s 39,95 por mes</td><td class="m" data-precio-mensual="premium">u$s 47 por mes</td></tr>
         </tbody>
       </table>
-      <p class="desc6-nota">El descuento se aplica una sola vez, a los primeros 6 meses; no es un precio permanente. Los add-ons (IA Extra y otros) no llevan descuento. Medio de pago: por ahora, transferencia bancaria. Tarjeta de crédito: próximamente.</p>
+      <p class="desc6-nota">El descuento se aplica una sola vez, a los primeros 3 meses; no es un precio permanente. Los add-ons (IA Extra y otros) no llevan descuento. Medio de pago: por ahora, transferencia bancaria. Tarjeta de crédito: próximamente.</p>
     </div>
 
     <!-- ADD-ON RECORDATORIOS AUTOMÁTICOS -->
@@ -4422,9 +4444,9 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
               <div class="fl"><label>Plan contratado
                 <select id="fs-plan">
 
-<option>Starter — U$S 24/mes</option>
-<option>Pro — U$S 34/mes</option>
-<option>Premium — U$S 44/mes</option>
+<option data-precio-opt="starter" data-pre="Starter — ">Starter — U$S 27/mes</option>
+<option data-precio-opt="pro" data-pre="Pro — ">Pro — U$S 37/mes</option>
+<option data-precio-opt="premium" data-pre="Premium — ">Premium — U$S 47/mes</option>
 <option>Centro Chico — U$S 149/mes</option>
 <option>Centro Mediano — U$S 299/mes</option>
 <option>Centro Grande — U$S 699/mes</option>
@@ -8639,9 +8661,9 @@ function rechazarDispositivoUI(id, _c){
 
 // ══ MEJORAR PLAN (Centro Médico) ══
 var MP_PLANES = [
-  {id:'starter', nombre:'Starter', precio:24},
-  {id:'pro', nombre:'Pro', precio:34},
-  {id:'premium', nombre:'Premium', precio:44}
+  {id:'starter', nombre:'Starter', precio:PRECIOS_PLANES.starter},
+  {id:'pro', nombre:'Pro', precio:PRECIOS_PLANES.pro},
+  {id:'premium', nombre:'Premium', precio:PRECIOS_PLANES.premium}
 ];
 // Los planes de Centro Médico son un conjunto aparte (Chico/Mediano/Grande,
 // por cantidad de médicos) — ya no comparten nombres ni precios con los
@@ -14329,7 +14351,7 @@ function _pintarMiPlan(cont, pack, susc){
   var bajaPack = (pack && pack.baja_desde) ? _diaAnteriorMP(pack.baja_desde) : null;
   cont.appendChild(_filaMP('Plan ' + P.nombre + ' · US$ ' + P.precio + ' por mes', 'Activo hasta el ' + _fechaAnioMP(prepago || vence)));
   if(pack && pack.paquetes) cont.appendChild(_filaMP('Pack IA Extra · +' + (pack.paquetes * 100) + ' consultas', ''));
-  if(prepago) cont.appendChild(_filaMP('Descuento de 6 meses', 'Pagado hasta el ' + _fechaMPLarga(prepago)));
+  if(prepago) cont.appendChild(_filaMP('Descuento de 3 meses', 'Pagado hasta el ' + _fechaMPLarga(prepago)));
   var canc = _eMP('div', 'mp-canc'); canc.appendChild(_eMP('div', 'mp-ct', 'Cancelación'));
   if(bajaPlan){
     canc.appendChild(_cfilaMP('Se da de baja el ' + _fechaAnioMP(bajaPlan), _botonMP('mp-verde', 'Cancelar la baja', function(){
@@ -14354,7 +14376,7 @@ function _confirmarBajaPlanMP(k, prepago, vence){
   var sig = new Date(vence.getFullYear(), vence.getMonth(), vence.getDate() + 1);
   var o = prepago ? {
     icono: '📋', titulo: '¿Dar de baja tu plan ' + nom + '?',
-    parrafos: ['Pagaste 6 meses por adelantado. Seguís con tu plan ' + nom + ' hasta el ' + _fechaMPLarga(prepago) + ' y después pasás al plan gratuito.',
+    parrafos: ['Pagaste 3 meses por adelantado. Seguís con tu plan ' + nom + ' hasta el ' + _fechaMPLarga(prepago) + ' y después pasás al plan gratuito.',
                'No se devuelve lo pagado. Tus datos no se borran. Podés cancelar la baja hasta esa fecha.']
   } : {
     icono: '📋', titulo: '¿Dar de baja tu plan ' + nom + '?',
@@ -17791,9 +17813,9 @@ function avisoRecordatoriosTurno(idx){
 // contó de verdad).
 var PLANES_INDIVIDUALES = {
   free:    { nombre:'Prueba Gratuita', precio:0,  pacientes:35,       recetas:20,        ia:10,  archivos:50 },
-  starter: { nombre:'Starter',         precio:24, pacientes:Infinity, recetas:Infinity,  ia:80,  archivos:1500 },
-  pro:     { nombre:'Pro',             precio:34, pacientes:Infinity, recetas:Infinity,  ia:200, archivos:5000 },
-  premium: { nombre:'Premium',         precio:44, pacientes:Infinity, recetas:Infinity,  ia:500, archivos:15000 }
+  starter: { nombre:'Starter',         precio:PRECIOS_PLANES.starter, pacientes:Infinity, recetas:Infinity,  ia:80,  archivos:1500 },
+  pro:     { nombre:'Pro',             precio:PRECIOS_PLANES.pro, pacientes:Infinity, recetas:Infinity,  ia:200, archivos:5000 },
+  premium: { nombre:'Premium',         precio:PRECIOS_PLANES.premium, pacientes:Infinity, recetas:Infinity,  ia:500, archivos:15000 }
 };
 var PLANES_CENTRO = {
   chico:   { nombre:'Centro Chico',   precio:149, medicos:5,  ia:1000 },
@@ -20651,7 +20673,7 @@ function mlRegistrar(){
       registrarAceptacionLegal();
 
       // Guardar la solicitud real en el reporte del panel admin (incluida Prueba Gratuita)
-      var preciosPlan = {'Prueba Gratuita':0, 'Starter':24, 'Pro':34, 'Premium':44};
+      var preciosPlan = {'Prueba Gratuita':0, 'Starter':PRECIOS_PLANES.starter, 'Pro':PRECIOS_PLANES.pro, 'Premium':PRECIOS_PLANES.premium};
       sb.from('solicitudes_suscripcion').insert({
         medico_nombre: nombre,
         medico_email: email,
