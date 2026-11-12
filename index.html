@@ -18936,6 +18936,33 @@ function _evolAlFinalizar(){
   evolConvertirBorrador(ab.p, function(){});
 }
 
+// P5 — Cambio de paciente: si el paciente que se deja tiene un borrador con contenido, se convierte en evolución definitiva (mismas reglas que «Finalizar atención»: nada vacío, sin duplicar, sin cartel, sin bloquear; si falla, queda en la cola con reintentos).
+// idNuevo: id del paciente que se va a abrir (si es el mismo, no se hace nada). vaciar: al volver a la lista el paciente sigue cargado en la pantalla, así que sus 3 campos de evolución se dejan en blanco (si no, lo escrito se volvería a guardar como otra evolución).
+function _evolAlDejarPaciente(idNuevo, nombreNuevo, vaciar){
+  var ab = _agPacienteAbierto(); if(!ab) return;
+  var p = ab.p;
+  if(idNuevo && String(idNuevo) === String(_idPac(p))) return;
+  if(!idNuevo && nombreNuevo && p.nombre && String(nombreNuevo) === String(p.nombre)) return;
+  var b = p.borrador; if(!b || _borVacio(b)) return;
+  var tt = function(v){ return ('' + (v || '')).trim(); };
+  var snap = { cuadro: tt(b.cuadro), plan: tt(b.plan), proxima: tt(b.proxima) };
+  try{ _agGuardarAbiertoYa(); }catch(eG){ console.warn('[catch]', eG); }
+  evolConvertirBorrador(p, function(){});
+  if(vaciar){
+    var g = function(id){ var d = document.getElementById(id); return d ? d : null; };
+    var c = g('evol-cuadro'), pl = g('evol-plan'), pr = g('evol-proxima');
+    if(c && pl && pr && tt(c.value) === snap.cuadro && tt(pl.value) === snap.plan && tt(pr.value) === snap.proxima){ c.value = ''; pl.value = ''; pr.value = ''; }
+  }
+}
+var _evolAbrirHCOrig = abrirHC;
+abrirHC = function(nombre, dni, edad, os, idPac){ try{ _evolAlDejarPaciente(idPac, nombre, false); }catch(x){ console.warn('[catch]', x); } return _evolAbrirHCOrig.apply(this, arguments); };
+var _evolLimpiarHCOrig = limpiarFormularioHC;
+limpiarFormularioHC = function(){ try{ _evolAlDejarPaciente('', '', false); }catch(x){ console.warn('[catch]', x); } return _evolLimpiarHCOrig.apply(this, arguments); };
+var _evolShowPanelOrig = showPanel;
+showPanel = function(id){ try{ if(id === 'pacientes') _evolAlDejarPaciente('', '', true); }catch(x){ console.warn('[catch]', x); } return _evolShowPanelOrig.apply(this, arguments); };
+var _evolShowPanelMobOrig = showPanelMob;
+showPanelMob = function(id){ try{ if(id === 'pacientes') _evolAlDejarPaciente('', '', true); }catch(x){ console.warn('[catch]', x); } return _evolShowPanelMobOrig.apply(this, arguments); };
+
 // Imprimir: si hay un borrador escrito, sale en el PDF como una evolución más, SIN ninguna marca de borrador (decisión escrita de la usuaria, 22/10/2026; riesgo asumido por ella: no se distingue de una guardada). Lo guardado se imprime como siempre.
 var _borDatosImprimirOrig = _datosEvolucionParaImprimir;
 _datosEvolucionParaImprimir = function(){
