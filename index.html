@@ -2653,16 +2653,14 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
                 <input type="text" id="evol-medico" readonly style="background:var(--g9);cursor:not-allowed;" title="Se completa automáticamente con la cuenta que inició sesión">
               </div>
             </div>
-            <div style="display:flex;gap:12px;margin-top:18px;flex-wrap:wrap;">
-              <button class="form-submit" style="flex:1;" onclick="guardarEvolucion()">💾 Guardar evolución</button>
-              <button class="form-submit" style="flex:1;background:linear-gradient(135deg,var(--g4),var(--g3));" onclick="imprimirEvolucion()">🖨️ Imprimir evolución</button>
-            </div>
-
             <!-- Evoluciones anteriores -->
             <div style="margin-top:28px;">
               <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:700;color:var(--g2);padding:10px 0 8px;border-bottom:2px solid var(--g6);margin-bottom:14px;">📋 Evoluciones anteriores</div>
               <div id="evol-historial-lista" style="display:flex;flex-direction:column;gap:12px;">
                 <div style="color:var(--muted);font-size:.85rem;text-align:center;padding:20px;">No hay evoluciones registradas aún.</div>
+              </div>
+              <div style="display:flex;gap:12px;flex-wrap:wrap;">
+              <button class="form-submit" onclick="imprimirEvolucion()" style="background:linear-gradient(135deg,var(--g4),var(--g3));">🖨️ Imprimir evolución</button>
               </div>
             </div>
           </div>
@@ -13827,7 +13825,7 @@ function _generarPDFEvolucion(){
 function imprimirEvolucion(){
   var r = _generarPDFEvolucion();
   if(!r) return;
-  if(r.sinGuardar) _toastAviso('Tenés una evolución escrita sin guardar: no se imprime. Guardala con «Guardar evolución» y volvé a imprimir.', 9000);
+  if(r.sinGuardar) _toastAviso('Todavía no escribiste la evolución de hoy: no se incluye en la impresión.', 9000);
   var url = URL.createObjectURL(r.doc.output('blob'));
   var ventana = null;
   try{ ventana = window.open(url, '_blank'); }catch(eV){ ventana = null; }
