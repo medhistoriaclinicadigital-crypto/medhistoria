@@ -2671,16 +2671,14 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
                 <input type="text" id="evol-medico" readonly style="background:var(--g9);cursor:not-allowed;" title="Se completa automáticamente con la cuenta que inició sesión">
               </div>
             </div>
-            <div style="display:flex;gap:12px;margin-top:18px;flex-wrap:wrap;">
-              <button class="form-submit" style="flex:1;" onclick="guardarEvolucion()">💾 Guardar evolución</button>
-              <button class="form-submit" style="flex:1;background:linear-gradient(135deg,var(--g4),var(--g3));" onclick="imprimirEvolucion()">🖨️ Imprimir evolución</button>
-            </div>
-
             <!-- Evoluciones anteriores -->
             <div style="margin-top:28px;">
               <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:700;color:var(--g2);padding:10px 0 8px;border-bottom:2px solid var(--g6);margin-bottom:14px;">📋 Evoluciones anteriores</div>
               <div id="evol-historial-lista" style="display:flex;flex-direction:column;gap:12px;">
                 <div style="color:var(--muted);font-size:.85rem;text-align:center;padding:20px;">No hay evoluciones registradas aún.</div>
+              </div>
+              <div style="display:flex;gap:12px;flex-wrap:wrap;">
+              <button class="form-submit" onclick="imprimirEvolucion()" style="background:linear-gradient(135deg,var(--g4),var(--g3));">🖨️ Imprimir evolución</button>
               </div>
             </div>
           </div>
@@ -13107,6 +13105,7 @@ function _audDocNombre(campo){
 function _audDescribir(x){
   var doc = _audDocNombre(x.campo), nuevo = ('' + (x.nuevo || '')).trim();
   if(doc) return { nombre: doc, corto: nuevo, completo: nuevo, antes: null };
+  if(x.campo === 'Evolución') return { nombre: 'Evolución', corto: nuevo, completo: nuevo, antes: null };   // evoluciones: sin «Antes: vacío» (se anotan una sola vez, ya definitivas)
   return { nombre: _audNombreCampo(x.campo), corto: nuevo, completo: nuevo, antes: ('' + (x.anterior || '')).trim() };
 }
 // Cola de líneas del Historial sin confirmar (sessionStorage: sobrevive a recargar la pestaña; «Cerrar sesión» la borra)
@@ -13821,7 +13820,7 @@ function _generarPDFEvolucion(){
 function imprimirEvolucion(){
   var r = _generarPDFEvolucion();
   if(!r) return;
-  if(r.sinGuardar) _toastAviso('Tenés una evolución escrita sin guardar: no se imprime. Guardala con «Guardar evolución» y volvé a imprimir.', 9000);
+  if(r.sinGuardar) _toastAviso('Todavía no escribiste la evolución de hoy: no se incluye en la impresión.', 9000);
   var url = URL.createObjectURL(r.doc.output('blob'));
   var ventana = null;
   try{ ventana = window.open(url, '_blank'); }catch(eV){ ventana = null; }
@@ -14979,7 +14978,7 @@ function renderTurnos(lista){
   function renderFila(t, mostrarFecha){
     var idx = turnos.indexOf(t);
     var fecha = (mostrarFecha && t.fechaDisplay)?'<span style="font-size:.76rem;color:var(--g4);font-weight:600;"> '+escHtml(t.fechaDisplay)+'</span>':'';
-    var op = t.estado==='ok'?'opacity:.65;':'';
+    var op = '';   // «Atendido» con sus colores originales (orden de la Dra. 10/11/2026): la fila ya no se apaga
     var waBtn = '<button onclick="avisoRecordatoriosTurno('+idx+')" title="Recordatorios de turno (servicio adicional)" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:1rem;padding:0 4px;opacity:.7;">🔔</button>';
     return '<div class="agenda-item mh-con-hc" style="'+op+'">'
       +'<div class="agenda-hora">'+escHtml(t.hora)+'</div>'
@@ -14987,7 +14986,7 @@ function renderTurnos(lista){
       +'<div class="mh-acciones">'
       +_hcBotonTurno(idx)
       +waBtn
-      +(t.estado==='ok' ? '<span class="pac-tag '+tagInfo(t)+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;">'+tagTxt(t)+'</span>' : '')   // sin etiqueta «Pendiente»: el turno pasa a «Atendido» con «Finalizar atención»
+      +(t.estado==='ok' ? '<span class="pac-tag '+tagInfo(t)+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;background:#d1fae5;color:#065f46;">'+tagTxt(t)+'</span>' : '')   // sin etiqueta «Pendiente»: el turno pasa a «Atendido» con «Finalizar atención»
       +_botonCancelarTurno(t, idx)
       +'</div>'
       +'</div>';
@@ -15164,7 +15163,7 @@ function filtrarPorFecha(){
         +'<div class="agenda-mot">'+escHtml(t.motivo)+(t.os?' · '+escHtml(t.os):'')+'</div></div>'
         +'<div class="mh-acciones">'
         +_hcBotonTurno(idx)
-        +(t.estado==='ok' ? '<span class="pac-tag '+tagClass+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;">'+tagText+'</span>' : '')   // sin etiqueta «Pendiente»
+        +(t.estado==='ok' ? '<span class="pac-tag '+tagClass+'" onclick="marcarAtendido('+idx+')" style="cursor:pointer;white-space:nowrap;background:#d1fae5;color:#065f46;">'+tagText+'</span>' : '')   // sin etiqueta «Pendiente»
         +_botonCancelarTurno(t, idx)
         +'</div>'
         +'</div>';
@@ -18625,6 +18624,286 @@ switchHcTab = function(btn, id){
   return r;
 };
 
+// ══ MOTOR DE CONVERSIÓN: BORRADOR → EVOLUCIÓN DEFINITIVA (etapa 2, pasos P2 y P3; orden de la Dra. 10/11/2026) ══
+// INVISIBLE: todavía NO lo llama ningún botón (los llamará «Finalizar atención», el cambio de paciente y el cierre de sesión en los pasos P4 a P6). «Guardar evolución» sigue funcionando igual.
+// evolConvertirBorrador(p, cb) convierte el BORRADOR GUARDADO del paciente `p` (lo que el médico escribió: `p.borrador`, nunca lo que haya en pantalla) en una evolución DEFINITIVA:
+//  · fecha fija = hora del último cambio del borrador (`p.borrador.ts`);
+//  · idempotente: antes de insertar se consulta en silencio si esa evolución (mismo paciente, médico y fecha) ya existe en el servidor; si existe NO se inserta de nuevo (queda exactamente 1 fila);
+//  · el borrador se borra SOLO después de que el servidor confirma la evolución; si algo falla, el borrador queda y la conversión queda en una COLA guardada en la pestaña (sessionStorage,
+//    como la del Historial) que se reintenta sola (al volver la conexión, al volver a entrar y con esperas crecientes); «Cerrar sesión» la borra, y el borrador sigue en el servidor;
+//  · un borrador vacío (sin nada, o solo con el encabezado automático de fecha) NO se convierte;
+//  · el texto propuesto por la IA que el médico no escribió no está en el borrador, así que no se convierte (la regla «la IA no se guarda hasta Avalar» queda pendiente con la función de la IA);
+//  · si el médico siguió escribiendo mientras tanto, el borrador NO se toca (nunca se pierde lo que escribió después);
+//  · P3: cuando la evolución queda definitiva se anota UNA línea en el «Historial de cambios» («Evolución»: el texto exacto; truncada con «…» y expandible al tocar), una sola vez.
+// Devuelve (cb) { estado: 'convertida' | 'ya-existia' | 'vacio' | 'pendiente' } ('pendiente' = quedó en la cola para reintentar).
+var _EVOL_COLA_CLAVE = 'mhcd_ag_evol';
+var _evolEnCurso = {};      // clave → [callbacks]: candado en memoria (doble toque / dos disparadores a la vez = UNA sola conversión)
+var _evolReintentos = {};   // clave → temporizador del próximo reintento
+function _evolColaLeer(){ try{ var c = sessionStorage.getItem(_userKey(_EVOL_COLA_CLAVE)); return c ? JSON.parse(c) : []; }catch(x){ return []; } }
+function _evolColaEscribir(l){ try{ if(l.length) sessionStorage.setItem(_userKey(_EVOL_COLA_CLAVE), JSON.stringify(l)); else sessionStorage.removeItem(_userKey(_EVOL_COLA_CLAVE)); }catch(x){ console.warn('[catch]', x); } }
+function _evolColaGuardar(item){ var l = _evolColaLeer().filter(function(x){ return x.clave !== item.clave; }); l.push(item); _evolColaEscribir(l); }
+function _evolColaQuitar(clave){ _evolColaEscribir(_evolColaLeer().filter(function(x){ return x.clave !== clave; })); }
+function _evolTextoHistorial(it){
+  var t = function(v){ return ('' + (v || '')).trim(); }, partes = [];
+  if(t(it.cuadro)) partes.push(t(it.cuadro));
+  if(t(it.plan)) partes.push('Indicaciones y plan: ' + t(it.plan));
+  if(t(it.proxima)) partes.push('Próxima consulta: ' + t(it.proxima));
+  return partes.join('\n\n');
+}
+function _evolPacienteDe(item){ var r = _agPacienteDe({ sbId: item.sbId || '', uid: item.uid || '' }); return r ? r.p : null; }
+function _evolTerminar(item, estado){
+  var clave = item.clave, cbs = _evolEnCurso[clave] || [];
+  delete _evolEnCurso[clave];
+  cbs.forEach(function(f){ try{ f({ estado: estado, clave: clave }); }catch(x){ console.warn('[catch]', x); } });
+}
+function _evolFallo(item, err){
+  console.warn('Conversión de la evolución: no se pudo todavía; queda en la cola para reintentar', err);
+  item.intentos = (item.intentos || 0) + 1; _evolColaGuardar(item);
+  clearTimeout(_evolReintentos[item.clave]);
+  var esperas = [4000, 10000, 30000, 60000], ms = esperas[Math.min(item.intentos - 1, esperas.length - 1)];
+  _evolReintentos[item.clave] = setTimeout(function(){ delete _evolReintentos[item.clave]; _evolIntentar(item); }, ms);
+  _evolTerminar(item, 'pendiente');
+}
+// Anota UNA línea en el Historial (una sola vez por conversión: la marca queda guardada ANTES de anotarla)
+function _evolAnotarHistorial(item, p){
+  if(item.auditada) return;
+  item.auditada = true; _evolColaGuardar(item);
+  var texto = _evolTextoHistorial(item); if(!texto) return;
+  var ahora = new Date();
+  var dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var medico = ''; try{ if(usuarioActual) medico = nombreConTitulo(usuarioActual); }catch(x){ console.warn('[catch]', x); }
+  if(p){
+    if(!p.auditoria) p.auditoria = [];
+    p.auditoria.unshift({ campo: 'Evolución', anterior: '', nuevo: texto, fecha: dias[ahora.getDay()] + ', ' + ahora.getDate() + ' de ' + meses[ahora.getMonth()] + ' de ' + ahora.getFullYear(), fechaISO: ahora.toISOString(), hora: ('0' + ahora.getHours()).slice(-2) + ':' + ('0' + ahora.getMinutes()).slice(-2), medico: medico });
+  }
+  var fila = { id: Date.now() + '-' + Math.random().toString(36).slice(2), t: Date.now(), paciente_id: item.pacienteId, medico_id: item.medicoId, campo: 'Evolución', valor_anterior: '', valor_nuevo: texto };
+  var cola = _audColaLeer(); cola.push(fila); _audColaEscribir(cola);   // queda anotada hasta que el servidor la confirme (igual que las demás líneas del Historial)
+  _audEnviarFila(fila);
+  try{ var cont = document.getElementById('hc-auditoria-lista'); if(cont && cont.offsetParent) renderAuditoriaHC(); }catch(x){ console.warn('[catch]', x); }
+}
+// Paso final, ya con la evolución confirmada en el servidor: se anota el Historial, se actualiza la lista local y se borra el borrador (solo si no escribió nada nuevo)
+function _evolConfirmada(item, estado){
+  var p = _evolPacienteDe(item);
+  // si una copia del borrador todavía se está mandando al servidor, se espera un momento (si no, podría reaparecer después de borrarlo)
+  if(p){ var e0 = _agEntrada(p, false); if(e0 && e0.enVuelo){ setTimeout(function(){ _evolConfirmada(item, estado); }, 500); return; } }
+  // si esta evolución ya estaba en el servidor (otra pestaña, o un intento anterior cuya respuesta se perdió), la línea del Historial puede estar ya: se consulta antes de anotarla
+  if(estado === 'ya-existia' && !item.auditada){
+    var txt = _evolTextoHistorial(item);
+    sb.from('auditoria_hc').select('fecha').eq('paciente_id', item.pacienteId).eq('campo', 'Evolución').eq('valor_nuevo', txt).limit(1).then(function(r){
+      if(!r.error && r.data && r.data.length){ item.auditada = true; _evolColaGuardar(item); }
+      _evolConfirmada2(item, estado, p);
+    }, function(){ _evolConfirmada2(item, estado, p); });
+    return;
+  }
+  _evolConfirmada2(item, estado, p);
+}
+function _evolConfirmada2(item, estado, p){
+  if(!item.evolId){   // sin el id del servidor (por ejemplo, la respuesta se perdió): se consulta, para que la lista local no quede repetida cuando se vuelva a leer el servidor
+    sb.from('evoluciones').select('id').eq('paciente_id', item.pacienteId).eq('medico_id', item.medicoId).eq('fecha_evolucion', item.ts).limit(1).then(function(r){
+      if(!r.error && r.data && r.data[0] && r.data[0].id){ item.evolId = r.data[0].id; _evolColaGuardar(item); }
+      _evolConfirmada3(item, estado, p);
+    }, function(){ _evolConfirmada3(item, estado, p); });
+    return;
+  }
+  _evolConfirmada3(item, estado, p);
+}
+function _evolConfirmada3(item, estado, p){
+  var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'], dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  _evolAnotarHistorial(item, p);
+  if(p){
+    var d = new Date(item.ts);
+    if(!p.evoluciones) p.evoluciones = [];
+    var _igual = function(e){ return (e._sbId && item.evolId && e._sbId === item.evolId) || e.fechaISO === item.ts || (('' + (e.cuadro || '')).trim() === item.cuadro && ('' + (e.plan || '')).trim() === item.plan && ('' + (e.proxima || '')).trim() === item.proxima && Math.abs(Date.parse(e.fechaISO || '') - Date.parse(item.ts)) < 15 * 60000); };
+    var yaLocal = p.evoluciones.filter(_igual)[0];
+    if(yaLocal){ if(!yaLocal._sbId && item.evolId){ yaLocal._sbId = item.evolId; try{ guardarLocal(); }catch(x){ console.warn('[catch]', x); } } }   // ya estaba (la puso «Guardar evolución»): solo se le anota el id, para que no se repita al volver a leer el servidor
+    else {
+      p.evoluciones.unshift({ _sbId: item.evolId || undefined, fecha: dias[d.getDay()] + ', ' + d.getDate() + ' de ' + meses[d.getMonth()] + ' de ' + d.getFullYear(), fechaISO: item.ts, hora: ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2), cuadro: item.cuadro, diag: '', plan: item.plan, proxima: item.proxima, medico: (function(){ try{ return nombreConTitulo(usuarioActual); }catch(x){ return ''; } })() });
+      try{ guardarLocal(); }catch(x){ console.warn('[catch]', x); }
+      try{ var ab = _agPacienteAbierto(); if(ab && ab.p === p) renderEvolucionesHistorial(); }catch(x){ console.warn('[catch]', x); }
+    }
+    // el borrador local se limpia SOLO si sigue siendo el mismo que se convirtió (si el médico escribió algo después, no se toca)
+    var tt = function(v){ return ('' + (v || '')).trim(); };
+    var mismo = !p.borrador || (tt(p.borrador.cuadro) === item.cuadro && tt(p.borrador.plan) === item.plan && tt(p.borrador.proxima) === item.proxima);   // mismo texto (el sello de hora puede haber cambiado al confirmarse el guardado automático)
+    if(!mismo && !_borVacio(p.borrador)){ _evolColaQuitar(item.clave); _evolTerminar(item, estado); return; }
+    var e = _agEntrada(p, true); clearTimeout(e.timer);
+    Object.keys(e.campos).forEach(function(k){ if(_AG_CAMPOS[k] && _AG_CAMPOS[k].g === 'ev') delete e.campos[k]; });
+    e.borr = null; p.borrador = null; _agPersistir(); try{ _agRender(); }catch(x){ console.warn('[catch]', x); }
+  }
+  // borrar el borrador del servidor (la evolución ya está confirmada); si falla, el borrador queda y se reintenta
+  sb.from('evoluciones_borrador').delete().eq('paciente_id', item.pacienteId).eq('medico_id', item.medicoId).then(function(r){
+    if(r.error){ _evolFallo(item, r.error); return; }
+    _evolColaQuitar(item.clave); _evolTerminar(item, estado);
+  }, function(x){ _evolFallo(item, x); });
+}
+// Espera (hasta 2,5 s) a que termine de mandarse al servidor la copia del borrador que el autoguardado tenga en vuelo: así «lo que escribió el médico» ya llegó ANTES de convertirlo
+function _evolEsperarGuardado(item, cb, n){
+  var p = _evolPacienteDe(item), e = p ? _agEntrada(p, false) : null;
+  if(e && e.enVuelo && (n || 0) < 25){ setTimeout(function(){ _evolEsperarGuardado(item, cb, (n || 0) + 1); }, 100); return; }
+  cb();
+}
+function _evolInsertar(item){
+  sb.from('evoluciones').insert({ paciente_id: item.pacienteId, medico_id: item.medicoId, fecha_evolucion: item.ts, motivo_consulta: '', evolucion: item.cuadro, indicaciones_plan: item.plan, proxima_consulta: item.proxima }).select('id').then(function(r2){
+    if(r2.error){
+      if(r2.error.code === '23505'){ item.borrarSolo = true; _evolColaGuardar(item); _evolConfirmada(item, 'ya-existia'); return; }   // (con el índice único) esa evolución ya está
+      _evolFallo(item, r2.error); return;   // si en verdad se guardó, el próximo intento lo encuentra y no lo repite
+    }
+    if(r2.data && r2.data[0] && r2.data[0].id) item.evolId = r2.data[0].id;
+    item.borrarSolo = true; _evolColaGuardar(item);
+    _evolConfirmada(item, 'convertida');
+  }, function(x){ _evolFallo(item, x); });
+}
+function _evolIntentar(item){
+  if(!usuarioActual || !usuarioActual.id){ return; }
+  clearTimeout(_evolReintentos[item.clave]); delete _evolReintentos[item.clave];
+  if(!_evolEnCurso[item.clave]) _evolEnCurso[item.clave] = [];
+  if(item.borrarSolo){ _evolConfirmada(item, 'ya-existia'); return; }
+  _evolEsperarGuardado(item, function(){
+    var yaEsta = function(){ item.borrarSolo = true; _evolColaGuardar(item); _evolConfirmada(item, 'ya-existia'); };   // ya está: NO se inserta de nuevo
+    sb.from('evoluciones').select('id').eq('paciente_id', item.pacienteId).eq('medico_id', item.medicoId).eq('fecha_evolucion', item.ts).limit(1).then(function(r){
+      if(r.error){ _evolFallo(item, r.error); return; }
+      if(r.data && r.data.length){ if(r.data[0] && r.data[0].id) item.evolId = r.data[0].id; yaEsta(); return; }
+      // además: si «Guardar evolución» (o un intento anterior) ya guardó EL MISMO TEXTO de este paciente hace poco, tampoco se repite (la fecha puede ser distinta)
+      if(item.cuadro && item.cuadro.length <= 1500){
+        var desde = new Date(Date.parse(item.ts) - 15 * 60000).toISOString();
+        sb.from('evoluciones').select('id,indicaciones_plan,proxima_consulta').eq('paciente_id', item.pacienteId).eq('medico_id', item.medicoId).eq('evolucion', item.cuadro).gte('fecha_evolucion', desde).limit(5).then(function(r3){
+          if(r3.error){ _evolFallo(item, r3.error); return; }   // si no se puede comprobar, no se inserta: se reintenta
+          var igual = (r3.data || []).some(function(x){ return ('' + (x.indicaciones_plan || '')) === item.plan && ('' + (x.proxima_consulta || '')) === item.proxima; });
+          if(igual){ var fx = (r3.data || []).filter(function(x){ return ('' + (x.indicaciones_plan || '')) === item.plan && ('' + (x.proxima_consulta || '')) === item.proxima; })[0]; if(fx && fx.id) item.evolId = fx.id; yaEsta(); return; }
+          _evolInsertar(item);
+        }, function(x){ _evolFallo(item, x); });
+        return;
+      }
+      _evolInsertar(item);
+    }, function(x){ _evolFallo(item, x); });
+  });
+}
+function evolConvertirBorrador(p, cb){
+  cb = cb || function(){};
+  try{
+    if(!p || !usuarioActual || !usuarioActual.id){ cb({ estado: 'vacio' }); return; }
+    var b = p.borrador;
+    if(!b || _borVacio(b)){ cb({ estado: 'vacio' }); return; }   // sin borrador, o solo con el encabezado automático de fecha: no se convierte
+    var t = function(v){ return ('' + (v || '')).trim(); };
+    var ts = new Date(isNaN(Date.parse(b.ts || '')) ? Date.now() : Date.parse(b.ts)).toISOString();   // hora del último cambio del borrador
+    _audIdServidor(p, function(pacienteId){
+      if(!pacienteId){ cb({ estado: 'pendiente' }); return; }   // sin ficha en el servidor no se puede (la regla de paciente evita este caso)
+      var clave = pacienteId + '|' + ts;
+      if(_evolEnCurso[clave]){ _evolEnCurso[clave].push(cb); return; }   // doble toque: se espera a la conversión que ya está en marcha
+      _evolEnCurso[clave] = [cb];
+      var item = _evolColaLeer().filter(function(x){ return x.clave === clave; })[0] || { clave: clave, pacienteId: pacienteId, sbId: p._sbId || '', uid: p._uid || '', medicoId: usuarioActual.id, ts: ts, cuadro: t(b.cuadro), plan: t(b.plan), proxima: t(b.proxima), intentos: 0 };
+      _evolColaGuardar(item);   // se anota ANTES de intentar: si se cierra la pestaña o se corta la red, no se pierde
+      _evolIntentar(item);
+    });
+  }catch(x){ console.warn('[catch]', x); cb({ estado: 'pendiente' }); }
+}
+// Cola: se reintenta al volver la conexión y al volver a entrar (una sola vez por carga)
+function _evolColaProcesar(){
+  if(!usuarioActual || !usuarioActual.id) return;
+  // ya, sin esperar el reintento programado (al volver la conexión no hay motivo para esperar)
+  _evolColaLeer().forEach(function(item){ if(item.medicoId === usuarioActual.id && !_evolEnCurso[item.clave]) _evolIntentar(item); });
+}
+window.addEventListener('online', function(){ try{ _evolColaProcesar(); }catch(x){ console.warn('[catch]', x); } });
+var _evolAgRestaurarOrig = _agRestaurar;
+_agRestaurar = function(){ var r = _evolAgRestaurarOrig.apply(this, arguments); try{ setTimeout(_evolColaProcesar, 3000); }catch(x){ console.warn('[catch]', x); } return r; };
+// «Finalizar atención» (paso P4): primero el autoguardado manda YA lo que el médico escribió (sin esperar los 3 s); después se convierte el borrador en evolución definitiva (el motor espera a que ese envío termine).
+// No bloquea nada: «Finalizar» sigue de inmediato con todo lo suyo; si falla la red, el borrador queda y la conversión queda en la cola. Sin cartel. Sin borrador (o solo el encabezado de fecha) no hace nada.
+function _evolAlFinalizar(){
+  var ab = _agPacienteAbierto(); if(!ab) return;
+  try{ _agGuardarAbiertoYa(); }catch(eG){ console.warn('[catch]', eG); }
+  evolConvertirBorrador(ab.p, function(){});
+}
+
+// P5 — Cambio de paciente: si el paciente que se deja tiene un borrador con contenido, se convierte en evolución definitiva (mismas reglas que «Finalizar atención»: nada vacío, sin duplicar, sin cartel, sin bloquear; si falla, queda en la cola con reintentos).
+// idNuevo: id del paciente que se va a abrir (si es el mismo, no se hace nada). vaciar: al volver a la lista el paciente sigue cargado en la pantalla, así que sus 3 campos de evolución se dejan en blanco (si no, lo escrito se volvería a guardar como otra evolución).
+function _evolAlDejarPaciente(idNuevo, nombreNuevo, vaciar){
+  var ab = _agPacienteAbierto(); if(!ab) return;
+  var p = ab.p;
+  if(idNuevo && String(idNuevo) === String(_idPac(p))) return;
+  if(!idNuevo && nombreNuevo && p.nombre && String(nombreNuevo) === String(p.nombre)) return;
+  var b = p.borrador; if(!b || _borVacio(b)) return;
+  var tt = function(v){ return ('' + (v || '')).trim(); };
+  var snap = { cuadro: tt(b.cuadro), plan: tt(b.plan), proxima: tt(b.proxima) };
+  try{ _agGuardarAbiertoYa(); }catch(eG){ console.warn('[catch]', eG); }
+  evolConvertirBorrador(p, function(){});
+  if(vaciar){
+    var g = function(id){ var d = document.getElementById(id); return d ? d : null; };
+    var c = g('evol-cuadro'), pl = g('evol-plan'), pr = g('evol-proxima');
+    if(c && pl && pr && tt(c.value) === snap.cuadro && tt(pl.value) === snap.plan && tt(pr.value) === snap.proxima){ c.value = ''; pl.value = ''; pr.value = ''; }
+  }
+}
+var _evolAbrirHCOrig = abrirHC;
+abrirHC = function(nombre, dni, edad, os, idPac){ try{ _evolAlDejarPaciente(idPac, nombre, false); }catch(x){ console.warn('[catch]', x); } return _evolAbrirHCOrig.apply(this, arguments); };
+var _evolLimpiarHCOrig = limpiarFormularioHC;
+limpiarFormularioHC = function(){ try{ _evolAlDejarPaciente('', '', false); }catch(x){ console.warn('[catch]', x); } return _evolLimpiarHCOrig.apply(this, arguments); };
+var _evolShowPanelOrig = showPanel;
+showPanel = function(id){ try{ if(id === 'pacientes') _evolAlDejarPaciente('', '', true); }catch(x){ console.warn('[catch]', x); } return _evolShowPanelOrig.apply(this, arguments); };
+var _evolShowPanelMobOrig = showPanelMob;
+showPanelMob = function(id){ try{ if(id === 'pacientes') _evolAlDejarPaciente('', '', true); }catch(x){ console.warn('[catch]', x); } return _evolShowPanelMobOrig.apply(this, arguments); };
+
+// P6 — Cerrar sesión, inactividad y borradores que quedaron. Mismas reglas que P4 y P5 (nada vacío, sin duplicar, sin cartel, con cola y reintentos).
+// (a) «Cerrar sesión» (y el cierre por inactividad, que usa la misma función): antes de cerrar se convierte el borrador de cada paciente que tenga texto (el abierto y cualquier otro que haya quedado); espera como máximo 2,5 s y, si el servidor no contesta, cierra igual (la cola de esta pestaña se borra al cerrar, pero el borrador sigue en el servidor y se convierte en el próximo ingreso).
+var _evolCerrando = false, _evolCierreOrig = cerrarApp;
+cerrarApp = function(forzar){
+  var self = this, args = arguments;
+  if(_evolCerrando) return;   // doble clic: ya se está cerrando
+  var pend = [];
+  try{
+    if(usuarioActual && usuarioActual.id){
+      try{ _agGuardarAbiertoYa(); }catch(eG){ console.warn('[catch]', eG); }
+      pend = (pacientes || []).filter(function(p){ return p && p.borrador && !_borVacio(p.borrador); });
+    }
+  }catch(x){ console.warn('[catch]', x); pend = []; }
+  if(!pend.length) return _evolCierreOrig.apply(self, args);
+  _evolCerrando = true;
+  var hecho = false, n = pend.length;
+  var seguir = function(){ if(hecho) return; hecho = true; _evolCerrando = false; _evolCierreOrig.apply(self, args); };
+  pend.forEach(function(p){ try{ evolConvertirBorrador(p, function(){ n--; if(n <= 0) seguir(); }); }catch(x){ console.warn('[catch]', x); n--; if(n <= 0) seguir(); } });
+  setTimeout(seguir, 2500);
+};
+// (c) Al volver a iniciar sesión (una vez por ingreso): primero los borradores que quedaron en este navegador (pacientes cargados y cola), después los del servidor (tabla evoluciones_borrador) de ESTA médica. El paciente que esté abierto en ese momento no se toca. La fecha es la del último cambio del borrador.
+var _evolRecuperadoPara = '';
+// Solo se recuperan los borradores cuya última modificación tiene MÁS de 30 minutos: uno más reciente puede estar escribiéndose ahora mismo en otro dispositivo o pestaña (se deja como borrador y se convierte en un ingreso posterior).
+var _EVOL_REC_MIN = 30;
+function _evolViejo(ts){ var d = Date.parse(ts || ''); return !isNaN(d) && (Date.now() - d) > _EVOL_REC_MIN * 60000; }
+function _evolRecuperar(){
+  if(!usuarioActual || !usuarioActual.id) return;
+  if(_evolRecuperadoPara === usuarioActual.id) return;
+  _evolRecuperadoPara = usuarioActual.id;
+  var yo = usuarioActual.id;
+  try{ _evolColaProcesar(); }catch(x){ console.warn('[catch]', x); }
+  var ab = _agPacienteAbierto();
+  var locales = (pacientes || []).filter(function(p){ return p && p.borrador && !_borVacio(p.borrador) && _evolViejo(p.borrador.ts) && !(ab && ab.p === p); });
+  var seguir = function(){ _evolRecuperarServidor(yo); };
+  if(!locales.length){ seguir(); return; }
+  var n = locales.length, fin = false;
+  locales.forEach(function(p){ evolConvertirBorrador(p, function(){ n--; if(n <= 0 && !fin){ fin = true; seguir(); } }); });
+  setTimeout(function(){ if(!fin){ fin = true; seguir(); } }, 15000);
+}
+function _evolRecuperarServidor(yo){
+  if(!usuarioActual || usuarioActual.id !== yo) return;
+  sb.from('evoluciones_borrador').select('paciente_id,evolucion,indicaciones_plan,proxima_consulta,actualizado_en').eq('medico_id', yo).then(function(r){
+    if(r.error || !r.data || !usuarioActual || usuarioActual.id !== yo) return;
+    var t = function(v){ return ('' + (v || '')).trim(); };
+    var ab = _agPacienteAbierto(), abId = (ab && ab.p._sbId) ? String(ab.p._sbId) : '';
+    var filas = r.data.filter(function(f){ return f.paciente_id && String(f.paciente_id) !== abId && _evolViejo(f.actualizado_en) && !_borVacio({ cuadro: f.evolucion, plan: f.indicaciones_plan, proxima: f.proxima_consulta }); });
+    (function sig(i){
+      if(i >= filas.length || !usuarioActual || usuarioActual.id !== yo) return;
+      var f = filas[i];
+      var ts = new Date(isNaN(Date.parse(f.actualizado_en || '')) ? Date.now() : Date.parse(f.actualizado_en)).toISOString();
+      var clave = f.paciente_id + '|' + ts;
+      var enCurso = Object.keys(_evolEnCurso).some(function(k){ return k.indexOf(f.paciente_id + '|') === 0; });
+      if(enCurso){ sig(i + 1); return; }   // ya se está convirtiendo (el mismo borrador, desde este navegador)
+      var item = _evolColaLeer().filter(function(x){ return x.clave === clave; })[0] || { clave: clave, pacienteId: f.paciente_id, sbId: String(f.paciente_id), uid: '', medicoId: yo, ts: ts, cuadro: t(f.evolucion), plan: t(f.indicaciones_plan), proxima: t(f.proxima_consulta), intentos: 0 };
+      _evolColaGuardar(item);
+      _evolEnCurso[clave] = [function(){ sig(i + 1); }];
+      _evolIntentar(item);
+    })(0);
+  }, function(x){ console.warn('[catch]', x); });
+}
+var _evolRecAgRestaurarOrig = _agRestaurar;
+_agRestaurar = function(){ var r = _evolRecAgRestaurarOrig.apply(this, arguments); try{ setTimeout(_evolRecuperar, 4500); }catch(x){ console.warn('[catch]', x); } return r; };
+
 // Imprimir: si hay un borrador escrito, sale en el PDF como una evolución más, SIN ninguna marca de borrador (decisión escrita de la usuaria, 22/10/2026; riesgo asumido por ella: no se distingue de una guardada). Lo guardado se imprime como siempre.
 var _borDatosImprimirOrig = _datosEvolucionParaImprimir;
 _datosEvolucionParaImprimir = function(){
@@ -20824,6 +21103,7 @@ function finalizarAtencion(_c){
       else el.value = '';
     });
   };
+  try{ _evolAlFinalizar(); }catch(eEv){ console.warn('[catch]', eEv); }   // la evolución escrita pasa a definitiva (motor de conversión; sin cartel; si falla la red queda en cola) — antes de cerrar al paciente
   try{ _turnoAtendidoAlFinalizar(); }catch(eAt){ console.warn('[catch]', eAt); }   // el turno de hoy de este paciente pasa a «Atendido» (antes de cerrar al paciente)
   // Historia Clínica: se cierra el paciente (hc-plan no lo limpia limpiarFormularioHC y volvería a Recetas/Derivaciones/Estudios al re-entrar)
   try{ limpiarFormularioHC(); }catch(eHc){ console.warn('[catch]', eHc); }
