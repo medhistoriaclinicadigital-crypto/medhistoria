@@ -18963,6 +18963,69 @@ showPanel = function(id){ try{ if(id === 'pacientes') _evolAlDejarPaciente('', '
 var _evolShowPanelMobOrig = showPanelMob;
 showPanelMob = function(id){ try{ if(id === 'pacientes') _evolAlDejarPaciente('', '', true); }catch(x){ console.warn('[catch]', x); } return _evolShowPanelMobOrig.apply(this, arguments); };
 
+// P6 — Cerrar sesión, inactividad y borradores que quedaron. Mismas reglas que P4 y P5 (nada vacío, sin duplicar, sin cartel, con cola y reintentos).
+// (a) «Cerrar sesión» (y el cierre por inactividad, que usa la misma función): antes de cerrar se convierte el borrador de cada paciente que tenga texto (el abierto y cualquier otro que haya quedado); espera como máximo 2,5 s y, si el servidor no contesta, cierra igual (la cola de esta pestaña se borra al cerrar, pero el borrador sigue en el servidor y se convierte en el próximo ingreso).
+var _evolCerrando = false, _evolCierreOrig = cerrarApp;
+cerrarApp = function(forzar){
+  var self = this, args = arguments;
+  if(_evolCerrando) return;   // doble clic: ya se está cerrando
+  var pend = [];
+  try{
+    if(usuarioActual && usuarioActual.id){
+      try{ _agGuardarAbiertoYa(); }catch(eG){ console.warn('[catch]', eG); }
+      pend = (pacientes || []).filter(function(p){ return p && p.borrador && !_borVacio(p.borrador); });
+    }
+  }catch(x){ console.warn('[catch]', x); pend = []; }
+  if(!pend.length) return _evolCierreOrig.apply(self, args);
+  _evolCerrando = true;
+  var hecho = false, n = pend.length;
+  var seguir = function(){ if(hecho) return; hecho = true; _evolCerrando = false; _evolCierreOrig.apply(self, args); };
+  pend.forEach(function(p){ try{ evolConvertirBorrador(p, function(){ n--; if(n <= 0) seguir(); }); }catch(x){ console.warn('[catch]', x); n--; if(n <= 0) seguir(); } });
+  setTimeout(seguir, 2500);
+};
+// (c) Al volver a iniciar sesión (una vez por ingreso): primero los borradores que quedaron en este navegador (pacientes cargados y cola), después los del servidor (tabla evoluciones_borrador) de ESTA médica. El paciente que esté abierto en ese momento no se toca. La fecha es la del último cambio del borrador.
+var _evolRecuperadoPara = '';
+// Solo se recuperan los borradores cuya última modificación tiene MÁS de 30 minutos: uno más reciente puede estar escribiéndose ahora mismo en otro dispositivo o pestaña (se deja como borrador y se convierte en un ingreso posterior).
+var _EVOL_REC_MIN = 30;
+function _evolViejo(ts){ var d = Date.parse(ts || ''); return !isNaN(d) && (Date.now() - d) > _EVOL_REC_MIN * 60000; }
+function _evolRecuperar(){
+  if(!usuarioActual || !usuarioActual.id) return;
+  if(_evolRecuperadoPara === usuarioActual.id) return;
+  _evolRecuperadoPara = usuarioActual.id;
+  var yo = usuarioActual.id;
+  try{ _evolColaProcesar(); }catch(x){ console.warn('[catch]', x); }
+  var ab = _agPacienteAbierto();
+  var locales = (pacientes || []).filter(function(p){ return p && p.borrador && !_borVacio(p.borrador) && _evolViejo(p.borrador.ts) && !(ab && ab.p === p); });
+  var seguir = function(){ _evolRecuperarServidor(yo); };
+  if(!locales.length){ seguir(); return; }
+  var n = locales.length, fin = false;
+  locales.forEach(function(p){ evolConvertirBorrador(p, function(){ n--; if(n <= 0 && !fin){ fin = true; seguir(); } }); });
+  setTimeout(function(){ if(!fin){ fin = true; seguir(); } }, 15000);
+}
+function _evolRecuperarServidor(yo){
+  if(!usuarioActual || usuarioActual.id !== yo) return;
+  sb.from('evoluciones_borrador').select('paciente_id,evolucion,indicaciones_plan,proxima_consulta,actualizado_en').eq('medico_id', yo).then(function(r){
+    if(r.error || !r.data || !usuarioActual || usuarioActual.id !== yo) return;
+    var t = function(v){ return ('' + (v || '')).trim(); };
+    var ab = _agPacienteAbierto(), abId = (ab && ab.p._sbId) ? String(ab.p._sbId) : '';
+    var filas = r.data.filter(function(f){ return f.paciente_id && String(f.paciente_id) !== abId && _evolViejo(f.actualizado_en) && !_borVacio({ cuadro: f.evolucion, plan: f.indicaciones_plan, proxima: f.proxima_consulta }); });
+    (function sig(i){
+      if(i >= filas.length || !usuarioActual || usuarioActual.id !== yo) return;
+      var f = filas[i];
+      var ts = new Date(isNaN(Date.parse(f.actualizado_en || '')) ? Date.now() : Date.parse(f.actualizado_en)).toISOString();
+      var clave = f.paciente_id + '|' + ts;
+      var enCurso = Object.keys(_evolEnCurso).some(function(k){ return k.indexOf(f.paciente_id + '|') === 0; });
+      if(enCurso){ sig(i + 1); return; }   // ya se está convirtiendo (el mismo borrador, desde este navegador)
+      var item = _evolColaLeer().filter(function(x){ return x.clave === clave; })[0] || { clave: clave, pacienteId: f.paciente_id, sbId: String(f.paciente_id), uid: '', medicoId: yo, ts: ts, cuadro: t(f.evolucion), plan: t(f.indicaciones_plan), proxima: t(f.proxima_consulta), intentos: 0 };
+      _evolColaGuardar(item);
+      _evolEnCurso[clave] = [function(){ sig(i + 1); }];
+      _evolIntentar(item);
+    })(0);
+  }, function(x){ console.warn('[catch]', x); });
+}
+var _evolRecAgRestaurarOrig = _agRestaurar;
+_agRestaurar = function(){ var r = _evolRecAgRestaurarOrig.apply(this, arguments); try{ setTimeout(_evolRecuperar, 4500); }catch(x){ console.warn('[catch]', x); } return r; };
+
 // Imprimir: si hay un borrador escrito, sale en el PDF como una evolución más, SIN ninguna marca de borrador (decisión escrita de la usuaria, 22/10/2026; riesgo asumido por ella: no se distingue de una guardada). Lo guardado se imprime como siempre.
 var _borDatosImprimirOrig = _datosEvolucionParaImprimir;
 _datosEvolucionParaImprimir = function(){
