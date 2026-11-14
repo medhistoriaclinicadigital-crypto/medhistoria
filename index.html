@@ -6400,7 +6400,7 @@ function switchHcTab(btn,id){
     if(eh) eh.textContent='🕐 '+hora+' hs';
     var cuadro = document.getElementById('evol-cuadro');
     if(cuadro && !cuadro.value){
-      cuadro.value = fechaLarga + ' — ' + hora + ' hs\n\n';
+      cuadro.value = fechaLarga + ' — ' + hora + ' hs.\n\n';
       cuadro.setSelectionRange(cuadro.value.length, cuadro.value.length);
     }
     renderEvolucionesHistorial();
@@ -18299,7 +18299,7 @@ function _borVacio(b){
   var t = function(x){ return ('' + (x || '')).trim(); };
   if(t(b.plan) || t(b.proxima)) return false;
   var c = t(b.cuadro);
-  return !c || /^[^\n]{0,80}\d\d:\d\d hs$/.test(c);
+  return !c || /^[^\n]{0,80}\d\d:\d\d hs\.?$/.test(c);   // el encabezado automático de fecha, con punto final (nuevo) o sin él (borradores anteriores)
 }
 
 // Copia pendiente en la pestaña (se borra al confirmar el servidor y al cerrar sesión)
