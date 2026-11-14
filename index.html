@@ -6235,7 +6235,7 @@ function showPanel(id){
         var hoyFact = _fechaLocalISO();
         var fpFecha = document.getElementById('fp-fecha'); if(fpFecha && !fpFecha.value) fpFecha.value = hoyFact;
         var foFecha = document.getElementById('fo-fecha'); if(foFecha && !foFecha.value) foFecha.value = hoyFact;
-        if(hcPac && panel){ var sub=panel.querySelector('.app-page-sub'); if(sub) sub.textContent='Paciente: '+hcPac+(hcDni?' · DNI '+hcDni:''); }
+        if(hcPac && panel){ var sub=panel.querySelector('.app-page-sub'); if(sub) sub.textContent='Paciente: '+_nombreVisible(hcPac)+(hcDni?' · DNI '+hcDni:''); }
       } else {
         var prefixMap = {recetas:'rx2', derivaciones:'der', estudios:'est'};
         var pre = prefixMap[id];
@@ -6253,7 +6253,7 @@ function showPanel(id){
           try{ _cargarCuilPacienteEnReceta(hcDni, hcPac); }catch(eCp){ console.warn('[catch]', eCp); }
           try{ _autocompletarCuilReceta(); }catch(e){ console.warn('[catch]', e); }
         }
-        if(hcPac && panel){ var sub=panel.querySelector('.app-page-sub'); if(sub) sub.textContent='Paciente: '+hcPac+(hcDni?' · DNI '+hcDni:''); }
+        if(hcPac && panel){ var sub=panel.querySelector('.app-page-sub'); if(sub) sub.textContent='Paciente: '+_nombreVisible(hcPac)+(hcDni?' · DNI '+hcDni:''); }
       }
     }catch(e){ console.warn('[catch]', e); }
   }
@@ -6368,7 +6368,7 @@ function abrirHC(nombre, dni, edad, os, idPac){
   // Mostrar panel HC
   showPanel('hc');
   renderAuditoriaHC();
-  document.querySelector('#panel-hc .app-page-title').textContent = '📋 HC — ' + nombre;
+  document.querySelector('#panel-hc .app-page-title').textContent = '📋 HC — ' + _nombreVisible(nombre);
   document.querySelector('#panel-hc .app-page-sub').textContent = 'DNI ' + (dni||'—') + (p.edad?' · '+p.edad+' años':'') + (p.os?' · '+p.os:'');
   document.querySelectorAll('.mob-btn').forEach(b=>b.classList.remove('act'));
   document.querySelectorAll('.mob-btn')[2].classList.add('act');
@@ -13560,7 +13560,7 @@ function generarResumen(){
       if(!isNaN(a)&&a>=0) edad = a+' años';
     }
     var datos = [
-      row('Paciente', fNombre),
+      row('Paciente', _nombreVisible(fNombre)),
       row('DNI', fDni),
       row('Fecha de nac.', fFnac),
       row('Edad', edad),
@@ -13717,7 +13717,7 @@ function _generarPDFEvolucion(){
   if(matSrc.indexOf('M.P.') !== -1){ if(!mp) mp = matSrc.replace(/M\.P\.?/i,'').trim(); } else { mn = matSrc.replace(/^M\.N\.?\s*/i,'').trim(); }
   var matTxt = [mn ? 'M.N. '+mn : '', mp ? 'M.P. '+mp : ''].filter(Boolean).join(' · ');
   var profTxt = (u.sexo === 'F' ? 'Médica' : 'Médico') + (u.especialidad ? ' — '+u.especialidad : '');
-  var pacUp = String(d.pac || '(sin nombre)').toUpperCase();
+  var pacUp = String(_nombreVisible(d.pac) || '(sin nombre)').toUpperCase();
   var limpiar = function(t){ return String(t==null?'':t).replace(/\r/g,'').replace(/\t/g,' ').replace(/≥/g,'>=').replace(/≤/g,'<=').replace(/→/g,'->').replace(/←/g,'<-').trim(); };
 
   var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4', compress:true });
@@ -13849,7 +13849,7 @@ function _generarPDFAnamnesis(){
   if(matSrc.indexOf('M.P.') !== -1){ if(!mp) mp = matSrc.replace(/M\.P\.?/i,'').trim(); } else { mn = matSrc.replace(/^M\.N\.?\s*/i,'').trim(); }
   var matTxt = [mn ? 'M.N. '+mn : '', mp ? 'M.P. '+mp : ''].filter(Boolean).join(' · ');
   var profTxt = (u.sexo === 'F' ? 'Médica' : 'Médico') + (u.especialidad ? ' — '+u.especialidad : '');
-  var pacUp = String(nombre || '(sin nombre)').toUpperCase();
+  var pacUp = String(_nombreVisible(nombre) || '(sin nombre)').toUpperCase();
   var cuil = ''; try{ cuil = medicoEsArgentina() ? _cuilDePaciente(dni, nombre) : ''; }catch(eC){ cuil = ''; }
   var fn = ga('hc-fnac'); if(fn){ var fp = fn.split('-'); if(fp.length === 3) fn = fp[2]+'/'+fp[1]+'/'+fp[0]; }
   // Datos personales: los 12 campos de la pantalla, en su orden (con el CUIL justo después del DNI si está cargado)
@@ -14287,7 +14287,7 @@ function sincronizarVideoconsultasSupabase(){
     var plat = v.plataforma || 'Daily';
     return '<div class="agenda-item">'
       +'<div class="agenda-hora">'+escHtml(v.hora)+'</div>'
-      +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(v.pac)+' <span style="font-size:.75rem;color:var(--g4);">· '+escHtml(v.fechaDisplay)+' · '+escHtml(plat)+'</span></div><div class="agenda-mot">'+escHtml(v.motivo)+' · '+escHtml(v.duracion)+'</div></div>'
+      +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(_nombreVisible(v.pac))+' <span style="font-size:.75rem;color:var(--g4);">· '+escHtml(v.fechaDisplay)+' · '+escHtml(plat)+'</span></div><div class="agenda-mot">'+escHtml(v.motivo)+' · '+escHtml(v.duracion)+'</div></div>'
       +'<button onclick="mostrarOpcionesLlamada('+i+')" style="background:linear-gradient(135deg,var(--g5),var(--g4));color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;margin-left:6px;">▶ Iniciar</button>'
      +'<button onclick="eliminarVideoconsulta('+i+');" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:0 4px;">✕</button>'
       +'</div>';
@@ -14909,7 +14909,7 @@ function renderPacientes(lista){
     var centroBadge = p.esDeCentro ? '<span style="background:#eef2ff;color:#4338ca;border-radius:10px;padding:2px 8px;font-size:.7rem;font-weight:600;margin-left:4px;" title="Paciente compartido del centro médico">🏥 '+escHtml(p.centroNombre||'Centro')+'</span>' : '';
     return '<div class="pac-card">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">'
-      +'<div style="font-weight:700;font-size:.9rem;color:var(--g2);">'+escHtml(p.nombre)+'</div>'
+      +'<div style="font-weight:700;font-size:.9rem;color:var(--g2);">'+escHtml(_nombreVisible(p.nombre))+'</div>'
       +'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end;">'+centroBadge+'</div>'
       +'</div>'
       +'<div style="font-size:.75rem;color:var(--muted);margin-bottom:4px;">DNI '+escHtml(p.dni||'—')+(p.os?' · '+escHtml(p.os):'')+'</div>'
@@ -14982,7 +14982,7 @@ function renderTurnos(lista){
     var waBtn = '<button onclick="avisoRecordatoriosTurno('+idx+')" title="Recordatorios de turno (servicio adicional)" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:1rem;padding:0 4px;opacity:.7;">🔔</button>';
     return '<div class="agenda-item mh-con-hc" style="'+op+'">'
       +'<div class="agenda-hora">'+escHtml(t.hora)+'</div>'
-      +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(t.pac)+fecha+'</div><div class="agenda-mot">'+escHtml(t.motivo||'Consulta')+(t.os?' · '+escHtml(t.os):'')+'</div></div>'
+      +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(_nombreVisible(t.pac))+fecha+'</div><div class="agenda-mot">'+escHtml(t.motivo||'Consulta')+(t.os?' · '+escHtml(t.os):'')+'</div></div>'
       +'<div class="mh-acciones">'
       +_hcBotonTurno(idx)
       +waBtn
@@ -15159,7 +15159,7 @@ function filtrarPorFecha(){
       var tagText = tagTxt(t);
       return '<div class="agenda-item mh-con-hc" style="">'
         +'<div class="agenda-hora">'+escHtml(t.hora)+'</div>'
-        +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(t.pac)+'</div>'
+        +'<div class="agenda-info"><div class="agenda-pac">'+escHtml(_nombreVisible(t.pac))+'</div>'
         +'<div class="agenda-mot">'+escHtml(t.motivo)+(t.os?' · '+escHtml(t.os):'')+'</div></div>'
         +'<div class="mh-acciones">'
         +_hcBotonTurno(idx)
@@ -15311,7 +15311,7 @@ try {
         var card = document.createElement('div');
         card.className = 'pac-card';
         card.setAttribute('onclick', "abrirHC('"+escJs(pac.nombre)+"','"+escJs(pac.dni)+"','"+escJs(pac.edad)+"','"+escJs(pac.os)+"','"+escJs(_idPac(pac))+"')");
-        card.innerHTML = '<div class="pac-card-top"><span class="pac-card-name">'+escHtml(pac.nombre)+'</span>'+(pac.edad?'<span style="background:#e8f5e9;color:#2e7d32;border-radius:10px;padding:2px 8px;font-size:.75rem;font-weight:600;">'+escHtml(pac.edad)+' años</span>':'')+'</div>'          +'<div class="pac-card-info">DNI '+(escHtml(pac.dni)||'—')+(pac.os?' · '+escHtml(pac.os):'')+'</div>'          +'<div class="pac-card-fecha">Última consulta: '+escHtml(pac.ultima||pac.ultimaConsulta||'—')+'</div>';
+        card.innerHTML = '<div class="pac-card-top"><span class="pac-card-name">'+escHtml(_nombreVisible(pac.nombre))+'</span>'+(pac.edad?'<span style="background:#e8f5e9;color:#2e7d32;border-radius:10px;padding:2px 8px;font-size:.75rem;font-weight:600;">'+escHtml(pac.edad)+' años</span>':'')+'</div>'          +'<div class="pac-card-info">DNI '+(escHtml(pac.dni)||'—')+(pac.os?' · '+escHtml(pac.os):'')+'</div>'          +'<div class="pac-card-fecha">Última consulta: '+escHtml(pac.ultima||pac.ultimaConsulta||'—')+'</div>';
         lista.insertBefore(card, lista.firstChild);
       });
     }
@@ -15566,7 +15566,7 @@ function _generarPDFRecetaReNaPDiS(d, callback, _extraMed){
 
     // ── PACIENTE: izquierda nombre/fecha nac./DNI-CUIL, derecha obra social-plan/afiliado/sexo ──
     var patColGap=8, patColW=(W-margin*2-patColGap)/2;
-    var patIzq = [['NOMBRE Y APELLIDO', d.pac||'(no indicado)']];
+    var patIzq = [['NOMBRE Y APELLIDO', _nombreVisible(d.pac)||'(no indicado)']];
     if(d.fnac){ var fnP=d.fnac.split('-'); patIzq.push(['FECHA DE NACIMIENTO', fnP.length===3?(fnP[2]+'/'+fnP[1]+'/'+fnP[0]):d.fnac]); }
     var dniCuilTxt = [d.dni?('DNI: '+d.dni):'', d.cuil?('CUIL: '+d.cuil):''].filter(Boolean).join('   ·   ');
     if(dniCuilTxt) patIzq.push(['DNI / CUIL', dniCuilTxt]);
@@ -15777,7 +15777,7 @@ function _generarPDFRecetaReNaPDiS(d, callback, _extraMed){
     doc.setTextColor(20,90,50); doc.setFontSize(7.2); doc.setFont('helvetica','bold');
     doc.text('PACIENTE', margin+3, y+6);
     doc.setTextColor(10,10,10); doc.setFontSize(12); doc.setFont('helvetica','normal');
-    var pacNombreLines = doc.splitTextToSize(d.pac||'(no indicado)', colIzqW-6);
+    var pacNombreLines = doc.splitTextToSize(_nombreVisible(d.pac)||'(no indicado)', colIzqW-6);
     doc.text(pacNombreLines, margin+3, y+11.5);
     y += 11.5 + (pacNombreLines.length>1 ? (pacNombreLines.length-1)*5 : 0) + 4.5;
     doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,60);
@@ -16138,7 +16138,7 @@ function generarPDFbase64(tipo, callback, soloVerificar, extra){
   doc.setTextColor(20,90,50); doc.setFontSize(7); doc.setFont('helvetica','bold');
   doc.text('PACIENTE', x, y);
   doc.setTextColor(10,10,10); doc.setFontSize(14); doc.setFont('helvetica','bold');
-  y += 6; doc.text(d.pac || '(no indicado)', x, y);
+  y += 6; doc.text(_nombreVisible(d.pac) || '(no indicado)', x, y);
 
   // ── DNI, Sexo, Obra Social, Afiliado, Plan, F.Nac ──
   y += 8;
@@ -17016,7 +17016,7 @@ function mostrarOpcionesEnvio(tipo, desdeEmitida){
   var overlay = document.getElementById('envioOverlay');
   document.body.appendChild(overlay); // evita que quede oculto si terminó anidado dentro de otro panel
   var nom = document.getElementById('envioOverlay-nombre');
-  if(nom) nom.textContent = d.pac;
+  if(nom) nom.textContent = _nombreVisible(d.pac);
   try{ _actualizarOpcionesCompartir(tipo); }catch(eCmp){ console.warn('[catch]', eCmp); }
   overlay.style.display = 'flex';
 }
@@ -17962,7 +17962,7 @@ function guardarDesdeHC(){
   // Título y subtítulo de la pantalla, como al abrir el paciente desde la lista (con un paciente NUEVO decía «Historia Clínica Online»).
   try{
     var _pT = pacientes[pacienteHCActualIdx], _tit = document.querySelector('#panel-hc .app-page-title'), _sub = document.querySelector('#panel-hc .app-page-sub');
-    if(_pT && _tit) _tit.textContent = '📋 HC — ' + _pT.nombre;
+    if(_pT && _tit) _tit.textContent = '📋 HC — ' + _nombreVisible(_pT.nombre);
     if(_pT && _sub) _sub.textContent = 'DNI ' + (_pT.dni||'—') + (_pT.edad?' · '+_edadConUnidad(_pT.edad):'') + (_pT.os?' · '+_pT.os:'');
   }catch(eTit){ console.warn('[catch]', eTit); }
 
@@ -18350,7 +18350,7 @@ function _agLimpiar(e, snap){ Object.keys(snap).forEach(function(id){ if(e.campo
 function _agRefrescarTituloHC(p){
   var ab = _agPacienteAbierto(); if(!ab || ab.p !== p) return;
   var tit = document.querySelector('#panel-hc .app-page-title'), sub = document.querySelector('#panel-hc .app-page-sub');
-  if(tit) tit.textContent = '📋 HC — ' + (p.nombre || '');
+  if(tit) tit.textContent = '📋 HC — ' + _nombreVisible(p.nombre || '');
   if(sub) sub.textContent = 'DNI ' + (p.dni || '—') + (p.edad ? ' · ' + _edadConUnidad(p.edad) : '') + (p.os ? ' · ' + p.os : '');
 }
 // Un dato personal a medio escribir NO se manda (igual que un número incompleto): devuelve { ok, val }
@@ -19078,6 +19078,8 @@ function cargarLocal(){
 }
 // Un paciente del servidor ya está en la lista local si coincide el DNI; si falta el DNI en alguno
 // de los dos, se compara por apellido y nombre (si no, los pacientes sin DNI se duplicaban en cada carga).
+// Solo para MOSTRAR (script 97): «Gaia batageli,» → «Gaia batageli»; «, Nombre» → «Nombre»; «Apellido, Nombre» queda igual. No se usa para guardar ni comparar.
+function _nombreVisible(n){ return ('' + (n == null ? '' : n)).replace(/\s+/g, ' ').replace(/\s+,/g, ',').replace(/^[\s,]+|[\s,]+$/g, ''); }
 function _normNombrePac(s){ return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase().replace(/\s+/g,' '); }
 // Identidad de una ficha: id del servidor (_sbId) o, mientras no tiene fila, un id local (_uid). Nunca el nombre.
 function _nuevoUid(){ return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
@@ -19553,7 +19555,7 @@ function abrirDictado(){
   var datosDiv = document.getElementById('dictado-datos-pac');
   if(datosDiv){
     var partes = [];
-    if(pac) partes.push('<strong>Paciente:</strong> '+escHtml(pac));
+    if(pac) partes.push('<strong>Paciente:</strong> '+escHtml(_nombreVisible(pac)));
     if(edad) partes.push('<strong>Edad:</strong> '+escHtml(edad));
     if(sexo) partes.push('<strong>Sexo:</strong> '+escHtml(sexo));
     if(os) partes.push('<strong>Obra social:</strong> '+escHtml(os));
@@ -20957,7 +20959,7 @@ function _hcReglaMostrar(estado, info){
   var tit = panel.querySelector('.app-page-title'), sub = panel.querySelector('.app-page-sub');
   if(estado === 'sinpaciente'){ if(tit) tit.textContent = '📋 Historia Clínica'; if(sub) sub.textContent = 'Elegí un paciente para empezar'; }
   else if(estado === 'elegir'){ if(tit) tit.textContent = '📋 Historia Clínica'; if(sub) sub.textContent = 'Elegí cuál es el paciente del turno'; }
-  else { if(tit) tit.textContent = '📋 HC — ' + nombre; if(sub) sub.textContent = estado === 'abriendo' ? 'Abriendo la ficha…' : ('DNI ' + (dni || '—') + ' · todavía sin ficha'); }
+  else { if(tit) tit.textContent = '📋 HC — ' + _nombreVisible(nombre); if(sub) sub.textContent = estado === 'abriendo' ? 'Abriendo la ficha…' : ('DNI ' + (dni || '—') + ' · todavía sin ficha'); }
   if(tarj) tarj.remove();
   tarj = document.createElement('div'); tarj.id = 'hc-regla-tarjeta';
   tarj.style.cssText = 'background:#fff;border:1px solid var(--g9);border-radius:14px;padding:34px 30px;margin-top:18px;text-align:center;box-shadow:0 8px 24px rgba(20,90,50,.08);';
