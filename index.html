@@ -18363,11 +18363,13 @@ function _agValidarPac(id, v){
   if(id === 'hc-email') return (v === '' || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) ? { ok: true, val: v } : { ok: false };
   return { ok: true, val: v };
 }
+// Parte «Apellido, Nombre» para el SERVIDOR (script 98): apellido = lo anterior a la primera coma; nombre = lo posterior (sin coma: nombre vacío, igual que «Pacientes»). Solo se usa al guardar.
+function _partirNombreServidor(s){ var t = ('' + (s == null ? '' : s)), i = t.indexOf(','); return i < 0 ? { apellido: t.trim(), nombre: '' } : { apellido: t.slice(0, i).trim(), nombre: t.slice(i + 1).trim() }; }
 // Envía los datos personales tocados a la fila del paciente (solo las columnas tocadas); fichas de centro: con la llamada que ya usa «Pacientes»
 function _agEnviarPac(p, pacienteId, pacSB, cb){
   var fallo = function(x){ cb(x || { message: 'Failed to fetch' }); };
   if(typeof miCentro !== 'undefined' && miCentro && miCentro.id && p.esDeCentro){
-    var completo = { medico_id: usuarioActual.id, nombre: p.nombre || '', apellido: p.apellido || '', dni: p.dni || '', cuil: p.cuil || '', fecha_nacimiento: p.fnac || null, telefono: p.tel || '', email: p.email || '', obra_social: p.os || '', n_afiliado: p.afiliado || '', plan: p.plan || '', domicilio: p.domicilio || '', localidad: p.localidad || '', nacionalidad: p.nacionalidad || '', sexo: p.sexo || '', centro_id: miCentro.id };
+    var completo = { medico_id: usuarioActual.id, nombre: _partirNombreServidor(p.nombre).nombre, apellido: _partirNombreServidor(p.nombre).apellido || p.apellido || '', dni: p.dni || '', cuil: p.cuil || '', fecha_nacimiento: p.fnac || null, telefono: p.tel || '', email: p.email || '', obra_social: p.os || '', n_afiliado: p.afiliado || '', plan: p.plan || '', domicilio: p.domicilio || '', localidad: p.localidad || '', nacionalidad: p.nacionalidad || '', sexo: p.sexo || '', centro_id: miCentro.id };
     sb.rpc('guardar_paciente_centro', { p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: Object.assign(completo, pacSB) }).then(function(r){ cb(r.error); }, fallo);
     return;
   }
@@ -18385,7 +18387,7 @@ function _agGuardar(e){
     if(c.g === 'pac'){
       var vp = _agValidarPac(id, v);
       if(!vp.ok){ delete e.campos[id]; return; }   // a medio escribir: no se manda (lo escrito queda en la pantalla)
-      pacSB[c.col] = vp.val; if(id === 'hc-paciente') pacSB.apellido = ('' + vp.val).split(',')[0].trim();
+      pacSB[c.col] = vp.val; if(id === 'hc-paciente'){ var _pn = _partirNombreServidor(vp.val); pacSB.apellido = _pn.apellido; pacSB.nombre = _pn.nombre; }
       snapPac[id] = v; return;
     }
     if(c.num){ var n = _agNum(v); if(!n.ok){ delete e.campos[id]; return; } hcSB[c.col] = n.val; }   // número a medio escribir: no se manda
