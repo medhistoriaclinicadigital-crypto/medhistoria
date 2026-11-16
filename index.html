@@ -12570,6 +12570,7 @@ function _subirArchivoAEstudios(file, meta){
           alert('Error al subir "'+file.name+'": '+msg);
           return;
         }
+        _audEstudio(meta.pAud, 'adjuntado', file.name, pacienteId);   // Historial (script 99)
         cargarEstudiosPaciente();
       });
       return;
@@ -12592,6 +12593,7 @@ function _subirArchivoAEstudios(file, meta){
           sb.storage.from(ESTUDIOS_BUCKET).remove([path]).then(function(){});
           return;
         }
+        _audEstudio(meta.pAud, 'adjuntado', file.name, pacienteId);   // Historial (script 99)
         cargarEstudiosPaciente();
       });
     });
@@ -12625,6 +12627,7 @@ function subirEstudios(files){
   var desc = (document.getElementById('estudio-desc')||{}).value||'';
   var filesArr = Array.from(files);
   if(!filesArr.length) return;
+  var pAud = (pacienteHCActualIdx>=0 && pacientes[pacienteHCActualIdx]) ? pacientes[pacienteHCActualIdx] : null;   // ficha a la que pertenecen los archivos (script 99: Historial)
   var limpiar = function(){
     var descEl = document.getElementById('estudio-desc');
     if(descEl) descEl.value = '';
@@ -12647,7 +12650,7 @@ function subirEstudios(files){
         limpiar(); return;
       }
     }
-    filesArr.forEach(function(file){ _subirArchivoAEstudios(file, {categoria:cat, descripcion:desc}); });
+    filesArr.forEach(function(file){ _subirArchivoAEstudios(file, {categoria:cat, descripcion:desc, pAud:pAud}); });
     limpiar();
   });
 }
@@ -12777,6 +12780,8 @@ function eliminarEstudio(id, _c){
   if(!estudio) return;
   if(_c !== _MH_OK){ _mhConfirmar('¿Eliminar "'+estudio.nombre+'"? Esta acción no se puede deshacer.', function(ok){ if(ok) eliminarEstudio(id, _MH_OK); }); return; }
 
+  var pAud = (pacienteHCActualIdx>=0 && pacientes[pacienteHCActualIdx]) ? pacientes[pacienteHCActualIdx] : null, nombreAud = estudio.nombre, pacIdAud = _pacienteIdEstudiosActual;   // para el Historial (script 99)
+
   // Pacientes de un Centro Médico: el borrado pasa por la Edge Function
   // estudio-gestion-centro (mismo motivo que la subida — ver hallazgo C).
   if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
@@ -12788,6 +12793,7 @@ function eliminarEstudio(id, _c){
         alert('No se pudo eliminar: '+msg);
         return;
       }
+      _audEstudio(pAud, 'eliminado', nombreAud, pacIdAud);   // Historial (script 99)
       estudiosAdjuntos = estudiosAdjuntos.filter(function(e){ return e.id !== id; });
       renderEstudios();
     });
@@ -12797,6 +12803,7 @@ function eliminarEstudio(id, _c){
   sb.storage.from(ESTUDIOS_BUCKET).remove([estudio.path]).then(function(){
     sb.from('estudios').delete().eq('id', id).then(function(r){
       if(r.error){ alert('No se pudo eliminar el registro: '+r.error.message); return; }
+      _audEstudio(pAud, 'eliminado', nombreAud, pacIdAud);   // Historial (script 99)
       estudiosAdjuntos = estudiosAdjuntos.filter(function(e){ return e.id !== id; });
       renderEstudios();
     });
@@ -13111,6 +13118,7 @@ function _audDescribir(x){
   var doc = _audDocNombre(x.campo), nuevo = ('' + (x.nuevo || '')).trim();
   if(doc) return { nombre: doc, corto: nuevo, completo: nuevo, antes: null };
   if(x.campo === 'Evolución') return { nombre: 'Evolución', corto: nuevo, completo: nuevo, antes: null };   // evoluciones: sin «Antes: vacío» (se anotan una sola vez, ya definitivas)
+  if(x.campo === 'Estudio adjuntado' || x.campo === 'Estudio eliminado') return { nombre: x.campo, corto: nuevo, completo: nuevo, antes: null };   // estudios (script 99): nombre del archivo, sin «Antes: vacío»
   return { nombre: _audNombreCampo(x.campo), corto: nuevo, completo: nuevo, antes: ('' + (x.anterior || '')).trim() };
 }
 // Cola de líneas del Historial sin confirmar (sessionStorage: sobrevive a recargar la pestaña; «Cerrar sesión» la borra)
@@ -13241,6 +13249,30 @@ function renderAuditoriaHC(){
       _audPintar(cont, _audJuntar(p, filas, mapa), true);
     });
   });
+}
+// ESTUDIOS en el Historial (script 99): una línea cuando se ADJUNTA o se ELIMINA un archivo del paciente (nombre del archivo, fecha y hora, médico). Se llama SOLO después de que el servidor confirmó; misma vía que la evolución:
+// línea local + cola que sobrevive a recargar (`_audColaEscribir`) + envío a `auditoria_hc` (`_audEnviarFila`). `p` es la ficha a la que pertenece el archivo (tomada al tocar, no al terminar); `pacienteId`, el id del servidor.
+function _audEstudio(p, accion, nombre, pacienteId){
+  try{
+    nombre = ('' + (nombre == null ? '' : nombre)).trim();
+    if(!p || !nombre) return;
+    var campo = accion === 'eliminado' ? 'Estudio eliminado' : 'Estudio adjuntado';
+    var ahora = new Date();
+    var dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    var medico = ''; try{ if(usuarioActual) medico = nombreConTitulo(usuarioActual); }catch(x){ console.warn('[catch]', x); }
+    if(!p.auditoria) p.auditoria = [];
+    p.auditoria.unshift({ campo: campo, anterior: '', nuevo: nombre, fecha: dias[ahora.getDay()] + ', ' + ahora.getDate() + ' de ' + meses[ahora.getMonth()] + ' de ' + ahora.getFullYear(), fechaISO: ahora.toISOString(), hora: ('0' + ahora.getHours()).slice(-2) + ':' + ('0' + ahora.getMinutes()).slice(-2), medico: medico });
+    var refrescar = function(){ try{ var cont = document.getElementById('hc-auditoria-lista'); if(cont && cont.offsetParent && pacienteHCActualIdx >= 0 && pacientes[pacienteHCActualIdx] === p) renderAuditoriaHC(); }catch(x){ console.warn('[catch]', x); } };
+    if(!(usuarioActual && usuarioActual.id)){ refrescar(); return; }
+    var enviar = function(idSrv){
+      if(!idSrv){ refrescar(); return; }
+      var fila = { id: Date.now() + '-' + Math.random().toString(36).slice(2), t: Date.now(), paciente_id: idSrv, medico_id: usuarioActual.id, campo: campo, valor_anterior: '', valor_nuevo: nombre };
+      var cola = _audColaLeer(); cola.push(fila); _audColaEscribir(cola);   // queda anotada hasta que el servidor la confirme
+      _audEnviarFila(fila); refrescar();
+    };
+    if(pacienteId) enviar(pacienteId); else _audIdServidor(p, enviar);
+  }catch(x){ console.warn('[catch]', x); }
 }
 // ── fin HISTORIAL DE CAMBIOS ──
 
