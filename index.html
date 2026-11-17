@@ -2696,7 +2696,9 @@ Solo tenés que completar tus datos y confirmar. Vas a quedar sumado automática
                   <div class="fl"><label>IMC<div class="input-unit"><input type="text" id="ex-imc" placeholder="Auto" style="padding-right:52px;"><span class="unit-suffix">kg/m²</span></div></div>
                   <div class="fl full"><label>Examen por aparatos y sistemas<textarea id="ex-sistemas" placeholder="Cardiovascular: ruidos normales, sin soplos&#10;Respiratorio: murmullo vesicular conservado&#10;Abdomen: blando, depresible, indoloro..."></textarea><button class="ai-assist" style="margin-top:6px;" onclick="completarConIA('ex-sistemas','examen por aparatos y sistemas')">🤖 IA: completar examen por aparatos y sistemas</button><div style="font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;margin-top:6px;">⚠️ Este campo puede enviarse a un servicio de IA externo. No escribas el nombre del paciente acá. Vos sos responsable de que los datos que cargues sean correctos y de revisar la respuesta antes de usarla clínicamente. MedHistoriaClinicaOnline no asume responsabilidad legal por las decisiones clínicas que el profesional adopte a partir de esta sugerencia — la decisión y la responsabilidad son siempre del médico tratante.</div></div>
                 </div>
-                <button class="form-submit" onclick="guardarExamenFisico()">Guardar examen físico →</button>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <button class="form-submit" onclick="imprimirExamenFisico()" style="background:linear-gradient(135deg,var(--g4),var(--g3));">🖨️ Imprimir examen físico</button>
+                </div>
               </div>
         </div>
 
@@ -6357,6 +6359,7 @@ function abrirHC(nombre, dni, edad, os, idPac){
   set('ex-temp', examen.temp);
   set('ex-sat', examen.sat);
   set('ex-imc', examen.imc);
+  if(parseFloat(examen.peso) > 0 && parseFloat(examen.talla) > 0){ try{ calcularIMC(); }catch(eImc){ console.warn('[catch]', eImc); } }   // IMC recalculado con el peso y la talla guardados (script 100)
   set('ex-sistemas', examen.sistemas);
   set('ex-obs', examen.obs);
 
@@ -13987,6 +13990,146 @@ function imprimirAnamnesis(){
   setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
 }
 
+// ── IMPRIMIR EXAMEN FÍSICO (script 100) ──
+// Texto del IMC con el MISMO cálculo que calcularIMC() (para el Historial de cambios): '' si falta el peso o la talla.
+function _agTextoIMC(peso, talla){
+  var p = parseFloat(peso), t = parseFloat(talla);
+  if(!(p > 0 && t > 0)) return '';
+  var tm = t < 3 ? t : t / 100;
+  var imc = (p / (tm * tm)).toFixed(1), cat = '';
+  if(imc < 18.5) cat = ' · Bajo peso'; else if(imc < 25) cat = ' · Normal'; else if(imc < 30) cat = ' · Sobrepeso';
+  else if(imc < 35) cat = ' · Obesidad G1'; else if(imc < 40) cat = ' · Obesidad G2'; else cat = ' · Obesidad G3';
+  return imc + cat;
+}
+// PDF del examen físico: lo que está en pantalla (signos vitales y examen por aparatos y sistemas) con el encabezado de la médica y el recuadro del paciente. Mismo diseño que el PDF de la anamnesis.
+function _generarPDFExamenFisico(){
+  var jsPDF = window.jspdf ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if(!jsPDF){ alert('Librería PDF no cargada. Verificá tu conexión a internet.'); return null; }
+  var ga = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
+  var limpiar = function(t){ return String(t==null?'':t).replace(/\r/g,'').replace(/\t/g,' ').replace(/≥/g,'>=').replace(/≤/g,'<=').replace(/→/g,'->').replace(/←/g,'<-').trim(); };
+  var idsEx = ['ex-peso','ex-talla','ex-ta','ex-fc','ex-fr','ex-temp','ex-sat','ex-imc','ex-sistemas'];
+  if(!idsEx.some(function(id){ return !!ga(id); })){ _toastAviso('El examen físico está vacío: no hay nada para imprimir. Completá los datos y volvé a imprimir.', 9000); return null; }
+  var nombre = ga('hc-paciente'), dni = ga('hc-dni');
+  var u = usuarioActual || {};
+  var medicaNombre = nombreConTitulo(u);
+  var matSrc = u.matricula || '', mn = '', mp = u.matricula_mp || '';
+  if(matSrc.indexOf('M.P.') !== -1){ if(!mp) mp = matSrc.replace(/M\.P\.?/i,'').trim(); } else { mn = matSrc.replace(/^M\.N\.?\s*/i,'').trim(); }
+  var matTxt = [mn ? 'M.N. '+mn : '', mp ? 'M.P. '+mp : ''].filter(Boolean).join(' · ');
+  var profTxt = (u.sexo === 'F' ? 'Médica' : 'Médico') + (u.especialidad ? ' — '+u.especialidad : '');
+  var pacUp = String(_nombreVisible(nombre) || '(sin nombre)').toUpperCase();
+  var cuil = ''; try{ cuil = medicoEsArgentina() ? _cuilDePaciente(dni, nombre) : ''; }catch(eC){ cuil = ''; }
+  var personales = [['APELLIDO Y NOMBRE', nombre], ['DNI', dni]];
+  if(cuil) personales.push(['CUIL', _formatearCuil(cuil)]);
+  personales = personales.concat([['EDAD', ga('hc-edad')], ['SEXO', ga('hc-sexo')], ['OBRA SOCIAL / PREPAGA', ga('hc-os')]]);
+  var conU = function(id, u2){ var v = ga(id); if(!v) return ''; return (u2 && !/[a-zA-Z°%]/.test(v)) ? v + ' ' + u2 : v; };
+  // Talla: igual que calcularIMC(): menor a 3 = metros (1.77 -> «1.77 m»); 3 o más = centímetros (177 -> «177 cm»). Si ya trae su unidad escrita, se respeta.
+  var tallaTxt = function(){ var v = ga('ex-talla'); if(!v) return ''; if(/[a-zA-Z]/.test(v)) return v; var n = parseFloat(v.replace(',', '.')); return v + (n > 0 && n < 3 ? ' m' : ' cm'); };
+  var imcTxt = function(){ var v = ga('ex-imc'); if(!v) return ''; var i = v.indexOf(' · '); return i < 0 ? v + ' kg/m2' : v.slice(0, i) + ' kg/m2' + v.slice(i); };
+  var vitales = [['PESO', conU('ex-peso','kg')], ['TALLA', tallaTxt()], ['TENSIÓN ARTERIAL', conU('ex-ta','mmHg')], ['FRECUENCIA CARDÍACA', conU('ex-fc','lpm')],
+                 ['FRECUENCIA RESPIRATORIA', conU('ex-fr','rpm')], ['TEMPERATURA', conU('ex-temp','°C')], ['SATURACIÓN O2', conU('ex-sat','%')], ['IMC', imcTxt()]];
+
+  var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4', compress:true });
+  var W = 210, M = 14, BOTTOM = 272, G = [20,90,50];
+  var lh = 9 * 1.15 / doc.internal.scaleFactor;
+  var y = 0;
+  var encabezado = function(primera){
+    doc.setFillColor(G[0],G[1],G[2]); doc.rect(0,0,W,5,'F');
+    doc.setTextColor(G[0],G[1],G[2]); doc.setFont('times','bold'); doc.setFontSize(primera?20:13);
+    doc.text('MedHistoriaClinicaOnline', W/2, primera?17:13, { align:'center' });
+    doc.setDrawColor(G[0],G[1],G[2]); doc.setLineWidth(0.6); doc.line(M, primera?21:16, W-M, primera?21:16);
+    if(primera){
+      doc.setFont('times','bold'); doc.setFontSize(14); doc.text('EXAMEN FÍSICO', W/2, 30, { align:'center' });
+      doc.setTextColor(15,15,15); doc.setFontSize(12); doc.text(medicaNombre, W/2, 38, { align:'center' });
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(40,40,40);
+      doc.text(profTxt + (matTxt ? '   ·   Matrícula: '+matTxt : ''), W/2, 43, { align:'center' });
+      doc.setDrawColor(G[0],G[1],G[2]); doc.setLineWidth(0.3); doc.line(M, 47, W-M, 47);
+      return 51;
+    }
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(90,90,90);
+    doc.text('Examen físico (continuación) — '+medicaNombre, W/2, 21.5, { align:'center' });
+    return 27;
+  };
+  var pieDeHoja = function(n, total){
+    doc.setDrawColor(G[0],G[1],G[2]); doc.setLineWidth(0.5); doc.line(M, 277, W-M, 277);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(G[0],G[1],G[2]);
+    doc.text(medicaNombre + (matTxt ? ' · '+matTxt : ''), M, 282);
+    doc.text('Página '+n+' de '+total, W-M, 282, { align:'right' });
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(70,70,70);
+    doc.text(doc.splitTextToSize('Paciente: ' + pacUp + (dni ? ' · DNI ' + dni : ''), W-2*M)[0], W/2, 287, { align:'center' });
+    doc.setFontSize(7); doc.setTextColor(110,110,110);
+    doc.text('Emitido desde MedHistoriaClinicaOnline · admin@medhistoriaclinicaonline.com', W/2, 292, { align:'center' });
+  };
+  var caja = function(x, yy, w, h, lineas){
+    doc.setFillColor(246,252,248); doc.setDrawColor(190,225,205); doc.setLineWidth(0.3); doc.roundedRect(x, yy, w, h, 1.6, 1.6, 'FD');
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(26,46,30);
+    if(lineas.length) doc.text(lineas, x+2.6, yy+4.4);
+  };
+  var rotulo = function(t2, x, yy){ doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(G[0],G[1],G[2]); doc.text(t2, x, yy+2.6); };
+  var lineasDe = function(t2, w){ doc.setFont('helvetica','normal'); doc.setFontSize(9); return doc.splitTextToSize(limpiar(t2), w - 5.2); };
+  var nuevaHoja = function(){ doc.addPage(); y = encabezado(false); };
+  var cabecera = function(t2, cont){
+    doc.setFillColor(240,253,244); doc.setDrawColor(134,239,172); doc.setLineWidth(0.3); doc.rect(M, y, W-2*M, 7, 'FD');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(G[0],G[1],G[2]); doc.text(t2 + (cont ? '   (continuación)' : ''), M+3, y+4.8); y += 9;
+  };
+
+  // Hoja 1: recuadro del paciente
+  y = encabezado(true);
+  var colW = (W - 2*M - 8 - 6) / 2, xs = [M+4, M+4+colW+6];
+  var filas = [];
+  for(var i = 0; i < personales.length; i += 2){ filas.push([personales[i], personales[i+1]].filter(Boolean)); }
+  var hFilas = filas.map(function(par){ return Math.max.apply(null, par.map(function(c){ return Math.max(6.4, lineasDe(c[1], colW).length*lh + 3.4); })) + 4.2 + 1.6; });
+  var hRecuadro = 11 + hFilas.reduce(function(a,b){ return a+b; }, 0) + 1;
+  doc.setDrawColor(180,210,190); doc.setLineWidth(0.3); doc.roundedRect(M, y, W-2*M, hRecuadro, 2.5, 2.5, 'S');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(G[0],G[1],G[2]); doc.text('DATOS DEL PACIENTE', M+4, y+5.2);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(90,90,90); doc.text('Fecha de emisión: ' + new Date().toLocaleDateString('es-AR'), W-M-4, y+5.2, { align:'right' });
+  var yy = y + 8.5;
+  filas.forEach(function(par, k){
+    par.forEach(function(c, j){ rotulo(c[0], xs[j], yy); var l = lineasDe(c[1], colW), hc = Math.max(6.4, l.length*lh + 3.4); caja(xs[j], yy+4.2, colW, hc, l); });
+    yy += hFilas[k];
+  });
+  y += hRecuadro + 5;
+
+  // Signos vitales (2 columnas)
+  if(y + 9 + 4.2 + 8 > BOTTOM) nuevaHoja();
+  cabecera('SIGNOS VITALES', false);
+  for(var k2 = 0; k2 < vitales.length; k2 += 2){
+    var par2 = [vitales[k2], vitales[k2+1]].filter(Boolean);
+    var hF = Math.max.apply(null, par2.map(function(c){ return Math.max(6.4, lineasDe(c[1], colW).length*lh + 3.4); })) + 4.2 + 1.6;
+    if(y + hF > BOTTOM){ nuevaHoja(); cabecera('SIGNOS VITALES', true); }
+    par2.forEach(function(c, j){ rotulo(c[0], xs[j]-1, y); var l = lineasDe(c[1], colW), hc = Math.max(6.4, l.length*lh + 3.4); caja(xs[j]-1, y+4.2, colW, hc, l); });
+    y += hF;
+  }
+  y += 2.2;
+
+  // Examen por aparatos y sistemas (puede seguir en otra hoja)
+  var wA = W - 2*M - 6;
+  if(y + 9 + 4.2 + 8 > BOTTOM) nuevaHoja();
+  cabecera('EXAMEN POR APARATOS Y SISTEMAS', false);
+  var cuerpo = lineasDe(ga('ex-sistemas'), wA); if(!cuerpo.length) cuerpo = [''];
+  var ii = 0;
+  while(ii < cuerpo.length){
+    var libre = BOTTOM - y, maxL = Math.max(1, Math.floor((libre - 3.4) / lh)), trozo = cuerpo.slice(ii, ii + maxL), ultimo = (ii + trozo.length >= cuerpo.length);
+    var h = Math.max(6.4 + (cuerpo.length === 1 && cuerpo[0] === '' ? 3.6 : 0), trozo.length*lh + 3.4);
+    caja(M+3, y, wA, h, trozo); y += h; ii += trozo.length;
+    if(!ultimo){ nuevaHoja(); cabecera('EXAMEN POR APARATOS Y SISTEMAS', true); }
+  }
+
+  var total = doc.getNumberOfPages();
+  for(var p2 = 1; p2 <= total; p2++){ doc.setPage(p2); pieDeHoja(p2, total); }
+  return { doc: doc, paginas: total };
+}
+// Botón «🖨️ Imprimir examen físico»: abre el PDF en una pestaña nueva (no imprime ni descarga nada solo).
+function imprimirExamenFisico(){
+  var r = _generarPDFExamenFisico();
+  if(!r) return;
+  var url = URL.createObjectURL(r.doc.output('blob'));
+  var ventana = null;
+  try{ ventana = window.open(url, '_blank'); }catch(eV){ ventana = null; }
+  if(!ventana){ _toastAviso('El navegador bloqueó la pestaña del PDF. Permití las ventanas emergentes de este sitio y volvé a tocar «Imprimir examen físico».', 9000); }
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+}
+// ── fin IMPRIMIR EXAMEN FÍSICO ──
+
 function imprimirResumenTab(){
   generarResumen();
   var doc = document.getElementById('hc-resumen-doc');
@@ -18486,6 +18629,12 @@ function _agCerrarEdicion(e){
     var actual = (id in e.campos) ? e.campos[id] : _agLeerLocal(r.p, id);
     registrarAuditoria(r.idx, _AG_CAMPOS[id].et, e.base[id], actual);
   });
+  // IMC (script 100): no es un campo del autoguardado (se calcula); si cambió el peso o la talla, el Historial anota «Examen físico — IMC» como antes.
+  if(('ex-peso' in e.base) || ('ex-talla' in e.base)){
+    var _vIMC = function(id){ return (id in e.campos) ? e.campos[id] : _agLeerLocal(r.p, id); };
+    var _aIMC = function(id){ return (id in e.base) ? e.base[id] : _vIMC(id); };
+    registrarAuditoria(r.idx, 'Examen físico — IMC', _agTextoIMC(_aIMC('ex-peso'), _aIMC('ex-talla')), _agTextoIMC(_vIMC('ex-peso'), _vIMC('ex-talla')));
+  }
   e.base = {};
 }
 // Opción B: cierra la sesión de edición de todos los pacientes con cambios (anota las líneas del Historial). Se llama al abrir el Historial, al cambiar de pestaña de la HC y al ocultar/cerrar/recargar la página.
