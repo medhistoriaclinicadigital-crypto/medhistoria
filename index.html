@@ -14026,9 +14026,12 @@ function _generarPDFExamenFisico(){
   var personales = [['APELLIDO Y NOMBRE', nombre], ['DNI', dni]];
   if(cuil) personales.push(['CUIL', _formatearCuil(cuil)]);
   personales = personales.concat([['EDAD', ga('hc-edad')], ['SEXO', ga('hc-sexo')], ['OBRA SOCIAL / PREPAGA', ga('hc-os')]]);
-  var conU = function(id, u2){ var v = ga(id); return v ? (u2 ? v + ' ' + u2 : v) : ''; };
-  var vitales = [['PESO', conU('ex-peso','kg')], ['TALLA', conU('ex-talla','cm')], ['TENSIÓN ARTERIAL', conU('ex-ta','mmHg')], ['FRECUENCIA CARDÍACA', conU('ex-fc','lpm')],
-                 ['FRECUENCIA RESPIRATORIA', conU('ex-fr','rpm')], ['TEMPERATURA', conU('ex-temp','°C')], ['SATURACIÓN O2', conU('ex-sat','%')], ['IMC', ga('ex-imc') ? ga('ex-imc') + ' kg/m2' : '']];
+  var conU = function(id, u2){ var v = ga(id); if(!v) return ''; return (u2 && !/[a-zA-Z°%]/.test(v)) ? v + ' ' + u2 : v; };
+  // Talla: igual que calcularIMC(): menor a 3 = metros (1.77 -> «1.77 m»); 3 o más = centímetros (177 -> «177 cm»). Si ya trae su unidad escrita, se respeta.
+  var tallaTxt = function(){ var v = ga('ex-talla'); if(!v) return ''; if(/[a-zA-Z]/.test(v)) return v; var n = parseFloat(v.replace(',', '.')); return v + (n > 0 && n < 3 ? ' m' : ' cm'); };
+  var imcTxt = function(){ var v = ga('ex-imc'); if(!v) return ''; var i = v.indexOf(' · '); return i < 0 ? v + ' kg/m2' : v.slice(0, i) + ' kg/m2' + v.slice(i); };
+  var vitales = [['PESO', conU('ex-peso','kg')], ['TALLA', tallaTxt()], ['TENSIÓN ARTERIAL', conU('ex-ta','mmHg')], ['FRECUENCIA CARDÍACA', conU('ex-fc','lpm')],
+                 ['FRECUENCIA RESPIRATORIA', conU('ex-fr','rpm')], ['TEMPERATURA', conU('ex-temp','°C')], ['SATURACIÓN O2', conU('ex-sat','%')], ['IMC', imcTxt()]];
 
   var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4', compress:true });
   var W = 210, M = 14, BOTTOM = 272, G = [20,90,50];
