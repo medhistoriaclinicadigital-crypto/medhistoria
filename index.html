@@ -14001,6 +14001,30 @@ function _agTextoIMC(peso, talla){
   else if(imc < 35) cat = ' · Obesidad G1'; else if(imc < 40) cat = ' · Obesidad G2'; else cat = ' · Obesidad G3';
   return imc + cat;
 }
+// ── COMA DECIMAL EN CAMPOS NUMÉRICOS (script 102) ──
+// En un navegador en inglés, un <input type="number"> descarta la coma («78,5» llega como 785). Esta función NUEVA, con dos escuchadores globales,
+// hace que teclear «,» escriba «.» y que pegar «78,5» pegue «78.5». Solo actúa en input[type=number]; no toca campos de texto ni textareas.
+function _comaComoPunto(){
+  if(window._comaComoPuntoOk) return; window._comaComoPuntoOk = true;
+  var esNum = function(t){ return !!(t && t.tagName === 'INPUT' && t.type === 'number' && !t.readOnly && !t.disabled); };
+  document.addEventListener('keydown', function(e){
+    try{
+      if(e.key !== ',' || e.ctrlKey || e.metaKey || e.altKey || !esNum(e.target)) return;
+      if(document.execCommand('insertText', false, '.')) e.preventDefault();
+    }catch(eC){ console.warn('[catch]', eC); }
+  }, true);
+  document.addEventListener('paste', function(e){
+    try{
+      if(!esNum(e.target) || !e.clipboardData) return;
+      var txt = String(e.clipboardData.getData('text') || '').trim();
+      if(txt.indexOf(',') < 0 || !/^[+-]?[0-9.,]+$/.test(txt)) return;
+      var n = (txt.indexOf('.') >= 0 && txt.lastIndexOf(',') > txt.lastIndexOf('.')) ? txt.replace(/\./g, '').replace(',', '.') : txt.replace(',', '.');
+      if(!/^[+-]?[0-9]*\.?[0-9]*$/.test(n)) return;
+      if(document.execCommand('insertText', false, n)) e.preventDefault();
+    }catch(eP){ console.warn('[catch]', eP); }
+  }, true);
+}
+_comaComoPunto();
 // PDF del examen físico: lo que está en pantalla (signos vitales y examen por aparatos y sistemas) con el encabezado de la médica y el recuadro del paciente. Mismo diseño que el PDF de la anamnesis.
 function _generarPDFExamenFisico(){
   var jsPDF = window.jspdf ? window.jspdf.jsPDF : (window.jsPDF || null);
