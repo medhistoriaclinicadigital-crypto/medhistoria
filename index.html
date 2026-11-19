@@ -13993,7 +13993,7 @@ function imprimirAnamnesis(){
 // ── IMPRIMIR EXAMEN FÍSICO (script 100) ──
 // Texto del IMC con el MISMO cálculo que calcularIMC() (para el Historial de cambios): '' si falta el peso o la talla.
 function _agTextoIMC(peso, talla){
-  var p = parseFloat(peso), t = parseFloat(talla);
+  var p = parseFloat(String(peso == null ? '' : peso).replace(',', '.')), t = parseFloat(String(talla == null ? '' : talla).replace(',', '.'));   // la coma vale como punto decimal, igual que calcularIMC()
   if(!(p > 0 && t > 0)) return '';
   var tm = t < 3 ? t : t / 100;
   var imc = (p / (tm * tm)).toFixed(1), cat = '';
@@ -20924,8 +20924,8 @@ function precargarDatosMedico(u){
 }
 
 function calcularIMC(){
-  var peso = parseFloat(document.getElementById('ex-peso').value);
-  var talla = parseFloat(document.getElementById('ex-talla').value);
+  var peso = parseFloat(String(document.getElementById('ex-peso').value).replace(',', '.'));   // la coma vale como punto decimal («78,5»)
+  var talla = parseFloat(String(document.getElementById('ex-talla').value).replace(',', '.'));   // «1,77» = 1.77 m
   var imcEl = document.getElementById('ex-imc');
   if(!imcEl) return;
   if(peso > 0 && talla > 0){
