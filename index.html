@@ -6864,39 +6864,10 @@ function switchAdminTab(btn, id){
     if(el) el.style.display = t===id?'block':'none';
   });
   if(id === 'at-mp') iniciarPagos2FA();
-  if(id === 'at-reportes'){ cargarReportesReales(); cargarCentrosPendientesPago(); cargarUsoDaily(); }
+  if(id === 'at-reportes'){ cargarReportesReales(); cargarCentrosPendientesPago(); }
   if(id === 'at-facturacion') cargarFacturacionEditable();
   if(id === 'at-firmas') cargarFirmasAdmin('');
   if(id === 'at-mensajes') cargarMensajesZoho();
-}
-
-// ── Uso de videollamadas Daily.co del mes (RPC solo-admin) ──
-// Cortes de color: verde <8.000 min (<80%) · amarillo 8.000–9.500 (80–95%) ·
-// rojo ≥9.500 (≥95%). Límite del plan gratis: 10.000 participant-minutes/mes.
-function cargarUsoDaily(){
-  var cont = document.getElementById('admin-uso-daily');
-  if(!cont) return;
-  cont.innerHTML = 'Cargando...';
-  sb.rpc('daily_uso_mes').then(function(r){
-    if(r.error){
-      cont.innerHTML = '<span style="color:#f87171;">No se pudo cargar (¿corriste el SQL de daily_uso?): '+escHtml(r.error.message)+'</span>';
-      return;
-    }
-    var d = (r.data && r.data[0]) || { minutos:0, limite:10000, porcentaje:0 };
-    var min = Number(d.minutos)||0, lim = Number(d.limite)||10000, pct = Number(d.porcentaje)||0;
-    var color, etiqueta;
-    if(min >= 9500){ color = '#f87171'; etiqueta = '🔴 CRÍTICO — pasá al plan pago de Daily YA (o cargá tarjeta para overage)'; }
-    else if(min >= 8000){ color = '#fbbf24'; etiqueta = '🟡 Cerca del límite — planificá el upgrade este mes'; }
-    else { color = '#6dde96'; etiqueta = '🟢 OK'; }
-    cont.innerHTML =
-      '<div style="font-size:1.6rem;font-weight:700;color:'+color+';">'+min.toLocaleString('es-AR')
-        +' <span style="font-size:.9rem;color:rgba(255,255,255,.4);">/ '+lim.toLocaleString('es-AR')+' min · '+pct+'%</span></div>'
-      +'<div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;margin:8px 0;overflow:hidden;">'
-        +'<div style="height:100%;width:'+Math.min(100,Math.max(0,pct))+'%;background:'+color+';border-radius:4px;"></div></div>'
-      +'<div style="font-size:.82rem;color:'+color+';font-weight:600;">'+etiqueta+'</div>';
-  }, function(err){
-    cont.innerHTML = '<span style="color:#f87171;">Error de conexión al cargar el uso.</span>';
-  });
 }
 
 // ── Centros médicos creados que todavía no pagaron (RPC solo-admin) ──
@@ -14179,85 +14150,13 @@ function imprimirResumenTab(){
 
 var videoconsultas = [];
 
-async function generarVideollamada(){
-  var pac = (document.getElementById('tele-paciente')||{}).value||'';
-  var fecha = (document.getElementById('tele-fecha')||{}).value||'';
-  var hora = (document.getElementById('tele-hora')||{}).value||'';
-  var tel = (document.getElementById('tele-tel')||{}).value||'';
-  var email = (document.getElementById('tele-email')||{}).value||'';
-  var motivo = (document.getElementById('tele-motivo')||{}).value||'Consulta médica';
-  var duracion = (document.getElementById('tele-duracion')||{}).value||'30 minutos';
-  if(!pac){ alert('Ingresá el nombre del paciente.'); return; }
-  if(!fecha){ alert('Seleccioná la fecha.'); return; }
-  if(!hora){ alert('Ingresá la hora.'); return; }
-  if(!tel && !email){ alert('Ingresá teléfono o email del paciente.'); return; }
-  if(!window._videoFichaLista){
-    _prepararFichaVideo(pac, tel, function(ok){ if(ok){ window._videoFichaLista = true; try{ generarVideollamada(); } finally { window._videoFichaLista = false; } } });
-    return;
-  }
-  if(!_confirmarVideoconsultaPasada(fecha, hora, fecha.split('-').reverse().join('/'))) return;
-
-  // Sala de videollamada en Daily.co (Edge Function daily-room). Sala pública
-  // con nombre imposible de adivinar; se autodestruye 24 h después del turno.
-  // El paciente entra con el link, sin cuenta ni app, sin "moderador".
-  var btnSala = document.querySelector('#btns-meet button.form-submit');
-  var _txtBtn = btnSala ? btnSala.innerHTML : '';
-  if(btnSala){ btnSala.disabled = true; btnSala.textContent = 'Creando sala…'; }
-  var rSala;
-  try{ rSala = await sb.functions.invoke('daily-room', { body: { fecha: fecha } }); }
-  catch(e){ rSala = { error: e }; }
-  if(btnSala){ btnSala.disabled = false; btnSala.innerHTML = _txtBtn; }
-  if(!rSala || rSala.error || !rSala.data || !rSala.data.url){
-    console.error('daily-room:', rSala && rSala.error);
-    alert('No se pudo crear la sala de videollamada. Probá de nuevo en unos segundos.\n\nSi el problema persiste, escribinos a consultas@medhistoriaclinicaonline.com.');
-    return;
-  }
-  var linkVideollamada = rSala.data.url;
-
-  var partes = fecha.split('-');
-  var fechaDisplay = partes[2]+'/'+partes[1]+'/'+partes[0];
-
-  var nuevaVC = {
-    pac:pac, fecha:fecha, fechaDisplay:fechaDisplay,
-    hora:hora, duracion:duracion, motivo:motivo, link:linkVideollamada, plataforma:'Daily', telefono:tel
-  };
-  videoconsultas.unshift(nuevaVC);
-  guardarVideoconsultaSupabase(nuevaVC);
-
-  var msg = 'Hola '+pac+', '+_medicoMensaje()+' le confirma su videoconsulta el '+fechaDisplay+' a las '+hora+' hs (duración: '+duracion+'). Para entrar use este enlace: '+linkVideollamada;
-
-  // Mostrar modal con link y opciones
-  var modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
-  modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px;max-width:440px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.4);">'
-    +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;font-weight:700;color:#042b10;margin-bottom:4px;">🎥 Videoconsulta lista</div>'
-    +'<div style="font-size:.78rem;color:#5a7362;margin-bottom:16px;">Sala creada para <strong>'+escHtml(pac)+'</strong> · '+escHtml(fechaDisplay)+' a las '+escHtml(hora)+' hs</div>'
-    +'<div style="background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:10px;padding:12px 14px;margin-bottom:16px;">'
-      +'<div style="font-size:.7rem;font-weight:700;color:#145a32;margin-bottom:4px;">LINK DE LA SALA</div>'
-      +'<div style="font-size:.82rem;color:#042b10;word-break:break-all;font-weight:600;">'+escHtml(linkVideollamada)+'</div>'
-    +'</div>'
-    +'<div style="display:flex;flex-direction:column;gap:8px;">'
-      +'<button onclick="_inactVideoconsulta();window.open(\''+escJs(linkVideollamada)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">🎥 Entrar a la videollamada ahora</button>'
-      +(tel?'<button onclick="window.open(\'https://api.whatsapp.com/send?phone='+_waNumero(tel)+'&text='+encodeURIComponent(msg)+'\',\'_blank\')" style="padding:12px;background:linear-gradient(135deg,#075e54,#25D366);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">📱 Enviar link al paciente por WhatsApp</button>':'')
-      +(email?'<button onclick="window.location.href=\'mailto:'+escJs(email)+'?subject='+encodeURIComponent('Videoconsulta · '+fechaDisplay)+'&body='+encodeURIComponent(msg.replace(/\*/g,'').replace(/_/g,''))+'\';" style="padding:12px;background:linear-gradient(135deg,#1a6aab,#0e4d8a);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;">✉️ Enviar link por Email</button>':'')
-      +'<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+escJs(linkVideollamada)+'\');this.textContent=\'✅ Copiado!\';" style="padding:12px;background:#f0fdf4;border:1.5px solid #b2f0cb;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;color:#145a32;">📋 Copiar link</button>'
-      +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:10px;background:none;border:1.5px solid #e5e7eb;border-radius:9px;font-size:.88rem;cursor:pointer;color:#6b7280;">Cerrar</button>'
-    +'</div>'
-    +'</div>';
-  document.body.appendChild(modal);
-  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
-
-  renderVideoconsultas();
-  ['tele-paciente','tele-motivo','tele-tel','tele-email'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
-}
-
 // ── TELEMEDICINA — PLATAFORMA SELECTOR ──
 var plataformaActual = 'whatsapp';
 
 function seleccionarPlataforma(plat){
   plataformaActual = plat;
-  var colores = {whatsapp:'#25D366', meet:'#1a73e8'};
-  ['whatsapp','meet'].forEach(function(p){
+  var colores = {whatsapp:'#25D366'};
+  ['whatsapp'].forEach(function(p){
     var btn = document.getElementById('btn-plat-'+p);
     if(btn){
       btn.style.borderColor = p===plat ? colores[p] : '#e0e0e0';
@@ -14270,13 +14169,13 @@ function seleccionarPlataforma(plat){
     if(btns) btns.style.display = p===plat ? 'flex' : 'none';
   });
   // Título
-  var titulos = {whatsapp:'📱 Nueva Videoconsulta por WhatsApp', meet:'🎥 Nueva Videollamada con link'};
+  var titulos = {whatsapp:'📱 Nueva Videoconsulta por WhatsApp'};
   var tituloEl = document.getElementById('tele-titulo');
   if(tituloEl) tituloEl.textContent = titulos[plat];
 }
 
 // ── VIDEOCONSULTA CON GOOGLE MEET (paso 1: el médico crea el link en Meet y lo pega) ──
-// Funciones NUEVAS y aditivas: no modifican seleccionarPlataforma, generarVideollamada (Daily) ni el resto de Telemedicina.
+// Funciones NUEVAS y aditivas: no modifican seleccionarPlataforma ni el resto de Telemedicina.
 // Valida que el link sea de meet.google.com (https, sin usuario ni puerto, un solo código tipo abc-defg-hij) y lo guarda limpio.
 function _gmeetLinkLimpio(txt){
   var t = String(txt || '').trim();
@@ -14302,7 +14201,7 @@ function _gmeetMostrar(vis){
 }
 function seleccionarPlataformaGMeet(){
   plataformaActual = 'gmeet';
-  ['whatsapp','meet'].forEach(function(p){
+  ['whatsapp'].forEach(function(p){
     var btn = document.getElementById('btn-plat-' + p);
     if(btn){ btn.style.borderColor = '#e0e0e0'; btn.style.background = '#f8f8f8'; btn.style.transform = 'scale(1)'; }
     var inst = document.getElementById('instruccion-' + p); if(inst) inst.style.display = 'none';
@@ -14312,10 +14211,10 @@ function seleccionarPlataformaGMeet(){
   var tituloEl = document.getElementById('tele-titulo');
   if(tituloEl) tituloEl.textContent = '🟩 Nueva Videoconsulta con Google Meet';
 }
-// Al elegir WhatsApp o «Videollamada con link» (sus botones no cambian), se esconde lo de Google Meet.
+// Al elegir WhatsApp (su botón no cambia), se esconde lo de Google Meet.
 document.addEventListener('click', function(e){
   try{
-    var b = e.target && e.target.closest ? e.target.closest('#btn-plat-whatsapp,#btn-plat-meet') : null;
+    var b = e.target && e.target.closest ? e.target.closest('#btn-plat-whatsapp') : null;
     if(b) _gmeetMostrar(false);
   }catch(eG){ console.warn('[catch]', eG); }
 });
@@ -20462,16 +20361,6 @@ window.addEventListener('beforeunload', guardarLocal);
         </div>
         <div style="color:rgba(255,220,140,.55);font-size:.78rem;margin-bottom:14px;">El centro ya está creado y capado a 35 pacientes. Verificá la transferencia en la cuenta y tocá "Confirmar pago" para activarle el plan completo.</div>
         <div id="admin-centros-pendientes" style="color:rgba(255,220,140,.5);font-size:.85rem;">Cargando...</div>
-      </div>
-
-      <!-- Uso de videollamadas (Daily.co) -->
-      <div style="background:#0a1a0f;border:1px solid rgba(52,196,100,.2);border-radius:14px;padding:20px;margin-bottom:20px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
-          <div style="color:#fff;font-weight:700;">🎥 Videollamadas — uso del mes</div>
-          <button onclick="cargarUsoDaily()" style="background:rgba(255,255,255,.08);border:1px solid rgba(109,222,150,.2);color:rgba(109,222,150,.8);padding:6px 14px;border-radius:8px;font-size:.78rem;cursor:pointer;font-family:'Outfit',sans-serif;">🔄 Actualizar</button>
-        </div>
-        <div style="color:rgba(109,222,150,.5);font-size:.78rem;margin-bottom:12px;">Minutos de participante consumidos en Daily.co este mes. Límite del plan gratis: 10.000/mes. Pasá al plan pago antes de llegar.</div>
-        <div id="admin-uso-daily" style="color:rgba(109,222,150,.5);font-size:.85rem;">Cargando...</div>
       </div>
 
       <!-- Suscripciones de hoy -->
