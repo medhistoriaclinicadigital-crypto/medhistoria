@@ -5773,6 +5773,7 @@ function guardarPerfil(){
     sb.from('usuarios').update(cambios).eq('id', usuarioActual.id).then(function(r){
       if(r.error){
         console.error('Error guardando perfil:', r.error);
+        if(_esErrorProfesionalDuplicado(r.error)){ try{ var antDup = _matriculaParaGuardar(matAntes.mn, matAntes.mp); usuarioActual.mn = matAntes.mn; usuarioActual.mp = matAntes.mp; usuarioActual.matricula = antDup.matricula; usuarioActual.matricula_mp = antDup.matricula_mp; }catch(eRev){ console.warn('[catch]', eRev); } _avisoProfesionalDuplicado(r.error); return; }
         alert('⚠️ No se pudo guardar el perfil en el servidor. Probá de nuevo en un momento.');
       }
     });
@@ -7900,6 +7901,7 @@ function procesarRegistroCentro(){
       especialidad: especialidad, matricula: matriculaTxt,
       telefono: tel, dni: dni, rol: 'medico', pais: 'ar', sexo: sexo
     }]).select('id').then(function(r2){
+      if(r2.error && _esErrorProfesionalDuplicado(r2.error)){ rehabilitar(); usuarioActual = null; try{ sb.auth.signOut({ scope:'local' }); }catch(eDup){ console.warn('[catch]', eDup); } _avisoProfesionalDuplicado(r2.error); return; }
       if(r2.error) console.error('Registro de centro: error guardando usuario:', r2.error);
       if(r2.data && r2.data[0] && r2.data[0].id) usuarioActual.id = r2.data[0].id;
       registrarAceptacionLegal();
@@ -18268,6 +18270,14 @@ function _tarjetaAviso(o){
   ov.appendChild(card); document.body.appendChild(ov);
   try{ primero.focus(); }catch(e){ console.warn('[catch]', e); }
 }
+// Etapa 1 de Centros Médicos: matrícula y DNI no repetidos entre cuentas individuales. Si el servidor responde que ya existe una, se avisa en una tarjeta de la app.
+function _esErrorProfesionalDuplicado(err){ return !!(err && /cuenta individual con (esa matr[ií]cula|ese DNI)/i.test(String(err.message || ''))); }
+function _avisoProfesionalDuplicado(err){
+  var porDni = /ese DNI/i.test(String((err && err.message) || ''));
+  _tarjetaAviso({ icono: '🪪', titulo: 'Ya existe una cuenta con ' + (porDni ? 'ese DNI' : 'esa matrícula'), parrafos: [
+    'Hay una cuenta individual registrada con ' + (porDni ? 'ese DNI' : 'esa matrícula') + '. Si es tuya, ingresá con tu mail y tu contraseña. Si fue un error al escribir el dato, corregilo e intentá de nuevo.',
+    'Si necesitás ayuda, escribinos a consultas@medhistoriaclinicaonline.com.' ] });
+}
 function guardarDesdeHC(){
   var ga = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
   var nombre = ga('hc-paciente');
@@ -21254,6 +21264,7 @@ function mlRegistrar(){
       especialidad: esp, matricula: matReg.matricula, matricula_mp: matReg.matricula_mp,
      telefono: tel, dni: dni, cuil_cuit: (cuil || null), rol: 'medico', pais: pais, sexo: sexo
     }]).select().then(function(r2){
+      if(r2.error && _esErrorProfesionalDuplicado(r2.error)){ usuarioActual = null; try{ sb.auth.signOut({ scope:'local' }); }catch(eDup){ console.warn('[catch]', eDup); } _avisoProfesionalDuplicado(r2.error); return; }
       if(r2.error) console.error('Error guardando en Supabase:', r2.error);
       registrarAceptacionLegal();
 
