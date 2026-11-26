@@ -12516,7 +12516,12 @@ function cargarEstudiosPaciente(){
           cat: e.categoria || '',
           desc: e.descripcion || '',
           fecha: e.created_at ? new Date(e.created_at).toLocaleDateString('es-AR') : '',
-          path: e.url_archivo || ''
+          path: e.url_archivo || '',
+          subidoPor: e.subido_por || null,
+          subidoPorNombre: e.subido_por_nombre || '',
+          anuladoEn: e.anulado_en || null,
+          anuladoPorNombre: e.anulado_por_nombre || '',
+          anuladoMotivo: e.anulado_motivo || ''
         };
       });
       renderEstudios();
@@ -12735,7 +12740,7 @@ function renderEstudios(){
     lista.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;font-size:.85rem;">No hay estudios adjuntos aún.</div>';
     return;
   }
-  lista.innerHTML = '<div style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;margin-bottom:10px;">'+estudiosAdjuntos.length+' archivo(s) adjunto(s)</div>'
+  lista.innerHTML = '<div style="font-size:.72rem;font-weight:700;color:var(--g3);text-transform:uppercase;margin-bottom:10px;">'+_textoCantidadEstudios()+'</div>'
     + estudiosAdjuntos.map(function(e){
       var esImagen = e.tipo.includes('image');
       var esPDF = e.tipo.includes('pdf');
@@ -12745,59 +12750,69 @@ function renderEstudios(){
       return '<div style="background:var(--g9);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">'
         +miniatura
         +'<div style="flex:1;min-width:0;">'
-          +'<div style="font-weight:600;color:var(--g2);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(e.nombre)+'</div>'
+          +'<div style="font-weight:600;color:var(--g2);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+(e.anuladoEn?'text-decoration:line-through;opacity:.7;':'')+'">'+escHtml(e.nombre)+'</div>'
           +'<div style="font-size:.75rem;color:var(--muted);">'+escHtml(e.cat)+' · '+escHtml(e.fecha)+'</div>'
+          +_lineaAutorEstudio(e)
           +(e.desc?'<div style="font-size:.78rem;color:var(--g3);margin-top:2px;">'+escHtml(e.desc)+'</div>':'')
         +'</div>'
         +'<div style="display:flex;gap:6px;flex-shrink:0;">'
           +'<button onclick="verImagenEstudio('+e.id+')" style="background:var(--g4);color:#fff;padding:5px 12px;border-radius:6px;font-size:.75rem;font-weight:600;border:none;cursor:pointer;">👁️ Ver</button>'
           +'<button onclick="descargarEstudio('+e.id+')" style="background:var(--g3);color:#fff;padding:5px 10px;border-radius:6px;font-size:.75rem;font-weight:600;border:none;cursor:pointer;">⬇️</button>'
-          +'<button onclick="eliminarEstudio('+e.id+')" style="background:none;border:1px solid #ddd;color:#aaa;padding:5px 9px;border-radius:6px;font-size:.8rem;cursor:pointer;">✕</button>'
+          +(e.anuladoEn ? '' : '<button onclick="eliminarEstudio('+e.id+')" title="Anular estudio" style="background:none;border:1px solid #ddd;color:#aaa;padding:5px 9px;border-radius:6px;font-size:.8rem;cursor:pointer;">✕</button>')
         +'</div>'
         +'</div>';
     }).join('');
 }
 
+// ETAPA 2 de Centros Médicos (propuesta de textos, NO definitivos hasta que la Dra. los apruebe): el botón ✕ ya no borra, ANULA. El estudio y su archivo se conservan, marcados con quién lo anuló, cuándo y el motivo (obligatorio).
+// Solo puede anular quien lo subió; lo decide el servidor y el mensaje que devuelve se muestra tal cual.
+function _textoCantidadEstudios(){
+  var an = estudiosAdjuntos.filter(function(e){ return e.anuladoEn; }).length, vig = estudiosAdjuntos.length - an;
+  return vig+' archivo(s) adjunto(s)' + (an ? ' · '+an+' anulado(s)' : '');
+}
+function _lineaAutorEstudio(e){
+  var h = '<div style="font-size:.72rem;color:var(--muted);margin-top:2px;">' + (e.subidoPorNombre ? 'Subido por '+escHtml(e.subidoPorNombre)+' el '+escHtml(e.fecha) : 'Subido el '+escHtml(e.fecha)+' (sin dato de quién lo subió: anterior al registro)') + '</div>';
+  if(e.anuladoEn){
+    var f = ''; try{ f = new Date(e.anuladoEn).toLocaleString('es-AR'); }catch(x){ console.warn('[catch]', x); }
+    h += '<div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:4px 8px;margin-top:4px;">🚫 <strong>ANULADO</strong> el '+escHtml(f)+(e.anuladoPorNombre?' por '+escHtml(e.anuladoPorNombre):'')+'. Motivo: '+escHtml(e.anuladoMotivo||'(sin motivo)')+'</div>';
+  }
+  return h;
+}
+function _mensajeErrorFuncion(r, cb){
+  var generico = 'Error desconocido';
+  if(r && r.data && r.data.error){ cb(r.data.error); return; }
+  if(r && r.error && r.error.context && typeof r.error.context.json === 'function'){ r.error.context.json().then(function(j){ cb((j && j.error) || (r.error && r.error.message) || generico); }, function(){ cb((r.error && r.error.message) || generico); }); return; }
+  cb((r && r.error && r.error.message) || generico);
+}
 function eliminarEstudio(id, _c){
   var estudio = estudiosAdjuntos.find(function(e){ return e.id === id; });
+  if(!estudio || estudio.anuladoEn) return;
+  _mhPedir('Anular "'+estudio.nombre+'". Escribí el motivo (obligatorio), por ejemplo: era de otro paciente.', '', function(m){
+    if(m === null) return;
+    m = String(m).trim();
+    if(m.length < 3){ alert('Escribí el motivo para anular el estudio.'); return; }
+    _mhConfirmar('¿Anular "'+estudio.nombre+'"? Queda guardado y marcado como anulado, con tu nombre, la fecha y el motivo. No se borra. Esta acción no se puede deshacer.', function(ok){ if(ok) _anularEstudioConMotivo(id, m); });
+  });
+}
+function _anularEstudioConMotivo(id, motivo){
+  var estudio = estudiosAdjuntos.find(function(e){ return e.id === id; });
   if(!estudio) return;
-  if(_c !== _MH_OK){ _mhConfirmar('¿Eliminar "'+estudio.nombre+'"? Esta acción no se puede deshacer.', function(ok){ if(ok) eliminarEstudio(id, _MH_OK); }); return; }
-
-  var pAud = (pacienteHCActualIdx>=0 && pacientes[pacienteHCActualIdx]) ? pacientes[pacienteHCActualIdx] : null, nombreAud = estudio.nombre, pacIdAud = _pacienteIdEstudiosActual;   // para el Historial (script 99)
-
-  // Pacientes de un Centro Médico: el borrado pasa por la Edge Function
-  // estudio-gestion-centro (mismo motivo que la subida — ver hallazgo C).
+  var pAud = (pacienteHCActualIdx>=0 && pacientes[pacienteHCActualIdx]) ? pacientes[pacienteHCActualIdx] : null, nombreAud = estudio.nombre, pacIdAud = _pacienteIdEstudiosActual;   // para el Historial
+  var hecho = function(){ _audEstudio(pAud, 'anulado', nombreAud, pacIdAud, motivo); cargarEstudiosPaciente(); };
+  var falla = function(msg){ alert('No se pudo anular: '+msg); };
+  // Pacientes de un Centro Médico: pasa por la función de servidor estudio-gestion-centro, que valida el aparato y llama a la función de base.
   if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
-    sb.functions.invoke('estudio-gestion-centro', {
-      body: { accion:'borrar', device_token: _deviceToken(), estudio_id: id }
-    }).then(function(r){
-      if(r.error || !r.data || !r.data.ok){
-        var msg = (r.data && r.data.error) || (r.error && r.error.message) || 'Error desconocido';
-        alert('No se pudo eliminar: '+msg);
-        return;
-      }
-      _audEstudio(pAud, 'eliminado', nombreAud, pacIdAud);   // Historial (script 99)
-      estudiosAdjuntos = estudiosAdjuntos.filter(function(e){ return e.id !== id; });
-      renderEstudios();
+    sb.functions.invoke('estudio-gestion-centro', { body: { accion:'anular', device_token: _deviceToken(), estudio_id: id, motivo: motivo } }).then(function(r){
+      if(r.error || !r.data || !r.data.ok){ _mensajeErrorFuncion(r, falla); return; }
+      hecho();
     });
     return;
   }
-
-  sb.storage.from(ESTUDIOS_BUCKET).remove([estudio.path]).then(function(){
-    sb.from('estudios').delete().eq('id', id).then(function(r){
-      if(r.error){ alert('No se pudo eliminar el registro: '+r.error.message); return; }
-      _audEstudio(pAud, 'eliminado', nombreAud, pacIdAud);   // Historial (script 99)
-      estudiosAdjuntos = estudiosAdjuntos.filter(function(e){ return e.id !== id; });
-      renderEstudios();
-    });
+  sb.rpc('anular_estudio', { p_estudio_id: id, p_motivo: motivo }).then(function(r){
+    if(r.error){ falla(r.error.message || 'Error desconocido'); return; }
+    hecho();
   });
 }
-
-// ══ GUARDAR EXAMEN FÍSICO EN PACIENTE ══
-// ══ Buscar el ID de un paciente en Supabase, sea propio o de un Centro Médico compartido ══
-// Antes, el guardado de Antecedentes/Examen físico/Diagnóstico solo buscaba por medico_id del
-// médico logueado — si el paciente lo había creado OTRO médico del mismo centro, no lo encontraba
-// y el guardado se perdía en silencio. Esta función revisa ambos casos.
 function buscarPacienteIdCompartido(dni, callback){
   if(!dni || !usuarioActual || !usuarioActual.id){ callback(null); return; }
   sb.from('pacientes').select('id').eq('medico_id', usuarioActual.id).eq('dni', dni).then(function(rPac){
@@ -13101,7 +13116,7 @@ function _audDescribir(x){
   var doc = _audDocNombre(x.campo), nuevo = ('' + (x.nuevo || '')).trim();
   if(doc) return { nombre: doc, corto: nuevo, completo: nuevo, antes: null };
   if(x.campo === 'Evolución') return { nombre: 'Evolución', corto: nuevo, completo: nuevo, antes: null };   // evoluciones: sin «Antes: vacío» (se anotan una sola vez, ya definitivas)
-  if(x.campo === 'Estudio adjuntado' || x.campo === 'Estudio eliminado') return { nombre: x.campo, corto: nuevo, completo: nuevo, antes: null };   // estudios (script 99): nombre del archivo, sin «Antes: vacío»
+  if(x.campo === 'Estudio adjuntado' || x.campo === 'Estudio eliminado' || x.campo === 'Estudio anulado') return { nombre: x.campo, corto: nuevo, completo: nuevo, antes: null };   // estudios (script 99): nombre del archivo, sin «Antes: vacío»
   return { nombre: _audNombreCampo(x.campo), corto: nuevo, completo: nuevo, antes: ('' + (x.anterior || '')).trim() };
 }
 // Cola de líneas del Historial sin confirmar (sessionStorage: sobrevive a recargar la pestaña; «Cerrar sesión» la borra)
@@ -13235,11 +13250,12 @@ function renderAuditoriaHC(){
 }
 // ESTUDIOS en el Historial (script 99): una línea cuando se ADJUNTA o se ELIMINA un archivo del paciente (nombre del archivo, fecha y hora, médico). Se llama SOLO después de que el servidor confirmó; misma vía que la evolución:
 // línea local + cola que sobrevive a recargar (`_audColaEscribir`) + envío a `auditoria_hc` (`_audEnviarFila`). `p` es la ficha a la que pertenece el archivo (tomada al tocar, no al terminar); `pacienteId`, el id del servidor.
-function _audEstudio(p, accion, nombre, pacienteId){
+function _audEstudio(p, accion, nombre, pacienteId, motivo){
   try{
     nombre = ('' + (nombre == null ? '' : nombre)).trim();
     if(!p || !nombre) return;
-    var campo = accion === 'eliminado' ? 'Estudio eliminado' : 'Estudio adjuntado';
+    var campo = accion === 'anulado' ? 'Estudio anulado' : (accion === 'eliminado' ? 'Estudio eliminado' : 'Estudio adjuntado');
+    if(accion === 'anulado' && motivo){ nombre += ' — motivo: ' + ('' + motivo).trim(); }
     var ahora = new Date();
     var dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
     var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
