@@ -12773,7 +12773,7 @@ function _textoCantidadEstudios(){
 function _lineaAutorEstudio(e){
   var h = '<div style="font-size:.72rem;color:var(--muted);margin-top:2px;">' + (e.subidoPorNombre ? 'Subido por '+escHtml(e.subidoPorNombre)+' el '+escHtml(e.fecha) : 'Subido el '+escHtml(e.fecha)+' (sin dato de quién lo subió: anterior al registro)') + '</div>';
   if(e.anuladoEn){
-    var f = ''; try{ f = new Date(e.anuladoEn).toLocaleString('es-AR'); }catch(x){ console.warn('[catch]', x); }
+    var f = ''; try{ f = new Date(e.anuladoEn).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hourCycle: 'h23' }); }catch(x){ console.warn('[catch]', x); }
     h += '<div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:4px 8px;margin-top:4px;">🚫 <strong>ANULADO</strong> el '+escHtml(f)+(e.anuladoPorNombre?' por '+escHtml(e.anuladoPorNombre):'')+'. Motivo: '+escHtml(e.anuladoMotivo||'(sin motivo)')+'</div>';
   }
   return h;
