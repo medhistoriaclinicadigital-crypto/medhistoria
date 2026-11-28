@@ -938,7 +938,20 @@ document.addEventListener('DOMContentLoaded', function(){
     Object.keys(localStorage).forEach(function(k){ if(/^sb-.*-auth-token/.test(k)) localStorage.removeItem(k); });
   }catch(eLu){ console.warn('[catch]', eLu); }
   // SESIÓN POR PESTAÑA: el token vive en sessionStorage (recargar la misma pestaña lo conserva; pestaña nueva o navegador reabierto, no).
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storage: window.sessionStorage } });
+  // Etapa 3 de Centros Médicos: todos los pedidos a /rest/v1/ (tablas y funciones de base) llevan el código de ESTE aparato en «x-device-token»; el servidor lo usa para
+  // saber si la computadora está aprobada por el centro. NO se manda a /functions/v1/ (las funciones de servidor no lo admiten), ni a /auth/v1/ ni a /storage/v1/.
+  function _fetchConAparato(url, opciones){
+    try{
+      var dir = (typeof url === 'string') ? url : ((url && url.url) ? url.url : String(url || ''));
+      if(dir.indexOf('/rest/v1/') !== -1 && typeof _deviceToken === 'function'){
+        var enc = new Headers((opciones && opciones.headers) || ((url && typeof url !== 'string' && url.headers) ? url.headers : {}));
+        enc.set('x-device-token', _deviceToken());
+        opciones = Object.assign({}, opciones || {}, { headers: enc });
+      }
+    }catch(eFa){ console.warn('[catch]', eFa); }
+    return fetch(url, opciones);
+  }
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storage: window.sessionStorage }, global: { fetch: _fetchConAparato } });
   // Subir a mano cada vez que cambie el texto de Términos/Privacidad/Cookies
   // (ver registrarAceptacionLegal) — queda guardado junto a cada consentimiento.
   const TERMINOS_VERSION = "2026-10-14";
@@ -8581,6 +8594,20 @@ function _queryCentroOProp(tablaDirecta, rpcCentro){
   }
   return sb.from(tablaDirecta).select('*');
 }
+// Etapa 3 de Centros Médicos: lo de UN paciente del centro se lee solo por las funciones del servidor «por paciente» (obtener_*_paciente_centro: exigen aparato
+// aprobado del centro y anotan la apertura en accesos_hc). Si no hay centro, la lectura es EXACTAMENTE la de siempre (tabla directa).
+function _enCentroEtapa3(){ return !!(typeof miCentro !== 'undefined' && miCentro && miCentro.id); }
+function _rpcPacienteCentro(rpcPaciente, pacienteId){ return sb.rpc(rpcPaciente, {p_device_token: _deviceToken(), p_paciente_id: pacienteId}); }
+// Reemplaza a _queryCentroOProp(tabla, rpc).eq('paciente_id', id): en un centro, la función por paciente; sin centro, la tabla con select('*') y el mismo filtro.
+function _queryPacienteCentroOProp(tablaDirecta, rpcPaciente, pacienteId){
+  if(_enCentroEtapa3()) return _rpcPacienteCentro(rpcPaciente, pacienteId).eq('paciente_id', pacienteId);
+  return sb.from(tablaDirecta).select('*').eq('paciente_id', pacienteId);
+}
+// Reemplaza a sb.from(tabla).select(columnas): en un centro, la función por paciente con las mismas columnas (lo que sigue en la cadena —.eq/.order/.limit— no cambia).
+function _selectPacienteCentroOTabla(tabla, rpcPaciente, pacienteId, columnas){
+  if(_enCentroEtapa3()) return _rpcPacienteCentro(rpcPaciente, pacienteId).select(columnas);
+  return sb.from(tabla).select(columnas);
+}
 
 function renderDispositivosCentro(){
   var cont = document.getElementById('centro-dispositivos-lista');
@@ -12506,7 +12533,7 @@ function cargarEstudiosPaciente(){
   renderEstudios();
   _resolverPacienteIdEstudios(function(pacienteId){
     if(!pacienteId) return;
-    _queryCentroOProp('estudios','obtener_estudios_centro').eq('paciente_id', pacienteId).order('created_at', {ascending:false}).then(function(r){
+    _queryPacienteCentroOProp('estudios','obtener_estudios_paciente_centro', pacienteId).order('created_at', {ascending:false}).then(function(r){
       if(r.error){ console.error('Error cargando estudios:', r.error); return; }
       estudiosAdjuntos = (r.data||[]).map(function(e){
         return {
@@ -13031,7 +13058,7 @@ function guardarExamenFisico(){
               saturacion_o2: examen.sat||null,
               examen_aparatos_sistemas: examen.sistemas||''
             };
-            _queryCentroOProp('historias_clinicas','obtener_historias_centro').eq('paciente_id', pacienteId).then(function(rHC){
+            _queryPacienteCentroOProp('historias_clinicas','obtener_historia_paciente_centro', pacienteId).then(function(rHC){
               if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
                 sb.rpc('guardar_historia_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB}).then(function(r){ if(r.error) console.error('Error guardando examen fisico de centro:', r.error); _guardadoServidor('examen:'+_nomF, 'el examen físico de ' + (_nomF || 'un paciente'), r.error); });
               } else if(rHC.data && rHC.data.length>0){
@@ -13133,7 +13160,7 @@ function _audColaVaciar(){
   var l = _audColaLeer();
   if(!l.length || !usuarioActual || !usuarioActual.id) return;
   l.forEach(function(fila){
-    sb.from('auditoria_hc').select('fecha').eq('paciente_id', fila.paciente_id).eq('campo', fila.campo).eq('valor_nuevo', fila.valor_nuevo).order('fecha', { ascending: false }).limit(1).then(function(r){
+    _selectPacienteCentroOTabla('auditoria_hc', 'obtener_auditoria_paciente_centro', fila.paciente_id, 'fecha').eq('paciente_id', fila.paciente_id).eq('campo', fila.campo).eq('valor_nuevo', fila.valor_nuevo).order('fecha', { ascending: false }).limit(1).then(function(r){
       if(r.error) return;
       var yaEsta = !!(r.data && r.data.length && Date.parse(r.data[0].fecha) >= fila.t - 120000);
       if(yaEsta) _audColaQuitar(fila.id); else _audEnviarFila(fila);
@@ -13148,7 +13175,7 @@ function _audIdServidor(p, cb){
 function _audLeerServidor(p, cb){   // cb(filas del servidor | null si no se pudo)
   _audIdServidor(p, function(pacienteId){
     if(!pacienteId){ cb(null); return; }
-    sb.from('auditoria_hc').select('campo,valor_anterior,valor_nuevo,fecha,medico_id').eq('paciente_id', pacienteId).order('fecha', { ascending: false }).limit(_AUD_MAX).then(function(r){
+    _selectPacienteCentroOTabla('auditoria_hc', 'obtener_auditoria_paciente_centro', pacienteId, 'campo,valor_anterior,valor_nuevo,fecha,medico_id').eq('paciente_id', pacienteId).order('fecha', { ascending: false }).limit(_AUD_MAX).then(function(r){
       if(r.error || !r.data){ if(r.error) console.warn('No se pudo leer el historial de cambios:', r.error); cb(null); return; }
       cb(r.data);
     }, function(x){ console.warn('No se pudo leer el historial de cambios:', x); cb(null); });
@@ -13299,7 +13326,7 @@ function guardarDiagnostico(){
               paciente_id: pacienteId,
               diagnostico: (diagnostico.principal||'') + (diagnostico.secundarios? (' / '+diagnostico.secundarios) : '')
             };
-            _queryCentroOProp('historias_clinicas','obtener_historias_centro').eq('paciente_id', pacienteId).then(function(rHC){
+            _queryPacienteCentroOProp('historias_clinicas','obtener_historia_paciente_centro', pacienteId).then(function(rHC){
               if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
                 sb.rpc('guardar_historia_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB}).then(function(r){ if(r.error) console.error('Error guardando diagnostico de centro:', r.error); _guardadoServidor('dx:'+_nomF, 'el diagnóstico de ' + (_nomF || 'un paciente'), r.error); });
               } else if(rHC.data && rHC.data.length>0){
@@ -15035,7 +15062,7 @@ function renderHistorial(){
     var idsPac = [];
     lista.forEach(function(f){ if(f.paciente_id && idsPac.indexOf(f.paciente_id)===-1) idsPac.push(f.paciente_id); });
     if(idsPac.length===0){ pintarHistorial(lista, {}); return; }
-    sb.from('pacientes').select('id,nombre,apellido').in('id', idsPac).then(function(rPac){
+    (_enCentroEtapa3() ? sb.rpc('obtener_pacientes_centro', { p_device_token: _deviceToken() }).select('id,nombre,apellido') : sb.from('pacientes').select('id,nombre,apellido')).in('id', idsPac).then(function(rPac){   // Etapa 3: en un centro, por la función del centro
       var mapa = {};
       (rPac.data||[]).forEach(function(p){ mapa[p.id] = (p.apellido?p.apellido+', ':'')+(p.nombre||''); });
       pintarHistorial(lista, mapa);
@@ -17942,7 +17969,12 @@ function cargarBackupsAutomaticos(){
   cont.innerHTML = '<div style="font-size:.8rem;color:#5a7362;">Cargando...</div>';
   var q;
   if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
-    q = sb.from('backups_automaticos').select('fecha,contenido').eq('entidad_tipo','centro').eq('entidad_id', miCentro.id);
+    // Etapa 3: la copia del centro la baja SOLO el dueño, por la función del servidor (exige aparato aprobado y queda registrada). A los demás médicos del centro, aviso.
+    if(!esDuenioDeCentro()){
+      cont.innerHTML = '<div id="backups-centro-solo-dueno" style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:12px 14px;font-size:.85rem;color:#3730a3;line-height:1.5;">ℹ️ La copia de seguridad del centro la baja el dueño del centro.</div>';
+      return;
+    }
+    q = sb.rpc('obtener_copias_centro', {p_device_token: _deviceToken()}).select('fecha, contenido');
   } else if(usuarioActual && usuarioActual.id){
     q = sb.from('backups_automaticos').select('fecha,contenido').eq('entidad_tipo','medico').eq('entidad_id', usuarioActual.id);
   } else {
@@ -18294,6 +18326,14 @@ function _avisoProfesionalDuplicado(err){
     'Hay una cuenta individual registrada con ' + (porDni ? 'ese DNI' : 'esa matrícula') + '. Si es tuya, ingresá con tu mail y tu contraseña. Si fue un error al escribir el dato, corregilo e intentá de nuevo.',
     'Si necesitás ayuda, escribinos a consultas@medhistoriaclinicaonline.com.' ] });
 }
+// Etapa 3 de Centros Médicos (textos PROPUESTOS): avisos del ingreso. La tarjeta se pone por encima de la ventana de ingreso (que está más arriba que las tarjetas comunes).
+function _tarjetaAvisoArriba(o){ _tarjetaAviso(o); try{ var ov = document.getElementById('tarjeta-aviso-overlay'); if(ov) ov.style.zIndex = '1000000'; }catch(e){ console.warn('[catch]', e); } }
+function _avisoCentroSoloComputadoras(){
+  _tarjetaAvisoArriba({ icono: '💻', titulo: 'Solo desde computadoras del centro', parrafos: [ 'Este centro médico solo se usa desde las computadoras aprobadas del centro. Entrá desde una computadora del centro.' ] });
+}
+function _avisoDuenoSinAprobar(){
+  _tarjetaAvisoArriba({ icono: '🔒', titulo: 'Computadora sin aprobar', parrafos: [ 'Esta computadora todavía no está aprobada como aparato del centro. Para ver las historias clínicas, aprobala en Mi Centro Médico → Dispositivos autorizados.' ] });
+}
 function guardarDesdeHC(){
   var ga = function(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; };
   var nombre = ga('hc-paciente');
@@ -18439,7 +18479,7 @@ function guardarDesdeHC(){
             medicacion_habitual: medicacion||'',
             alergias: alergias||''
           };
-          _queryCentroOProp('historias_clinicas','obtener_historias_centro').eq('paciente_id', pacienteId).then(function(rHC){
+          _queryPacienteCentroOProp('historias_clinicas','obtener_historia_paciente_centro', pacienteId).then(function(rHC){
             if(typeof miCentro !== 'undefined' && miCentro && miCentro.id){
               sb.rpc('guardar_historia_centro', {p_device_token: _deviceToken(), p_paciente_id: pacienteId, p_campos: hcSB}).then(function(r){ if(r.error) console.error('Error guardando HC de centro:', r.error); _guardadoServidor('hc:'+_nomF, 'la anamnesis de ' + (_nomF || 'un paciente'), r.error); _hcConfirmada(r.error); });
             } else if(rHC.data && rHC.data.length>0){
@@ -19001,7 +19041,7 @@ function _borCargar(){
   var p = ab.p, e = _agEntrada(p, true);
   _agIdServidor(e, p, function(pid){
     if(!pid) return;
-    sb.from('evoluciones_borrador').select('motivo_consulta,evolucion,indicaciones_plan,proxima_consulta,actualizado_en').eq('paciente_id', pid).eq('medico_id', usuarioActual.id).limit(1).then(function(r){
+    _selectPacienteCentroOTabla('evoluciones_borrador', 'obtener_borradores_paciente_centro', pid, 'motivo_consulta,evolucion,indicaciones_plan,proxima_consulta,actualizado_en').eq('paciente_id', pid).eq('medico_id', usuarioActual.id).limit(1).then(function(r){
       if(r.error){ console.warn('Borrador: no se pudo leer', r.error); return; }
       if(!r.data || !r.data.length){ e.borrExiste = false; _agRender(); return; }
       var fila = r.data[0];
@@ -19150,7 +19190,7 @@ function _evolConfirmada(item, estado){
   // si esta evolución ya estaba en el servidor (otra pestaña, o un intento anterior cuya respuesta se perdió), la línea del Historial puede estar ya: se consulta antes de anotarla
   if(estado === 'ya-existia' && !item.auditada){
     var txt = _evolTextoHistorial(item);
-    sb.from('auditoria_hc').select('fecha').eq('paciente_id', item.pacienteId).eq('campo', 'Evolución').eq('valor_nuevo', txt).limit(1).then(function(r){
+    _selectPacienteCentroOTabla('auditoria_hc', 'obtener_auditoria_paciente_centro', item.pacienteId, 'fecha').eq('paciente_id', item.pacienteId).eq('campo', 'Evolución').eq('valor_nuevo', txt).limit(1).then(function(r){
       if(!r.error && r.data && r.data.length){ item.auditada = true; _evolColaGuardar(item); }
       _evolConfirmada2(item, estado, p);
     }, function(){ _evolConfirmada2(item, estado, p); });
@@ -19160,7 +19200,7 @@ function _evolConfirmada(item, estado){
 }
 function _evolConfirmada2(item, estado, p){
   if(!item.evolId){   // sin el id del servidor (por ejemplo, la respuesta se perdió): se consulta, para que la lista local no quede repetida cuando se vuelva a leer el servidor
-    sb.from('evoluciones').select('id').eq('paciente_id', item.pacienteId).eq('medico_id', item.medicoId).eq('fecha_evolucion', item.ts).limit(1).then(function(r){
+    _selectPacienteCentroOTabla('evoluciones', 'obtener_evoluciones_paciente_centro', item.pacienteId, 'id').eq('paciente_id', item.pacienteId).eq('medico_id', item.medicoId).eq('fecha_evolucion', item.ts).limit(1).then(function(r){
       if(!r.error && r.data && r.data[0] && r.data[0].id){ item.evolId = r.data[0].id; _evolColaGuardar(item); }
       _evolConfirmada3(item, estado, p);
     }, function(){ _evolConfirmada3(item, estado, p); });
@@ -19220,13 +19260,13 @@ function _evolIntentar(item){
   if(item.borrarSolo){ _evolConfirmada(item, 'ya-existia'); return; }
   _evolEsperarGuardado(item, function(){
     var yaEsta = function(){ item.borrarSolo = true; _evolColaGuardar(item); _evolConfirmada(item, 'ya-existia'); };   // ya está: NO se inserta de nuevo
-    sb.from('evoluciones').select('id').eq('paciente_id', item.pacienteId).eq('medico_id', item.medicoId).eq('fecha_evolucion', item.ts).limit(1).then(function(r){
+    _selectPacienteCentroOTabla('evoluciones', 'obtener_evoluciones_paciente_centro', item.pacienteId, 'id').eq('paciente_id', item.pacienteId).eq('medico_id', item.medicoId).eq('fecha_evolucion', item.ts).limit(1).then(function(r){
       if(r.error){ _evolFallo(item, r.error); return; }
       if(r.data && r.data.length){ if(r.data[0] && r.data[0].id) item.evolId = r.data[0].id; yaEsta(); return; }
       // además: si «Guardar evolución» (o un intento anterior) ya guardó EL MISMO TEXTO de este paciente hace poco, tampoco se repite (la fecha puede ser distinta)
       if(item.cuadro && item.cuadro.length <= 1500){
         var desde = new Date(Date.parse(item.ts) - 15 * 60000).toISOString();
-        sb.from('evoluciones').select('id,indicaciones_plan,proxima_consulta').eq('paciente_id', item.pacienteId).eq('medico_id', item.medicoId).eq('evolucion', item.cuadro).gte('fecha_evolucion', desde).limit(5).then(function(r3){
+        _selectPacienteCentroOTabla('evoluciones', 'obtener_evoluciones_paciente_centro', item.pacienteId, 'id,indicaciones_plan,proxima_consulta').eq('paciente_id', item.pacienteId).eq('medico_id', item.medicoId).eq('evolucion', item.cuadro).gte('fecha_evolucion', desde).limit(5).then(function(r3){
           if(r3.error){ _evolFallo(item, r3.error); return; }   // si no se puede comprobar, no se inserta: se reintenta
           var igual = (r3.data || []).some(function(x){ return ('' + (x.indicaciones_plan || '')) === item.plan && ('' + (x.proxima_consulta || '')) === item.proxima; });
           if(igual){ var fx = (r3.data || []).filter(function(x){ return ('' + (x.indicaciones_plan || '')) === item.plan && ('' + (x.proxima_consulta || '')) === item.proxima; })[0]; if(fx && fx.id) item.evolId = fx.id; yaEsta(); return; }
@@ -19666,7 +19706,7 @@ function sincronizarPacientesSupabase(){
         // Si es centro, se traen sin filtro: la RLS ya devuelve las propias
         // + las de pacientes de centro accesibles. Si no, solo las propias.
         var evolQuery = esCentro
-          ? sb.from('evoluciones').select('*')
+          ? sb.rpc('obtener_evoluciones_centro', { p_device_token: _deviceToken() })   // Etapa 3: lo del centro ya no se lee directo de la tabla
           : sb.from('evoluciones').select('*').eq('medico_id', usuarioActual.id);
         evolQuery.then(function(r){
           if(!r.data){ if(cb) cb(); return; }
@@ -20954,6 +20994,12 @@ function mlIngresar(){
         return;
       }
       var estadoDisp = (rDisp.data && rDisp.data[0]) || { permitido:false, estado:'error' };
+      // Etapa 3: celular o tablet → el centro solo se usa desde computadoras: se cierra la sesión sin cargar nada y se avisa en una tarjeta.
+      if(estadoDisp.estado === 'celular'){
+        sb.auth.signOut({ scope:'local' });
+        _avisoCentroSoloComputadoras();
+        return;
+      }
       if(!estadoDisp.permitido){
         sb.auth.signOut({ scope:'local' });
         if(estadoDisp.estado === 'pendiente'){
@@ -20965,6 +21011,7 @@ function mlIngresar(){
         }
         return;
       }
+      window._mhAvisoDuenoSinAprobar = (estadoDisp.estado === 'dueno_sin_aprobar');   // Etapa 3: el dueño entra; el aviso sale al terminar de entrar
       continuarLoginTrasDispositivo(authId, u);
     });
   });
@@ -21005,6 +21052,7 @@ function continuarLoginTrasDispositivo(authId, emailFallback){
       try{ sincronizarEvolucionesSupabase(); }catch(e){ console.warn('[catch]', e); }
       try{ showPanel('dash'); }catch(e){ console.warn('[catch]', e); }
       try{ precargarDatosMedico(perfil); }catch(e){ console.warn('[catch]', e); }
+      try{ if(window._mhAvisoDuenoSinAprobar){ window._mhAvisoDuenoSinAprobar = false; _avisoDuenoSinAprobar(); } }catch(e){ console.warn('[catch]', e); }   // Etapa 3
     });
 }
 
@@ -21055,6 +21103,13 @@ function _verificarDispositivoConReintento(session, intento){
       return;
     }
     var estadoDisp = (rDisp.data && rDisp.data[0]) || { permitido:false };
+    // Etapa 3: celular o tablet → se cierra la sesión sin cargar nada y se avisa en una tarjeta.
+    if(estadoDisp.estado === 'celular'){
+      try{ sb.auth.signOut({ scope:'local' }); }catch(eSo){ console.warn('[catch]', eSo); }
+      _ocultarVerificandoSesion();
+      _avisoCentroSoloComputadoras();
+      return;
+    }
     if(!estadoDisp.permitido){
       // Dispositivo no aprobado o revocado desde la última vez: que inicie sesión de nuevo a mano.
       try{ sb.auth.signOut({ scope:'local' }); }catch(eSo){ console.warn('[catch]', eSo); }
@@ -21071,6 +21126,7 @@ function _verificarDispositivoConReintento(session, intento){
         return;
       }
       _ocultarVerificandoSesion();
+      window._mhAvisoDuenoSinAprobar = (estadoDisp.estado === 'dueno_sin_aprobar');   // Etapa 3
       continuarLoginTrasDispositivo(session.user.id, session.user.email);
     });
   });
